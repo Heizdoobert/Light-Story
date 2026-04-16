@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './modules/auth/AuthContext';
 import { ThemeProvider } from './modules/theme/ThemeContext';
 import { RoleProtectedRoute } from './shared/components/RoleProtectedRoute';
+import { ErrorBoundary } from './shared/components/ErrorBoundary';
 
 // Lazy load heavy modules to keep client bundle lightweight
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
@@ -35,35 +36,37 @@ const ErrorFallback = () => (
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <BrowserRouter>
-            <Toaster position="top-right" richColors closeButton />
-            <Suspense fallback={
-              <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            }>
-              <Routes>
-                {/* Client Portal */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/story/:storyId/chapter/:chapterId" element={<ReaderPage />} />
-                
-                {/* Admin Portal (Code-Split & Protected) */}
-                <Route 
-                  path="/admin/*" 
-                  element={
-                    <RoleProtectedRoute allowedRoles={['superadmin', 'admin', 'employee']}>
-                      <AdminDashboard />
-                    </RoleProtectedRoute>
-                  } 
-                />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <ThemeProvider>
+            <BrowserRouter>
+              <Toaster position="top-right" richColors closeButton />
+              <Suspense fallback={
+                <div className="h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              }>
+                <Routes>
+                  {/* Client Portal */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/story/:storyId/chapter/:chapterId" element={<ReaderPage />} />
+                  
+                  {/* Admin Portal (Code-Split & Protected) */}
+                  <Route 
+                    path="/admin/*" 
+                    element={
+                      <RoleProtectedRoute allowedRoles={['superadmin', 'admin', 'employee']}>
+                        <AdminDashboard />
+                      </RoleProtectedRoute>
+                    } 
+                  />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </ThemeProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }

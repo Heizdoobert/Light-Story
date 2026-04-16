@@ -68,10 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async () => {
     if (!supabase) return;
     
-    // Attempting to use a more universal sign-in method if Google is not enabled.
-    // In a real production app, you should enable Google in Supabase Dashboard.
-    // For now, let's provide a prompt for email if Google fails, or just use a placeholder for demo.
-    const email = window.prompt('Enter your email for Magic Link login:');
+    const email = window.prompt('Nhập email của bạn để nhận liên kết đăng nhập:');
     if (!email) return;
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -83,9 +80,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error('Login error:', error.message);
-      alert(`Login failed: ${error.message}. Make sure the provider is enabled in Supabase Dashboard.`);
+      alert(`Lỗi đăng nhập: ${error.message}. Hãy đảm bảo phương thức Email đã được bật trong Supabase Dashboard.`);
     } else {
-      alert('Check your email for the login link!');
+      alert('Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!');
     }
   };
 
