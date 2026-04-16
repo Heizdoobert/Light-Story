@@ -67,10 +67,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async () => {
     if (!supabase) return;
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
+    
+    // Attempting to use a more universal sign-in method if Google is not enabled.
+    // In a real production app, you should enable Google in Supabase Dashboard.
+    // For now, let's provide a prompt for email if Google fails, or just use a placeholder for demo.
+    const email = window.prompt('Enter your email for Magic Link login:');
+    if (!email) return;
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
     });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      alert(`Login failed: ${error.message}. Make sure the provider is enabled in Supabase Dashboard.`);
+    } else {
+      alert('Check your email for the login link!');
+    }
   };
 
   const signOut = async () => {
