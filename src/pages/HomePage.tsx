@@ -6,10 +6,12 @@ import { SupabaseStoryRepository } from '../infrastructure/repositories/Supabase
 import { Story } from '../domain/entities';
 import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
+import { LoginModal } from '../shared/components/LoginModal';
 
 export const HomePage: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { user, profile, signIn, signOut, role } = useAuth();
 
   useEffect(() => {
@@ -88,10 +90,7 @@ export const HomePage: React.FC = () => {
           ) : (
             <motion.button 
               {...bounceClick}
-              onClick={() => {
-                signIn();
-                toast.info('Đang mở cửa sổ đăng nhập...');
-              }}
+              onClick={() => setIsLoginModalOpen(true)}
               className="flex items-center gap-2 px-6 py-2.5 bg-text-main text-white rounded-xl text-sm font-bold shadow-lg shadow-black/10"
             >
               <LogIn size={16} />
@@ -100,6 +99,8 @@ export const HomePage: React.FC = () => {
           )}
         </div>
       </nav>
+
+      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
 
       <div className="max-w-7xl mx-auto p-8 lg:p-12">
         <header className="mb-16 text-center space-y-4">

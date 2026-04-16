@@ -11,6 +11,8 @@ interface AuthContextType {
   role: UserRole | null;
   loading: boolean;
   signIn: () => Promise<void>;
+  signInWithEmail: (email: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -68,8 +70,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async () => {
     if (!supabase) return;
     
-    const email = window.prompt('Nhập email của bạn để nhận liên kết đăng nhập:');
-    if (!email) return;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      alert(`Lỗi đăng nhập Google: ${error.message}. Hãy đảm bảo Google Provider đã được bật trong Supabase Dashboard.`);
+    }
+  };
+
+  const signInWithEmail = async (email: string) => {
+    if (!supabase) return;
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -80,9 +95,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error('Login error:', error.message);
-      alert(`Lỗi đăng nhập: ${error.message}. Hãy đảm bảo phương thức Email đã được bật trong Supabase Dashboard.`);
+      alert(`Lỗi đăng nhập: ${error.message}`);
+      throw error;
     } else {
       alert('Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!');
+    }
+  };
+
+  const signInWithPassword = async (email: string, password: string) => {
+    if (!supabase) return;
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Login error:', error.message);
+      alert(`Lỗi đăng nhập: ${error.message}`);
+      throw error;
     }
   };
 
@@ -98,6 +129,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: profile?.role || null, 
       loading, 
       signIn, 
+      signInWithEmail,
+      signInWithPassword,
       signOut 
     }}>
       {children}
