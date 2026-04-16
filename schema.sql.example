@@ -1,0 +1,98 @@
+/* 
+  Supabase Database Schema for Story Platform RBAC
+  Includes: Roles, Profiles, Stories, Settings, and RLS Policies
+*/
+
+-- 1. Create Role Enum
+CREATE TYPE user_role AS ENUM ('superadmin', 'admin', 'employee');
+
+-- 2. Profiles Table (Extends Supabase Auth)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  role user_role DEFAULT 'employee' NOT NULL,
+  full_name TEXT,
+  avatar_url TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3. Stories Table
+CREATE TABLE IF NOT EXISTS stories (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  cover_url TEXT,
+  status TEXT DEFAULT 'ongoing',
+  views INTEGER DEFAULT 0,
+  created_by UUID REFERENCES profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 4. Site Settings Table
+CREATE TABLE IF NOT EXISTS site_settings (
+  id SERIAL PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  value TEXT,
+  description TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 5. Enable RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+-- 6. RLS Policies
+
+-- Profiles: Users can view all profiles, but only SuperAdmin can update roles
+CREATE POLICY "Profiles are viewable by authenticated users" ON profiles
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Only SuperAdmin can update profiles" ON profiles
+  FOR UPDATE USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'superadmin'
+  );
+
+-- Stories: All staff can view/create, but only Admin+ can delete
+CREATE POLICY "Staff can view stories" ON stories
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Staff can insert stories" ON stories
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "Staff can update stories" ON stories
+  FOR UPDATE USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Only Admin/SuperAdmin can delete stories" ON stories
+  FOR DELETE USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) IN ('superadmin', 'admin')
+  );
+
+-- Settings: Viewable by all, manageable by Admin+
+CREATE POLICY "Public settings view" ON site_settings
+  FOR SELECT USING (true);
+
+CREATE POLICY "Admin manage settings" ON site_settings
+  FOR ALL USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) IN ('superadmin', 'admin')
+  );
+
+-- 7. Trigger for new user profile
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, full_name, avatar_url, role)
+  VALUES (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'avatar_url',
+    'employee' -- Default role
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
