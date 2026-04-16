@@ -11,10 +11,16 @@ LightStory is a high-performance, secure, and minimalist web application designe
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices.
 
 ### 🛡️ Admin Portal (Management System)
-- **Role-Based Access Control (RBAC)**: Granular permissions for `SuperAdmin`, `Admin`, and `Employee`.
-- **Story & Chapter CRUD**: Professional management tools with image upload support.
-- **Ad Management**: Dynamic ad script injection via a secure, non-blocking renderer.
-- **User Management**: (SuperAdmin only) Control user roles and access levels.
+- **Role-Based Access Control (RBAC)**: Granular permissions for `superadmin`, `admin`, and `employee`.
+- **Dedicated Story Creation**: New tab-based story creation flow to prevent data loss.
+- **Story & Chapter CRUD**: Professional management tools with Supabase integration.
+- **Ad Management**: Dynamic ad script injection via a secure renderer.
+- **User Management**: (SuperAdmin only) Advanced role control and user auditing.
+- **Accessibility**: High-contrast typography and polished dark mode implementation.
+
+### 🔐 Authentication
+- **Multi-channel Login**: Supports Google OAuth, Email Magic Link, and traditional Email/Password.
+- **Secure Sessions**: Persistent auth states with automatic profile synchronization.
 
 ## 🏗️ Technical Architecture
 

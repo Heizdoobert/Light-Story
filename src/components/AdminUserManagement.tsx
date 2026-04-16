@@ -54,25 +54,25 @@ export const AdminUserManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-black tracking-tight">User Management</h1>
-        <p className="text-text-muted font-medium mt-1">Manage system roles and permissions</p>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">User Management</h1>
+        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage system roles and permissions</p>
       </header>
 
-      <div className="glass-panel rounded-3xl overflow-hidden shadow-sm">
+      <div className="glass-panel rounded-3xl overflow-hidden shadow-sm dark:bg-slate-900/40 dark:border-slate-800">
         <table className="w-full text-sm text-left border-separate border-spacing-y-2 px-4">
           <thead>
             <tr>
-              <th className="px-6 py-4 font-black text-text-muted text-[11px] uppercase tracking-widest">User</th>
-              <th className="px-6 py-4 font-black text-text-muted text-[11px] uppercase tracking-widest">Current Role</th>
-              <th className="px-6 py-4 font-black text-text-muted text-[11px] uppercase tracking-widest text-right">Actions</th>
+              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">User</th>
+              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">Current Role</th>
+              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="bg-white/40 hover:bg-white/60 transition-colors">
+              <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
                 <td className="px-6 py-4 rounded-l-2xl">
-                  <div className="font-bold">{user.full_name || 'No Name'}</div>
-                  <div className="text-xs text-text-muted">{user.email}</div>
+                  <div className="font-bold text-slate-900 dark:text-slate-200">{user.full_name || 'No Name'}</div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div>
                 </td>
                 <td className="px-6 py-4">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
@@ -85,7 +85,7 @@ export const AdminUserManagement: React.FC = () => {
                 </td>
                 <td className="px-6 py-4 rounded-r-2xl text-right">
                   <select 
-                    className="bg-white border border-glass-border rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                     value={user.role}
                     onChange={(e) => handleRoleChange(user.id, e.target.value)}
                   >

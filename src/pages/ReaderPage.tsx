@@ -65,8 +65,8 @@ export const ReaderPage: React.FC = () => {
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl">
           <div className="flex gap-4">
-            <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 hover:bg-black/10 font-bold">A-</button>
-            <button onClick={() => setFontSize(s => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 hover:bg-black/10 font-bold">A+</button>
+            <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A-</button>
+            <button onClick={() => setFontSize(s => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A+</button>
           </div>
           <div className="flex gap-2">
             {['light', 'sepia', 'dark'].map((t) => (
@@ -74,7 +74,7 @@ export const ReaderPage: React.FC = () => {
                 key={t}
                 onClick={() => setTheme(t)}
                 className={`px-3 py-1 rounded text-xs font-bold uppercase transition-all ${
-                  theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 hover:bg-black/10'
+                  theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
                 }`}
               >
                 {t}

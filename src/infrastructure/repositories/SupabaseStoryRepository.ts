@@ -21,4 +21,17 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (!supabase) return;
     await supabase.rpc('increment_story_views', { story_id_param: storyId });
   }
+
+  async saveStory(story: Partial<Story>): Promise<Story> {
+    if (!supabase) throw new Error('Supabase client not initialized');
+    
+    const { data, error } = await supabase
+      .from('stories')
+      .insert([story])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
 }

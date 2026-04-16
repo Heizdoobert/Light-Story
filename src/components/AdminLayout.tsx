@@ -14,12 +14,13 @@ import {
   ChevronRight,
   Menu,
   X,
+  PlusCircle,
   Bell,
   Sun,
   Moon
 } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from '../modules/theme/ThemeContext';
 import { toast } from 'sonner';
 
 interface AdminLayoutProps {
@@ -35,6 +36,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, o
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['superadmin', 'admin', 'employee'] },
+    { id: 'create_story', label: 'Tạo Truyện', icon: PlusCircle, roles: ['superadmin', 'admin', 'employee'] },
     { id: 'stories', label: 'Stories', icon: BookOpen, roles: ['superadmin', 'admin', 'employee'] },
     { id: 'users', label: 'Users', icon: Users, roles: ['superadmin'] },
     { id: 'ads', label: 'Ads & Revenue', icon: DollarSign, roles: ['superadmin', 'admin'] },
@@ -69,7 +71,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, o
                 exit={{ opacity: 0 }}
                 className="font-black text-xl text-primary tracking-tighter"
               >
-                LIGHTSTORY <span className="text-slate-400 dark:text-slate-500">v0</span>
+                LIGHTSTORY <span className="text-slate-400 dark:text-slate-300">v0</span>
               </motion.div>
             )}
           </AnimatePresence>
@@ -124,18 +126,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, o
             </div>
             <div>
               <h2 className="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider text-xs">Admin Panel</h2>
-              <p className="text-[10px] font-bold text-slate-400">Welcome back, {profile?.full_name || 'Admin'}</p>
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400">Welcome back, {profile?.full_name || 'Admin'}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-6">
             <button 
               onClick={toggleTheme}
-              className="p-2 text-slate-400 hover:text-primary transition-colors bg-slate-50 dark:bg-slate-800 rounded-lg"
+              className="p-2 text-slate-400 dark:text-slate-300 hover:text-primary transition-colors bg-slate-50 dark:bg-slate-800 rounded-lg"
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             </button>
-            <button className="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+            <button className="relative p-2 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
             </button>

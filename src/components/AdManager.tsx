@@ -67,8 +67,8 @@ export const AdManager: React.FC = () => {
   return (
     <div className="max-w-4xl space-y-8">
       <header>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ad Script Manager</h1>
-        <p className="text-slate-500 font-medium mt-1">Inject monetization scripts into specific slots across the platform.</p>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Ad Script Manager</h1>
+        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Inject monetization scripts into specific slots across the platform.</p>
       </header>
 
       <div className="grid grid-cols-1 gap-6">
@@ -81,7 +81,7 @@ export const AdManager: React.FC = () => {
             key={ad.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 space-y-4"
+            className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-4 transition-colors"
           >
             <div className="flex justify-between items-start">
               <div className="flex gap-3">
@@ -89,14 +89,14 @@ export const AdManager: React.FC = () => {
                   <Info size={18} />
                 </div>
                 <div>
-                  <h3 className="font-black text-slate-900 uppercase tracking-widest text-xs">{ad.label}</h3>
-                  <p className="text-xs text-slate-400 font-bold mt-1">{ad.desc}</p>
+                  <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">{ad.label}</h3>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-bold mt-1">{ad.desc}</p>
                 </div>
               </div>
               <button 
                 onClick={() => handleSave(ad.id)}
                 disabled={mutation.isPending}
-                className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 bg-slate-900 dark:bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:opacity-90 transition-all disabled:opacity-50"
               >
                 <Save size={14} />
                 Save Changes
@@ -105,12 +105,12 @@ export const AdManager: React.FC = () => {
 
             <div className="relative">
               <textarea 
-                className="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl p-5 font-mono text-[12px] h-40 resize-none focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner"
+                className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-5 font-mono text-[12px] h-40 resize-none focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner text-slate-900 dark:text-slate-200"
                 value={(configs as any)[ad.id]}
                 onChange={(e) => setConfigs({...configs, [ad.id]: e.target.value})}
                 placeholder="<!-- Paste your HTML/JS script here -->"
               />
-              <div className="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              <div className="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
                 <AlertCircle size={12} />
                 HTML/JS Supported
               </div>

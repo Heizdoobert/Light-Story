@@ -10,6 +10,13 @@
   --background-image-glass-gradient: radial-gradient(at 0% 0%, #e0e7ff 0%, #fef2f2 50%, #f0fdf4 100%);
 }
 
+@theme dark {
+  --color-glass-bg: rgba(15, 23, 42, 0.8);
+  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-text-main: #f8fafc;
+  --color-text-muted: #94a3b8;
+}
+
 @layer base {
   body {
     @apply bg-[image:--background-image-glass-gradient] text-text-main font-sans min-h-screen;

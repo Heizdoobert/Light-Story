@@ -35,9 +35,9 @@ export const HomePage: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-[#f8fafc]">
+    <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-[#f8fafc] dark:bg-slate-950">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-text-muted font-bold animate-pulse">Đang tải danh sách truyện...</p>
+      <p className="text-text-muted dark:text-slate-400 font-bold animate-pulse">Đang tải danh sách truyện...</p>
     </div>
   );
 
@@ -198,12 +198,12 @@ export const HomePage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 opacity-50">
             <div className="w-6 h-6 bg-slate-400 rounded flex items-center justify-center text-white font-black text-[10px]">L</div>
-            <span className="font-black text-sm tracking-tighter text-slate-500">LightStory.v0</span>
+            <span className="font-black text-sm tracking-tighter text-slate-500 dark:text-slate-400">LightStory.v0</span>
           </div>
-          <p className="text-slate-400 text-xs font-bold">© 2026 LightStory. All rights reserved.</p>
+          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold">© 2026 LightStory. All rights reserved.</p>
           <div className="flex gap-8">
-            <Link to="/admin" className="text-xs font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-widest">Admin Panel</Link>
-            <a href="#" className="text-xs font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-widest">Privacy</a>
+            <Link to="/admin" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Admin Panel</Link>
+            <a href="#" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Privacy</a>
           </div>
         </div>
       </footer>
