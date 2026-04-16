@@ -9,7 +9,7 @@ import { SupabaseStoryRepository } from '../infrastructure/repositories/Supabase
 import { SupabaseChapterRepository } from '../infrastructure/repositories/SupabaseChapterRepository';
 import { SupabaseSettingsRepository } from '../infrastructure/repositories/SupabaseSettingsRepository';
 import { Story } from '../domain/entities';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../modules/auth/AuthContext';
 import { motion } from 'motion/react';
 
 const queryClient = new QueryClient();

@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { LogIn, LogOut, LayoutDashboard, BookOpen, User as UserIcon } from 'lucide-react';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
 
 export const HomePage: React.FC = () => {
