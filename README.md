@@ -1,12 +1,4 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
-
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/eeeac6aa-9251-4bb1-934e-96ff524fb441
+<blockquote class="pix-embed-wrap"><div class="pix-embed-activity" data-id="sr5z6c1947276daws3" data-width="128" data-height="128" data-type="art" data-theme="light" data-show-edit="1">Pixilart Embed</div></blockquote><script async="async" src="https://www.pixilart.com/js/embed.js?v=1.0.4"></script>
 
 ## Run Locally
 
