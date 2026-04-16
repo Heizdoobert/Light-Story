@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../core/supabase';
 import { Chapter } from '../../domain/entities';
 import { IChapterRepository } from '../../domain/repositories';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 

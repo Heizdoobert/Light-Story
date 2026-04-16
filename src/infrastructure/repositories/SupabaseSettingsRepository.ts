@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../core/supabase';
 import { SiteSetting } from '../../domain/entities';
 import { ISettingsRepository } from '../../domain/repositories';
 

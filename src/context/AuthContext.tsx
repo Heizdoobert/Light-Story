@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../core/supabase';
 import { User } from '@supabase/supabase-js';
 
 type UserRole = 'superadmin' | 'admin' | 'employee' | 'user';
@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       alert('Supabase is not configured');
       return;
     }
-    await supabase.auth.signInWithPopup({
+    await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin }
     });
