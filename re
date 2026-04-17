@@ -1,0 +1,32 @@
+ │ │ ├╴  AdminDashboard.tsx
+ │ │ ├╴  HomePage.tsx
+ │ │ └╴  ReaderPage.tsx
+ │ ├╴  presentation
+ │ │ └╴  mvp
+ │ │   ├╴  AdminContract.ts
+ │ │   ├╴  AdminPresenter.ts
+ │ │   ├╴  ReaderContract.ts
+ │ │   └╴  ReaderPresenter.ts
+ │ ├╴  shared
+ │ │ └╴  components
+ │ │   ├╴  AdRenderer.tsx
+ │ │   ├╴  ErrorBoundary.tsx
+ │ │   ├╴  LoginModal.tsx
+ │ │   └╴  RoleProtectedRoute.tsx
+ │ ├╴  utils
+ │ │ └╴  supabase.ts
+ │ ├╴  App.tsx
+ │ ├╴  index.css
+ │ ├╴  main.tsx
+ │ └╴  vite-env.d.ts
+ ├╴  .gitignore
+ ├╴  AUDIT_REPORT.md
+ ├╴  PROJECT_STRUCTURE.md
+ ├╴  README.md
+ ├╴  Register.tsx
+ ├╴  database.sql.example
+ ├╴  index.html
+ ├╴  metadata.json
+ ├╴  package-lock.json
+ ├╴  package.json
+
