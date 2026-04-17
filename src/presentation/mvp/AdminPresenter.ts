@@ -1,6 +1,10 @@
-import { IAdminView } from './AdminContract';
-import { IStoryRepository, IChapterRepository, ISettingsRepository } from '../../domain/repositories';
-import { getErrorMessage } from '../../lib/errorUtils';
+import { IAdminView } from "./AdminContract";
+import {
+  IStoryRepository,
+  IChapterRepository,
+  ISettingsRepository,
+} from "../../domain/repositories";
+import { getErrorMessage } from "../../lib/errorUtils";
 
 export class AdminPresenter {
   private view: IAdminView | null = null;
@@ -8,7 +12,7 @@ export class AdminPresenter {
   constructor(
     private storyRepo: IStoryRepository,
     private chapterRepo: IChapterRepository,
-    private settingsRepo: ISettingsRepository
+    private settingsRepo: ISettingsRepository,
   ) {}
 
   attachView(view: IAdminView) {
@@ -25,30 +29,29 @@ export class AdminPresenter {
       this.view.showLoading();
       const [stories, header, middle, sidebar] = await Promise.all([
         this.storyRepo.getStories(),
-        this.settingsRepo.getSettingByKey('ad_header'),
-        this.settingsRepo.getSettingByKey('ad_middle'),
-        this.settingsRepo.getSettingByKey('ad_sidebar')
+        this.settingsRepo.getSettingByKey("ad_header"),
+        this.settingsRepo.getSettingByKey("ad_middle"),
+        this.settingsRepo.getSettingByKey("ad_sidebar"),
       ]);
-      
+
       const totalViews = stories.reduce((sum, s) => sum + (s.views || 0), 0);
       const activeStories = stories.length;
-      
+
       this.view.displayStats({
         totalViews,
         activeStories,
-        totalChapters: 0 
+        totalChapters: 0,
       });
-      
+
       this.view.displayStories(stories);
 
-      // Trả về dữ liệu ad để view cập nhật state
       return {
-        header: header?.value || '',
-        middle: middle?.value || '',
-        sidebar: sidebar?.value || ''
+        header: header?.value || "",
+        middle: middle?.value || "",
+        sidebar: sidebar?.value || "",
       };
     } catch (error: any) {
-      this.view.showError(getErrorMessage(error, 'fetch_stories'));
+      this.view.showError(getErrorMessage(error, "fetch_stories"));
     } finally {
       this.view.hideLoading();
     }
@@ -60,7 +63,7 @@ export class AdminPresenter {
       await this.settingsRepo.updateSetting(key, value);
       this.view.showSuccess(`Đã lưu cấu hình ${key}`);
     } catch (error: any) {
-      this.view.showError(getErrorMessage(error, 'update_settings'));
+      this.view.showError(getErrorMessage(error, "update_settings"));
     }
   }
 }
