@@ -44,11 +44,11 @@ export const ReaderPage: React.FC = () => {
   const getThemeClasses = () => {
     switch (theme) {
       case 'dark':
-        return 'bg-gray-900 text-gray-100';
+        return 'bg-slate-950 text-slate-100';
       case 'sepia':
         return 'bg-[#f4ecd8] text-[#5b4636]';
       default:
-        return 'bg-white text-gray-900';
+        return 'bg-slate-50 text-slate-900';
     }
   };
 
@@ -63,7 +63,7 @@ export const ReaderPage: React.FC = () => {
         <meta name="description" content={storyMeta?.description || `Đọc chương ${chapter.chapter_number} của truyện ${storyMeta?.title}`} />
       </Helmet>
       <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl">
+        <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">
           <div className="flex gap-4">
             <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A-</button>
             <button onClick={() => setFontSize(s => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A+</button>

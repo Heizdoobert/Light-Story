@@ -1,5 +1,6 @@
 import { IAdminView } from './AdminContract';
 import { IStoryRepository, IChapterRepository, ISettingsRepository } from '../../domain/repositories';
+import { getErrorMessage } from '../../lib/errorUtils';
 
 export class AdminPresenter {
   private view: IAdminView | null = null;
@@ -47,7 +48,7 @@ export class AdminPresenter {
         sidebar: sidebar?.value || ''
       };
     } catch (error: any) {
-      this.view.showError(error.message);
+      this.view.showError(getErrorMessage(error, 'fetch_stories'));
     } finally {
       this.view.hideLoading();
     }
@@ -59,7 +60,7 @@ export class AdminPresenter {
       await this.settingsRepo.updateSetting(key, value);
       this.view.showSuccess(`Đã lưu cấu hình ${key}`);
     } catch (error: any) {
-      this.view.showError(error.message);
+      this.view.showError(getErrorMessage(error, 'update_settings'));
     }
   }
 }

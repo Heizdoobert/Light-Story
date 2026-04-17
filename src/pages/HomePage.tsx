@@ -6,6 +6,7 @@ import { SupabaseStoryRepository } from '../infrastructure/repositories/Supabase
 import { Story } from '../domain/entities';
 import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
+import { getErrorMessage } from '../lib/errorUtils';
 import { LoginModal } from '../shared/components/LoginModal';
 
 export const HomePage: React.FC = () => {
@@ -22,6 +23,7 @@ export const HomePage: React.FC = () => {
         setStories(data);
       } catch (error) {
         console.error('Error fetching stories:', error);
+        toast.error(getErrorMessage(error, 'fetch_stories'));
       } finally {
         setLoading(false);
       }
@@ -35,16 +37,16 @@ export const HomePage: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-[#f8fafc] dark:bg-slate-950">
+    <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-slate-50 dark:bg-slate-950">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       <p className="text-text-muted dark:text-slate-400 font-bold animate-pulse">Đang tải danh sách truyện...</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] transition-colors duration-300 dark:bg-slate-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 glass-panel border-b border-white/40 px-8 py-4 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-black">L</div>
           <span className="font-black text-xl tracking-tighter text-text-main dark:text-white">LightStory.v0</span>
@@ -107,15 +109,15 @@ export const HomePage: React.FC = () => {
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl lg:text-6xl font-black text-text-main dark:text-white tracking-tight"
+            className="text-5xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tight"
           >
-            Đọc truyện <span className="text-primary">tối giản</span>.
+            Đọc truyện <span className="text-primary italic">tối giản.</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-text-muted dark:text-slate-400 text-lg font-medium max-w-2xl mx-auto"
+            className="text-slate-600 dark:text-slate-400 text-lg lg:text-xl font-medium max-w-2xl mx-auto leading-relaxed"
           >
             Trải nghiệm đọc truyện chữ thuần túy với giao diện hiện đại, không quảng cáo phiền nhiễu và hỗ trợ đa nền tảng.
           </motion.p>
@@ -194,7 +196,7 @@ export const HomePage: React.FC = () => {
         )}
       </div>
 
-      <footer className="mt-20 py-12 border-t border-slate-200 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40">
+      <footer className="mt-20 py-12 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
         <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2 opacity-50">
             <div className="w-6 h-6 bg-slate-400 rounded flex items-center justify-center text-white font-black text-[10px]">L</div>

@@ -11,16 +11,11 @@ LightStory is a high-performance, secure, and minimalist web application designe
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices.
 
 ### 🛡️ Admin Portal (Management System)
-- **Role-Based Access Control (RBAC)**: Granular permissions for `superadmin`, `admin`, and `employee`.
-- **Dedicated Story Creation**: New tab-based story creation flow to prevent data loss.
-- **Story & Chapter CRUD**: Professional management tools with Supabase integration.
-- **Ad Management**: Dynamic ad script injection via a secure renderer.
-- **User Management**: (SuperAdmin only) Advanced role control and user auditing.
-- **Accessibility**: High-contrast typography and polished dark mode implementation.
-
-### 🔐 Authentication
-- **Multi-channel Login**: Supports Google OAuth, Email Magic Link, and traditional Email/Password.
-- **Secure Sessions**: Persistent auth states with automatic profile synchronization.
+- **Role-Based Access Control (RBAC)**: Granular permissions for `SuperAdmin`, `Admin`, and `Employee`.
+- **Dedicated Creation Tab**: A standalone "Tạo Truyện" tab to prevent data loss during long-form editing.
+- **Story & Chapter CRUD**: Professional management tools with instant cache invalidation.
+- **Ad Management**: Dynamic ad script injection via a secure, non-blocking renderer.
+- **User Management**: (SuperAdmin only) Control user roles and access levels.
 
 ## 🏗️ Technical Architecture
 
@@ -65,7 +60,7 @@ LightStory is a high-performance, secure, and minimalist web application designe
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
    ```
 4. **Database Setup**:
-   Execute the contents of `database.sql.example` in your Supabase SQL Editor to set up tables, enums, and RLS policies.
+   Execute the contents of `supabase_setup.sql` in your Supabase SQL Editor to set up tables, enums, RLS policies, and RPC functions.
 5. **Run Development Server**:
    ```bash
    npm run dev

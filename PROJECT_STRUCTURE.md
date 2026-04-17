@@ -3,38 +3,31 @@
   
   /src
     /core
-      supabase.ts            - Supabase singleton client
-    /domain                  - Core logic & entities
-      entities.ts            - Story, Chapter, Setting interfaces
-      repositories.ts        - Repository interface definitions
-    /infrastructure          - Data access & implementations
-      /repositories
-        SupabaseStoryRepository.ts
-        SupabaseChapterRepository.ts
-        SupabaseSettingsRepository.ts
-    /presentation            - MVP/MVVM pattern logic
-      /mvp
-        AdminPresenter.ts
-        ReaderPresenter.ts
+      supabase.ts        - Supabase client initialization
+      types.ts           - Shared domain types & interfaces
+      constants.ts       - System constants
     /shared
       /components
-        ErrorBoundary.tsx    - Global error safety
-        LoginModal.tsx       - Unified auth interface
-        RoleProtectedRoute.tsx - RBAC-aware route guard
-    /components              - Reusable UI blocks
-      AdminLayout.tsx        - Master admin wrapper
-      StoryForm.tsx          - Dedicated story creation tab
-      AdManager.tsx          - Ad script configuration
-      AdminUserManagement.tsx - RBAC management
-      AdRenderer.tsx         - Dynamic script injector
+        Button.tsx       - Reusable button
+        Input.tsx        - Reusable input
+        AdRenderer.tsx   - Component to inject DB-stored ad scripts
+        ThemeToggle.tsx  - Dark mode switcher
     /modules
       /auth
-        AuthContext.tsx      - Unified Auth management
-      /theme
-        ThemeContext.tsx     - FOUC-proof theme syncing
-    /pages                   - View entry points
-      HomePage.tsx           - Story discovery
-      ReaderPage.tsx         - Multi-theme reading view
-      AdminDashboard.tsx     - Tabbed management portal
-    App.tsx                  - Router config & providers
+        AuthContext.tsx  - Global auth state & RBAC logic
+        Login.tsx        - Admin/Staff login page
+      /client
+        Home.tsx         - Story browsing page
+        Reader.tsx       - Minimalist reading experience
+      /admin
+        /components
+          AdminSidebar.tsx - Role-aware sidebar
+        Dashboard.tsx    - Overview stats
+        StoryManager.tsx - CRUD for stories
+        AdManager.tsx    - Ad script configuration
+        UserManager.tsx  - RBAC management (SuperAdmin only)
+    /hooks
+      useStories.ts      - React Query hooks for story data
+      useSettings.ts     - React Query hooks for site config
+    App.tsx              - Main router & layout coordinator
 */

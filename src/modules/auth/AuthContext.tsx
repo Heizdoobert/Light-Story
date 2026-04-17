@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../../core/supabase';
 import { User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { getErrorMessage } from '../../lib/errorUtils';
 
 export type UserRole = 'superadmin' | 'admin' | 'employee' | 'user';
 
@@ -79,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error('Login error:', error.message);
-      alert(`Lỗi đăng nhập Google: ${error.message}. Hãy đảm bảo Google Provider đã được bật trong Supabase Dashboard.`);
+      toast.error(getErrorMessage(error));
     }
   };
 
@@ -95,10 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error('Login error:', error.message);
-      alert(`Lỗi đăng nhập: ${error.message}`);
+      toast.error(getErrorMessage(error));
       throw error;
     } else {
-      alert('Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!');
+      toast.info('Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!');
     }
   };
 
@@ -112,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (error) {
       console.error('Login error:', error.message);
-      alert(`Lỗi đăng nhập: ${error.message}`);
+      toast.error(getErrorMessage(error));
       throw error;
     }
   };

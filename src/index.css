@@ -1,25 +1,33 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #6366f1;
-  --color-glass-bg: rgba(255, 255, 255, 0.65);
-  --color-glass-border: rgba(255, 255, 255, 0.4);
-  --color-text-main: #1e293b;
-  --color-text-muted: #64748b;
+  --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-glass-border: rgba(0, 0, 0, 0.1);
+  --color-text-main: #0f172a;
+  --color-text-muted: #475569;
   
-  --background-image-glass-gradient: radial-gradient(at 0% 0%, #e0e7ff 0%, #fef2f2 50%, #f0fdf4 100%);
+  --background-image-glass-gradient: none;
 }
 
 @theme dark {
-  --color-glass-bg: rgba(15, 23, 42, 0.8);
+  --color-glass-bg: rgba(15, 23, 42, 0.85);
   --color-glass-border: rgba(255, 255, 255, 0.1);
   --color-text-main: #f8fafc;
   --color-text-muted: #94a3b8;
+  
+  --background-image-glass-gradient: none;
 }
 
 @layer base {
+  *, ::before, ::after {
+    @apply border-slate-200 dark:border-slate-800;
+  }
+  
   body {
-    @apply bg-[image:--background-image-glass-gradient] text-text-main font-sans min-h-screen;
+    @apply bg-slate-50 dark:bg-slate-950 text-text-main font-sans min-h-screen transition-colors duration-300;
   }
 }
 

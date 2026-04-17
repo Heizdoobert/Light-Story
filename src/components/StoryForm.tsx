@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { toast } from 'sonner';
+import { getErrorMessage } from '../lib/errorUtils';
 import { Save, X, PlusCircle, Image as ImageIcon, Type, User, BookOpen, Tag, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -36,7 +37,7 @@ export const StoryForm: React.FC = () => {
       });
     },
     onError: (error: any) => {
-      toast.error('Lỗi khi tạo truyện: ' + error.message);
+      toast.error(getErrorMessage(error, 'save_story'));
     }
   });
 
