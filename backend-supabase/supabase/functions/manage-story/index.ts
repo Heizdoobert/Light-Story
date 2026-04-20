@@ -34,10 +34,19 @@ serve(async (req) => {
 
   const payload = await req.json().catch(() => null);
   const title = payload?.title;
-  const author = payload?.author;
+  const authorId = payload?.authorId;
+  const categoryId = payload?.categoryId;
 
-  if (typeof title !== "string" || typeof author !== "string" || !title.trim() || !author.trim()) {
-    return jsonResponse({ error: "title and author are required" }, 400);
+  if (typeof title !== "string" || !title.trim()) {
+    return jsonResponse({ error: "title is required" }, 400);
+  }
+
+  if (typeof authorId !== "string" || !authorId.trim()) {
+    return jsonResponse({ error: "authorId is required" }, 400);
+  }
+
+  if (typeof categoryId !== "string" || !categoryId.trim()) {
+    return jsonResponse({ error: "categoryId is required" }, 400);
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -64,16 +73,32 @@ serve(async (req) => {
     return jsonResponse({ error: "Forbidden" }, 403);
   }
 
+  const [{ data: authorRecord, error: authorError }, { data: categoryRecord, error: categoryError }] = await Promise.all([
+    supabase.from("authors").select("id,name").eq("id", authorId).maybeSingle(),
+    supabase.from("categories").select("id,name").eq("id", categoryId).maybeSingle(),
+  ]);
+
+  if (authorError || !authorRecord) {
+    return jsonResponse({ error: "Author does not exist" }, 400);
+  }
+
+  if (categoryError || !categoryRecord) {
+    return jsonResponse({ error: "Category does not exist" }, 400);
+  }
+
   const { data, error } = await supabase
     .from("stories")
     .insert([
       {
         title: title.trim(),
-        author: author.trim(),
+        author: authorRecord.name,
+        author_id: authorRecord.id,
         description: typeof payload?.description === "string" ? payload.description.trim() : null,
         cover_url: typeof payload?.cover_url === "string" ? payload.cover_url.trim() : null,
-        category: typeof payload?.category === "string" ? payload.category.trim() : null,
+        category: categoryRecord.name,
+        category_id: categoryRecord.id,
         status: payload?.status ?? "draft",
+        created_by: verifiedUser.userId,
       },
     ])
     .select("*")

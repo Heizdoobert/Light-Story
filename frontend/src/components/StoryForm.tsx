@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
+import { SupabaseTaxonomyRepository } from "../infrastructure/repositories/SupabaseTaxonomyRepository";
 import { Story } from "../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/errorUtils";
@@ -26,13 +27,26 @@ export const StoryForm: React.FC = () => {
     title: "",
     description: "",
     author: "",
+    author_id: null,
     cover_url: "",
     category: "",
+    category_id: null,
     status: "ongoing",
     views: 0,
   });
 
   const storyRepo = new SupabaseStoryRepository();
+  const taxonomyRepo = new SupabaseTaxonomyRepository();
+
+  const authorsQuery = useQuery({
+    queryKey: ["authors"],
+    queryFn: () => taxonomyRepo.getAuthors(),
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => taxonomyRepo.getCategories(),
+  });
 
   useEffect(() => {
     if (!coverFile) {
@@ -51,8 +65,10 @@ export const StoryForm: React.FC = () => {
       title: "",
       description: "",
       author: "",
+      author_id: null,
       cover_url: "",
       category: "",
+      category_id: null,
       status: "ongoing",
       views: 0,
     });
@@ -115,6 +131,10 @@ export const StoryForm: React.FC = () => {
       toast.error("Please write full form required!!!");
       return;
     }
+    if (!formData.author_id || !formData.category_id) {
+      toast.error("Please choose an author and category from linked records");
+      return;
+    }
     if (!coverFile) {
       toast.error("Please upload a cover image");
       return;
@@ -162,32 +182,54 @@ export const StoryForm: React.FC = () => {
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
                 <User size={12} /> Author
               </label>
-              <input
-                type="text"
+              <select
                 required
-                value={formData.author}
-                onChange={(e) =>
-                  setFormData({ ...formData, author: e.target.value })
-                }
-                placeholder="Author name"
+                value={formData.author_id ?? ""}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const selectedAuthor = authorsQuery.data?.find((item) => item.id === selectedId);
+                  setFormData({
+                    ...formData,
+                    author_id: selectedId || null,
+                    author: selectedAuthor?.name || "",
+                  });
+                }}
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
-              />
+              >
+                <option value="">{authorsQuery.isLoading ? "Loading authors..." : "Select author"}</option>
+                {(authorsQuery.data ?? []).map((author) => (
+                  <option key={author.id} value={author.id}>
+                    {author.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
                 <Tag size={12} /> Category
               </label>
-              <input
-                type="text"
+              <select
                 required
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                placeholder="Example: Fantasy, Urban"
+                value={formData.category_id ?? ""}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const selectedCategory = categoriesQuery.data?.find((item) => item.id === selectedId);
+                  setFormData({
+                    ...formData,
+                    category_id: selectedId || null,
+                    category: selectedCategory?.name || "",
+                  });
+                }}
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
-              />
+              >
+                <option value="">{categoriesQuery.isLoading ? "Loading categories..." : "Select category"}</option>
+                {(categoriesQuery.data ?? []).map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">

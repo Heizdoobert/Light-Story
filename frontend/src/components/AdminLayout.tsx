@@ -20,6 +20,8 @@ import {
   Moon,
   House,
   User,
+  Library,
+  PenSquare,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -58,6 +60,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       id: "stories",
       label: "Stories",
       icon: BookOpen,
+      roles: ["superadmin", "admin", "employee"],
+    },
+    {
+      id: "categories",
+      label: "Categories",
+      icon: Library,
+      roles: ["superadmin", "admin", "employee"],
+    },
+    {
+      id: "authors",
+      label: "Authors",
+      icon: PenSquare,
       roles: ["superadmin", "admin", "employee"],
     },
     { id: "users", label: "Users", icon: Users, roles: ["superadmin"] },
