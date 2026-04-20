@@ -85,7 +85,9 @@ create table if not exists public.story_likes (
 
 create index if not exists idx_story_likes_user_id on public.story_likes(user_id);
 
-create or replace function public.handle_new_user()
+drop function if exists public.handle_new_user();
+
+create or replace function app_private.handle_new_user()
 returns trigger
 language plpgsql
 security definer
@@ -321,7 +323,7 @@ using (auth.uid() = user_id);
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
 after insert on auth.users
-for each row execute function public.handle_new_user();
+for each row execute function app_private.handle_new_user();
 
 drop trigger if exists trg_profiles_updated_at on public.profiles;
 create trigger trg_profiles_updated_at
