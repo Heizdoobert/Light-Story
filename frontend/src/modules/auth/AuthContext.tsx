@@ -98,13 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchProfile = async (authUser: User) => {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase.schema("app_private").rpc("get_current_profile", {
-        // The RPC is defined in app_private and executed as SECURITY DEFINER.
-      });
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,email,full_name,avatar_url,role")
+        .eq("id", authUser.id)
+        .maybeSingle();
 
       if (error) throw error;
-      const profileData = Array.isArray(data) ? data?.[0] : data;
-      setProfile(buildProfile(authUser, profileData as ProfileRow | undefined));
+      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
     } catch (error) {
       console.error("Error fetching profile:", error);
       setProfile(buildProfile(authUser));
