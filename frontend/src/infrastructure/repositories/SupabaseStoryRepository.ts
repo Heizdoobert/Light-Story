@@ -42,16 +42,8 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 
-    return {
-      id: data.story.id,
-      title: data.story.title,
-      author: data.story.author,
-      description: story.description || '',
-      cover_url: story.cover_url || '',
-      category: story.category || '',
-      status: data.story.status as 'ongoing' | 'completed',
-      views: 0,
-      created_at: new Date().toISOString(),
-    };
+    const created = await this.getStoryById(data.story.id);
+    if (!created) throw new Error('Story was created but could not be retrieved');
+    return created;
   }
 }

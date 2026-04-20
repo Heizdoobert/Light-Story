@@ -97,7 +97,7 @@ export const DashboardSidebar: React.FC<{
               className="w-full bg-text-main text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-black/10 flex items-center justify-center gap-2"
             >
               <span className="text-xl">+</span>
-              Thêm Chương Mới
+              Thêm Chương
             </motion.button>
           </div>
         )}

@@ -32,13 +32,8 @@ export class SupabaseChapterRepository implements IChapterRepository {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 
-    return {
-      id: data.chapter.id,
-      story_id: data.chapter.story_id,
-      chapter_number: data.chapter.chapter_number,
-      title: data.chapter.title,
-      content: chapter.content || '',
-      created_at: new Date().toISOString(),
-    };
+    const created = await this.getChapterById(data.chapter.id);
+    if (!created) throw new Error('Chapter was created but could not be retrieved');
+    return created;
   }
 }
