@@ -49,7 +49,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
     {
       id: "create_story",
-      label: "Tạo Truyện",
+      label: "Create Story",
       icon: PlusCircle,
       roles: ["superadmin", "admin", "employee"],
     },
@@ -126,7 +126,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               size={20}
               className="group-hover:scale-110 transition-transform"
             />
-            {isSidebarOpen && <span className="font-bold text-sm">Trang chủ</span>}
+            {isSidebarOpen && <span className="font-bold text-sm">Home</span>}
           </Link>
         </div>
 

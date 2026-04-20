@@ -126,7 +126,7 @@ export const StoryForm: React.FC = () => {
     <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="mb-10">
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          Tạo Truyện Mới
+          Create New Story
         </h2>
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
           Your content will be safe in this tab until your save this session and
@@ -152,7 +152,7 @@ export const StoryForm: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  placeholder="Ví dụ: Ánh Sáng Cuối Con Đường"
+                  placeholder="Example: Light at the End of the Road"
                   className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
                 />
               </div>
@@ -169,7 +169,7 @@ export const StoryForm: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, author: e.target.value })
                 }
-                placeholder="Tên tác giả"
+                placeholder="Author name"
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               />
             </div>
@@ -185,7 +185,7 @@ export const StoryForm: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, category: e.target.value })
                 }
-                placeholder="Ví dụ: Tiên Hiệp, Đô Thị"
+                placeholder="Example: Fantasy, Urban"
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               />
             </div>
@@ -226,7 +226,7 @@ export const StoryForm: React.FC = () => {
                   <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 px-6 py-8 text-center">
                     <Upload size={22} className="text-primary" />
                     <p className="mt-3 text-sm font-bold text-slate-900 dark:text-white">
-                      Chọn ảnh từ máy tính
+                      Choose an image from your device
                     </p>
                     <p className="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">
                       PNG, JPG, JPEG, WebP
@@ -275,7 +275,7 @@ export const StoryForm: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Viết tóm tắt về câu chuyện..."
+                placeholder="Write a short summary of the story..."
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner resize-none"
               />
             </div>

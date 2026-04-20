@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw error;
     } else {
       toast.info(
-        "Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!",
+        "Check your email for the sign-in link (Magic Link)!",
       );
     }
   };

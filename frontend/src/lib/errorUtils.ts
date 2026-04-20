@@ -1,5 +1,5 @@
 /**
- * Translates technical error messages into user-friendly Vietnamese notifications.
+ * Translates technical error messages into user-friendly notifications.
  */
 export const getErrorMessage = (error: any, context?: string): string => {
   const message = error?.message || String(error);
@@ -11,40 +11,40 @@ export const getErrorMessage = (error: any, context?: string): string => {
     lowercaseMessage.includes("fetch") ||
     lowercaseMessage.includes("internet")
   ) {
-    return "Không thể kết nối với máy chủ. Vui lòng kiểm tra lại đường truyền internet của bạn.";
+    return "Unable to connect to the server. Please check your internet connection.";
   }
 
   // Supabase/Database Specific Errors
   if (lowercaseMessage.includes("pgrst116")) {
     // JSON single object error
-    return "Dữ liệu không tồn tại hoặc đã bị xóa.";
+    return "Data does not exist or has been deleted.";
   }
 
   if (
     lowercaseMessage.includes("insufficient permissions") ||
     lowercaseMessage.includes("permission denied")
   ) {
-    return "Bạn không có quyền thực hiện hành động này. Vui lòng kiểm tra lại tài khoản.";
+    return "You do not have permission to perform this action. Please verify your account permissions.";
   }
 
   if (lowercaseMessage.includes("duplicate key")) {
-    return "Dữ liệu đã tồn tại trong hệ thống. Vui lòng kiểm tra lại.";
+    return "Data already exists in the system. Please review your input.";
   }
 
   // Auth Specific Errors
   if (lowercaseMessage.includes("invalid login credentials")) {
-    return "Email hoặc mật khẩu không chính xác. Vui lòng thử lại.";
+    return "Email or password is incorrect. Please try again.";
   }
 
   // Context-based fallbacks
   if (context === "fetch_stories")
-    return "Không thể tải danh sách truyện. Vui lòng làm mới trang.";
+    return "Unable to load the story list. Please refresh the page.";
   if (context === "save_story")
-    return "Không thể tạo truyện mới. Vui lòng kiểm tra lại các trường thông tin.";
+    return "Unable to create a new story. Please check the input fields.";
   if (context === "save_chapter")
-    return "Không thể tạo chương mới. Vui lòng kiểm tra lại các trường thông tin.";
+    return "Unable to create a new chapter. Please check the input fields.";
   if (context === "update_settings")
-    return "Không thể cập nhật cấu hình. Vui lòng thử lại sau.";
+    return "Unable to update settings. Please try again later.";
 
-  return "Đã có lỗi xảy ra. Vui lòng thử lại sau giây lát.";
+  return "An error occurred. Please try again in a moment.";
 };

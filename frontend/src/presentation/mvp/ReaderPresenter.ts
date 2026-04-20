@@ -38,7 +38,7 @@ export class ReaderPresenter {
       }
 
     } catch (error: any) {
-      this.view.showError(error.message || 'Lỗi tải dữ liệu');
+      this.view.showError(error.message || 'Failed to load data');
     } finally {
       this.view.hideLoading();
     }

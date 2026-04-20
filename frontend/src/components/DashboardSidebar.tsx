@@ -25,13 +25,13 @@ const menuItems: SidebarItem[] = [
   },
   {
     id: "create_story",
-    label: "Tạo Truyện Mới",
+    label: "Create New Story",
     icon: "✍️",
     roles: ["superadmin", "admin", "employee"],
   },
   {
     id: "create_chapter",
-    label: "Thêm Chương",
+    label: "Add Chapter",
     icon: "📝",
     roles: ["superadmin", "admin", "employee"],
   },
@@ -97,7 +97,7 @@ export const DashboardSidebar: React.FC<{
               className="w-full bg-text-main text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-black/10 flex items-center justify-center gap-2"
             >
               <span className="text-xl">+</span>
-              Thêm Chương
+              Add Chapter
             </motion.button>
           </div>
         )}
