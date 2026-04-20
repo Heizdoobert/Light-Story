@@ -7,6 +7,41 @@ import { getErrorMessage } from "../../lib/errorUtils";
 
 export type UserRole = "superadmin" | "admin" | "employee" | "user";
 
+const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "user"];
+
+const isUserRole = (value: unknown): value is UserRole =>
+  typeof value === "string" && USER_ROLES.includes(value as UserRole);
+
+const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
+  const appRole = user?.app_metadata?.role;
+
+  if (isUserRole(appRole)) return appRole;
+  if (isUserRole(profileRole)) return profileRole;
+  return null;
+};
+
+const buildProfile = (user: User, profileData?: any) => ({
+  ...(profileData || {}),
+  id: profileData?.id ?? user.id,
+  email: profileData?.email ?? user.email ?? "",
+  full_name:
+    profileData?.full_name ??
+    user.user_metadata?.full_name ??
+    user.email ??
+    "Admin",
+  avatar_url:
+    profileData?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+  role: resolveRole(user, profileData?.role),
+});
+
+type ProfileRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: UserRole | string | null;
+};
+
 interface AuthContextType {
   user: User | null;
   profile: any | null;
@@ -41,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) fetchProfile(session.user);
       else setLoading(false);
     });
 
@@ -50,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) fetchProfile(session.user);
       else {
         setProfile(null);
         setLoading(false);
@@ -60,19 +95,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (authUser: User) => {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+      const { data, error } = await supabase.schema("app_private").rpc("get_current_profile", {
+        // The RPC is defined in app_private and executed as SECURITY DEFINER.
+      });
 
       if (error) throw error;
-      setProfile(data);
+      const profileData = Array.isArray(data) ? data?.[0] : data;
+      setProfile(buildProfile(authUser, profileData as ProfileRow | undefined));
     } catch (error) {
       console.error("Error fetching profile:", error);
+      setProfile(buildProfile(authUser));
     } finally {
       setLoading(false);
     }
@@ -164,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         user,
         profile,
-        role: profile?.role || null,
+        role: resolveRole(user, profile?.role),
         loading,
         signIn,
         signInWithEmail,
