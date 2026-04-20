@@ -6,6 +6,8 @@ import { AdminUserManagement } from '../components/AdminUserManagement';
 import { StoryForm } from '../components/StoryForm';
 import { ChapterForm } from '../components/ChapterForm';
 import { UserProfileTab } from '../components/UserProfileTab';
+import { CategoryManagementTab } from '../components/CategoryManagementTab';
+import { AuthorManagementTab } from '../components/AuthorManagementTab';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { supabase } from '../core/supabase';
@@ -147,6 +149,10 @@ const AdminDashboardContent: React.FC<{
         {activeTab === 'ads' && <AdManager />}
 
         {activeTab === 'profile' && <UserProfileTab />}
+
+        {activeTab === 'categories' && <CategoryManagementTab />}
+
+        {activeTab === 'authors' && <AuthorManagementTab />}
         
         {activeTab === 'users' && role === 'superadmin' && <AdminUserManagement />}
 

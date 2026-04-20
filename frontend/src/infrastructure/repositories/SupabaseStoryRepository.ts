@@ -32,9 +32,11 @@ export class SupabaseStoryRepository implements IStoryRepository {
       body: {
         title: story.title,
         author: story.author,
+        authorId: story.author_id,
         description: story.description,
         cover_url: story.cover_url,
         category: story.category,
+        categoryId: story.category_id,
         status: story.status,
       },
     });
