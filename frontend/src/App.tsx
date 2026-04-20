@@ -15,6 +15,11 @@ import { ErrorBoundary } from './shared/components/ErrorBoundary';
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const ReaderPage = lazy(() => import('./pages/ReaderPage').then(m => ({ default: m.ReaderPage })));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
+const BadRequestPage = lazy(() => import('./pages/BadRequestPage').then(m => ({ default: m.BadRequestPage })));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
+const ForbiddenPage = lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
+const ServiceUnavailablePage = lazy(() => import('./pages/ServiceUnavailablePage').then(m => ({ default: m.ServiceUnavailablePage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,15 +29,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-// Global Error Boundary Fallback
-const ErrorFallback = () => (
-  <div className="h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-center p-6">
-    <h1 className="text-4xl font-black mb-4">Something went wrong.</h1>
-    <p className="text-slate-500 mb-6">The system encountered a critical error. Please refresh the page.</p>
-    <button onClick={() => window.location.reload()} className="btn-primary px-8 py-3">Reload System</button>
-  </div>
-);
 
 export default function App() {
   return (
@@ -48,11 +44,14 @@ export default function App() {
                 </div>
               }>
                 <Routes>
-                  {/* Client Portal */}
                   <Route path="/" element={<HomePage />} />
                   <Route path="/story/:storyId/chapter/:chapterId" element={<ReaderPage />} />
-                  
-                  {/* Admin Portal (Code-Split & Protected) */}
+                  <Route path="/400" element={<BadRequestPage />} />
+                  <Route path="/401" element={<UnauthorizedPage />} />
+                  <Route path="/403" element={<ForbiddenPage />} />
+                  <Route path="/503" element={<ServiceUnavailablePage />} />
+                  <Route path="/unauthorized" element={<UnauthorizedPage />} />
+                  <Route path="/forbidden" element={<ForbiddenPage />} />
                   <Route 
                     path="/admin/*" 
                     element={
@@ -61,6 +60,7 @@ export default function App() {
                       </RoleProtectedRoute>
                     } 
                   />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </Suspense>
             </BrowserRouter>
