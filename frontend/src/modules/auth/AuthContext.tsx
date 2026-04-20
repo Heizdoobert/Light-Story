@@ -34,6 +34,14 @@ const buildProfile = (user: User, profileData?: any) => ({
   role: resolveRole(user, profileData?.role),
 });
 
+type ProfileRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  role: UserRole | string | null;
+};
+
 interface AuthContextType {
   user: User | null;
   profile: any | null;
@@ -90,14 +98,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchProfile = async (authUser: User) => {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", authUser.id)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("get_current_profile", {
+        // The RPC is defined in app_private and executed as SECURITY DEFINER.
+      });
 
       if (error) throw error;
-      setProfile(buildProfile(authUser, data));
+      const profileData = Array.isArray(data) ? data?.[0] : data;
+      setProfile(buildProfile(authUser, profileData as ProfileRow | undefined));
     } catch (error) {
       console.error("Error fetching profile:", error);
       setProfile(buildProfile(authUser));
