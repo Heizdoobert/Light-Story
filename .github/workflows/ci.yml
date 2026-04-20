@@ -1,0 +1,54 @@
+name: light-story-ci
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+
+jobs:
+  frontend:
+    name: Frontend Lint and Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  backend-supabase:
+    name: Backend Structure Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate migration and function files
+        run: |
+          test -f backend-supabase/supabase/config.toml
+          test -f backend-supabase/supabase/migrations/202604200001_mvp_init.sql
+          test -f backend-supabase/supabase/functions/increment-story-views/index.ts
+          test -f backend-supabase/supabase/functions/manage-story/index.ts
+          test -f backend-supabase/supabase/functions/manage-chapter/index.ts
+
+      - name: Validate SQL test artifacts
+        run: |
+          test -f backend-supabase/supabase/tests/rls_smoke.sql
+          test -f backend-supabase/supabase/tests/rpc_smoke.sql

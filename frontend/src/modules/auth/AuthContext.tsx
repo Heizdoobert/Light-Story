@@ -142,10 +142,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   ) => {
     if (!supabase) return;
 
-    const { error } = await supabase.auth.register({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      full_name,
+      options: {
+        data: {
+          full_name,
+        },
+      },
     });
 
     if (error) {

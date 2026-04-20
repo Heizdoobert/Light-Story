@@ -1,78 +1,64 @@
-# LightStory v0 - Enterprise Story Management System
+# Light Story
 
-LightStory is a high-performance, secure, and minimalist web application designed for reading and managing digital stories. Built with a **Clean Architecture** approach, it features a dual-portal system for readers and administrators, powered by **React (Vite)**, **Supabase**, and **Tailwind CSS**.
+Light Story is an online reading platform with a React frontend and a Supabase backend stack.
 
-## 🚀 Key Features
-
-### 📖 Client Portal (Reader Experience)
-- **Minimalist Reader**: A distraction-free reading interface optimized for long-form content.
-- **Optimistic Interactions**: Instant feedback for views and likes using React Query.
-- **FOUC-Proof Dark Mode**: Seamless theme switching without initial white flashes.
-- **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices.
-
-### 🛡️ Admin Portal (Management System)
-- **Role-Based Access Control (RBAC)**: Granular permissions for `SuperAdmin`, `Admin`, and `Employee`.
-- **Dedicated Creation Tab**: A standalone "Tạo Truyện" tab to prevent data loss during long-form editing.
-- **Story & Chapter CRUD**: Professional management tools with instant cache invalidation.
-- **Ad Management**: Dynamic ad script injection via a secure, non-blocking renderer.
-- **User Management**: (SuperAdmin only) Control user roles and access levels.
-
-## 🏗️ Technical Architecture
-
-- **Frontend**: React 18+ with Vite for ultra-fast builds.
-- **Styling**: Tailwind CSS for utility-first, responsive design.
-- **Backend-as-a-Service**: Supabase (PostgreSQL, Auth, Storage).
-- **Security**: Zero-Trust Row Level Security (RLS) policies enforced at the database level.
-- **State Management**: React Context for Auth/Theme and TanStack Query for server state.
-- **Performance**: Code-splitting (Lazy Loading) and atomic RPC functions for data integrity.
-
-## 📁 Project Structure
+## Repository Layout
 
 ```text
-/src
-  /core          # Supabase config, shared types, and constants
-  /shared        # Reusable UI components and route guards
-  /modules
-    /auth        # RBAC logic and Authentication context
-    /theme       # FOUC-proof theme management
-    /client      # User-facing pages (Home, Reader)
-    /admin       # Dashboard and management modules
-  /hooks         # Custom hooks with optimistic update logic
+/
+   frontend/                # React + Vite application
+   backend-supabase/        # Supabase config, migrations, functions, docs
+   agents/                  # Local project knowledge (ignored by git)
+   docs/                    # Architecture and ADR workspace
 ```
 
-## 🛠️ Getting Started
+## Frontend
 
-### Prerequisites
-- Node.js (v18+)
-- Supabase Project
+- Location: `frontend/`
+- Stack: React, TypeScript, Vite
+- Main scripts:
+   - `npm run dev`
+   - `npm run build`
+   - `npm run lint`
 
-### Installation
+Environment variables expected in `frontend/.env`:
 
-1. **Clone the repository**
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-3. **Configure Environment Variables**:
-   Create a `.env` file based on `.env.example`:
-   ```env
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
-   ```
-4. **Database Setup**:
-   Execute the contents of `supabase_setup.sql` in your Supabase SQL Editor to set up tables, enums, RLS policies, and RPC functions.
-5. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+```
 
-## 🔒 Security Audit
+## Backend (Supabase)
 
-This project has undergone a rigorous security audit. Key protections include:
-- **Zero-Trust RLS**: No data can be accessed or modified without explicit database-level permission.
-- **Atomic Operations**: View counts and interactions use PostgreSQL functions to prevent race conditions.
-- **Role Integrity**: Users cannot escalate their own privileges via frontend or API manipulation.
+- Location: `backend-supabase/supabase/`
+- Contains:
+   - `migrations/` for versioned SQL
+   - `functions/` for edge functions
+   - `seed.sql` for local seed data
+   - `config.toml` for local Supabase settings
 
-## 📄 License
+MVP baseline migration:
 
-This project is licensed under the Apache-2.0 License.
+- `backend-supabase/supabase/migrations/202604200001_mvp_init.sql`
+
+## Quick Start
+
+1. Install frontend dependencies:
+
+```bash
+cd frontend
+npm install
+```
+
+2. Start frontend locally:
+
+```bash
+npm run dev
+```
+
+3. Apply backend migration in your Supabase project using your preferred workflow.
+
+## Notes
+
+- `agents/` is intentionally git-ignored for local project memory.
+- Existing legacy SQL files at repository root are retained for reference during transition.
