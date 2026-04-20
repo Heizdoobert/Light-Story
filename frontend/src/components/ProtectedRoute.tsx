@@ -24,12 +24,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   }
 
   if (!user) {
-    // Redirect to home or login page
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/401" state={{ from: location }} replace />;
   }
 
   if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to="/403" replace />;
   }
 
   return <>{children}</>;
