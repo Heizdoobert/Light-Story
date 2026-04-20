@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
   House,
+  User,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
@@ -71,6 +72,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       label: "Settings",
       icon: Settings,
       roles: ["superadmin"],
+    },
+    {
+      id: "profile",
+      label: "My Profile",
+      icon: User,
+      roles: ["superadmin", "admin", "employee"],
     },
   ];
 

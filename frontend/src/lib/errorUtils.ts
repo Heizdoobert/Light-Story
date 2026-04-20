@@ -2,7 +2,35 @@
  * Translates technical error messages into user-friendly notifications.
  */
 export const getErrorMessage = (error: any, context?: string): string => {
-  const message = error?.message || String(error);
+  const extractMessage = (): string => {
+    if (!error) return "";
+
+    if (typeof error === "string") return error;
+
+    if (error?.message && typeof error.message === "string") {
+      return error.message;
+    }
+
+    if (error?.error_description && typeof error.error_description === "string") {
+      return error.error_description;
+    }
+
+    if (error?.details && typeof error.details === "string") {
+      return error.details;
+    }
+
+    if (error?.hint && typeof error.hint === "string") {
+      return error.hint;
+    }
+
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  };
+
+  const message = extractMessage();
   const lowercaseMessage = message.toLowerCase();
 
   // Network & Connection Issues
@@ -36,6 +64,10 @@ export const getErrorMessage = (error: any, context?: string): string => {
     return "Email or password is incorrect. Please try again.";
   }
 
+  if (message && message !== "[object Object]") {
+    return message;
+  }
+
   // Context-based fallbacks
   if (context === "fetch_stories")
     return "Unable to load the story list. Please refresh the page.";
@@ -45,6 +77,8 @@ export const getErrorMessage = (error: any, context?: string): string => {
     return "Unable to create a new chapter. Please check the input fields.";
   if (context === "update_settings")
     return "Unable to update settings. Please try again later.";
+  if (context === "update_profile")
+    return "Unable to update profile information. Please verify your account permissions and try again.";
 
   return "An error occurred. Please try again in a moment.";
 };
