@@ -49,6 +49,7 @@ export default function App() {
                   <Route path="/400" element={<BadRequestPage />} />
                   <Route path="/401" element={<UnauthorizedPage />} />
                   <Route path="/403" element={<ForbiddenPage />} />
+                  <Route path="/404" element={<NotFoundPage />} />
                   <Route path="/503" element={<ServiceUnavailablePage />} />
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
                   <Route path="/forbidden" element={<ForbiddenPage />} />
