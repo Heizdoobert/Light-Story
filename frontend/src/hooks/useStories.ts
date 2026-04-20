@@ -29,7 +29,9 @@ export const useStories = () => {
   const incrementViewMutation = useMutation({
     mutationFn: async (storyId: string) => {
       if (!supabase) return;
-      const { error } = await supabase.rpc('increment_story_views', { story_id: storyId });
+      const { error } = await supabase.functions.invoke('increment-story-views', {
+        body: { storyId },
+      });
       if (error) throw error;
     },
     onMutate: async (storyId) => {

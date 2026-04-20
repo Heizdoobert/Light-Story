@@ -4,6 +4,7 @@ import { AdminLayout } from '../components/AdminLayout';
 import { AdManager } from '../components/AdManager';
 import { AdminUserManagement } from '../components/AdminUserManagement';
 import { StoryForm } from '../components/StoryForm';
+import { ChapterForm } from '../components/ChapterForm';
 import { IAdminView } from '../presentation/mvp/AdminContract';
 import { AdminPresenter } from '../presentation/mvp/AdminPresenter';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -109,6 +110,8 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {activeTab === 'create_story' && <StoryForm />}
+
+        {activeTab === 'create_chapter' && <ChapterForm />}
 
         {activeTab === 'ads' && <AdManager />}
         

@@ -41,6 +41,8 @@ export const getErrorMessage = (error: any, context?: string): string => {
     return "Không thể tải danh sách truyện. Vui lòng làm mới trang.";
   if (context === "save_story")
     return "Không thể tạo truyện mới. Vui lòng kiểm tra lại các trường thông tin.";
+  if (context === "save_chapter")
+    return "Không thể tạo chương mới. Vui lòng kiểm tra lại các trường thông tin.";
   if (context === "update_settings")
     return "Không thể cập nhật cấu hình. Vui lòng thử lại sau.";
 
