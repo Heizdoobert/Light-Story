@@ -69,6 +69,8 @@ npm install
 npm run dev
 ```
 
+You can run this from the repository root or from `frontend/`; the root `package.json` forwards the command to the Vite app.
+
 3. Build and type-check the frontend before shipping:
 
 ```bash
