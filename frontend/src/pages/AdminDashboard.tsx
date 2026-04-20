@@ -8,11 +8,13 @@ import { ChapterForm } from '../components/ChapterForm';
 import { UserProfileTab } from '../components/UserProfileTab';
 import { CategoryManagementTab } from '../components/CategoryManagementTab';
 import { AuthorManagementTab } from '../components/AuthorManagementTab';
+import { SystemSettingsTab } from '../components/SystemSettingsTab';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { supabase } from '../core/supabase';
 import { useAuth } from '../modules/auth/AuthContext';
 import { motion } from 'motion/react';
+import { parseBooleanSetting, SITE_SETTING_KEYS } from '../lib/systemSettings';
 
 type DashboardStats = {
   totalViews: number;
@@ -73,18 +75,61 @@ const AdminDashboardContent: React.FC<{
   const stories = dashboardQuery.data?.stories ?? [];
   const stats = dashboardQuery.data?.stats ?? { totalViews: 0, activeStories: 0, totalChapters: 0 };
 
+  const uiSettingsQuery = useQuery({
+    queryKey: ['site_settings', 'system_ui_controls'],
+    queryFn: async () => {
+      if (!supabase) {
+        return {
+          compactMode: false,
+          showSyncBadge: true,
+        };
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('key,value')
+          .in('key', [SITE_SETTING_KEYS.uiCompactMode, SITE_SETTING_KEYS.uiShowSyncBadge]);
+
+        if (error) {
+          return {
+            compactMode: false,
+            showSyncBadge: true,
+          };
+        }
+
+        const map = new Map((data ?? []).map((item: any) => [item.key, item.value]));
+
+        return {
+          compactMode: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiCompactMode), false),
+          showSyncBadge: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true),
+        };
+      } catch {
+        return {
+          compactMode: false,
+          showSyncBadge: true,
+        };
+      }
+    },
+  });
+
+  const compactMode = uiSettingsQuery.data?.compactMode ?? false;
+  const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
+
   return (
     <AdminLayout activeTab={activeTab} onTabChange={onTabChange}>
       {activeTab === 'dashboard' && (
-        <div className="space-y-8">
+        <div className={compactMode ? 'space-y-5' : 'space-y-8'}>
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Analytics Overview</h1>
               <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">AJAX polling updates the dashboard automatically while this tab is open.</p>
             </div>
-            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-              {dashboardQuery.isFetching ? 'Refreshing live data' : `Synced ${dashboardQuery.data ? 'just now' : 'waiting'}`}
-            </div>
+            {showSyncBadge && (
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                {dashboardQuery.isFetching ? 'Refreshing live data' : `Synced ${dashboardQuery.data ? 'just now' : 'waiting'}`}
+              </div>
+            )}
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -94,7 +139,7 @@ const AdminDashboardContent: React.FC<{
               { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
               { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
             ].map((stat, i) => (
-              <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+              <div key={i} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
                   <div className={`w-2 h-2 rounded-full ${stat.color}`}></div>
@@ -153,10 +198,12 @@ const AdminDashboardContent: React.FC<{
         {activeTab === 'categories' && <CategoryManagementTab />}
 
         {activeTab === 'authors' && <AuthorManagementTab />}
+
+        {activeTab === 'settings' && <SystemSettingsTab />}
         
         {activeTab === 'users' && role === 'superadmin' && <AdminUserManagement />}
 
-        {(activeTab === 'stories' || activeTab === 'settings') && (
+        {activeTab === 'stories' && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
             <div className="text-6xl">🚧</div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white">Under Construction</h2>

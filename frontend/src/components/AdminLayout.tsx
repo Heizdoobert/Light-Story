@@ -4,6 +4,7 @@
 */
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   BookOpen,
@@ -27,6 +28,13 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
 import { toast } from "sonner";
+import { supabase } from "../core/supabase";
+import {
+  DEFAULT_DASHBOARD_TAB_VISIBILITY,
+  isDashboardTabVisibleForRole,
+  parseDashboardTabVisibility,
+  SITE_SETTING_KEYS,
+} from "../lib/systemSettings";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -42,6 +50,29 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const { profile, role, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const tabVisibilityQuery = useQuery({
+    queryKey: ["site_settings", SITE_SETTING_KEYS.dashboardTabVisibility],
+    queryFn: async () => {
+      if (!supabase) return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+
+      try {
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", SITE_SETTING_KEYS.dashboardTabVisibility)
+          .maybeSingle();
+
+        if (error) {
+          return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+        }
+
+        return parseDashboardTabVisibility(data?.value);
+      } catch {
+        return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+      }
+    },
+  });
 
   const menuItems = [
     {
@@ -96,7 +127,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   ];
 
   const filteredMenu = menuItems.filter(
-    (item) => role && item.roles.includes(role),
+    (item) => {
+      if (!role || !item.roles.includes(role)) return false;
+      const visibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
+      return isDashboardTabVisibleForRole(item.id, role, visibility);
+    },
   );
 
   const handleSignOut = async () => {
