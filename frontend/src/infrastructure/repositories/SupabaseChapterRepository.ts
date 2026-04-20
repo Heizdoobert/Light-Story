@@ -16,4 +16,24 @@ export class SupabaseChapterRepository implements IChapterRepository {
     if (error) throw error;
     return data || [];
   }
+
+  async saveChapter(chapter: Partial<Chapter>): Promise<Chapter> {
+    if (!supabase) throw new Error('Supabase client not initialized');
+
+    const { data, error } = await supabase.functions.invoke('manage-chapter', {
+      body: {
+        story_id: chapter.story_id,
+        chapter_number: chapter.chapter_number,
+        title: chapter.title,
+        content: chapter.content,
+      },
+    });
+
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+
+    const created = await this.getChapterById(data.chapter.id);
+    if (!created) throw new Error('Chapter was created but could not be retrieved');
+    return created;
+  }
 }

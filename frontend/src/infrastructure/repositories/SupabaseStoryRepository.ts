@@ -19,19 +19,31 @@ export class SupabaseStoryRepository implements IStoryRepository {
 
   async incrementViews(storyId: string): Promise<void> {
     if (!supabase) return;
-    await supabase.rpc('increment_story_views', { story_id_param: storyId });
+    const { error } = await supabase.functions.invoke('increment-story-views', {
+      body: { storyId },
+    });
+    if (error) throw error;
   }
 
   async saveStory(story: Partial<Story>): Promise<Story> {
     if (!supabase) throw new Error('Supabase client not initialized');
-    
-    const { data, error } = await supabase
-      .from('stories')
-      .insert([story])
-      .select()
-      .single();
+
+    const { data, error } = await supabase.functions.invoke('manage-story', {
+      body: {
+        title: story.title,
+        author: story.author,
+        description: story.description,
+        cover_url: story.cover_url,
+        category: story.category,
+        status: story.status,
+      },
+    });
 
     if (error) throw error;
-    return data;
+    if (data?.error) throw new Error(data.error);
+
+    const created = await this.getStoryById(data.story.id);
+    if (!created) throw new Error('Story was created but could not be retrieved');
+    return created;
   }
 }

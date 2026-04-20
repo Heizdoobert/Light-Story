@@ -24,6 +24,18 @@ const menuItems: SidebarItem[] = [
     roles: ["superadmin", "admin", "employee"],
   },
   {
+    id: "create_story",
+    label: "Tạo Truyện Mới",
+    icon: "✍️",
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "create_chapter",
+    label: "Thêm Chương",
+    icon: "📝",
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
     id: "ads",
     label: "Ad Network",
     icon: "💰",
@@ -81,10 +93,11 @@ export const DashboardSidebar: React.FC<{
           <div className="pt-6 border-t border-white/40">
             <motion.button
               {...bounceClick}
+              onClick={() => onTabChange("create_chapter")}
               className="w-full bg-text-main text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-black/10 flex items-center justify-center gap-2"
             >
               <span className="text-xl">+</span>
-              Create New Story
+              Thêm Chương
             </motion.button>
           </div>
         )}
