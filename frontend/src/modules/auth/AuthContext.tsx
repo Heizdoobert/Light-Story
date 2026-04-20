@@ -98,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchProfile = async (authUser: User) => {
     if (!supabase) return;
     try {
-      const { data, error } = await supabase.rpc("get_current_profile", {
+      const { data, error } = await supabase.schema("app_private").rpc("get_current_profile", {
         // The RPC is defined in app_private and executed as SECURITY DEFINER.
       });
 
