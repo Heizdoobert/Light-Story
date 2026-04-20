@@ -2,6 +2,7 @@
 // This edge function provides an MVP admin endpoint for creating chapters with ordering safeguards.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { verifySupabaseBearerToken } from "../_shared/jwt.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -31,16 +32,6 @@ serve(async (req) => {
     return jsonResponse({ error: "Missing Supabase environment configuration" }, 500);
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  if (!authHeader.startsWith("Bearer ")) {
-    return jsonResponse({ error: "Missing bearer token" }, 401);
-  }
-
-  const jwt = authHeader.slice("Bearer ".length).trim();
-  if (!jwt) {
-    return jsonResponse({ error: "Invalid bearer token" }, 401);
-  }
-
   const payload = await req.json().catch(() => null);
   const storyId = payload?.story_id;
   const chapterNumber = payload?.chapter_number;
@@ -64,15 +55,18 @@ serve(async (req) => {
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey);
-  const { data: userData, error: userError } = await supabase.auth.getUser(jwt);
-  if (userError || !userData.user) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+  let verifiedUser;
+
+  try {
+    verifiedUser = await verifySupabaseBearerToken(req);
+  } catch (error) {
+    return jsonResponse({ error: error instanceof Error ? error.message : "Unauthorized" }, 401);
   }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", userData.user.id)
+    .eq("id", verifiedUser.userId)
     .single();
 
   if (profileError) {

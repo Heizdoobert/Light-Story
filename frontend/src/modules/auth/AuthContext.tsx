@@ -34,6 +34,8 @@ const buildProfile = (user: User, profileData?: any) => ({
   role: resolveRole(user, profileData?.role),
 });
 
+const PROFILE_SELECT = "id,email,full_name,avatar_url,role";
+
 type ProfileRow = {
   id: string;
   email: string;
@@ -56,6 +58,10 @@ interface AuthContextType {
     password: string,
     full_name: string,
   ) => Promise<void>;
+  updateProfile: (payload: {
+    full_name?: string;
+    avatar_url?: string | null;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,email,full_name,avatar_url,role")
+        .select(PROFILE_SELECT)
         .eq("id", authUser.id)
         .maybeSingle();
 
@@ -146,7 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw error;
     } else {
       toast.info(
-        "Kiểm tra email của bạn để nhận liên kết đăng nhập (Magic Link)!",
+        "Check your email for the sign-in link (Magic Link)!",
       );
     }
   };
@@ -195,6 +201,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const updateProfile = async (payload: {
+    full_name?: string;
+    avatar_url?: string | null;
+  }) => {
+    if (!supabase || !user) return;
+
+    const updates: {
+      full_name?: string;
+      avatar_url?: string | null;
+    } = {};
+
+    if (payload.full_name !== undefined) {
+      updates.full_name = payload.full_name;
+    }
+
+    if (payload.avatar_url !== undefined) {
+      updates.avatar_url = payload.avatar_url;
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user.id);
+
+    if (error) {
+      throw error;
+    }
+
+    const { data: freshProfile, error: refreshError } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (refreshError) {
+      setProfile((prev: any) => ({
+        ...(prev || {}),
+        ...updates,
+        id: prev?.id ?? user.id,
+        email: prev?.email ?? user.email ?? "",
+        role: prev?.role ?? resolveRole(user, prev?.role),
+      }));
+      return;
+    }
+
+    setProfile(buildProfile(user, freshProfile as ProfileRow | undefined));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -207,6 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signInWithPassword,
         signOut,
         register,
+        updateProfile,
       }}
     >
       {children}

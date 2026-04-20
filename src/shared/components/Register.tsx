@@ -57,10 +57,10 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <div className="flex justify-between items-start mb-8">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                    Chào mừng trở lại
+                    Welcome
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
-                    Register account.
+                    Create your account.
                   </p>
                 </div>
                 <button
@@ -142,7 +142,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   ) : (
                     <>
                       <LogIn size={18} />
-                      Đăng nhập hệ thống
+                      Create Account
                     </>
                   )}
                 </button>
@@ -150,7 +150,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
 
               <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                  Sử dụng tài khoản quản trị đã được cấp để truy cập hệ thống.
+                  Use your assigned administrator account to access the system.
                 </p>
               </div>
             </div>

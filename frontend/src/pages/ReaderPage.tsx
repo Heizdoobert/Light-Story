@@ -52,15 +52,15 @@ export const ReaderPage: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-screen">Đang tải...</div>;
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (error) return <div className="flex items-center justify-center h-screen text-red-500">{error}</div>;
-  if (!chapter) return <div className="flex items-center justify-center h-screen">Không tìm thấy chương</div>;
+  if (!chapter) return <div className="flex items-center justify-center h-screen">Chapter not found</div>;
 
   return (
     <div className={`min-h-screen p-8 transition-colors duration-300 ${getThemeClasses()}`}>
       <Helmet>
-        <title>{`${chapter.title} - ${storyMeta?.title || 'Đang tải...'}`}</title>
-        <meta name="description" content={storyMeta?.description || `Đọc chương ${chapter.chapter_number} của truyện ${storyMeta?.title}`} />
+        <title>{`${chapter.title} - ${storyMeta?.title || 'Loading...'}`}</title>
+        <meta name="description" content={storyMeta?.description || `Read chapter ${chapter.chapter_number} of ${storyMeta?.title}`} />
       </Helmet>
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">

@@ -46,7 +46,7 @@ export const ChapterForm: React.FC = () => {
       chapterRepo.saveChapter(newChapter),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
-      toast.success("Chương mới đã được tạo thành công!");
+      toast.success("New chapter created successfully!");
       setFormData((prev) => ({
         ...prev,
         chapter_number: (prev.chapter_number || 1) + 1,
@@ -62,11 +62,11 @@ export const ChapterForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.story_id || !formData.title || !formData.content) {
-      toast.error("Vui lòng điền đầy đủ các trường bắt buộc!");
+      toast.error("Please fill in all required fields!");
       return;
     }
     if (!formData.chapter_number || formData.chapter_number <= 0) {
-      toast.error("Số chương phải là số nguyên dương!");
+      toast.error("Chapter number must be a positive integer!");
       return;
     }
     mutation.mutate(formData);
@@ -76,10 +76,10 @@ export const ChapterForm: React.FC = () => {
     <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="mb-10">
         <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          Thêm Chương Mới
+          Add New Chapter
         </h2>
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
-          Chọn truyện và điền nội dung chương để xuất bản.
+          Choose a story and fill in chapter content to publish.
         </p>
       </header>
 
@@ -91,7 +91,7 @@ export const ChapterForm: React.FC = () => {
           >
             <div className="space-y-2 md:col-span-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                <BookOpen size={12} /> Truyện
+                <BookOpen size={12} /> Story
               </label>
               <select
                 required
@@ -102,7 +102,7 @@ export const ChapterForm: React.FC = () => {
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               >
                 {stories.length === 0 && (
-                  <option value="">Chưa có truyện nào</option>
+                  <option value="">No stories available</option>
                 )}
                 {stories.map((story) => (
                   <option key={story.id} value={story.id}>
@@ -114,7 +114,7 @@ export const ChapterForm: React.FC = () => {
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                <Hash size={12} /> Số chương
+                <Hash size={12} /> Chapter Number
               </label>
               <input
                 type="number"
@@ -133,7 +133,7 @@ export const ChapterForm: React.FC = () => {
 
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                <Type size={12} /> Tiêu đề chương
+                <Type size={12} /> Chapter Title
               </label>
               <input
                 type="text"
@@ -142,14 +142,14 @@ export const ChapterForm: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                placeholder="Ví dụ: Chương 1: Khởi Đầu"
+                placeholder="Example: Chapter 1: The Beginning"
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               />
             </div>
 
             <div className="space-y-2 md:col-span-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 flex items-center gap-2">
-                <AlignLeft size={12} /> Nội dung chương
+                <AlignLeft size={12} /> Chapter Content
               </label>
               <textarea
                 required
@@ -158,7 +158,7 @@ export const ChapterForm: React.FC = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, content: e.target.value })
                 }
-                placeholder="Viết nội dung chương tại đây..."
+                placeholder="Write chapter content here..."
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner resize-none"
               />
             </div>
@@ -174,7 +174,7 @@ export const ChapterForm: React.FC = () => {
                 ) : (
                   <>
                     <Save size={20} />
-                    Lưu & Tạo Chương
+                    Save & Create Chapter
                   </>
                 )}
               </button>

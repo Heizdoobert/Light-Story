@@ -22,7 +22,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     setIsSubmitting(true);
     try {
       await signInWithPassword(email, password);
-      toast.success('Đăng nhập thành công!');
+      toast.success('Signed in successfully!');
       onClose();
     } catch (error) {
       // Error handled in context
@@ -52,8 +52,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             <div className="p-8">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Chào mừng trở lại</h2>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Đăng nhập để tiếp tục trải nghiệm.</p>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Welcome back</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">Sign in to continue your experience.</p>
                 </div>
                 <button 
                   onClick={onClose}
@@ -66,7 +66,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                    Địa chỉ Email
+                    Email Address
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -83,7 +83,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                    Mật khẩu
+                    Password
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -108,7 +108,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                   ) : (
                     <>
                       <LogIn size={18} />
-                      Đăng nhập hệ thống
+                      Sign In
                     </>
                   )}
                 </button>
@@ -116,7 +116,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
               <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                  Sử dụng tài khoản quản trị đã được cấp để truy cập hệ thống.
+                  Use your assigned administrator account to access the system.
                 </p>
               </div>
             </div>

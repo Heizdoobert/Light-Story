@@ -61,7 +61,7 @@ export class AdminPresenter {
     if (!this.view) return;
     try {
       await this.settingsRepo.updateSetting(key, value);
-      this.view.showSuccess(`Đã lưu cấu hình ${key}`);
+      this.view.showSuccess(`Saved configuration: ${key}`);
     } catch (error: any) {
       this.view.showError(getErrorMessage(error, "update_settings"));
     }

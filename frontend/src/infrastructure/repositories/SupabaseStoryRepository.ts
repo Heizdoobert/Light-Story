@@ -42,8 +42,10 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 
-    const created = await this.getStoryById(data.story.id);
-    if (!created) throw new Error('Story was created but could not be retrieved');
-    return created;
+    if (!data?.story) {
+      throw new Error('Story was created but the server did not return the record');
+    }
+
+    return data.story as Story;
   }
 }
