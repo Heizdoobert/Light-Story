@@ -1,33 +1,39 @@
-/*
-  LightStory - Clean Architecture & RBAC System
-  
-  /src
-    /core
-      supabase.ts        - Supabase client initialization
-      types.ts           - Shared domain types & interfaces
-      constants.ts       - System constants
-    /shared
-      /components
-        Button.tsx       - Reusable button
-        Input.tsx        - Reusable input
-        AdRenderer.tsx   - Component to inject DB-stored ad scripts
-        ThemeToggle.tsx  - Dark mode switcher
-    /modules
-      /auth
-        AuthContext.tsx  - Global auth state & RBAC logic
-        Login.tsx        - Admin/Staff login page
-      /client
-        Home.tsx         - Story browsing page
-        Reader.tsx       - Minimalist reading experience
-      /admin
-        /components
-          AdminSidebar.tsx - Role-aware sidebar
-        Dashboard.tsx    - Overview stats
-        StoryManager.tsx - CRUD for stories
-        AdManager.tsx    - Ad script configuration
-        UserManager.tsx  - RBAC management (SuperAdmin only)
-    /hooks
-      useStories.ts      - React Query hooks for story data
-      useSettings.ts     - React Query hooks for site config
-    App.tsx              - Main router & layout coordinator
-*/
+# Light Story Project Structure
+
+```text
+/
+  frontend/
+    index.html
+    package.json
+    tsconfig.json
+    vite.config.ts
+    src/
+      App.tsx
+      main.tsx
+      core/
+      domain/
+      infrastructure/
+      modules/
+      pages/
+      components/
+      shared/
+      hooks/
+      presentation/
+
+  backend-supabase/
+    supabase/
+      config.toml
+      migrations/
+      functions/
+      tests/
+      seed.sql
+    docs/
+      db-schema.md
+      rls-policies.md
+      storage.md
+
+  agents/                     # Local project memory (git-ignored)
+  docs/
+    architecture/
+    adr/
+```
