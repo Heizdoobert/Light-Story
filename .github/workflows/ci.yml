@@ -58,3 +58,65 @@ jobs:
         run: |
           test -f backend-supabase/supabase/tests/rls_smoke.sql
           test -f backend-supabase/supabase/tests/rpc_smoke.sql
+
+  auto-pull-request:
+    name: Auto Pull Request to main
+    needs: [frontend, backend-supabase]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const sha = context.sha.slice(0, 7);
+            const { data: commit } = await github.rest.git.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+            const commitMsg = commit.message.split('\n')[0];
+            const author = commit.author.name;
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const title = `[Auto PR] ${branch}: ${commitMsg}`;
+            const body = [
+              `Automatically created after a successful CI build on branch \`${branch}\`.`,
+              ``,
+              `| Field | Value |`,
+              `|---|---|`,
+              `| Branch | \`${branch}\` |`,
+              `| Commit | \`${sha}\` |`,
+              `| Author | ${author} |`,
+              `| Message | ${commitMsg} |`,
+              `| CI Run | [View run](${runUrl}) |`,
+            ].join('\n');
+
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`,
+              base: 'main',
+              state: 'open',
+            });
+
+            if (prs.length === 0) {
+              await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                head: branch,
+                base: 'main',
+              });
+              core.info(`Pull request created: ${title}`);
+            } else {
+              core.info(`Pull request already exists: ${prs[0].html_url}`);
+            }
