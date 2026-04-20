@@ -26,3 +26,9 @@ jwt_expiry = 3600
 [storage]
 enabled = true
 file_size_limit = "50MiB"
+
+[functions.manage-story]
+verify_jwt = false
+
+[functions.manage-chapter]
+verify_jwt = false

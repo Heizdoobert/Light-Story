@@ -85,7 +85,7 @@ export const AdManager: React.FC = () => {
           >
             <div className="flex justify-between items-start">
               <div className="flex gap-3">
-                <div className="p-2 bg-primary/10 text-primary rounded-lg h-fit">
+                  <div className="p-2 bg-primary text-white rounded-lg h-fit">
                   <Info size={18} />
                 </div>
                 <div>

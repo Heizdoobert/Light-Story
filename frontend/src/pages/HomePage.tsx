@@ -59,7 +59,7 @@ export const HomePage: React.FC = () => {
                 <Link to="/admin">
                   <motion.button 
                     {...bounceClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90 transition-all"
                   >
                     <LayoutDashboard size={14} />
                     Dashboard
@@ -204,7 +204,9 @@ export const HomePage: React.FC = () => {
           </div>
           <p className="text-slate-400 dark:text-slate-500 text-xs font-bold">© 2026 LightStory. All rights reserved.</p>
           <div className="flex gap-8">
-            <Link to="/admin" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Admin Panel</Link>
+            {role && role !== 'user' && (
+              <Link to="/admin" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Admin Panel</Link>
+            )}
             <a href="#" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Privacy</a>
           </div>
         </div>

@@ -18,7 +18,9 @@ import {
   Bell,
   Sun,
   Moon,
+  House,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
 import { toast } from "sonner";
@@ -115,6 +117,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </button>
         </div>
 
+        <div className="px-4 pb-2">
+          <Link
+            to="/"
+            className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200 group"
+          >
+            <House
+              size={20}
+              className="group-hover:scale-110 transition-transform"
+            />
+            {isSidebarOpen && <span className="font-bold text-sm">Trang chủ</span>}
+          </Link>
+        </div>
+
         <nav className="flex-1 px-4 space-y-2 mt-4">
           {filteredMenu.map((item) => (
             <button
@@ -122,7 +137,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               onClick={() => onTabChange(item.id)}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === item.id
-                  ? "bg-primary text-white shadow-lg shadow-primary/30"
+                  ? "bg-slate-900 text-slate-50 shadow-lg shadow-slate-950/30 dark:bg-slate-800 dark:text-white dark:shadow-black/30"
                   : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100"
               }`}
             >

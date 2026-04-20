@@ -78,8 +78,8 @@ export const DashboardSidebar: React.FC<{
                 onClick={() => onTabChange(item.id)}
                 className={`flex items-center w-full px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                   activeTab === item.id
-                    ? "bg-primary text-white shadow-lg shadow-primary/20"
-                    : "text-text-main hover:bg-white/60"
+                    ? "bg-slate-900 text-slate-50 shadow-lg shadow-slate-950/20 dark:bg-slate-800 dark:text-white dark:shadow-black/25"
+                    : "text-text-main dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="mr-3 text-lg">{item.icon}</span>
