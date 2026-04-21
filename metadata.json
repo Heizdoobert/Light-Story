@@ -1,6 +1,0 @@
-{
-  "name": "Lightweight Story Reader",
-  "description": "A lightweight, high-performance story platform with secure auth, role-based admin controls, operations center, operations-data backend scaffolding, and system backup/restore workflows.",
-  "requestFramePermissions": [],
-  "majorCapabilities": []
-}
