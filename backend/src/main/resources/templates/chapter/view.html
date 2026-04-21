@@ -1,0 +1,82 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title th:text="'Chương ' + ${chapter.chapterNumber}">Đọc Truyện</title>
+    <style>
+      body {
+        background-color: #f0f0f0;
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+      .reader-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        padding-bottom: 50px;
+      }
+      .header {
+        padding: 15px 20px;
+        background-color: #2c3e50;
+        color: white;
+        text-align: center;
+        position: sticky;
+        top: 0;
+      }
+      .header a {
+        color: #f1c40f;
+        text-decoration: none;
+        float: left;
+        font-weight: bold;
+      }
+      .comic-image {
+        width: 100%;
+        display: block;
+        margin: 0;
+        padding: 0;
+      } /* CSS cốt lõi để ảnh liền mạch */
+      .text-content {
+        padding: 30px;
+        font-size: 18px;
+        line-height: 1.8;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reader-container">
+      <div class="header">
+        <a th:href="@{/AdminHome/stories/{id}/chapters(id=${story.id})}"
+          >⬅ Trở về</a
+        >
+        <span
+          th:text="${story.title} + ' - Chương ' + ${chapter.chapterNumber}"
+        ></span>
+      </div>
+
+      <div
+        class="text-content"
+        th:if="${chapter.content != null and !chapter.content.isEmpty()}"
+        th:text="${chapter.content}"
+      ></div>
+
+      <div th:if="${!images.empty}">
+        <img
+          th:each="img : ${images}"
+          th:src="@{${img}}"
+          class="comic-image"
+          loading="lazy"
+          alt="Trang truyện"
+        />
+      </div>
+
+      <div
+        th:if="${images.empty and (chapter.content == null or chapter.content.isEmpty())}"
+        style="text-align: center; padding: 50px; color: gray"
+      >
+        Chương này chưa có nội dung.
+      </div>
+    </div>
+  </body>
+</html>

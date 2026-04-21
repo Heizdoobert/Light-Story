@@ -1,0 +1,150 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title th:text="${pageTitle}">Thêm/Sửa Truyện</title>
+  </head>
+  <body>
+    <h2 th:text="${pageTitle}">Tiêu đề Form</h2>
+    <p><a th:href="@{/AdminHome/stories}">⬅ Quay lại danh sách</a></p>
+    <hr />
+
+    <br />
+
+    <form
+      th:action="@{/AdminHome/stories/save}"
+      th:object="${story}"
+      method="post"
+      enctype="multipart/form-data"
+    >
+      <input type="hidden" th:field="*{id}" />
+      <input type="hidden" th:field="*{coverUrl}" />
+
+      <table border="1" cellpadding="10" cellspacing="0">
+        <tr>
+          <td><label>Tên Truyện (*):</label></td>
+          <td>
+            <input
+              type="text"
+              th:field="*{title}"
+              required
+              style="width: 300px"
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Đường dẫn tĩnh (Slug) (*):</label></td>
+          <td>
+            <input
+              type="text"
+              th:field="*{slug}"
+              required
+              style="width: 300px"
+            />
+            <br /><small><i>(Ví dụ: ten-truyen-viet-khong-dau)</i></small>
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Tác giả (*):</label></td>
+          <td>
+            <select th:field="*{author}">
+              <option value="">-- Chọn tác giả có sẵn --</option>
+              <option
+                th:each="a : ${authors}"
+                th:value="${a.id}"
+                th:text="${a.name}"
+              ></option>
+            </select>
+
+            <br /><br />
+            <span>Hoặc thêm tác giả mới:</span><br />
+
+            <input
+              type="text"
+              name="newAuthorName"
+              placeholder="Nhập tên tác giả..."
+              style="width: 300px"
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Thể loại:</label></td>
+          <td>
+            <span
+              th:each="g : ${allGenres}"
+              style="margin-right: 15px; display: inline-block"
+            >
+              <input type="checkbox" th:field="*{genres}" th:value="${g.id}" />
+              <label th:text="${g.name}"></label>
+            </span>
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Ảnh Bìa (Cover):</label></td>
+          <td>
+            <div
+              th:if="${story.coverUrl != null and !story.coverUrl.isEmpty()}"
+            >
+              <p>Ảnh hiện tại:</p>
+              <img th:src="@{${story.coverUrl}}" width="80" alt="Cover" />
+              <br /><br />
+            </div>
+
+            <input
+              type="file"
+              name="imageFile"
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+            />
+            <br /><small><i>(Bỏ trống nếu không muốn thay đổi ảnh)</i></small>
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Trạng Thái:</label></td>
+          <td>
+            <select th:field="*{status}">
+              <option value="ONGOING">Đang ra (Ongoing)</option>
+              <option value="COMPLETED">Hoàn thành (Completed)</option>
+              <option value="HIATUS">Tạm dừng (Hiatus)</option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Hiển thị cho độc giả:</label></td>
+          <td>
+            <input type="checkbox" th:field="*{active}" /> Cho phép hiển thị ra
+            Trang chủ
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Mô tả truyện (Tóm tắt):</label></td>
+          <td>
+            <textarea
+              th:field="*{description}"
+              rows="6"
+              style="width: 100%; max-width: 400px"
+            ></textarea>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="2" style="text-align: center">
+            <button
+              type="submit"
+              style="padding: 10px 20px; font-weight: bold; cursor: pointer"
+            >
+              Lưu Truyện
+            </button>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>
+</html>

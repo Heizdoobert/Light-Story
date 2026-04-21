@@ -1,0 +1,99 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quản Lý Truyện</title>
+  </head>
+  <body>
+    <h2>QUẢN TRỊ VIÊN</h2>
+    <hr />
+
+    <h3>Danh sách Truyện đang có</h3>
+    <p><a th:href="@{/AdminHome/stories/add}">➕ Thêm truyện mới</a></p>
+
+    <form
+      th:action="@{/AdminHome/stories}"
+      method="get"
+      style="margin-bottom: 20px"
+    >
+      <input
+        type="text"
+        name="keyword"
+        th:value="${keyword}"
+        placeholder="Nhập tên truyện, tác giả, thể loại..."
+        style="width: 300px; padding: 5px"
+      />
+      <button type="submit" style="padding: 5px 15px">🔍 Tìm kiếm</button>
+      <a th:href="@{/AdminHome/stories}" style="margin-left: 10px"
+        >❌ Xóa bộ lọc</a
+      >
+    </form>
+    <table border="1" cellpadding="8" cellspacing="0">
+      <thead style="background-color: #f2f2f2">
+        <tr>
+          <th>ID</th>
+          <th>Ảnh Bìa</th>
+          <th>Tên Truyện</th>
+          <th>Tác Giả</th>
+          <th>Thể Loại</th>
+          <th>Trạng Thái</th>
+          <th>Hành Động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="s : ${stories}">
+          <td th:text="${s.id}"></td>
+          <td>
+            <img
+              th:if="${s.coverUrl != null and !s.coverUrl.isEmpty()}"
+              th:src="@{${s.coverUrl}}"
+              width="50"
+              alt="Cover"
+            />
+            <span th:unless="${s.coverUrl != null and !s.coverUrl.isEmpty()}"
+              >Trống</span
+            >
+          </td>
+          <td th:text="${s.title}"></td>
+          <td th:text="${s.author != null ? s.author.name : 'Chưa rõ'}"></td>
+          <td>
+            <span
+              th:each="g, iterStat : ${s.genres}"
+              th:text="${g.name} + ${!iterStat.last ? ', ' : ''}"
+            >
+            </span>
+          </td>
+          <td th:text="${s.status}"></td>
+          <td>
+            <a
+              th:href="@{/AdminHome/stories/{id}/chapters(id=${s.id})}"
+              style="
+                background-color: #3498db;
+                color: white;
+                padding: 4px 8px;
+                border-radius: 4px;
+                text-decoration: none;
+                font-size: 14px;
+              "
+            >
+              📚 DS Chương
+            </a>
+            |
+
+            <a th:href="@{/AdminHome/stories/edit/{id}(id=${s.id})}">Sửa</a> |
+
+            <a
+              th:href="@{/AdminHome/stories/delete/{id}(id=${s.id})}"
+              onclick="
+                return confirm(
+                  'Xóa truyện này sẽ xóa luôn cả ảnh gốc và TOÀN BỘ CHƯƠNG bên trong. Bạn chắc chứ?',
+                );
+              "
+              >Xóa</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

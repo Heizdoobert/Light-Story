@@ -1,0 +1,109 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quản Lý Chương</title>
+  </head>
+  <body>
+    <h2>QUẢN TRỊ VIÊN</h2>
+    <hr />
+
+    <h3>
+      Danh sách Chương của truyện:
+      <span th:text="${story.title}" style="color: #2980b9">Tên Truyện</span>
+    </h3>
+
+    <p><a th:href="@{/AdminHome/stories}">⬅ Quay lại Danh sách Truyện</a></p>
+
+    <p>
+      <a
+        th:href="@{/AdminHome/stories/{id}/chapters/add(id=${story.id})}"
+        style="
+          background-color: #27ae60;
+          color: white;
+          padding: 8px 12px;
+          text-decoration: none;
+          border-radius: 4px;
+        "
+        >➕ Thêm chương mới</a
+      >
+    </p>
+
+    <br />
+
+    <table
+      border="1"
+      cellpadding="10"
+      cellspacing="0"
+      style="width: 100%; text-align: left"
+    >
+      <thead style="background-color: #f2f2f2">
+        <tr>
+          <th>Số Chương</th>
+          <th>Tên Chương</th>
+          <th>Loại Nội Dung</th>
+          <th>Lượt Xem</th>
+          <th>Ngày Đăng</th>
+          <th>Hành Động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:if="${chapters.empty}">
+          <td colspan="6" style="text-align: center; color: #7f8c8d">
+            Truyện này chưa có chương nào. Hãy thêm chương đầu tiên!
+          </td>
+        </tr>
+
+        <tr th:each="c : ${chapters}">
+          <td>Chương <strong th:text="${c.chapterNumber}">1</strong></td>
+          <td
+            th:text="${c.title != null and !c.title.isEmpty() ? c.title : '(Không có tiêu đề)'}"
+          ></td>
+
+          <td>
+            <span
+              th:if="${c.content != null and !c.content.isEmpty()}"
+              style="color: #8e44ad; font-weight: bold"
+              >📝 Truyện Chữ</span
+            >
+            <br
+              th:if="${c.content != null and !c.content.isEmpty() and c.imageUrls != null and c.imageUrls != '[]'}"
+            />
+            <span
+              th:if="${c.imageUrls != null and c.imageUrls != '[]'}"
+              style="color: #d35400; font-weight: bold"
+              >🖼️ Truyện Tranh</span
+            >
+          </td>
+
+          <td th:text="${c.viewCount}">0</td>
+
+          <td
+            th:text="${#temporals.format(c.createdAt, 'dd-MM-yyyy HH:mm')}"
+          ></td>
+
+          <td>
+            <a
+              th:href="@{/AdminHome/stories/{sId}/chapters/view/{cId}(sId=${story.id}, cId=${c.id})}"
+              style="color: #27ae60; font-weight: bold"
+              >👁️ Xem</a
+            >
+            |
+
+            <a
+              th:href="@{/AdminHome/stories/{sId}/chapters/edit/{cId}(sId=${story.id}, cId=${c.id})}"
+              >Sửa</a
+            >
+            |
+            <a
+              th:href="@{/AdminHome/stories/{sId}/chapters/delete/{cId}(sId=${story.id}, cId=${c.id})}"
+              onclick="return confirm('Bạn có chắc chắn muốn xóa chương này?');"
+              style="color: red"
+              >Xóa</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

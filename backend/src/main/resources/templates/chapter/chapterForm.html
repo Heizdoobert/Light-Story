@@ -1,0 +1,141 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title th:text="${pageTitle}">Thêm/Sửa Chương</title>
+  </head>
+  <body>
+    <h2 th:text="${pageTitle}">Tiêu đề Form</h2>
+
+    <p>
+      <a th:href="@{/AdminHome/stories/{id}/chapters(id=${story.id})}"
+        >⬅ Quay lại danh sách chương</a
+      >
+    </p>
+    <hr />
+
+    <div
+      th:if="${errorMessage}"
+      style="
+        color: white;
+        background-color: #e74c3c;
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        display: inline-block;
+      "
+    >
+      <strong th:text="${errorMessage}"></strong>
+    </div>
+
+    <form
+      th:action="@{/AdminHome/stories/{id}/chapters/save(id=${story.id})}"
+      th:object="${chapter}"
+      method="post"
+      enctype="multipart/form-data"
+    >
+      <input type="hidden" th:field="*{id}" />
+
+      <table border="1" cellpadding="10" cellspacing="0">
+        <tr>
+          <td style="width: 200px"><label>Số Chương (*):</label></td>
+          <td>
+            <input
+              type="number"
+              th:field="*{chapterNumber}"
+              required
+              min="1"
+              style="width: 100px; padding: 5px"
+            />
+            <small style="color: #666; margin-left: 10px"
+              ><i>(Hệ thống sẽ không cho phép nhập trùng số chương)</i></small
+            >
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Tên Chương:</label></td>
+          <td>
+            <input
+              type="text"
+              th:field="*{title}"
+              style="width: 100%; max-width: 500px; padding: 5px"
+              placeholder="Ví dụ: Sự khởi đầu"
+            />
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Nội dung chữ (Text):</label></td>
+          <td>
+            <textarea
+              th:field="*{content}"
+              rows="15"
+              style="width: 100%; max-width: 800px; padding: 10px"
+              placeholder="Nhập nội dung truyện chữ vào đây..."
+            ></textarea>
+          </td>
+        </tr>
+
+        <tr>
+          <td><label>Tải lên Ảnh Truyện Tranh:</label></td>
+          <td>
+            <input
+              type="file"
+              name="chapterImages"
+              multiple
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+            />
+
+            <div style="margin-top: 10px; font-size: 13px; color: #555">
+              <p>
+                - Có thể chọn nhiều ảnh cùng lúc bằng cách
+                <strong>bôi đen</strong> hoặc giữ phím <strong>Ctrl</strong>.
+              </p>
+              <p>
+                - Tên file ảnh nên đặt theo thứ tự (VD: 01.jpg, 02.jpg) để hệ
+                thống sắp xếp chuẩn nhất.
+              </p>
+              <p>- Nếu chỉ đăng truyện chữ, hãy bỏ trống ô này.</p>
+            </div>
+
+            <div
+              th:if="${chapter.imageUrls != null and chapter.imageUrls != '[]'}"
+              style="
+                margin-top: 15px;
+                padding: 10px;
+                background-color: #dff0d8;
+                color: #3c763d;
+                border: 1px solid #d6e9c6;
+              "
+            >
+              ✅ Chương này hiện đang có chứa dữ liệu ảnh. Nếu bạn tải lên file
+              mới, <strong>toàn bộ ảnh cũ sẽ bị ghi đè</strong>. Nếu muốn giữ
+              nguyên ảnh cũ, đừng tải gì lên ô này.
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td colspan="2" style="text-align: center; padding: 15px">
+            <button
+              type="submit"
+              style="
+                padding: 10px 25px;
+                background-color: #2980b9;
+                color: white;
+                border: none;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                border-radius: 4px;
+              "
+            >
+              💾 LƯU CHƯƠNG TRUYỆN
+            </button>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>
+</html>
