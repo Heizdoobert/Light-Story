@@ -81,7 +81,7 @@ export const AuthorManagementTab: React.FC = () => {
             type="button"
             onClick={() => createMutation.mutate()}
             disabled={createMutation.isPending || !name.trim()}
-            className="w-full rounded-xl bg-slate-900 dark:bg-primary text-white py-3 font-bold disabled:opacity-50"
+            className="w-full rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 py-3 font-bold disabled:opacity-50"
           >
             {createMutation.isPending ? 'Creating...' : 'Create Author'}
           </button>

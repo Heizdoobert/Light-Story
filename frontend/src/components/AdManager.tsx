@@ -101,7 +101,7 @@ export const AdManager: React.FC = () => {
               <button 
                 onClick={() => handleSave(ad.id)}
                 disabled={mutation.isPending}
-                className="flex items-center gap-2 bg-slate-900 dark:bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:opacity-90 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
               >
                 <Save size={14} />
                 Save Changes
