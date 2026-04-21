@@ -17,9 +17,11 @@ const AuthorManagementTab = lazy(() => import('../components/AuthorManagementTab
 const SystemSettingsTab = lazy(() => import('../components/SystemSettingsTab').then((m) => ({ default: m.SystemSettingsTab })));
 const AdminUserManagement = lazy(() => import('../components/AdminUserManagement').then((m) => ({ default: m.AdminUserManagement })));
 const OperationsCenterTab = lazy(() => import('../components/OperationsCenterTab').then((m) => ({ default: m.OperationsCenterTab })));
+const OperationsDataTab = lazy(() => import('../components/OperationsDataTab').then((m) => ({ default: m.OperationsDataTab })));
 
 type AdminTabId =
   | 'dashboard'
+  | 'operations_data'
   | 'create_story'
   | 'stories'
   | 'create_chapter'
@@ -42,6 +44,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   settings: () => import('../components/SystemSettingsTab'),
   users: () => import('../components/AdminUserManagement'),
   operations: () => import('../components/OperationsCenterTab'),
+  operations_data: () => import('../components/OperationsDataTab'),
 };
 
 const TabLoadingFallback: React.FC = () => (
@@ -242,6 +245,12 @@ const AdminDashboardContent: React.FC<{
       {activeTab === 'operations' && (
         <Suspense fallback={<TabLoadingFallback />}>
           <OperationsCenterTab onNavigate={onTabChange} />
+        </Suspense>
+      )}
+
+      {activeTab === 'operations_data' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <OperationsDataTab />
         </Suspense>
       )}
 

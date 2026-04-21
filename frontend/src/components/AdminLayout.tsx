@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
@@ -114,7 +114,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <motion.aside
         initial={false}
         animate={{ width: isSidebarOpen ? 280 : 80 }}
-        className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col relative z-20 shadow-xl"
+        className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col relative z-20 shadow-xl overflow-hidden"
       >
         <div className="p-6 flex items-center justify-between">
           <AnimatePresence mode="wait">
@@ -151,7 +151,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </Link>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 mt-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 space-y-2 mt-4 pb-4">
           {filteredMenu.map((item) => (
             <button
               key={item.id}

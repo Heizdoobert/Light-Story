@@ -1,8 +1,9 @@
-import { BookOpen, DollarSign, LayoutDashboard, Library, PenSquare, PlusCircle, Settings, User, Users, Workflow, type LucideIcon } from 'lucide-react';
+import { BookOpen, Database, DollarSign, LayoutDashboard, Library, PenSquare, PlusCircle, Settings, User, Users, Workflow, type LucideIcon } from 'lucide-react';
 import { UserRole } from '../modules/auth/AuthContext';
 
 export type AdminMenuId =
   | 'dashboard'
+  | 'operations_data'
   | 'create_story'
   | 'stories'
   | 'categories'
@@ -31,6 +32,12 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     id: 'operations',
     label: 'Operations Center',
     icon: Workflow,
+    roles: ['superadmin', 'admin', 'employee'],
+  },
+  {
+    id: 'operations_data',
+    label: 'Operations Data',
+    icon: Database,
     roles: ['superadmin', 'admin', 'employee'],
   },
   {
@@ -90,7 +97,7 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> = ADMIN_MENU_ITEMS.r
 
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'operations', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
-  employee: ['dashboard', 'operations', 'create_story', 'stories', 'categories', 'authors', 'profile'],
+  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile'],
   user: [],
 };
