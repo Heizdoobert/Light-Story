@@ -16,6 +16,7 @@ const CategoryManagementTab = lazy(() => import('../components/CategoryManagemen
 const AuthorManagementTab = lazy(() => import('../components/AuthorManagementTab').then((m) => ({ default: m.AuthorManagementTab })));
 const SystemSettingsTab = lazy(() => import('../components/SystemSettingsTab').then((m) => ({ default: m.SystemSettingsTab })));
 const AdminUserManagement = lazy(() => import('../components/AdminUserManagement').then((m) => ({ default: m.AdminUserManagement })));
+const OperationsCenterTab = lazy(() => import('../components/OperationsCenterTab').then((m) => ({ default: m.OperationsCenterTab })));
 
 type AdminTabId =
   | 'dashboard'
@@ -27,7 +28,8 @@ type AdminTabId =
   | 'ads'
   | 'settings'
   | 'profile'
-  | 'users';
+  | 'users'
+  | 'operations';
 
 const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   create_story: () => import('../components/StoryForm'),
@@ -39,6 +41,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   authors: () => import('../components/AuthorManagementTab'),
   settings: () => import('../components/SystemSettingsTab'),
   users: () => import('../components/AdminUserManagement'),
+  operations: () => import('../components/OperationsCenterTab'),
 };
 
 const TabLoadingFallback: React.FC = () => (
@@ -234,6 +237,12 @@ const AdminDashboardContent: React.FC<{
             </div>
           </div>
         </div>
+      )}
+
+      {activeTab === 'operations' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <OperationsCenterTab onNavigate={onTabChange} />
+        </Suspense>
       )}
 
       {activeTab === 'create_story' && (

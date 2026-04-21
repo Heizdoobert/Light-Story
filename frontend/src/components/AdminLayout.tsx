@@ -5,34 +5,20 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  Settings,
-  DollarSign,
-  LogOut,
-  ChevronRight,
-  Menu,
-  X,
-  PlusCircle,
-  Bell,
-  Sun,
-  Moon,
-  House,
-  User,
-  Library,
-  PenSquare,
-} from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
 import { toast } from "sonner";
 import { supabase } from "../core/supabase";
+import { ADMIN_MENU_ITEMS } from "../lib/adminNavigation";
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
+  DEFAULT_SIDEBAR_MENU_VISIBILITY,
+  isAdminMenuVisibleForRole,
   isDashboardTabVisibleForRole,
   parseDashboardTabVisibility,
+  parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
 } from "../lib/systemSettings";
 
@@ -42,58 +28,6 @@ interface AdminLayoutProps {
   onTabChange: (tab: string) => void;
   onTabPrefetch?: (tab: string) => void;
 }
-
-const menuItems = [
-  {
-    id: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "create_story",
-    label: "Create Story",
-    icon: PlusCircle,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "stories",
-    label: "Stories",
-    icon: BookOpen,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "categories",
-    label: "Categories",
-    icon: Library,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "authors",
-    label: "Authors",
-    icon: PenSquare,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  { id: "users", label: "Users", icon: Users, roles: ["superadmin"] },
-  {
-    id: "ads",
-    label: "Ads & Revenue",
-    icon: DollarSign,
-    roles: ["superadmin", "admin"],
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: Settings,
-    roles: ["superadmin"],
-  },
-  {
-    id: "profile",
-    label: "My Profile",
-    icon: User,
-    roles: ["superadmin", "admin", "employee"],
-  },
-] as const;
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
@@ -130,13 +64,40 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
   });
 
-  const filteredMenu = menuItems.filter(
-    (item) => {
-      if (!role || !item.roles.includes(role)) return false;
-      const visibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
-      return isDashboardTabVisibleForRole(item.id, role, visibility);
+  const menuVisibilityQuery = useQuery({
+    queryKey: ["site_settings", SITE_SETTING_KEYS.sidebarMenuVisibility],
+    staleTime: 60_000,
+    gcTime: 300_000,
+    queryFn: async () => {
+      if (!supabase) return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+
+      try {
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", SITE_SETTING_KEYS.sidebarMenuVisibility)
+          .maybeSingle();
+
+        if (error) {
+          return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+        }
+
+        return parseSidebarMenuVisibility(data?.value);
+      } catch {
+        return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+      }
     },
-  );
+  });
+
+  const filteredMenu = ADMIN_MENU_ITEMS.filter((item) => {
+    if (!role || !item.roles.includes(role)) return false;
+    const dashboardVisibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
+    const menuVisibility = menuVisibilityQuery.data ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
+    return (
+      isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
+      isAdminMenuVisibleForRole(item.id, role, menuVisibility)
+    );
+  });
 
   const handleSignOut = async () => {
     try {

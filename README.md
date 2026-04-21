@@ -42,6 +42,12 @@ The app also accepts `NEXT_PUBLIC_*` keys for compatibility, but `VITE_*` is the
 - Role-based admin access for `superadmin`, `admin`, and `employee` with route guards.
 - Admin user-role operations are hardened to prevent unsafe role transitions and self-role edits.
 
+### Admin Operations
+
+- Operations center for core content, user, commerce, analytics, and system workflows.
+- Menu visibility controls for role-based sidebar configuration.
+- System settings backup and restore for the settings surface managed in the UI.
+
 ## Backend
 
 Location: `backend-supabase/supabase/`

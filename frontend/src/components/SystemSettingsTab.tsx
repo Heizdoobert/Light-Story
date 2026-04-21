@@ -6,13 +6,17 @@ import { toast } from 'sonner';
 import { useAuth } from '../modules/auth/AuthContext';
 import { getErrorMessage } from '../lib/errorUtils';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
+import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '../lib/adminNavigation';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
   DashboardTabVisibility,
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
+  DEFAULT_SIDEBAR_MENU_VISIBILITY,
+  SidebarMenuVisibility,
   getRoleVisibleTabs,
   parseBooleanSetting,
   parseDashboardTabVisibility,
+  parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
 } from '../lib/systemSettings';
 
@@ -41,6 +45,8 @@ export const SystemSettingsTab: React.FC = () => {
   const [compactMode, setCompactMode] = useState(false);
   const [showSyncBadge, setShowSyncBadge] = useState(true);
   const [visibility, setVisibility] = useState<DashboardTabVisibility>(DEFAULT_DASHBOARD_TAB_VISIBILITY);
+  const [menuVisibility, setMenuVisibility] = useState<SidebarMenuVisibility>(DEFAULT_SIDEBAR_MENU_VISIBILITY);
+  const [backupJson, setBackupJson] = useState('');
 
   const settingsQuery = useQuery({
     queryKey: ['site_settings', 'system_settings_tab_rows'],
@@ -54,6 +60,7 @@ export const SystemSettingsTab: React.FC = () => {
           SITE_SETTING_KEYS.uiCompactMode,
           SITE_SETTING_KEYS.uiShowSyncBadge,
           SITE_SETTING_KEYS.dashboardTabVisibility,
+          SITE_SETTING_KEYS.sidebarMenuVisibility,
         ]);
 
       if (error) {
@@ -73,7 +80,23 @@ export const SystemSettingsTab: React.FC = () => {
     setCompactMode(parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiCompactMode), false));
     setShowSyncBadge(parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true));
     setVisibility(parseDashboardTabVisibility(map.get(SITE_SETTING_KEYS.dashboardTabVisibility)));
+    setMenuVisibility(parseSidebarMenuVisibility(map.get(SITE_SETTING_KEYS.sidebarMenuVisibility)));
   }, [settingsQuery.data]);
+
+  useEffect(() => {
+    setBackupJson(
+      JSON.stringify(
+        {
+          compactMode,
+          showSyncBadge,
+          dashboardTabVisibility: visibility,
+          sidebarMenuVisibility: menuVisibility,
+        },
+        null,
+        2,
+      ),
+    );
+  }, [compactMode, showSyncBadge, visibility, menuVisibility]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -83,6 +106,7 @@ export const SystemSettingsTab: React.FC = () => {
         { key: SITE_SETTING_KEYS.uiCompactMode, value: compactMode },
         { key: SITE_SETTING_KEYS.uiShowSyncBadge, value: showSyncBadge },
         { key: SITE_SETTING_KEYS.dashboardTabVisibility, value: visibility },
+        { key: SITE_SETTING_KEYS.sidebarMenuVisibility, value: menuVisibility },
       ];
 
       const { error } = await supabase.from('site_settings').upsert(payload, { onConflict: 'key' });
@@ -111,6 +135,56 @@ export const SystemSettingsTab: React.FC = () => {
         [targetRole]: nextTabs,
       };
     });
+  };
+
+  const toggleMenuTab = (targetRole: keyof SidebarMenuVisibility, menuId: string) => {
+    setMenuVisibility((prev) => {
+      const current = prev[targetRole] ?? [];
+      const exists = current.includes(menuId as any);
+      const nextTabs = exists ? current.filter((item) => item !== menuId) : [...current, menuId as any];
+      return {
+        ...prev,
+        [targetRole]: nextTabs,
+      };
+    });
+  };
+
+  const restoreBackup = async () => {
+    try {
+      const parsed = JSON.parse(backupJson);
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Invalid backup payload');
+      }
+
+      if (typeof parsed.compactMode === 'boolean') {
+        setCompactMode(parsed.compactMode);
+      }
+
+      if (typeof parsed.showSyncBadge === 'boolean') {
+        setShowSyncBadge(parsed.showSyncBadge);
+      }
+
+      if (parsed.dashboardTabVisibility) {
+        setVisibility(parseDashboardTabVisibility(parsed.dashboardTabVisibility));
+      }
+
+      if (parsed.sidebarMenuVisibility) {
+        setMenuVisibility(parseSidebarMenuVisibility(parsed.sidebarMenuVisibility));
+      }
+
+      toast.success('Backup snapshot loaded. Save settings to persist the changes.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'update_settings'));
+    }
+  };
+
+  const copyBackup = async () => {
+    try {
+      await navigator.clipboard.writeText(backupJson);
+      toast.success('Backup snapshot copied to clipboard');
+    } catch {
+      toast.error('Unable to copy backup snapshot');
+    }
   };
 
   if (role !== 'superadmin') {
@@ -199,6 +273,54 @@ export const SystemSettingsTab: React.FC = () => {
                   </div>
                 </div>
               ))}
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Sidebar Menu Visibility</h4>
+              {(['admin', 'employee', 'user'] as Array<keyof SidebarMenuVisibility>).map((targetRole) => (
+                <div key={targetRole} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                  <p className="text-sm font-black uppercase text-slate-900 dark:text-white mb-3">{targetRole}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {ADMIN_MENU_IDS.map((menuId) => (
+                      <label key={menuId} className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={menuVisibility[targetRole].includes(menuId)}
+                          onChange={() => toggleMenuTab(targetRole, menuId)}
+                        />
+                        <span>{ADMIN_MENU_LABELS[menuId]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Backup & Restore</h4>
+              <div className="grid grid-cols-1 gap-3">
+                <textarea
+                  value={backupJson}
+                  onChange={(e) => setBackupJson(e.target.value)}
+                  rows={10}
+                  className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 font-mono text-xs text-slate-800 dark:text-slate-100"
+                  placeholder="System settings backup JSON"
+                />
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={copyBackup} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-black">Copy Snapshot</button>
+                  <button type="button" onClick={() => {
+                    const blob = new Blob([backupJson], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const anchor = document.createElement('a');
+                    anchor.href = url;
+                    anchor.download = 'light-story-system-settings-backup.json';
+                    anchor.click();
+                    window.URL.revokeObjectURL(url);
+                  }} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-black">Download Snapshot</button>
+                  <button type="button" onClick={restoreBackup} className="rounded-xl bg-slate-900 dark:bg-primary text-white px-4 py-3 text-sm font-black">Restore From JSON</button>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400">This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.</p>
+              </div>
+            </div>
           </section>
         </div>
       )}
