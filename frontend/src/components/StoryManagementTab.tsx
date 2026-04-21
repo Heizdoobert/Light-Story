@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCw, BookOpenText, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
+import { useAuth, UserRole } from '../modules/auth/AuthContext';
 import { Story } from '../domain/entities';
 import { getErrorMessage } from '../lib/errorUtils';
 import { toast } from 'sonner';
@@ -27,6 +28,8 @@ export const StoryManagementTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [page, setPage] = useState(1);
+  const { role } = useAuth();
+  const canManageStories = role === 'superadmin' || role === 'admin';
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingStory, setEditingStory] = useState<StoryEditForm | null>(null);
 
@@ -245,7 +248,7 @@ export const StoryManagementTab: React.FC = () => {
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button
             type="button"
-            disabled={selectedIds.length === 0 || isMutating}
+            disabled={selectedIds.length === 0 || isMutating || !canManageStories}
             onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'ongoing' })}
             className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 disabled:opacity-50"
           >
@@ -253,7 +256,7 @@ export const StoryManagementTab: React.FC = () => {
           </button>
           <button
             type="button"
-            disabled={selectedIds.length === 0 || isMutating}
+            disabled={selectedIds.length === 0 || isMutating || !canManageStories}
             onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'completed' })}
             className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 disabled:opacity-50"
           >
@@ -261,7 +264,7 @@ export const StoryManagementTab: React.FC = () => {
           </button>
           <button
             type="button"
-            disabled={selectedIds.length === 0 || isMutating}
+            disabled={selectedIds.length === 0 || isMutating || !canManageStories}
             onClick={handleBulkDelete}
             className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border border-red-200 text-red-600 dark:border-red-700 dark:text-red-300 disabled:opacity-50"
           >
@@ -444,7 +447,7 @@ export const StoryManagementTab: React.FC = () => {
                 </button>
                 <button
                   type="button"
-                  disabled={updateStoryMutation.isPending || !editingStory.title.trim()}
+                  disabled={!canManageStories || updateStoryMutation.isPending || !editingStory.title.trim()}
                   onClick={() => updateStoryMutation.mutate(editingStory)}
                   className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 text-sm font-bold disabled:opacity-50"
                 >

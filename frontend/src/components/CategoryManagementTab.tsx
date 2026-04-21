@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SupabaseTaxonomyRepository } from '../infrastructure/repositories/SupabaseTaxonomyRepository';
 import { supabase } from '../core/supabase';
+import { useAuth, UserRole } from '../modules/auth/AuthContext';
 import { getErrorMessage } from '../lib/errorUtils';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
@@ -12,6 +13,8 @@ export const CategoryManagementTab: React.FC = () => {
   const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const { role } = useAuth();
+  const canManageCategories = role === 'superadmin' || role === 'admin';
 
   const categoriesQuery = useQuery({
     queryKey: ['categories'],
@@ -80,7 +83,7 @@ export const CategoryManagementTab: React.FC = () => {
           <button
             type="button"
             onClick={() => createMutation.mutate()}
-            disabled={createMutation.isPending || !name.trim()}
+            disabled={createMutation.isPending || !name.trim() || !canManageCategories}
             className="w-full rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 py-3 font-bold disabled:opacity-50"
           >
             {createMutation.isPending ? 'Creating...' : 'Create Category'}

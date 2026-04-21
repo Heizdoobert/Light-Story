@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../core/supabase';
+import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -12,6 +13,8 @@ import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '.
 
 export const AdManager: React.FC = () => {
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const canManageAds = role === 'superadmin' || role === 'admin';
   const [configs, setConfigs] = useState({
     ad_header: '',
     ad_middle: '',
@@ -100,7 +103,7 @@ export const AdManager: React.FC = () => {
               </div>
               <button 
                 onClick={() => handleSave(ad.id)}
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !canManageAds}
                 className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
               >
                 <Save size={14} />
