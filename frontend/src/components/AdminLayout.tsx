@@ -151,7 +151,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </Link>
         </div>
 
-        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 space-y-2 mt-4 pb-4">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 space-y-2 mt-4 pb-4 [scrollbar-width:thin] [scrollbar-color:rgb(148_163_184)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-slate-600">
           {filteredMenu.map((item) => (
             <button
               key={item.id}

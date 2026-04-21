@@ -2,12 +2,10 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../core/supabase';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
-import { SupabaseTaxonomyRepository } from '../infrastructure/repositories/SupabaseTaxonomyRepository';
 import { Story } from '../domain/entities';
 import { ArrowRight, BookOpen, CircleAlert, Coins, FileText, Library, MessageSquare, Shield, Users, Workflow } from 'lucide-react';
 
 const storyRepo = new SupabaseStoryRepository();
-const taxonomyRepo = new SupabaseTaxonomyRepository();
 
 type OperationsCenterTabProps = {
   onNavigate: (tab: string) => void;
@@ -53,7 +51,7 @@ const ActionButton: React.FC<{
     onClick={onClick}
     className={`inline-flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-black transition-colors ${
       variant === 'primary'
-        ? 'bg-slate-900 text-white hover:opacity-90 dark:bg-primary'
+        ? 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-cyan-400 dark:text-slate-950 dark:hover:bg-cyan-300'
         : 'border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
     }`}
   >
@@ -66,16 +64,6 @@ export const OperationsCenterTab: React.FC<OperationsCenterTabProps> = ({ onNavi
   const storiesQuery = useQuery({
     queryKey: ['operations-center-stories'],
     queryFn: () => storyRepo.getStories(),
-  });
-
-  const authorsQuery = useQuery({
-    queryKey: ['operations-center-authors'],
-    queryFn: () => taxonomyRepo.getAuthors(),
-  });
-
-  const categoriesQuery = useQuery({
-    queryKey: ['operations-center-categories'],
-    queryFn: () => taxonomyRepo.getCategories(),
   });
 
   const profileCountQuery = useQuery({
@@ -139,8 +127,23 @@ export const OperationsCenterTab: React.FC<OperationsCenterTabProps> = ({ onNavi
     [stories],
   );
 
-  const totalAuthors = authorsQuery.data?.length ?? 0;
-  const totalCategories = categoriesQuery.data?.length ?? 0;
+  const totalAuthors = useMemo(() => {
+    const pool = new Set<string>();
+    for (const story of stories) {
+      const authorName = (story.author ?? '').trim();
+      if (authorName) pool.add(authorName.toLowerCase());
+    }
+    return pool.size;
+  }, [stories]);
+
+  const totalCategories = useMemo(() => {
+    const pool = new Set<string>();
+    for (const story of stories) {
+      const categoryName = (story.category ?? '').trim();
+      if (categoryName) pool.add(categoryName.toLowerCase());
+    }
+    return pool.size;
+  }, [stories]);
   const totalProfiles = profileCountQuery.data ?? 0;
   const totalChapters = chapterCountQuery.data ?? 0;
   const totalAdSlots = adSettingsQuery.data ?? 0;
