@@ -9,3 +9,6 @@ coverage/
 .agents/
 agents/
 backend-supabase/supabase/.temp/
+.vscode/
+.claude/
+docs/
