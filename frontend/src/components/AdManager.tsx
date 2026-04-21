@@ -8,6 +8,7 @@ import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
 
 export const AdManager: React.FC = () => {
   const queryClient = useQueryClient();
@@ -49,12 +50,16 @@ export const AdManager: React.FC = () => {
         .upsert({ key, value: (configs as any)[key] }, { onConflict: 'key' });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
-      toast.success('Configuration saved successfully');
+    onMutate: (key) => {
+      const toastId = startDbChangeToast(`Saving ${key} configuration...`);
+      return { toastId };
     },
-    onError: (error: any) => {
-      toast.error('Failed to save: ' + error.message);
+    onSuccess: (_data, key, context) => {
+      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
+      resolveDbChangeToast(context?.toastId, `${key} saved successfully`);
+    },
+    onError: (error: any, _key, context) => {
+      rejectDbChangeToast(context?.toastId, error, 'update_settings');
     }
   });
 

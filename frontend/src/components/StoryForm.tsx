@@ -5,6 +5,7 @@ import { SupabaseTaxonomyRepository } from "../infrastructure/repositories/Supab
 import { Story } from "../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/errorUtils";
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../lib/dbChangeToast";
 import { supabase } from "../core/supabase";
 import {
   Save,
@@ -113,15 +114,20 @@ export const StoryForm: React.FC = () => {
       const coverUrl = await uploadCoverImage(coverFile);
       return storyRepo.saveStory({ ...newStory, cover_url: coverUrl });
     },
-    onSuccess: () => {
+    onMutate: (newStory) => {
+      const title = newStory.title?.trim() || 'new story';
+      const toastId = startDbChangeToast(`Creating \"${title}\"...`);
+      return { toastId };
+    },
+    onSuccess: (_data, _variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["admin-dashboard-metrics"] });
       queryClient.invalidateQueries({ queryKey: ["stories"] });
       queryClient.invalidateQueries({ queryKey: ["admin_stories"] });
-      toast.success("New story has been creat successfully!");
+      resolveDbChangeToast(context?.toastId, "Story created successfully");
       resetForm();
     },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error, "save_story"));
+    onError: (error: any, _variables, context) => {
+      rejectDbChangeToast(context?.toastId, error, "save_story");
     },
   });
 

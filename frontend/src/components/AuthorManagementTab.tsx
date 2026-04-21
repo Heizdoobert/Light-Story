@@ -4,6 +4,7 @@ import { SupabaseTaxonomyRepository } from '../infrastructure/repositories/Supab
 import { supabase } from '../core/supabase';
 import { getErrorMessage } from '../lib/errorUtils';
 import { toast } from 'sonner';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
 
 const taxonomyRepo = new SupabaseTaxonomyRepository();
 
@@ -19,14 +20,18 @@ export const AuthorManagementTab: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: () => taxonomyRepo.createAuthor({ name, bio }),
-    onSuccess: () => {
+    onMutate: () => {
+      const toastId = startDbChangeToast(`Creating author \"${name.trim() || 'new'}\"...`);
+      return { toastId };
+    },
+    onSuccess: (_data, _variables, context) => {
       queryClient.invalidateQueries({ queryKey: ['authors'] });
       queryClient.invalidateQueries({ queryKey: ['author-story-links'] });
       setName('');
       setBio('');
-      toast.success('Author created successfully');
+      resolveDbChangeToast(context?.toastId, 'Author created successfully');
     },
-    onError: (error) => toast.error(getErrorMessage(error)),
+    onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
   });
 
   const linkQuery = useQuery({

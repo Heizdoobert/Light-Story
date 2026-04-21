@@ -5,6 +5,7 @@ import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { useAuth } from '../modules/auth/AuthContext';
 import { getErrorMessage } from '../lib/errorUtils';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
   DashboardTabVisibility,
@@ -87,12 +88,16 @@ export const SystemSettingsTab: React.FC = () => {
       const { error } = await supabase.from('site_settings').upsert(payload, { onConflict: 'key' });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
-      toast.success('System settings saved successfully');
+    onMutate: () => {
+      const toastId = startDbChangeToast('Saving system settings...');
+      return { toastId };
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error, 'update_settings'));
+    onSuccess: (_data, _variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
+      resolveDbChangeToast(context?.toastId, 'System settings saved successfully');
+    },
+    onError: (error, _variables, context) => {
+      rejectDbChangeToast(context?.toastId, error, 'update_settings');
     },
   });
 

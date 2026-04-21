@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
 
 interface Profile {
   id: string;
@@ -35,6 +36,7 @@ export const AdminUserManagement: React.FC = () => {
   }, []);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
+    const toastId = startDbChangeToast(`Updating role to ${newRole}...`);
     try {
       const { error } = await supabase!
         .from('profiles')
@@ -42,10 +44,10 @@ export const AdminUserManagement: React.FC = () => {
         .eq('id', userId);
       
       if (error) throw error;
-      toast.success('Role updated successfully');
+      resolveDbChangeToast(toastId, 'Role updated successfully');
       fetchUsers();
     } catch (error: any) {
-      toast.error('Failed to update role: ' + error.message);
+      rejectDbChangeToast(toastId, error);
     }
   };
 

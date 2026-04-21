@@ -1,20 +1,51 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, startTransition, useCallback, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../components/AdminLayout';
-import { AdManager } from '../components/AdManager';
-import { AdminUserManagement } from '../components/AdminUserManagement';
-import { StoryForm } from '../components/StoryForm';
-import { ChapterForm } from '../components/ChapterForm';
-import { UserProfileTab } from '../components/UserProfileTab';
-import { CategoryManagementTab } from '../components/CategoryManagementTab';
-import { AuthorManagementTab } from '../components/AuthorManagementTab';
-import { SystemSettingsTab } from '../components/SystemSettingsTab';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { supabase } from '../core/supabase';
 import { useAuth } from '../modules/auth/AuthContext';
-import { motion } from 'motion/react';
 import { parseBooleanSetting, SITE_SETTING_KEYS } from '../lib/systemSettings';
+
+const StoryForm = lazy(() => import('../components/StoryForm').then((m) => ({ default: m.StoryForm })));
+const StoryManagementTab = lazy(() => import('../components/StoryManagementTab').then((m) => ({ default: m.StoryManagementTab })));
+const ChapterForm = lazy(() => import('../components/ChapterForm').then((m) => ({ default: m.ChapterForm })));
+const AdManager = lazy(() => import('../components/AdManager').then((m) => ({ default: m.AdManager })));
+const UserProfileTab = lazy(() => import('../components/UserProfileTab').then((m) => ({ default: m.UserProfileTab })));
+const CategoryManagementTab = lazy(() => import('../components/CategoryManagementTab').then((m) => ({ default: m.CategoryManagementTab })));
+const AuthorManagementTab = lazy(() => import('../components/AuthorManagementTab').then((m) => ({ default: m.AuthorManagementTab })));
+const SystemSettingsTab = lazy(() => import('../components/SystemSettingsTab').then((m) => ({ default: m.SystemSettingsTab })));
+const AdminUserManagement = lazy(() => import('../components/AdminUserManagement').then((m) => ({ default: m.AdminUserManagement })));
+
+type AdminTabId =
+  | 'dashboard'
+  | 'create_story'
+  | 'stories'
+  | 'create_chapter'
+  | 'categories'
+  | 'authors'
+  | 'ads'
+  | 'settings'
+  | 'profile'
+  | 'users';
+
+const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
+  create_story: () => import('../components/StoryForm'),
+  stories: () => import('../components/StoryManagementTab'),
+  create_chapter: () => import('../components/ChapterForm'),
+  ads: () => import('../components/AdManager'),
+  profile: () => import('../components/UserProfileTab'),
+  categories: () => import('../components/CategoryManagementTab'),
+  authors: () => import('../components/AuthorManagementTab'),
+  settings: () => import('../components/SystemSettingsTab'),
+  users: () => import('../components/AdminUserManagement'),
+};
+
+const TabLoadingFallback: React.FC = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 type DashboardStats = {
   totalViews: number;
@@ -29,19 +60,35 @@ type DashboardData = {
 };
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState<AdminTabId>('dashboard');
   const { role } = useAuth();
 
+  const handleTabChange = useCallback((tab: string) => {
+    startTransition(() => {
+      setActiveTab(tab as AdminTabId);
+    });
+  }, []);
+
+  const handleTabPrefetch = useCallback((tab: string) => {
+    tabPreloaders[tab as AdminTabId]?.();
+  }, []);
+
   return (
-    <AdminDashboardContent activeTab={activeTab} onTabChange={setActiveTab} role={role} />
+    <AdminDashboardContent
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+      onTabPrefetch={handleTabPrefetch}
+      role={role}
+    />
   );
 };
 
 const AdminDashboardContent: React.FC<{
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onTabPrefetch?: (tab: string) => void;
   role: string | null;
-}> = ({ activeTab, onTabChange, role }) => {
+}> = ({ activeTab, onTabChange, onTabPrefetch, role }) => {
   const dashboardQuery = useQuery<DashboardData>({
     queryKey: ['admin-dashboard-metrics'],
     enabled: activeTab === 'dashboard',
@@ -77,6 +124,8 @@ const AdminDashboardContent: React.FC<{
 
   const uiSettingsQuery = useQuery({
     queryKey: ['site_settings', 'system_ui_controls'],
+    staleTime: 60_000,
+    gcTime: 300_000,
     queryFn: async () => {
       if (!supabase) {
         return {
@@ -117,7 +166,7 @@ const AdminDashboardContent: React.FC<{
   const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
 
   return (
-    <AdminLayout activeTab={activeTab} onTabChange={onTabChange}>
+    <AdminLayout activeTab={activeTab} onTabChange={onTabChange} onTabPrefetch={onTabPrefetch}>
       {activeTab === 'dashboard' && (
         <div className={compactMode ? 'space-y-5' : 'space-y-8'}>
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -187,29 +236,59 @@ const AdminDashboardContent: React.FC<{
         </div>
       )}
 
-        {activeTab === 'create_story' && <StoryForm />}
+      {activeTab === 'create_story' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <StoryForm />
+        </Suspense>
+      )}
 
-        {activeTab === 'create_chapter' && <ChapterForm />}
+      {activeTab === 'create_chapter' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <ChapterForm />
+        </Suspense>
+      )}
 
-        {activeTab === 'ads' && <AdManager />}
+      {activeTab === 'ads' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <AdManager />
+        </Suspense>
+      )}
 
-        {activeTab === 'profile' && <UserProfileTab />}
+      {activeTab === 'profile' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <UserProfileTab />
+        </Suspense>
+      )}
 
-        {activeTab === 'categories' && <CategoryManagementTab />}
+      {activeTab === 'categories' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <CategoryManagementTab />
+        </Suspense>
+      )}
 
-        {activeTab === 'authors' && <AuthorManagementTab />}
+      {activeTab === 'authors' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <AuthorManagementTab />
+        </Suspense>
+      )}
 
-        {activeTab === 'settings' && <SystemSettingsTab />}
-        
-        {activeTab === 'users' && role === 'superadmin' && <AdminUserManagement />}
+      {activeTab === 'settings' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <SystemSettingsTab />
+        </Suspense>
+      )}
 
-        {activeTab === 'stories' && (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-            <div className="text-6xl">🚧</div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Under Construction</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">This module is currently being refactored to support the new RBAC architecture.</p>
-          </div>
-        )}
+      {activeTab === 'users' && role === 'superadmin' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <AdminUserManagement />
+        </Suspense>
+      )}
+
+      {activeTab === 'stories' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <StoryManagementTab />
+        </Suspense>
+      )}
     </AdminLayout>
   );
 };
