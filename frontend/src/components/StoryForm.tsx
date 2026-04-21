@@ -263,7 +263,7 @@ export const StoryForm: React.FC = () => {
                           setCoverFile(null);
                           setFileInputKey((current) => current + 1);
                         }}
-                        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white dark:bg-primary dark:text-white"
+                        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white dark:bg-cyan-400 dark:text-slate-950"
                       >
                         <X size={14} />
                         Remove
@@ -332,7 +332,7 @@ export const StoryForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="w-full bg-slate-900 dark:bg-primary py-5 rounded-3xl text-white font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-primary/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
+                className="w-full bg-slate-900 dark:bg-cyan-400 py-5 rounded-3xl text-white dark:text-slate-950 font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
                 {mutation.isPending ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

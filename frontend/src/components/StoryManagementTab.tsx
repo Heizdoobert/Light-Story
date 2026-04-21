@@ -446,7 +446,7 @@ export const StoryManagementTab: React.FC = () => {
                   type="button"
                   disabled={updateStoryMutation.isPending || !editingStory.title.trim()}
                   onClick={() => updateStoryMutation.mutate(editingStory)}
-                  className="rounded-xl bg-slate-900 dark:bg-primary text-white px-4 py-2 text-sm font-bold disabled:opacity-50"
+                  className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 text-sm font-bold disabled:opacity-50"
                 >
                   {updateStoryMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>

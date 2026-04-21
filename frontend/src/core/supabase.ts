@@ -6,6 +6,16 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 let lastErrorRedirectAt = 0;
 
+const getRequestUrl = (input: RequestInfo | URL): string => {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.toString();
+  return input.url;
+};
+
+const isSupabaseApiRequest = (url: string): boolean => {
+  return url.includes('/rest/v1/') || url.includes('/functions/v1/') || url.includes('/storage/v1/');
+};
+
 const getErrorRouteFromStatus = (status: number): string | null => {
   if (status === 400) return '/400';
   if (status === 401) return '/401';
@@ -33,7 +43,11 @@ const supabaseFetch: typeof fetch = async (input, init) => {
   try {
     const response = await fetch(input, init);
     if (!response.ok) {
-      maybeRedirectToErrorPage(response.status);
+      const requestUrl = getRequestUrl(input);
+      const skipRedirect = response.status === 404 && isSupabaseApiRequest(requestUrl);
+      if (!skipRedirect) {
+        maybeRedirectToErrorPage(response.status);
+      }
     }
     return response;
   } catch (error) {

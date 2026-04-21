@@ -88,7 +88,7 @@ export const ResetPasswordPage: React.FC = () => {
             </p>
             <Link
               to="/"
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 dark:bg-primary text-white text-sm font-bold"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 text-sm font-bold"
             >
               Return Home
             </Link>
@@ -128,7 +128,7 @@ export const ResetPasswordPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-slate-900 dark:bg-primary py-4 rounded-2xl text-white font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {submitting ? <Loader2 className="animate-spin" size={18} /> : 'Update Password'}
             </button>

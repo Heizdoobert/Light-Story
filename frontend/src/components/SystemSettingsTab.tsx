@@ -311,7 +311,7 @@ export const SystemSettingsTab: React.FC = () => {
               type="button"
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending}
-              className="w-full rounded-xl bg-slate-900 dark:bg-primary text-white py-3 font-bold disabled:opacity-50"
+              className="w-full rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 py-3 font-bold disabled:opacity-50"
             >
               {saveMutation.isPending ? 'Saving...' : 'Save Settings'}
             </button>
@@ -381,7 +381,7 @@ export const SystemSettingsTab: React.FC = () => {
                     window.URL.revokeObjectURL(url);
                     appendSystemLog('Download backup snapshot', 'Downloaded settings backup JSON file.');
                   }} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-black">Download Snapshot</button>
-                  <button type="button" onClick={restoreBackup} className="rounded-xl bg-slate-900 dark:bg-primary text-white px-4 py-3 text-sm font-black">Restore From JSON</button>
+                  <button type="button" onClick={restoreBackup} className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-3 text-sm font-black">Restore From JSON</button>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.</p>
               </div>
