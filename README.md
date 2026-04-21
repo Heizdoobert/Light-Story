@@ -34,6 +34,14 @@ VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 The app also accepts `NEXT_PUBLIC_*` keys for compatibility, but `VITE_*` is the primary convention.
 
+### Authentication & Access
+
+- Sign in with password, Google OAuth, and email magic link.
+- User self-registration with email verification.
+- Dedicated password reset flow via `/auth/reset-password`.
+- Role-based admin access for `superadmin`, `admin`, and `employee` with route guards.
+- Admin user-role operations are hardened to prevent unsafe role transitions and self-role edits.
+
 ## Backend
 
 Location: `backend-supabase/supabase/`

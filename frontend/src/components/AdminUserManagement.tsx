@@ -3,17 +3,33 @@ import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
+import { useAuth, UserRole } from '../modules/auth/AuthContext';
 
 interface Profile {
   id: string;
   email: string;
-  role: string;
+  role: UserRole;
   full_name: string;
 }
+
+const ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
+
+const canManageTargetRole = (actorRole: UserRole | null, targetRole: UserRole): boolean => {
+  if (actorRole === 'superadmin') return true;
+  if (actorRole === 'admin') return targetRole === 'user' || targetRole === 'employee';
+  return false;
+};
+
+const canAssignRole = (actorRole: UserRole | null, nextRole: UserRole): boolean => {
+  if (actorRole === 'superadmin') return true;
+  if (actorRole === 'admin') return nextRole === 'user' || nextRole === 'employee';
+  return false;
+};
 
 export const AdminUserManagement: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const { user: currentUser, role: currentRole } = useAuth();
 
   const fetchUsers = async () => {
     try {
@@ -35,13 +51,28 @@ export const AdminUserManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  const handleRoleChange = async (targetUser: Profile, newRole: UserRole) => {
+    if (targetUser.id === currentUser?.id) {
+      toast.error('You cannot change your own role while signed in.');
+      return;
+    }
+
+    if (!canManageTargetRole(currentRole, targetUser.role)) {
+      toast.error('You do not have permission to modify this user.');
+      return;
+    }
+
+    if (!canAssignRole(currentRole, newRole)) {
+      toast.error('You do not have permission to assign this role.');
+      return;
+    }
+
     const toastId = startDbChangeToast(`Updating role to ${newRole}...`);
     try {
       const { error } = await supabase!
         .from('profiles')
         .update({ role: newRole })
-        .eq('id', userId);
+        .eq('id', targetUser.id);
       
       if (error) throw error;
       resolveDbChangeToast(toastId, 'Role updated successfully');
@@ -86,15 +117,29 @@ export const AdminUserManagement: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-6 py-4 rounded-r-2xl text-right">
+                  {user.id === currentUser?.id && (
+                    <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">
+                      Current account
+                    </div>
+                  )}
                   <select 
                     className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
                     value={user.role}
-                    onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                    onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
+                    disabled={
+                      user.id === currentUser?.id ||
+                      !canManageTargetRole(currentRole, user.role)
+                    }
                   >
-                    <option value="user">User</option>
-                    <option value="employee">Employee</option>
-                    <option value="admin">Admin</option>
-                    <option value="superadmin">SuperAdmin</option>
+                    {ROLE_OPTIONS.map((roleOption) => (
+                      <option
+                        key={roleOption}
+                        value={roleOption}
+                        disabled={!canAssignRole(currentRole, roleOption)}
+                      >
+                        {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
+                      </option>
+                    ))}
                   </select>
                 </td>
               </tr>
