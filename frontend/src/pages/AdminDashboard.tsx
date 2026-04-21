@@ -8,6 +8,7 @@ import { useAuth } from '../modules/auth/AuthContext';
 import { parseBooleanSetting, SITE_SETTING_KEYS } from '../lib/systemSettings';
 
 const StoryForm = lazy(() => import('../components/StoryForm').then((m) => ({ default: m.StoryForm })));
+const StoryManagementTab = lazy(() => import('../components/StoryManagementTab').then((m) => ({ default: m.StoryManagementTab })));
 const ChapterForm = lazy(() => import('../components/ChapterForm').then((m) => ({ default: m.ChapterForm })));
 const AdManager = lazy(() => import('../components/AdManager').then((m) => ({ default: m.AdManager })));
 const UserProfileTab = lazy(() => import('../components/UserProfileTab').then((m) => ({ default: m.UserProfileTab })));
@@ -30,6 +31,7 @@ type AdminTabId =
 
 const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   create_story: () => import('../components/StoryForm'),
+  stories: () => import('../components/StoryManagementTab'),
   create_chapter: () => import('../components/ChapterForm'),
   ads: () => import('../components/AdManager'),
   profile: () => import('../components/UserProfileTab'),
@@ -282,13 +284,11 @@ const AdminDashboardContent: React.FC<{
         </Suspense>
       )}
 
-        {activeTab === 'stories' && (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-            <div className="text-6xl">🚧</div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Under Construction</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">This module is currently being refactored to support the new RBAC architecture.</p>
-          </div>
-        )}
+      {activeTab === 'stories' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <StoryManagementTab />
+        </Suspense>
+      )}
     </AdminLayout>
   );
 };

@@ -5,6 +5,7 @@ import { SupabaseStoryRepository } from "../infrastructure/repositories/Supabase
 import { Chapter, Story } from "../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/errorUtils";
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../lib/dbChangeToast";
 import {
   Save,
   BookOpen,
@@ -44,9 +45,14 @@ export const ChapterForm: React.FC = () => {
   const mutation = useMutation({
     mutationFn: (newChapter: Partial<Chapter>) =>
       chapterRepo.saveChapter(newChapter),
-    onSuccess: () => {
+    onMutate: (newChapter) => {
+      const title = newChapter.title?.trim() || 'new chapter';
+      const toastId = startDbChangeToast(`Creating \"${title}\"...`);
+      return { toastId };
+    },
+    onSuccess: (_data, _variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
-      toast.success("New chapter created successfully!");
+      resolveDbChangeToast(context?.toastId, "Chapter created successfully");
       setFormData((prev) => ({
         ...prev,
         chapter_number: (prev.chapter_number || 1) + 1,
@@ -54,8 +60,8 @@ export const ChapterForm: React.FC = () => {
         content: "",
       }));
     },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error, "save_chapter"));
+    onError: (error: any, _variables, context) => {
+      rejectDbChangeToast(context?.toastId, error, "save_chapter");
     },
   });
 
