@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
 import { SupabaseTaxonomyRepository } from "../infrastructure/repositories/SupabaseTaxonomyRepository";
+import { useAuth } from "../modules/auth/AuthContext";
 import { Story } from "../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/errorUtils";
@@ -21,6 +22,8 @@ import {
 
 export const StoryForm: React.FC = () => {
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const canManageStories = role === 'superadmin' || role === 'admin';
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string>("");
   const [fileInputKey, setFileInputKey] = useState(0);
@@ -331,7 +334,7 @@ export const StoryForm: React.FC = () => {
             <div className="md:col-span-2 pt-4">
               <button
                 type="submit"
-                disabled={mutation.isPending}
+                disabled={mutation.isPending || !canManageStories}
                 className="w-full bg-slate-900 dark:bg-cyan-400 py-5 rounded-3xl text-white dark:text-slate-950 font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
                 {mutation.isPending ? (

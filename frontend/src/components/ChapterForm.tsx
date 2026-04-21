@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SupabaseChapterRepository } from "../infrastructure/repositories/SupabaseChapterRepository";
 import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
+import { useAuth } from "../modules/auth/AuthContext";
 import { Chapter, Story } from "../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../lib/errorUtils";
@@ -16,6 +17,8 @@ import {
 
 export const ChapterForm: React.FC = () => {
   const queryClient = useQueryClient();
+  const { role } = useAuth();
+  const canManageChapters = role === 'superadmin' || role === 'admin';
   const [stories, setStories] = useState<Story[]>([]);
   const [formData, setFormData] = useState<Partial<Chapter>>({
     story_id: "",
@@ -172,7 +175,7 @@ export const ChapterForm: React.FC = () => {
             <div className="md:col-span-2 pt-4">
               <button
                 type="submit"
-                disabled={mutation.isPending || stories.length === 0}
+                disabled={mutation.isPending || stories.length === 0 || !canManageChapters}
                 className="w-full bg-slate-900 dark:bg-cyan-400 py-5 rounded-3xl text-white dark:text-slate-950 font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
                 {mutation.isPending ? (
