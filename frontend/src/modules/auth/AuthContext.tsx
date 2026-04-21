@@ -52,6 +52,8 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<void>;
   signOut: () => Promise<void>;
   register: (
     email: string,
@@ -80,18 +82,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user);
+      if (session?.user) await fetchProfile(session.user);
       else setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user);
+      if (session?.user) await fetchProfile(session.user);
       else {
         setProfile(null);
         setLoading(false);
@@ -101,9 +103,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => subscription.unsubscribe();
   }, []);
 
+  const ensureProfileExists = async (authUser: User) => {
+    if (!supabase) return;
+
+    await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: authUser.id,
+          email: authUser.email ?? "",
+          full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+          avatar_url: authUser.user_metadata?.avatar_url ?? null,
+          role: "user",
+        },
+        {
+          onConflict: "id",
+          ignoreDuplicates: true,
+        },
+      );
+  };
+
   const fetchProfile = async (authUser: User) => {
     if (!supabase) return;
     try {
+      await ensureProfileExists(authUser);
+
       const { data, error } = await supabase
         .from("profiles")
         .select(PROFILE_SELECT)
@@ -170,6 +194,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       toast.error(getErrorMessage(error));
       throw error;
     }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    if (!supabase) return;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+
+    if (error) {
+      toast.error(getErrorMessage(error));
+      throw error;
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    if (!supabase) return;
+
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      toast.error(getErrorMessage(error));
+      throw error;
+    }
+
+    toast.success("Password updated successfully");
   };
 
   const signOut = async () => {
@@ -259,6 +309,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         signIn,
         signInWithEmail,
         signInWithPassword,
+        sendPasswordReset,
+        updatePassword,
         signOut,
         register,
         updateProfile,

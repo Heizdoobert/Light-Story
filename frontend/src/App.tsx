@@ -20,6 +20,7 @@ const BadRequestPage = lazy(() => import('./pages/BadRequestPage').then(m => ({ 
 const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage').then(m => ({ default: m.UnauthorizedPage })));
 const ForbiddenPage = lazy(() => import('./pages/ForbiddenPage').then(m => ({ default: m.ForbiddenPage })));
 const ServiceUnavailablePage = lazy(() => import('./pages/ServiceUnavailablePage').then(m => ({ default: m.ServiceUnavailablePage })));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ export default function App() {
                   <Route path="/403" element={<ForbiddenPage />} />
                   <Route path="/404" element={<NotFoundPage />} />
                   <Route path="/503" element={<ServiceUnavailablePage />} />
+                  <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
                   <Route path="/unauthorized" element={<UnauthorizedPage />} />
                   <Route path="/forbidden" element={<ForbiddenPage />} />
                   <Route 
