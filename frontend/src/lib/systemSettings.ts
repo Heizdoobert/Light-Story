@@ -1,14 +1,18 @@
 // Centralized keys, defaults, and parsers for system settings persisted in site_settings.
 import { UserRole } from '../modules/auth/AuthContext';
+import { ADMIN_MENU_IDS, AdminMenuId } from './adminNavigation';
 
 export const SITE_SETTING_KEYS = {
   uiCompactMode: 'ui_compact_mode',
   uiShowSyncBadge: 'ui_show_sync_badge',
   dashboardTabVisibility: 'dashboard_tab_visibility',
+  sidebarMenuVisibility: 'sidebar_menu_visibility',
 } as const;
 
 export const DASHBOARD_CONFIGURABLE_TABS = [
   'dashboard',
+  'operations',
+  'operations_data',
   'create_story',
   'stories',
   'create_chapter',
@@ -22,15 +26,27 @@ export type DashboardTabId = (typeof DASHBOARD_CONFIGURABLE_TABS)[number];
 
 export type DashboardTabVisibility = Record<UserRole, DashboardTabId[]>;
 
+export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
+
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],
-  admin: ['dashboard', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile'],
-  employee: ['dashboard', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile'],
+  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile'],
   user: ['dashboard', 'stories', 'profile'],
+};
+
+export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
+  superadmin: [...ADMIN_MENU_IDS],
+  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile'],
+  user: [],
 };
 
 const isDashboardTabId = (value: string): value is DashboardTabId =>
   (DASHBOARD_CONFIGURABLE_TABS as readonly string[]).includes(value);
+
+const isAdminMenuId = (value: string): value is AdminMenuId =>
+  (ADMIN_MENU_IDS as readonly string[]).includes(value);
 
 const tryParseJson = (value: unknown): unknown => {
   let next: unknown = value;
@@ -93,6 +109,37 @@ export const parseDashboardTabVisibility = (
   return next;
 };
 
+export const parseSidebarMenuVisibility = (
+  raw: unknown,
+  fallback: SidebarMenuVisibility = DEFAULT_SIDEBAR_MENU_VISIBILITY,
+): SidebarMenuVisibility => {
+  const parsed = tryParseJson(raw);
+  if (!parsed || typeof parsed !== 'object') return fallback;
+
+  const source = parsed as Record<string, unknown>;
+  const next: SidebarMenuVisibility = {
+    superadmin: [...fallback.superadmin],
+    admin: [...fallback.admin],
+    employee: [...fallback.employee],
+    user: [...fallback.user],
+  };
+
+  (['superadmin', 'admin', 'employee', 'user'] as const).forEach((role) => {
+    const incoming = source[role];
+    if (!Array.isArray(incoming)) return;
+
+    const filtered = incoming
+      .map((item) => String(item))
+      .filter(isAdminMenuId);
+
+    if (filtered.length > 0) {
+      next[role] = filtered;
+    }
+  });
+
+  return next;
+};
+
 export const getRoleVisibleTabs = (
   visibility: DashboardTabVisibility,
   role: keyof DashboardTabVisibility,
@@ -113,4 +160,13 @@ export const isDashboardTabVisibleForRole = (
 ): boolean => {
   if (role === 'superadmin') return true;
   return visibility[role]?.includes(tabId as DashboardTabId) ?? false;
+};
+
+export const isAdminMenuVisibleForRole = (
+  menuId: string,
+  role: UserRole,
+  visibility: SidebarMenuVisibility,
+): boolean => {
+  if (role === 'superadmin') return true;
+  return visibility[role]?.includes(menuId as AdminMenuId) ?? false;
 };

@@ -42,6 +42,13 @@ The app also accepts `NEXT_PUBLIC_*` keys for compatibility, but `VITE_*` is the
 - Role-based admin access for `superadmin`, `admin`, and `employee` with route guards.
 - Admin user-role operations are hardened to prevent unsafe role transitions and self-role edits.
 
+### Admin Operations
+
+- Operations center for core content, user, commerce, analytics, and system workflows.
+- Operations data tab to validate backend admin tables and row counts in real time.
+- Menu visibility controls for role-based sidebar configuration.
+- System settings backup and restore for the settings surface managed in the UI.
+
 ## Backend
 
 Location: `backend-supabase/supabase/`
@@ -56,6 +63,12 @@ Contains:
 Current baseline migration:
 
 - `backend-supabase/supabase/migrations/202604200001_mvp_init.sql`
+
+Recent operations migration:
+
+- `backend-supabase/supabase/migrations/20260421074259_admin_operations_schema.sql`
+  - Adds collections, moderation queue, crawler sources/runs, VIP plans/subscriptions,
+    promotions/events, transactions, comments/ratings, and revenue snapshots.
 
 Suggested verification scope:
 

@@ -1,6 +1,6 @@
 {
   "name": "Lightweight Story Reader",
-  "description": "A lightweight, high-performance story platform with end-to-end authentication (password, OAuth, magic link, reset flow) and role-based admin dashboard.",
+  "description": "A lightweight, high-performance story platform with secure auth, role-based admin controls, operations center, operations-data backend scaffolding, and system backup/restore workflows.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
