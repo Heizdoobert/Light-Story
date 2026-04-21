@@ -40,12 +40,66 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onTabPrefetch?: (tab: string) => void;
 }
+
+const menuItems = [
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    icon: LayoutDashboard,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "create_story",
+    label: "Create Story",
+    icon: PlusCircle,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "stories",
+    label: "Stories",
+    icon: BookOpen,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "categories",
+    label: "Categories",
+    icon: Library,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "authors",
+    label: "Authors",
+    icon: PenSquare,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  { id: "users", label: "Users", icon: Users, roles: ["superadmin"] },
+  {
+    id: "ads",
+    label: "Ads & Revenue",
+    icon: DollarSign,
+    roles: ["superadmin", "admin"],
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    roles: ["superadmin"],
+  },
+  {
+    id: "profile",
+    label: "My Profile",
+    icon: User,
+    roles: ["superadmin", "admin", "employee"],
+  },
+] as const;
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
   activeTab,
   onTabChange,
+  onTabPrefetch,
 }) => {
   const { profile, role, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -53,6 +107,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const tabVisibilityQuery = useQuery({
     queryKey: ["site_settings", SITE_SETTING_KEYS.dashboardTabVisibility],
+    staleTime: 60_000,
+    gcTime: 300_000,
     queryFn: async () => {
       if (!supabase) return DEFAULT_DASHBOARD_TAB_VISIBILITY;
 
@@ -73,58 +129,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       }
     },
   });
-
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      roles: ["superadmin", "admin", "employee"],
-    },
-    {
-      id: "create_story",
-      label: "Create Story",
-      icon: PlusCircle,
-      roles: ["superadmin", "admin", "employee"],
-    },
-    {
-      id: "stories",
-      label: "Stories",
-      icon: BookOpen,
-      roles: ["superadmin", "admin", "employee"],
-    },
-    {
-      id: "categories",
-      label: "Categories",
-      icon: Library,
-      roles: ["superadmin", "admin", "employee"],
-    },
-    {
-      id: "authors",
-      label: "Authors",
-      icon: PenSquare,
-      roles: ["superadmin", "admin", "employee"],
-    },
-    { id: "users", label: "Users", icon: Users, roles: ["superadmin"] },
-    {
-      id: "ads",
-      label: "Ads & Revenue",
-      icon: DollarSign,
-      roles: ["superadmin", "admin"],
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: Settings,
-      roles: ["superadmin"],
-    },
-    {
-      id: "profile",
-      label: "My Profile",
-      icon: User,
-      roles: ["superadmin", "admin", "employee"],
-    },
-  ];
 
   const filteredMenu = menuItems.filter(
     (item) => {
@@ -191,6 +195,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
+              onMouseEnter={() => onTabPrefetch?.(item.id)}
+              onFocus={() => onTabPrefetch?.(item.id)}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 activeTab === item.id
                   ? "bg-slate-900 text-slate-50 shadow-lg shadow-slate-950/30 dark:bg-slate-800 dark:text-white dark:shadow-black/30"
