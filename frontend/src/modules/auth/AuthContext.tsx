@@ -76,31 +76,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isActive = true;
+
     if (!supabase) {
       setLoading(false);
       return;
     }
 
-    // Initial session check
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) await fetchProfile(session.user);
-      else setLoading(false);
-    });
+    // Safety release in case auth/profile calls stall unexpectedly.
+    const loadingFallback = window.setTimeout(() => {
+      if (isActive) setLoading(false);
+    }, 12000);
+
+    const bootstrapAuth = async () => {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!isActive) return;
+
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          await fetchProfile(session.user);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error restoring auth session:", error);
+        if (!isActive) return;
+        setUser(null);
+        setProfile(null);
+        setLoading(false);
+      }
+    };
+
+    void bootstrapAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isActive) return;
+
       setUser(session?.user ?? null);
-      if (session?.user) await fetchProfile(session.user);
-      else {
+
+      if (session?.user) {
+        void fetchProfile(session.user);
+      } else {
         setProfile(null);
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isActive = false;
+      window.clearTimeout(loadingFallback);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const ensureProfileExists = async (authUser: User) => {
@@ -124,7 +157,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const fetchProfile = async (authUser: User) => {
-    if (!supabase) return;
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
     try {
       await ensureProfileExists(authUser);
 
