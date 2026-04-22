@@ -3,6 +3,7 @@ import { UserRole } from '../modules/auth/AuthContext';
 
 export type AdminMenuId =
   | 'dashboard'
+  | 'audit_logs'
   | 'operations_data'
   | 'create_story'
   | 'stories'
@@ -27,6 +28,12 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     roles: ['superadmin', 'admin', 'employee'],
+  },
+  {
+    id: 'audit_logs',
+    label: 'Audit Logs',
+    icon: Database,
+    roles: ['superadmin'],
   },
   {
     id: 'operations',

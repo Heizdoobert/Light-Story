@@ -84,12 +84,12 @@ export const OperationsDataTab: React.FC = () => {
       const tableNames = DATA_GROUPS.flatMap((group) => group.tables.map((item) => item.table));
       const results = await Promise.all(
         tableNames.map(async (tableName) => {
-          const { count, error } = await supabase.from(tableName).select('id', { count: 'exact', head: true });
+          const { count, error } = await supabase.from(tableName).select('created_at', { count: 'exact' });
           return [
             tableName,
             {
               count: error ? null : (count ?? 0),
-              error: error ? 'Table unavailable or blocked by policy' : null,
+              error: error ? error.message : null,
             } satisfies TableStatus,
           ] as const;
         }),
