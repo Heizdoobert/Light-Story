@@ -11,6 +11,7 @@ export const SITE_SETTING_KEYS = {
 
 export const DASHBOARD_CONFIGURABLE_TABS = [
   'dashboard',
+  'audit_logs',
   'operations',
   'operations_data',
   'create_story',

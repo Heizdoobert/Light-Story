@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
-import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
 import { useAuth, UserRole } from '../modules/auth/AuthContext';
 
@@ -13,22 +12,30 @@ interface Profile {
 }
 
 const ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
+const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin'];
 
-const canManageTargetRole = (actorRole: UserRole | null, targetRole: UserRole): boolean => {
+const canManageTargetRole = (actorRole: UserRole | null): boolean => {
   if (actorRole === 'superadmin') return true;
-  if (actorRole === 'admin') return targetRole === 'user' || targetRole === 'employee';
   return false;
 };
 
 const canAssignRole = (actorRole: UserRole | null, nextRole: UserRole): boolean => {
   if (actorRole === 'superadmin') return true;
-  if (actorRole === 'admin') return nextRole === 'user' || nextRole === 'employee';
   return false;
 };
 
 export const AdminUserManagement: React.FC = () => {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingNameUserId, setEditingNameUserId] = useState<string | null>(null);
+  const [editingNameValue, setEditingNameValue] = useState('');
+  const [savingNameId, setSavingNameId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserFullName, setNewUserFullName] = useState('');
+  const [newUserRole, setNewUserRole] = useState<UserRole>('user');
+  const [creatingUser, setCreatingUser] = useState(false);
   const { user: currentUser, role: currentRole } = useAuth();
 
   const fetchUsers = async () => {
@@ -57,7 +64,7 @@ export const AdminUserManagement: React.FC = () => {
       return;
     }
 
-    if (!canManageTargetRole(currentRole, targetUser.role)) {
+    if (!canManageTargetRole(currentRole)) {
       toast.error('You do not have permission to modify this user.');
       return;
     }
@@ -82,14 +89,174 @@ export const AdminUserManagement: React.FC = () => {
     }
   };
 
+  const startNameEdit = (targetUser: Profile) => {
+    setEditingNameUserId(targetUser.id);
+    setEditingNameValue(targetUser.full_name || '');
+  };
+
+  const cancelNameEdit = () => {
+    setEditingNameUserId(null);
+    setEditingNameValue('');
+  };
+
+  const handleNameSave = async (targetUser: Profile) => {
+    if (currentRole !== 'superadmin') {
+      toast.error('Only superadmin can update user profiles.');
+      return;
+    }
+
+    setSavingNameId(targetUser.id);
+    const toastId = startDbChangeToast('Updating user profile...');
+    try {
+      const { error } = await supabase!
+        .from('profiles')
+        .update({ full_name: editingNameValue.trim() || null })
+        .eq('id', targetUser.id);
+
+      if (error) throw error;
+      resolveDbChangeToast(toastId, 'User profile updated successfully');
+      cancelNameEdit();
+      fetchUsers();
+    } catch (error: any) {
+      rejectDbChangeToast(toastId, error);
+    } finally {
+      setSavingNameId(null);
+    }
+  };
+
+  const handleDeleteUser = async (targetUser: Profile) => {
+    if (currentRole !== 'superadmin') {
+      toast.error('Only superadmin can delete users.');
+      return;
+    }
+
+    if (targetUser.id === currentUser?.id) {
+      toast.error('You cannot delete your current account.');
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete user ${targetUser.email}? This removes the auth account and profile.`);
+    if (!confirmed) return;
+
+    setDeletingUserId(targetUser.id);
+    const toastId = startDbChangeToast('Deleting user profile...');
+    try {
+      const { data, error } = await supabase!.functions.invoke('manage-user', {
+        body: {
+          action: 'delete',
+          userId: targetUser.id,
+          targetEmail: targetUser.email,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
+
+      resolveDbChangeToast(toastId, 'User deleted successfully');
+      fetchUsers();
+    } catch (error: any) {
+      rejectDbChangeToast(toastId, error);
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (currentRole !== 'superadmin') {
+      toast.error('Only superadmin can create users.');
+      return;
+    }
+
+    const email = newUserEmail.trim();
+    const password = newUserPassword.trim();
+    if (!email || !password) {
+      toast.error('Email and password are required.');
+      return;
+    }
+
+    setCreatingUser(true);
+    const toastId = startDbChangeToast(`Creating user ${email}...`);
+    try {
+      const { data, error } = await supabase!.functions.invoke('manage-user', {
+        body: {
+          action: 'create',
+          email,
+          password,
+          fullName: newUserFullName.trim() || null,
+          role: newUserRole,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(String(data.error));
+
+      resolveDbChangeToast(toastId, 'User created successfully');
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserFullName('');
+      setNewUserRole('user');
+      fetchUsers();
+    } catch (error: any) {
+      rejectDbChangeToast(toastId, error);
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   if (loading) return <div>Loading users...</div>;
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">User Management</h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage system roles and permissions</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage user profiles and roles (superadmin only).</p>
       </header>
+
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Create User</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input
+            type="email"
+            value={newUserEmail}
+            onChange={(e) => setNewUserEmail(e.target.value)}
+            placeholder="Email"
+            className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-bold"
+          />
+          <input
+            type="password"
+            value={newUserPassword}
+            onChange={(e) => setNewUserPassword(e.target.value)}
+            placeholder="Password"
+            className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-bold"
+          />
+          <input
+            type="text"
+            value={newUserFullName}
+            onChange={(e) => setNewUserFullName(e.target.value)}
+            placeholder="Full name (optional)"
+            className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-bold"
+          />
+          <select
+            value={newUserRole}
+            onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+            className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-bold"
+          >
+            {CREATE_ROLE_OPTIONS.map((roleOption) => (
+              <option key={roleOption} value={roleOption}>
+                {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          onClick={handleCreateUser}
+          disabled={currentRole !== 'superadmin' || creatingUser || !newUserEmail.trim() || !newUserPassword.trim()}
+          className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2.5 text-sm font-bold disabled:opacity-50"
+        >
+          {creatingUser ? 'Creating...' : 'Create User'}
+        </button>
+      </div>
 
       <div className="glass-panel rounded-3xl overflow-hidden shadow-sm dark:bg-slate-900/40 dark:border-slate-800">
         <table className="w-full text-sm text-left border-separate border-spacing-y-2 px-4">
@@ -104,7 +271,36 @@ export const AdminUserManagement: React.FC = () => {
             {users.map((user) => (
               <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
                 <td className="px-6 py-4 rounded-l-2xl">
-                  <div className="font-bold text-slate-900 dark:text-slate-200">{user.full_name || 'No Name'}</div>
+                  {editingNameUserId === user.id ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editingNameValue}
+                        onChange={(e) => setEditingNameValue(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-sm font-bold text-slate-900 dark:text-slate-200"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleNameSave(user)}
+                          disabled={savingNameId === user.id || currentRole !== 'superadmin'}
+                          className="rounded-lg bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelNameEdit}
+                          disabled={savingNameId === user.id}
+                          className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="font-bold text-slate-900 dark:text-slate-200">{user.full_name || 'No Name'}</div>
+                  )}
                   <div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div>
                 </td>
                 <td className="px-6 py-4">
@@ -122,25 +318,47 @@ export const AdminUserManagement: React.FC = () => {
                       Current account
                     </div>
                   )}
-                  <select 
-                    className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
-                    value={user.role}
-                    onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
-                    disabled={
-                      user.id === currentUser?.id ||
-                      !canManageTargetRole(currentRole, user.role)
-                    }
-                  >
-                    {ROLE_OPTIONS.map((roleOption) => (
-                      <option
-                        key={roleOption}
-                        value={roleOption}
-                        disabled={!canAssignRole(currentRole, roleOption)}
-                      >
-                        {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startNameEdit(user)}
+                      disabled={currentRole !== 'superadmin' || editingNameUserId === user.id}
+                      className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUser(user)}
+                      disabled={
+                        currentRole !== 'superadmin' ||
+                        user.id === currentUser?.id ||
+                        deletingUserId === user.id
+                      }
+                      className="rounded-lg border border-red-300 text-red-600 dark:border-red-700 dark:text-red-300 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                    <select
+                      className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
+                      disabled={
+                        user.id === currentUser?.id ||
+                        !canManageTargetRole(currentRole)
+                      }
+                    >
+                      {ROLE_OPTIONS.map((roleOption) => (
+                        <option
+                          key={roleOption}
+                          value={roleOption}
+                          disabled={!canAssignRole(currentRole, roleOption)}
+                        >
+                          {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -12,3 +12,4 @@ backend-supabase/supabase/.temp/
 .vscode/
 .claude/
 docs/
+.grapuco/

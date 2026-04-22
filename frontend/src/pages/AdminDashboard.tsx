@@ -18,9 +18,11 @@ const SystemSettingsTab = lazy(() => import('../components/SystemSettingsTab').t
 const AdminUserManagement = lazy(() => import('../components/AdminUserManagement').then((m) => ({ default: m.AdminUserManagement })));
 const OperationsCenterTab = lazy(() => import('../components/OperationsCenterTab').then((m) => ({ default: m.OperationsCenterTab })));
 const OperationsDataTab = lazy(() => import('../components/OperationsDataTab').then((m) => ({ default: m.OperationsDataTab })));
+const AdminAuditLogsTab = lazy(() => import('../components/AdminAuditLogsTab').then((m) => ({ default: m.AdminAuditLogsTab })));
 
 type AdminTabId =
   | 'dashboard'
+  | 'audit_logs'
   | 'operations_data'
   | 'create_story'
   | 'stories'
@@ -43,6 +45,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   authors: () => import('../components/AuthorManagementTab'),
   settings: () => import('../components/SystemSettingsTab'),
   users: () => import('../components/AdminUserManagement'),
+  audit_logs: () => import('../components/AdminAuditLogsTab'),
   operations: () => import('../components/OperationsCenterTab'),
   operations_data: () => import('../components/OperationsDataTab'),
 };
@@ -299,6 +302,12 @@ const AdminDashboardContent: React.FC<{
       {activeTab === 'users' && role === 'superadmin' && (
         <Suspense fallback={<TabLoadingFallback />}>
           <AdminUserManagement />
+        </Suspense>
+      )}
+
+      {activeTab === 'audit_logs' && role === 'superadmin' && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <AdminAuditLogsTab />
         </Suspense>
       )}
 
