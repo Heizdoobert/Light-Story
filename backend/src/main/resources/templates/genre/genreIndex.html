@@ -1,0 +1,42 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Quản Lý Thể Loại</title>
+  </head>
+  <body>
+    <h2>QUẢN LÝ THỂ LOẠI</h2>
+    <hr />
+    <p>
+      <a th:href="@{/AdminHome/genres/add}">➕ Thêm thể loại mới</a> |
+      <a th:href="@{/AdminHome}">⬅ Quay lại</a>
+    </p>
+    <table border="1" cellpadding="10" cellspacing="0">
+      <thead>
+        <tr style="background-color: #f2f2f2">
+          <th>ID</th>
+          <th>Tên Thể Loại</th>
+          <th>Hành Động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="g : ${genres}">
+          <td th:text="${g.id}"></td>
+          <td th:text="${g.name}" style="font-weight: bold"></td>
+          <td>
+            <a th:href="@{/AdminHome/genres/edit/{id}(id=${g.id})}">Sửa</a> |
+            <a
+              th:href="@{/AdminHome/genres/delete/{id}(id=${g.id})}"
+              onclick="
+                return confirm(
+                  'Xóa thể loại này có thể ảnh hưởng đến các truyện đang thuộc thể loại này. Bạn chắc chứ?',
+                );
+              "
+              >Xóa</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

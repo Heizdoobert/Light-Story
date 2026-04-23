@@ -1,0 +1,34 @@
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title th:text="${pageTitle}"></title>
+  </head>
+  <body>
+    <h2 th:text="${pageTitle}"></h2>
+    <hr />
+    <div
+      th:if="${errorMessage}"
+      style="color: red; margin-bottom: 15px"
+      th:text="${errorMessage}"
+    ></div>
+
+    <form
+      th:action="@{/AdminHome/genres/save}"
+      th:object="${genre}"
+      method="post"
+    >
+      <input type="hidden" th:field="*{id}" />
+      <label>Tên thể loại:</label>
+      <input
+        type="text"
+        th:field="*{name}"
+        required
+        placeholder="Ví dụ: Tiên Hiệp, Trinh Thám..."
+      />
+      <br /><br />
+      <button type="submit">Lưu lại</button>
+      <a th:href="@{/AdminHome/genres}">Hủy bỏ</a>
+    </form>
+  </body>
+</html>

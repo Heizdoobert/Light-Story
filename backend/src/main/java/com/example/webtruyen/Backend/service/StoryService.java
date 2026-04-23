@@ -3,6 +3,7 @@ package com.example.webtruyen.Backend.service;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.webtruyen.Backend.model.Story;
@@ -14,7 +15,7 @@ public class StoryService {
     private StoryRepository storyRepository;
 
     public List<Story> getAllStories() {
-        return storyRepository.findAll();
+        return storyRepository.findAll(Sort.by(Sort.Direction.DESC,"updatedAt"));
     }
 
     public Story createStory(Story story) {
@@ -44,6 +45,7 @@ public class StoryService {
     public void deleteStory(Long id) {
         storyRepository.deleteById(id);
     }
+    
     public List<Story> searchStories(String keyword) {
         if (keyword != null && !keyword.trim().isEmpty()) {
             return storyRepository.searchByKeyword(keyword.trim());

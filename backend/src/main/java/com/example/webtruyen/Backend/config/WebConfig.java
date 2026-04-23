@@ -14,7 +14,6 @@ public class WebConfig implements WebMvcConfigurer {
         Path uploadDir = Paths.get("img");
         String uploadPath = uploadDir.toFile().getAbsolutePath();
 
-        // Mở đường dẫn web trỏ vào thư mục thực tế
         registry.addResourceHandler("/img/**")
                 .addResourceLocations("file:/" + uploadPath + "/");
     }
