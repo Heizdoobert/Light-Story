@@ -12,7 +12,7 @@ interface Profile {
 }
 
 const ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
-const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin'];
+const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
 
 const canManageTargetRole = (actorRole: UserRole | null): boolean => {
   if (actorRole === 'superadmin') return true;
@@ -37,6 +37,51 @@ export const AdminUserManagement: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState<UserRole>('user');
   const [creatingUser, setCreatingUser] = useState(false);
   const { user: currentUser, role: currentRole } = useAuth();
+
+  const invokeManageUser = async (body: Record<string, unknown>) => {
+    if (!supabase) {
+      throw new Error('Supabase client is unavailable');
+    }
+
+    const { error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw sessionError;
+
+    const accessToken = sessionData.session?.access_token;
+    if (!accessToken) {
+      throw new Error('Your session has expired. Please sign in again.');
+    }
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase credentials are not configured.');
+    }
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/manage-user`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: supabaseKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        data,
+        error: new Error(data?.error ?? `Request failed with status ${response.status}`),
+      };
+    }
+
+    return { data, error: null };
+  };
 
   const fetchUsers = async () => {
     try {
@@ -141,12 +186,10 @@ export const AdminUserManagement: React.FC = () => {
     setDeletingUserId(targetUser.id);
     const toastId = startDbChangeToast('Deleting user profile...');
     try {
-      const { data, error } = await supabase!.functions.invoke('manage-user', {
-        body: {
-          action: 'delete',
-          userId: targetUser.id,
-          targetEmail: targetUser.email,
-        },
+      const { data, error } = await invokeManageUser({
+        action: 'delete',
+        userId: targetUser.id,
+        targetEmail: targetUser.email,
       });
 
       if (error) throw error;
@@ -177,14 +220,12 @@ export const AdminUserManagement: React.FC = () => {
     setCreatingUser(true);
     const toastId = startDbChangeToast(`Creating user ${email}...`);
     try {
-      const { data, error } = await supabase!.functions.invoke('manage-user', {
-        body: {
-          action: 'create',
-          email,
-          password,
-          fullName: newUserFullName.trim() || null,
-          role: newUserRole,
-        },
+      const { data, error } = await invokeManageUser({
+        action: 'create',
+        email,
+        password,
+        fullName: newUserFullName.trim() || null,
+        role: newUserRole,
       });
 
       if (error) throw error;

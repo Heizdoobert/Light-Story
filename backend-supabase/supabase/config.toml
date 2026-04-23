@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.manage-chapter]
 verify_jwt = false
+
+[functions.manage-user]
+verify_jwt = false
