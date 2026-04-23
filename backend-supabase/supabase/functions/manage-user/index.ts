@@ -82,133 +82,161 @@ async function verifySupabaseRequestUser(
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
-
-  if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
-  }
-
-  if (!supabaseUrl || !serviceRoleKey) {
-    return jsonResponse({ error: "Missing Supabase environment configuration" }, 500);
-  }
-
-  const payload = await req.json().catch(() => null);
-  const action = payload?.action;
-
-  if (action !== "create" && action !== "delete") {
-    return jsonResponse({ error: "action must be one of: create, delete" }, 400);
-  }
-
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
-  let verifiedUser;
-
   try {
-    verifiedUser = await verifySupabaseRequestUser(supabase, req);
-  } catch (error) {
-    return jsonResponse({ error: error instanceof Error ? error.message : "Unauthorized" }, 401);
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", verifiedUser.userId)
-    .single();
-
-  if (profileError) {
-    return jsonResponse({ error: "Unable to load user profile" }, 403);
-  }
-
-  if (profile?.role !== "superadmin") {
-    return jsonResponse({ error: "Forbidden" }, 403);
-  }
-
-  if (action === "create") {
-    const email = payload?.email;
-    const password = payload?.password;
-    const role = payload?.role;
-    const fullName = payload?.fullName;
-
-    if (typeof email !== "string" || !email.trim()) {
-      return jsonResponse({ error: "email is required" }, 400);
+    if (req.method === "OPTIONS") {
+      return new Response("ok", { headers: corsHeaders });
     }
 
-    if (typeof password !== "string" || password.trim().length < 6) {
-      return jsonResponse({ error: "password must be at least 6 characters" }, 400);
+    if (req.method !== "POST") {
+      return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
-    if (!isValidRole(role)) {
-      return jsonResponse({ error: "invalid role" }, 400);
+    if (!supabaseUrl || !serviceRoleKey) {
+      return jsonResponse({ error: "Missing Supabase environment configuration" }, 500);
     }
 
-    if (!isCreatableRole(role)) {
-      return jsonResponse({ error: "invalid role" }, 400);
+    const payload = await req.json().catch(() => null);
+    const action = payload?.action;
+
+    if (action !== "create" && action !== "delete") {
+      return jsonResponse({ error: "action must be one of: create, delete" }, 400);
     }
 
-    const { data: created, error: createError } = await supabase.auth.admin.createUser({
-      email: email.trim(),
-      password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: typeof fullName === "string" ? fullName.trim() : undefined,
-      },
-    });
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    let verifiedUser;
 
-    if (createError || !created?.user?.id) {
-      return jsonResponse({ error: createError?.message ?? "Failed to create user" }, 500);
+    try {
+      verifiedUser = await verifySupabaseRequestUser(supabase, req);
+    } catch (error) {
+      return jsonResponse({ error: error instanceof Error ? error.message : "Unauthorized" }, 401);
     }
 
-    const userId = created.user.id;
-
-    const { error: profileUpsertError } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .upsert({
-        id: userId,
-        email: email.trim(),
-        full_name: typeof fullName === "string" && fullName.trim() ? fullName.trim() : null,
-        role,
-      });
+      .select("role")
+      .eq("id", verifiedUser.userId)
+      .single();
 
-    if (profileUpsertError) {
-      await supabase.auth.admin.deleteUser(userId);
-      return jsonResponse({ error: profileUpsertError.message }, 500);
+    if (profileError) {
+      return jsonResponse({ error: "Unable to load user profile" }, 403);
+    }
+
+    if (profile?.role !== "superadmin") {
+      return jsonResponse({ error: "Forbidden" }, 403);
+    }
+
+    if (action === "create") {
+      const email = payload?.email;
+      const password = payload?.password;
+      const role = payload?.role;
+      const fullName = payload?.fullName;
+
+      if (typeof email !== "string" || !email.trim()) {
+        return jsonResponse({ error: "email is required" }, 400);
+      }
+
+      if (typeof password !== "string" || password.trim().length < 6) {
+        return jsonResponse({ error: "password must be at least 6 characters" }, 400);
+      }
+
+      if (!isValidRole(role)) {
+        return jsonResponse({ error: "invalid role" }, 400);
+      }
+
+      if (!isCreatableRole(role)) {
+        return jsonResponse({ error: "invalid role" }, 400);
+      }
+
+      let created;
+      try {
+        const result = await supabase.auth.admin.createUser({
+          email: email.trim(),
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: typeof fullName === "string" ? fullName.trim() : undefined,
+          },
+        });
+        created = result.data;
+        if (result.error) {
+          console.error("manage-user createUser error:", result.error);
+          return jsonResponse({ error: `createUser failed: ${result.error.message}` }, 500);
+        }
+      } catch (error) {
+        console.error("manage-user createUser exception:", error);
+        return jsonResponse({
+          error: `createUser exception: ${error instanceof Error ? error.message : String(error)}`,
+        }, 500);
+      }
+
+      if (!created?.user?.id) {
+        return jsonResponse({ error: "createUser returned no user id" }, 500);
+      }
+
+      const userId = created.user.id;
+
+      const { error: profileUpsertError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          email: email.trim(),
+          full_name: typeof fullName === "string" && fullName.trim() ? fullName.trim() : null,
+          role,
+        });
+
+      if (profileUpsertError) {
+        console.error("manage-user profile upsert error:", profileUpsertError);
+        await supabase.auth.admin.deleteUser(userId);
+        return jsonResponse({ error: `profile upsert failed: ${profileUpsertError.message}` }, 500);
+      }
+
+      try {
+        await writeAuditLog(supabase, {
+          actorUserId: verifiedUser.userId,
+          action: "user_create",
+          targetUserId: userId,
+          targetEmail: email.trim(),
+          metadata: {
+            assignedRole: role,
+          },
+        });
+      } catch (error) {
+        console.error("manage-user audit log error:", error);
+        return jsonResponse({
+          error: `audit log failed: ${error instanceof Error ? error.message : String(error)}`,
+        }, 500);
+      }
+
+      return jsonResponse({ userId, email: email.trim(), role }, 200);
+    }
+
+    const userId = payload?.userId;
+    const targetEmail = typeof payload?.targetEmail === "string" ? payload.targetEmail.trim() : null;
+    if (typeof userId !== "string" || !userId.trim()) {
+      return jsonResponse({ error: "userId is required" }, 400);
+    }
+
+    if (userId === verifiedUser.userId) {
+      return jsonResponse({ error: "You cannot delete your own account" }, 400);
+    }
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId.trim());
+    if (deleteError) {
+      console.error("manage-user deleteUser error:", deleteError);
+      return jsonResponse({ error: deleteError.message }, 500);
     }
 
     await writeAuditLog(supabase, {
       actorUserId: verifiedUser.userId,
-      action: "user_create",
-      targetUserId: userId,
-      targetEmail: email.trim(),
-      metadata: {
-        assignedRole: role,
-      },
+      action: "user_delete",
+      targetUserId: userId.trim(),
+      targetEmail,
     });
 
-    return jsonResponse({ userId, email: email.trim(), role }, 200);
+    return jsonResponse({ deleted: true, userId: userId.trim() }, 200);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("Unhandled error in manage-user:", message, err);
+    return jsonResponse({ error: `Internal error: ${message}` }, 500);
   }
-
-  const userId = payload?.userId;
-  const targetEmail = typeof payload?.targetEmail === "string" ? payload.targetEmail.trim() : null;
-  if (typeof userId !== "string" || !userId.trim()) {
-    return jsonResponse({ error: "userId is required" }, 400);
-  }
-
-  if (userId === verifiedUser.userId) {
-    return jsonResponse({ error: "You cannot delete your own account" }, 400);
-  }
-
-  const { error: deleteError } = await supabase.auth.admin.deleteUser(userId.trim());
-  if (deleteError) {
-    return jsonResponse({ error: deleteError.message }, 500);
-  }
-
-  await writeAuditLog(supabase, {
-    actorUserId: verifiedUser.userId,
-    action: "user_delete",
-    targetUserId: userId.trim(),
-    targetEmail,
-  });
-
-  return jsonResponse({ deleted: true, userId: userId.trim() }, 200);
 });

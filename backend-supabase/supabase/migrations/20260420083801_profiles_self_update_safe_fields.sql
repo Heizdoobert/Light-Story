@@ -6,6 +6,11 @@ language plpgsql
 set search_path = public, app_private
 as $$
 begin
+	-- Edge Functions run as service_role; allow privileged sync path.
+	if current_setting('request.jwt.claim.role', true) = 'service_role' then
+		return new;
+	end if;
+
 	-- Only superadmin can modify role.
 	if new.role is distinct from old.role
 		 and not app_private.has_role(array['superadmin']::text[]) then
