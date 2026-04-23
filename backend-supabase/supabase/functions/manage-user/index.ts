@@ -2,7 +2,6 @@
 // Superadmin-only admin endpoint for creating and deleting users.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { verifySupabaseBearerToken } from "../_shared/jwt.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -24,8 +23,8 @@ function isValidRole(value: unknown): value is "superadmin" | "admin" | "employe
   return value === "superadmin" || value === "admin" || value === "employee" || value === "user";
 }
 
-function isCreatableRole(value: unknown): value is "admin" | "employee" | "user" {
-  return value === "admin" || value === "employee" || value === "user";
+function isCreatableRole(value: unknown): value is "superadmin" | "admin" | "employee" | "user" {
+  return value === "superadmin" || value === "admin" || value === "employee" || value === "user";
 }
 
 async function writeAuditLog(
@@ -49,6 +48,37 @@ async function writeAuditLog(
   } catch (_error) {
     // Audit logging should not block the primary admin operation.
   }
+}
+
+async function verifySupabaseRequestUser(
+  supabase: ReturnType<typeof createClient>,
+  request: Request,
+) {
+  const authHeader = request.headers.get("Authorization") ?? "";
+
+  if (!authHeader.startsWith("Bearer ")) {
+    throw new Error("Missing bearer token");
+  }
+
+  const token = authHeader.slice("Bearer ".length).trim();
+  if (!token) {
+    throw new Error("Invalid bearer token");
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error) {
+    throw new Error(error.message || "Unauthorized");
+  }
+
+  const userId = data.user?.id ?? "";
+  if (!userId) {
+    throw new Error("Invalid JWT payload");
+  }
+
+  return {
+    userId,
+    email: data.user?.email ?? null,
+  };
 }
 
 serve(async (req) => {
@@ -75,7 +105,7 @@ serve(async (req) => {
   let verifiedUser;
 
   try {
-    verifiedUser = await verifySupabaseBearerToken(req);
+    verifiedUser = await verifySupabaseRequestUser(supabase, req);
   } catch (error) {
     return jsonResponse({ error: error instanceof Error ? error.message : "Unauthorized" }, 401);
   }
@@ -113,7 +143,7 @@ serve(async (req) => {
     }
 
     if (!isCreatableRole(role)) {
-      return jsonResponse({ error: "superadmin cannot be created from this endpoint" }, 400);
+      return jsonResponse({ error: "invalid role" }, 400);
     }
 
     const { data: created, error: createError } = await supabase.auth.admin.createUser({
