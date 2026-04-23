@@ -71,9 +71,22 @@ export const AdminUserManagement: React.FC = () => {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json().catch(() => null);
+    const rawResponse = await response.text().catch(() => '');
+    const data = rawResponse ? (() => {
+      try {
+        return JSON.parse(rawResponse);
+      } catch {
+        return { raw: rawResponse };
+      }
+    })() : null;
 
     if (!response.ok) {
+      console.error('manage-user failed', {
+        status: response.status,
+        statusText: response.statusText,
+        rawResponse,
+        data,
+      });
       return {
         data,
         error: new Error(data?.error ?? `Request failed with status ${response.status}`),
