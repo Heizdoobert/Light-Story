@@ -1,13 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogIn, LogOut, LayoutDashboard, BookOpen, User as UserIcon } from 'lucide-react';
+import { LogIn, LogOut, LayoutDashboard, BookOpen, User as UserIcon, ChevronRight } from 'lucide-react';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/errorUtils';
 import { LoginModal } from '../shared/components/LoginModal';
+
+const STAFF_ROLES = new Set(['superadmin', 'admin', 'employee']);
+
+function isStaffRole(role: string | null | undefined): boolean {
+  return STAFF_ROLES.has(role ?? '');
+}
 
 export const HomePage: React.FC = () => {
   const [stories, setStories] = useState<Story[]>([]);
@@ -55,7 +61,7 @@ export const HomePage: React.FC = () => {
         <div className="flex items-center gap-4">
           {user ? (
             <div className="flex items-center gap-4">
-              {['superadmin', 'admin', 'employee'].includes(role || '') && (
+              {isStaffRole(role) && (
                 <Link to="/admin">
                   <motion.button 
                     {...bounceClick}
@@ -131,7 +137,7 @@ export const HomePage: React.FC = () => {
           >
             <div className="text-5xl mb-6">📚</div>
             <p className="text-text-muted dark:text-slate-400 font-bold mb-6 text-lg">No stories are available yet.</p>
-            {['superadmin', 'admin', 'employee'].includes(role || '') && (
+            {isStaffRole(role) && (
               <Link to="/admin">
                 <motion.button {...bounceClick} className="btn-primary px-8 py-3">
                   Create a story now
@@ -195,28 +201,6 @@ export const HomePage: React.FC = () => {
           </div>
         )}
       </div>
-
-      <footer className="mt-20 py-12 border-t border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2 opacity-50">
-            <div className="w-6 h-6 bg-slate-400 rounded flex items-center justify-center text-white font-black text-[10px]">L</div>
-            <span className="font-black text-sm tracking-tighter text-slate-500 dark:text-slate-400">LightStory.v0</span>
-          </div>
-          <p className="text-slate-400 dark:text-slate-500 text-xs font-bold">© 2026 LightStory. All rights reserved.</p>
-          <div className="flex gap-8">
-            {role && role !== 'user' && (
-              <Link to="/admin" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Admin Panel</Link>
-            )}
-            <a href="#" className="text-xs font-black text-slate-400 dark:text-slate-500 hover:text-primary transition-colors uppercase tracking-widest">Privacy</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 };
-
-const ChevronRight = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m9 18 6-6-6-6"/>
-  </svg>
-);
