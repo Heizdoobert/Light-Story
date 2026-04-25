@@ -13,3 +13,6 @@ backend-supabase/supabase/.temp/
 .claude/
 docs/
 .grapuco/
+.agent/
+*.agent.md
+*.agent.original.md
