@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, startTransition, useCallback, useState } from 'react';
+import React, { Suspense, lazy, startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../components/AdminLayout';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -19,9 +19,11 @@ const AdminUserManagement = lazy(() => import('../components/AdminUserManagement
 const OperationsCenterTab = lazy(() => import('../components/OperationsCenterTab').then((m) => ({ default: m.OperationsCenterTab })));
 const OperationsDataTab = lazy(() => import('../components/OperationsDataTab').then((m) => ({ default: m.OperationsDataTab })));
 const AdminAuditLogsTab = lazy(() => import('../components/AdminAuditLogsTab').then((m) => ({ default: m.AdminAuditLogsTab })));
+const DashboardAccessLogsTab = lazy(() => import('../components/DashboardAccessLogsTab').then((m) => ({ default: m.DashboardAccessLogsTab })));
 
 type AdminTabId =
   | 'dashboard'
+  | 'dashboard_access_logs'
   | 'audit_logs'
   | 'operations_data'
   | 'create_story'
@@ -46,6 +48,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   settings: () => import('../components/SystemSettingsTab'),
   users: () => import('../components/AdminUserManagement'),
   audit_logs: () => import('../components/AdminAuditLogsTab'),
+  dashboard_access_logs: () => import('../components/DashboardAccessLogsTab'),
   operations: () => import('../components/OperationsCenterTab'),
   operations_data: () => import('../components/OperationsDataTab'),
 };
@@ -70,7 +73,7 @@ type DashboardData = {
 
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTabId>('dashboard');
-  const { role } = useAuth();
+  const { role, user } = useAuth();
 
   const handleTabChange = useCallback((tab: string) => {
     startTransition(() => {
@@ -88,6 +91,7 @@ export const AdminDashboard: React.FC = () => {
       onTabChange={handleTabChange}
       onTabPrefetch={handleTabPrefetch}
       role={role}
+      userId={user?.id ?? null}
     />
   );
 };
@@ -97,7 +101,26 @@ const AdminDashboardContent: React.FC<{
   onTabChange: (tab: string) => void;
   onTabPrefetch?: (tab: string) => void;
   role: string | null;
-}> = ({ activeTab, onTabChange, onTabPrefetch, role }) => {
+  userId: string | null;
+}> = ({ activeTab, onTabChange, onTabPrefetch, role, userId }) => {
+  const lastAccessLogAtRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!supabase || !userId || activeTab !== 'dashboard') return;
+
+    const now = Date.now();
+    if (now - lastAccessLogAtRef.current < 60_000) return;
+    lastAccessLogAtRef.current = now;
+
+    void supabase.from('admin_audit_logs').insert({
+      actor_user_id: userId,
+      action: 'dashboard_access',
+      metadata: {
+        page: '/admin',
+      },
+    });
+  }, [activeTab, userId]);
+
   const dashboardQuery = useQuery<DashboardData>({
     queryKey: ['admin-dashboard-metrics'],
     enabled: activeTab === 'dashboard',
@@ -308,6 +331,12 @@ const AdminDashboardContent: React.FC<{
       {activeTab === 'audit_logs' && role === 'superadmin' && (
         <Suspense fallback={<TabLoadingFallback />}>
           <AdminAuditLogsTab />
+        </Suspense>
+      )}
+
+      {activeTab === 'dashboard_access_logs' && (role === 'superadmin' || role === 'admin') && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <DashboardAccessLogsTab />
         </Suspense>
       )}
 
