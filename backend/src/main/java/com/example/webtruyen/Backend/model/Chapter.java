@@ -30,7 +30,6 @@ public class Chapter {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    // Lưu mảng JSON chứa các link ảnh (nếu là truyện tranh)
     @Column(name = "image_urls", columnDefinition = "LONGTEXT")
     private String imageUrls; 
     

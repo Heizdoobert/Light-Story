@@ -40,9 +40,10 @@ public class Story {
     @Column(length = 20)
     private StoryStatus status = StoryStatus.ONGOING;
 
-    @Column(name = "view_count")
+    @Column(name = "view_count",columnDefinition = "BIGINT DEFAULT 0")
     private Long viewCount = 0L;
 
+    @Column(name = "rating", columnDefinition = "DOUBLE DEFAULT 0.0")
     private Double rating = 0.0;
 
     private Boolean active = true;
