@@ -29,11 +29,11 @@ npm run ci:verify
 Environment variables:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
-The app accepts both `VITE_*` and `NEXT_PUBLIC_*` keys for compatibility.
+Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
 
 ### Authentication & Access
 
