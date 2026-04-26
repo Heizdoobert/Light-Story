@@ -1,3 +1,5 @@
+'use client'
+
 /*
   AdminLayout.tsx
   Main layout for the Admin Dashboard with dynamic sidebar and topbar.
@@ -9,6 +11,7 @@ import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House, LayoutDashboard 
 import Link from "next/link";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
+import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { toast } from "sonner";
 import { supabase } from "../core/supabase";
 import { ADMIN_MENU_ITEMS } from "../lib/adminNavigation";
@@ -214,12 +217,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-6">
-            <button
-              onClick={toggleTheme}
-              className="p-2 text-slate-400 dark:text-slate-300 hover:text-primary transition-colors bg-slate-50 dark:bg-slate-800 rounded-lg"
-            >
-              {theme === "light" ? <Moon size={20} /> : <Sun size={20} />}
-            </button>
+            <ThemeToggleButton />
             <button className="relative p-2 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
               <Bell size={20} />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
