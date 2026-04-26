@@ -8,6 +8,13 @@ import { supabase } from '../core/supabase';
 import { useAuth } from '../modules/auth/AuthContext';
 import { parseBooleanSetting, SITE_SETTING_KEYS } from '../lib/systemSettings';
 
+const storyRepo = new SupabaseStoryRepository();
+
+const DEFAULT_UI_SETTINGS = {
+  compactMode: false,
+  showSyncBadge: true,
+};
+
 const StoryForm = lazy(() => import('../components/StoryForm').then((m) => ({ default: m.StoryForm })));
 const StoryManagementTab = lazy(() => import('../components/StoryManagementTab').then((m) => ({ default: m.StoryManagementTab })));
 const ChapterForm = lazy(() => import('../components/ChapterForm').then((m) => ({ default: m.ChapterForm })));
@@ -129,13 +136,12 @@ const AdminDashboardContent: React.FC<{
     queryKey: ['admin-dashboard-metrics'],
     enabled: activeTab === 'dashboard',
     refetchInterval: activeTab === 'dashboard' ? 5000 : false,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       if (!supabase) {
         throw new Error('Supabase not initialized');
       }
 
-      const storyRepo = new SupabaseStoryRepository();
       const [stories, chaptersResult] = await Promise.all([
         storyRepo.getStories(),
         supabase.from('chapters').select('id', { count: 'exact', head: true }),
@@ -160,14 +166,12 @@ const AdminDashboardContent: React.FC<{
 
   const uiSettingsQuery = useQuery({
     queryKey: ['site_settings', 'system_ui_controls'],
+    enabled: activeTab === 'dashboard',
     staleTime: 60_000,
     gcTime: 300_000,
     queryFn: async () => {
       if (!supabase) {
-        return {
-          compactMode: false,
-          showSyncBadge: true,
-        };
+        return DEFAULT_UI_SETTINGS;
       }
 
       try {
@@ -177,10 +181,7 @@ const AdminDashboardContent: React.FC<{
           .in('key', [SITE_SETTING_KEYS.uiCompactMode, SITE_SETTING_KEYS.uiShowSyncBadge]);
 
         if (error) {
-          return {
-            compactMode: false,
-            showSyncBadge: true,
-          };
+          return DEFAULT_UI_SETTINGS;
         }
 
         const map = new Map((data ?? []).map((item: any) => [item.key, item.value]));
@@ -190,10 +191,7 @@ const AdminDashboardContent: React.FC<{
           showSyncBadge: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true),
         };
       } catch {
-        return {
-          compactMode: false,
-          showSyncBadge: true,
-        };
+        return DEFAULT_UI_SETTINGS;
       }
     },
   });

@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start -p 3001 -H 0.0.0.0",
     "lint": "tsc --noEmit",
+    "ci:verify": "npm run lint && npm run build",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop"
   },

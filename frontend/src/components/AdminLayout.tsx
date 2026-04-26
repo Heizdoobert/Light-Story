@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "../modules/auth/AuthContext";
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
+import { ThemeToggleButton } from './ThemeToggleButton';
 import { toast } from "sonner";
 import { supabase } from "../core/supabase";
 import { ADMIN_MENU_ITEMS } from "../lib/adminNavigation";
@@ -90,15 +90,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
   });
 
-  const filteredMenu = ADMIN_MENU_ITEMS.filter((item) => {
-    if (!role || !item.roles.includes(role)) return false;
+  const filteredMenu = React.useMemo(() => {
     const dashboardVisibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
     const menuVisibility = menuVisibilityQuery.data ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
-    return (
-      isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
-      isAdminMenuVisibleForRole(item.id, role, menuVisibility)
-    );
-  });
+
+    return ADMIN_MENU_ITEMS.filter((item) => {
+      if (!role || !item.roles.includes(role)) return false;
+      return (
+        isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
+        isAdminMenuVisibleForRole(item.id, role, menuVisibility)
+      );
+    });
+  }, [menuVisibilityQuery.data, role, tabVisibilityQuery.data]);
 
   const handleSignOut = async () => {
     try {
