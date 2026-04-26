@@ -208,6 +208,47 @@ const AdminDashboardContent: React.FC<{
     [stats],
   );
 
+  const withSuspense = useCallback((node: React.ReactNode) => (
+    <Suspense fallback={<TabLoadingFallback />}>
+      {node}
+    </Suspense>
+  ), []);
+
+  const renderActiveTab = useCallback(() => {
+    switch (activeTab) {
+      case 'operations':
+        return withSuspense(<OperationsCenterTab onNavigate={onTabChange} />);
+      case 'operations_data':
+        return withSuspense(<OperationsDataTab />);
+      case 'create_story':
+        return withSuspense(<StoryForm />);
+      case 'create_chapter':
+        return withSuspense(<ChapterForm />);
+      case 'ads':
+        return withSuspense(<AdManager />);
+      case 'profile':
+        return withSuspense(<UserProfileTab />);
+      case 'categories':
+        return withSuspense(<CategoryManagementTab />);
+      case 'authors':
+        return withSuspense(<AuthorManagementTab />);
+      case 'settings':
+        return withSuspense(<SystemSettingsTab />);
+      case 'users':
+        return role === 'superadmin' ? withSuspense(<AdminUserManagement />) : null;
+      case 'audit_logs':
+        return role === 'superadmin' ? withSuspense(<AdminAuditLogsTab />) : null;
+      case 'dashboard_access_logs':
+        return role === 'superadmin' || role === 'admin'
+          ? withSuspense(<DashboardAccessLogsTab />)
+          : null;
+      case 'stories':
+        return withSuspense(<StoryManagementTab />);
+      default:
+        return null;
+    }
+  }, [activeTab, onTabChange, role, withSuspense]);
+
   return (
     <AdminLayout activeTab={activeTab} onTabChange={onTabChange} onTabPrefetch={onTabPrefetch}>
       {activeTab === 'dashboard' && (
@@ -274,83 +315,7 @@ const AdminDashboardContent: React.FC<{
         </div>
       )}
 
-      {activeTab === 'operations' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <OperationsCenterTab onNavigate={onTabChange} />
-        </Suspense>
-      )}
-
-      {activeTab === 'operations_data' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <OperationsDataTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'create_story' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <StoryForm />
-        </Suspense>
-      )}
-
-      {activeTab === 'create_chapter' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <ChapterForm />
-        </Suspense>
-      )}
-
-      {activeTab === 'ads' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdManager />
-        </Suspense>
-      )}
-
-      {activeTab === 'profile' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <UserProfileTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'categories' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <CategoryManagementTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'authors' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AuthorManagementTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'settings' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <SystemSettingsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'users' && role === 'superadmin' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdminUserManagement />
-        </Suspense>
-      )}
-
-      {activeTab === 'audit_logs' && role === 'superadmin' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdminAuditLogsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'dashboard_access_logs' && (role === 'superadmin' || role === 'admin') && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <DashboardAccessLogsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'stories' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <StoryManagementTab />
-        </Suspense>
-      )}
+      {activeTab !== 'dashboard' && renderActiveTab()}
     </AdminLayout>
   );
 };

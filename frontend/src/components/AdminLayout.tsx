@@ -40,59 +40,48 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const { profile, role, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const tabVisibilityQuery = useQuery({
-    queryKey: ["site_settings", SITE_SETTING_KEYS.dashboardTabVisibility],
+  const visibilityQuery = useQuery({
+    queryKey: ["site_settings", "admin_visibility_controls"],
     staleTime: 60_000,
     gcTime: 300_000,
     queryFn: async () => {
-      if (!supabase) return DEFAULT_DASHBOARD_TAB_VISIBILITY;
-
-      try {
-        const { data, error } = await supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", SITE_SETTING_KEYS.dashboardTabVisibility)
-          .maybeSingle();
-
-        if (error) {
-          return DEFAULT_DASHBOARD_TAB_VISIBILITY;
-        }
-
-        return parseDashboardTabVisibility(data?.value);
-      } catch {
-        return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+      if (!supabase) {
+        return {
+          dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+          menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+        };
       }
-    },
-  });
-
-  const menuVisibilityQuery = useQuery({
-    queryKey: ["site_settings", SITE_SETTING_KEYS.sidebarMenuVisibility],
-    staleTime: 60_000,
-    gcTime: 300_000,
-    queryFn: async () => {
-      if (!supabase) return DEFAULT_SIDEBAR_MENU_VISIBILITY;
 
       try {
         const { data, error } = await supabase
           .from("site_settings")
-          .select("value")
-          .eq("key", SITE_SETTING_KEYS.sidebarMenuVisibility)
-          .maybeSingle();
+          .select("key,value")
+          .in("key", [SITE_SETTING_KEYS.dashboardTabVisibility, SITE_SETTING_KEYS.sidebarMenuVisibility]);
 
         if (error) {
-          return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+          return {
+            dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+            menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+          };
         }
 
-        return parseSidebarMenuVisibility(data?.value);
+        const map = new Map((data ?? []).map((item: { key: string; value: unknown }) => [item.key, item.value]));
+        return {
+          dashboardVisibility: parseDashboardTabVisibility(map.get(SITE_SETTING_KEYS.dashboardTabVisibility)),
+          menuVisibility: parseSidebarMenuVisibility(map.get(SITE_SETTING_KEYS.sidebarMenuVisibility)),
+        };
       } catch {
-        return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+        return {
+          dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+          menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+        };
       }
     },
   });
 
   const filteredMenu = React.useMemo(() => {
-    const dashboardVisibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
-    const menuVisibility = menuVisibilityQuery.data ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
+    const dashboardVisibility = visibilityQuery.data?.dashboardVisibility ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
+    const menuVisibility = visibilityQuery.data?.menuVisibility ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
 
     return ADMIN_MENU_ITEMS.filter((item) => {
       if (!role || !item.roles.includes(role)) return false;
@@ -101,7 +90,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         isAdminMenuVisibleForRole(item.id, role, menuVisibility)
       );
     });
-  }, [menuVisibilityQuery.data, role, tabVisibilityQuery.data]);
+  }, [role, visibilityQuery.data]);
 
   const handleSignOut = async () => {
     try {
