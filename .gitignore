@@ -14,5 +14,6 @@ backend-supabase/supabase/.temp/
 docs/
 .grapuco/
 .agent/
+agent/
 *.agent.md
 *.agent.original.md

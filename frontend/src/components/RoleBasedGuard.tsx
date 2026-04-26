@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../modules/auth/AuthContext';
 
 interface RoleBasedGuardProps {
@@ -9,18 +9,29 @@ interface RoleBasedGuardProps {
 
 export const RoleBasedGuard: React.FC<RoleBasedGuardProps> = ({ children, allowedRoles }) => {
   const { role, loading, user } = useAuth();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (loading) return;
+
+    const from = encodeURIComponent(pathname || '/');
+    if (!user) {
+      router.replace(`/401?from=${from}`);
+      return;
+    }
+
+    if (!role || !allowedRoles.includes(role)) {
+      router.replace(`/403?from=${from}`);
+    }
+  }, [allowedRoles, loading, pathname, role, router, user]);
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen">Verifying permissions...</div>;
   }
 
-  if (!user) {
-    return <Navigate to="/401" state={{ from: location }} replace />;
-  }
-
-  if (!role || !allowedRoles.includes(role)) {
-    return <Navigate to="/403" state={{ from: location }} replace />;
+  if (!user || !role || !allowedRoles.includes(role)) {
+    return null;
   }
 
   return <>{children}</>;

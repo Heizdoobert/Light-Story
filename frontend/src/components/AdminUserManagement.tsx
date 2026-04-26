@@ -54,8 +54,8 @@ export const AdminUserManagement: React.FC = () => {
       throw new Error('Your session has expired. Please sign in again.');
     }
 
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Supabase credentials are not configured.');
@@ -266,7 +266,7 @@ export const AdminUserManagement: React.FC = () => {
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage user profiles and roles (superadmin only).</p>
       </header>
 
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
         <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Create User</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input
