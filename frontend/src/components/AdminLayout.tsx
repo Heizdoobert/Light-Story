@@ -1,3 +1,5 @@
+'use client'
+
 /*
   AdminLayout.tsx
   Main layout for the Admin Dashboard with dynamic sidebar and topbar.
