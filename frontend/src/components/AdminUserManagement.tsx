@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../core/supabase';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
@@ -37,6 +37,13 @@ export const AdminUserManagement: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState<UserRole>('user');
   const [creatingUser, setCreatingUser] = useState(false);
   const { user: currentUser, role: currentRole } = useAuth();
+
+  const getSupabaseClient = () => {
+    if (!supabase) {
+      throw new Error('Supabase client is unavailable');
+    }
+    return supabase;
+  };
 
   const invokeManageUser = async (body: Record<string, unknown>) => {
     if (!supabase) {
@@ -96,11 +103,12 @@ export const AdminUserManagement: React.FC = () => {
     return { data, error: null };
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
-      const { data, error } = await supabase!
+      const client = getSupabaseClient();
+      const { data, error } = await client
         .from('profiles')
-        .select('*')
+        .select('id,email,role,full_name')
         .order('role', { ascending: true });
       
       if (error) throw error;
@@ -110,11 +118,11 @@ export const AdminUserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    void fetchUsers();
+  }, [fetchUsers]);
 
   const handleRoleChange = async (targetUser: Profile, newRole: UserRole) => {
     if (targetUser.id === currentUser?.id) {
@@ -134,14 +142,15 @@ export const AdminUserManagement: React.FC = () => {
 
     const toastId = startDbChangeToast(`Updating role to ${newRole}...`);
     try {
-      const { error } = await supabase!
+      const client = getSupabaseClient();
+      const { error } = await client
         .from('profiles')
         .update({ role: newRole })
         .eq('id', targetUser.id);
       
       if (error) throw error;
       resolveDbChangeToast(toastId, 'Role updated successfully');
-      fetchUsers();
+      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     }
@@ -166,7 +175,8 @@ export const AdminUserManagement: React.FC = () => {
     setSavingNameId(targetUser.id);
     const toastId = startDbChangeToast('Updating user profile...');
     try {
-      const { error } = await supabase!
+      const client = getSupabaseClient();
+      const { error } = await client
         .from('profiles')
         .update({ full_name: editingNameValue.trim() || null })
         .eq('id', targetUser.id);
@@ -174,7 +184,7 @@ export const AdminUserManagement: React.FC = () => {
       if (error) throw error;
       resolveDbChangeToast(toastId, 'User profile updated successfully');
       cancelNameEdit();
-      fetchUsers();
+      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
@@ -209,7 +219,7 @@ export const AdminUserManagement: React.FC = () => {
       if (data?.error) throw new Error(String(data.error));
 
       resolveDbChangeToast(toastId, 'User deleted successfully');
-      fetchUsers();
+      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
@@ -249,7 +259,7 @@ export const AdminUserManagement: React.FC = () => {
       setNewUserPassword('');
       setNewUserFullName('');
       setNewUserRole('user');
-      fetchUsers();
+      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
