@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, lazy, startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../components/AdminLayout';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -200,6 +200,15 @@ const AdminDashboardContent: React.FC<{
 
   const compactMode = uiSettingsQuery.data?.compactMode ?? false;
   const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
+  const statsCards = useMemo(
+    () => [
+      { label: 'Total Reads', value: stats.totalViews.toLocaleString(), color: 'bg-blue-500' },
+      { label: 'Active Stories', value: stats.activeStories.toString(), color: 'bg-purple-500' },
+      { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
+      { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
+    ],
+    [stats],
+  );
 
   return (
     <AdminLayout activeTab={activeTab} onTabChange={onTabChange} onTabPrefetch={onTabPrefetch}>
@@ -218,13 +227,8 @@ const AdminDashboardContent: React.FC<{
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { label: 'Total Reads', value: stats.totalViews.toLocaleString(), color: 'bg-blue-500' },
-              { label: 'Active Stories', value: stats.activeStories.toString(), color: 'bg-purple-500' },
-              { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
-              { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
-            ].map((stat, i) => (
-              <div key={i} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
+            {statsCards.map((stat) => (
+              <div key={stat.label} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
                   <div className={`w-2 h-2 rounded-full ${stat.color}`}></div>

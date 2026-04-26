@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /*
   AdminLayout.tsx
@@ -7,10 +7,9 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House, LayoutDashboard } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "../modules/auth/AuthContext";
-import { useTheme } from "../modules/theme/ThemeContext";
 import { ThemeToggleButton } from '../components/ThemeToggleButton';
 import { toast } from "sonner";
 import { supabase } from "../core/supabase";
@@ -39,7 +38,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onTabPrefetch,
 }) => {
   const { profile, role, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const tabVisibilityQuery = useQuery({

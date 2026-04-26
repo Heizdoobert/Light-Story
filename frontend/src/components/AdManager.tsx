@@ -6,51 +6,72 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../core/supabase';
 import { useAuth } from '../modules/auth/AuthContext';
-import { toast } from 'sonner';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
+
+type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
+type AdConfigs = Record<AdConfigKey, string>;
+
+type SiteSettingRow = {
+  key: string;
+  value: string | null;
+};
+
+const AD_SLOTS: ReadonlyArray<{ id: AdConfigKey; label: string; desc: string }> = [
+  { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
+  { id: 'ad_middle', label: 'In-Content Slot', desc: 'Injected between paragraphs in the story content.' },
+  { id: 'ad_sidebar', label: 'Sidebar Sticky Slot', desc: 'Floats on the right side of the desktop view.' },
+];
+
+const DEFAULT_CONFIGS: AdConfigs = {
+  ad_header: '',
+  ad_middle: '',
+  ad_sidebar: '',
+};
 
 export const AdManager: React.FC = () => {
   const queryClient = useQueryClient();
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
-  const [configs, setConfigs] = useState({
-    ad_header: '',
-    ad_middle: '',
-    ad_sidebar: ''
-  });
+  const [configs, setConfigs] = useState<AdConfigs>(DEFAULT_CONFIGS);
 
   // Fetch settings
   const { data, isLoading } = useQuery({
-    queryKey: ['site_settings'],
+    queryKey: ['site_settings', 'ad_slots'],
     queryFn: async () => {
-      const { data, error } = await supabase!
+      if (!supabase) return [] as SiteSettingRow[];
+
+      const { data, error } = await supabase
         .from('site_settings')
-        .select('*')
+        .select('key,value')
         .in('key', ['ad_header', 'ad_middle', 'ad_sidebar']);
       if (error) throw error;
-      return data;
+      return (data ?? []) as SiteSettingRow[];
     }
   });
 
   useEffect(() => {
     if (data) {
-      const newConfigs = { ...configs };
-      data.forEach((item: any) => {
-        if (item.key in newConfigs) {
-          (newConfigs as any)[item.key] = item.value;
+      const nextConfigs: AdConfigs = { ...DEFAULT_CONFIGS };
+      data.forEach((item) => {
+        if (item.key in nextConfigs) {
+          nextConfigs[item.key as AdConfigKey] = item.value ?? '';
         }
       });
-      setConfigs(newConfigs);
+      setConfigs(nextConfigs);
     }
   }, [data]);
 
   const mutation = useMutation({
-    mutationFn: async (key: string) => {
-      const { error } = await supabase!
+    mutationFn: async (key: AdConfigKey) => {
+      if (!supabase) {
+        throw new Error('Supabase client is unavailable');
+      }
+
+      const { error } = await supabase
         .from('site_settings')
-        .upsert({ key, value: (configs as any)[key] }, { onConflict: 'key' });
+        .upsert({ key, value: configs[key] }, { onConflict: 'key' });
       if (error) throw error;
     },
     onMutate: (key) => {
@@ -58,7 +79,7 @@ export const AdManager: React.FC = () => {
       return { toastId };
     },
     onSuccess: (_data, key, context) => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings'] });
+      queryClient.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] });
       resolveDbChangeToast(context?.toastId, `${key} saved successfully`);
     },
     onError: (error: any, _key, context) => {
@@ -66,7 +87,7 @@ export const AdManager: React.FC = () => {
     }
   });
 
-  const handleSave = (key: string) => {
+  const handleSave = (key: AdConfigKey) => {
     mutation.mutate(key);
   };
 
@@ -80,11 +101,7 @@ export const AdManager: React.FC = () => {
       </header>
 
       <div className="grid grid-cols-1 gap-6">
-        {[
-          { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
-          { id: 'ad_middle', label: 'In-Content Slot', desc: 'Injected between paragraphs in the story content.' },
-          { id: 'ad_sidebar', label: 'Sidebar Sticky Slot', desc: 'Floats on the right side of the desktop view.' }
-        ].map((ad) => (
+        {AD_SLOTS.map((ad) => (
           <motion.div 
             key={ad.id}
             initial={{ opacity: 0, y: 10 }}
@@ -114,8 +131,8 @@ export const AdManager: React.FC = () => {
             <div className="relative">
               <textarea 
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-5 font-mono text-[12px] h-40 resize-none focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner text-slate-900 dark:text-slate-200"
-                value={(configs as any)[ad.id]}
-                onChange={(e) => setConfigs({...configs, [ad.id]: e.target.value})}
+                value={configs[ad.id]}
+                onChange={(e) => setConfigs((prev) => ({ ...prev, [ad.id]: e.target.value }))}
                 placeholder="<!-- Paste your HTML/JS script here -->"
               />
               <div className="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
