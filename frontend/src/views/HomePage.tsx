@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import { LogIn, LogOut, LayoutDashboard, BookOpen, User as UserIcon, ChevronRight } from 'lucide-react';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -62,7 +62,7 @@ export const HomePage: React.FC = () => {
           {user ? (
             <div className="flex items-center gap-4">
               {isStaffRole(role) && (
-                <Link to="/admin">
+                <Link href="/admin">
                   <motion.button 
                     {...bounceClick}
                     className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90 transition-all"
@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
             <div className="text-5xl mb-6">📚</div>
             <p className="text-text-muted dark:text-slate-400 font-bold mb-6 text-lg">No stories are available yet.</p>
             {isStaffRole(role) && (
-              <Link to="/admin">
+              <Link href="/admin">
                 <motion.button {...bounceClick} className="btn-primary px-8 py-3">
                   Create a story now
                 </motion.button>
@@ -190,7 +190,7 @@ export const HomePage: React.FC = () => {
                     {story.views.toLocaleString()} views
                   </div>
                   <Link 
-                    to={`/story/${story.id}/chapter/1`} // Assume chapter 1 exists, or handle fallback later
+                    href={`/story/${story.id}/chapter/1`} // Assume chapter 1 exists, or handle fallback later
                     className="p-2 bg-slate-50 dark:bg-slate-900 rounded-lg text-text-main dark:text-white hover:bg-primary hover:text-white transition-all"
                   >
                     <ChevronRight size={16} />

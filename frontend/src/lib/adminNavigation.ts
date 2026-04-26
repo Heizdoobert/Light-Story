@@ -3,6 +3,7 @@ import { UserRole } from '../modules/auth/AuthContext';
 
 export type AdminMenuId =
   | 'dashboard'
+  | 'dashboard_access_logs'
   | 'audit_logs'
   | 'operations_data'
   | 'create_story'
@@ -28,6 +29,12 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     roles: ['superadmin', 'admin', 'employee'],
+  },
+  {
+    id: 'dashboard_access_logs',
+    label: 'Dashboard Access Logs',
+    icon: Database,
+    roles: ['superadmin', 'admin'],
   },
   {
     id: 'audit_logs',
@@ -104,7 +111,7 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> = ADMIN_MENU_ITEMS.r
 
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
   employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile'],
   user: [],
 };

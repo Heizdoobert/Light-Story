@@ -1,4 +1,5 @@
-import React, { Suspense, lazy, startTransition, useCallback, useState } from 'react';
+"use client";
+import React, { Suspense, lazy, startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../components/AdminLayout';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -19,9 +20,11 @@ const AdminUserManagement = lazy(() => import('../components/AdminUserManagement
 const OperationsCenterTab = lazy(() => import('../components/OperationsCenterTab').then((m) => ({ default: m.OperationsCenterTab })));
 const OperationsDataTab = lazy(() => import('../components/OperationsDataTab').then((m) => ({ default: m.OperationsDataTab })));
 const AdminAuditLogsTab = lazy(() => import('../components/AdminAuditLogsTab').then((m) => ({ default: m.AdminAuditLogsTab })));
+const DashboardAccessLogsTab = lazy(() => import('../components/DashboardAccessLogsTab').then((m) => ({ default: m.DashboardAccessLogsTab })));
 
 type AdminTabId =
   | 'dashboard'
+  | 'dashboard_access_logs'
   | 'audit_logs'
   | 'operations_data'
   | 'create_story'
@@ -46,6 +49,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   settings: () => import('../components/SystemSettingsTab'),
   users: () => import('../components/AdminUserManagement'),
   audit_logs: () => import('../components/AdminAuditLogsTab'),
+  dashboard_access_logs: () => import('../components/DashboardAccessLogsTab'),
   operations: () => import('../components/OperationsCenterTab'),
   operations_data: () => import('../components/OperationsDataTab'),
 };
@@ -70,7 +74,7 @@ type DashboardData = {
 
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTabId>('dashboard');
-  const { role } = useAuth();
+  const { role, user } = useAuth();
 
   const handleTabChange = useCallback((tab: string) => {
     startTransition(() => {
@@ -88,16 +92,39 @@ export const AdminDashboard: React.FC = () => {
       onTabChange={handleTabChange}
       onTabPrefetch={handleTabPrefetch}
       role={role}
+      userId={user?.id ?? null}
     />
   );
 };
+
+// Export as default for Next.js page import
+export default AdminDashboard;
 
 const AdminDashboardContent: React.FC<{
   activeTab: string;
   onTabChange: (tab: string) => void;
   onTabPrefetch?: (tab: string) => void;
   role: string | null;
-}> = ({ activeTab, onTabChange, onTabPrefetch, role }) => {
+  userId: string | null;
+}> = ({ activeTab, onTabChange, onTabPrefetch, role, userId }) => {
+  const lastAccessLogAtRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!supabase || !userId || activeTab !== 'dashboard') return;
+
+    const now = Date.now();
+    if (now - lastAccessLogAtRef.current < 60_000) return;
+    lastAccessLogAtRef.current = now;
+
+    void supabase.from('admin_audit_logs').insert({
+      actor_user_id: userId,
+      action: 'dashboard_access',
+      metadata: {
+        page: '/admin',
+      },
+    });
+  }, [activeTab, userId]);
+
   const dashboardQuery = useQuery<DashboardData>({
     queryKey: ['admin-dashboard-metrics'],
     enabled: activeTab === 'dashboard',
@@ -197,7 +224,7 @@ const AdminDashboardContent: React.FC<{
               { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
               { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
             ].map((stat, i) => (
-              <div key={i} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors`}>
+              <div key={i} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
                   <div className={`w-2 h-2 rounded-full ${stat.color}`}></div>
@@ -207,7 +234,7 @@ const AdminDashboardContent: React.FC<{
             ))}
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm transition-colors">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm transition-colors">
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <div>
                 <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Recent Stories</h3>
@@ -308,6 +335,12 @@ const AdminDashboardContent: React.FC<{
       {activeTab === 'audit_logs' && role === 'superadmin' && (
         <Suspense fallback={<TabLoadingFallback />}>
           <AdminAuditLogsTab />
+        </Suspense>
+      )}
+
+      {activeTab === 'dashboard_access_logs' && (role === 'superadmin' || role === 'admin') && (
+        <Suspense fallback={<TabLoadingFallback />}>
+          <DashboardAccessLogsTab />
         </Suspense>
       )}
 

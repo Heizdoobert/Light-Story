@@ -1,5 +1,6 @@
+'use client';
+
 import React, { useEffect, useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { AdRenderer } from '../components/AdRenderer';
 import { IReaderView } from '../presentation/mvp/ReaderContract';
@@ -8,8 +9,12 @@ import { SupabaseStoryRepository } from '../infrastructure/repositories/Supabase
 import { SupabaseChapterRepository } from '../infrastructure/repositories/SupabaseChapterRepository';
 import { Chapter } from '../domain/entities';
 
-export const ReaderPage: React.FC = () => {
-  const { storyId, chapterId } = useParams<{ storyId: string, chapterId: string }>();
+interface ReaderPageProps {
+  storyId: string;
+  chapterId: string;
+}
+
+export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) => {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [storyMeta, setStoryMeta] = useState<{ title: string, description: string } | null>(null);
   const [loading, setLoading] = useState(true);

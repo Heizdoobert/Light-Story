@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../modules/auth/AuthContext';
 import { supabase } from '../core/supabase';
@@ -12,7 +13,7 @@ export const ResetPasswordPage: React.FC = () => {
   const [verifying, setVerifying] = useState(true);
   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
   const { updatePassword } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     const hash = window.location.hash || '';
@@ -56,7 +57,7 @@ export const ResetPasswordPage: React.FC = () => {
     try {
       await updatePassword(password);
       toast.success('Password updated. Please sign in again.');
-      navigate('/', { replace: true });
+      router.replace('/');
     } catch {
       // Error already handled in context
     } finally {
@@ -87,7 +88,7 @@ export const ResetPasswordPage: React.FC = () => {
               This reset link is invalid or has expired. Please request a new password reset email.
             </p>
             <Link
-              to="/"
+              href="/"
               className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 text-sm font-bold"
             >
               Return Home

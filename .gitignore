@@ -14,5 +14,12 @@ backend-supabase/supabase/.temp/
 docs/
 .grapuco/
 .agent/
+agent/
 *.agent.md
 *.agent.original.md
+
+# Frontend generated artifacts
+frontend/.next/
+frontend/out/
+frontend/.turbo/
+frontend/.tsbuildinfo

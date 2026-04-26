@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House, LayoutDashboard } from "lucide-react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { useAuth } from "../modules/auth/AuthContext";
 import { useTheme } from "../modules/theme/ThemeContext";
 import { toast } from "sonner";
@@ -140,7 +140,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
         <div className="px-4 pb-2">
           <Link
-            to="/"
+            href="/"
             className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-200 group"
           >
             <House

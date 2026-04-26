@@ -12,11 +12,20 @@ const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "user"];
 const isUserRole = (value: unknown): value is UserRole =>
   typeof value === "string" && USER_ROLES.includes(value as UserRole);
 
-const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
-  const appRole = user?.app_metadata?.role;
+const normalizeRole = (value: unknown): UserRole | null => {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase();
+  return isUserRole(normalized) ? normalized : null;
+};
 
-  if (isUserRole(appRole)) return appRole;
-  if (isUserRole(profileRole)) return profileRole;
+const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
+  // Prefer role from profiles table to avoid stale app_metadata causing false 403.
+  const resolvedProfileRole = normalizeRole(profileRole);
+  if (resolvedProfileRole) return resolvedProfileRole;
+
+  const resolvedAppRole = normalizeRole(user?.app_metadata?.role);
+  if (resolvedAppRole) return resolvedAppRole;
+
   return null;
 };
 

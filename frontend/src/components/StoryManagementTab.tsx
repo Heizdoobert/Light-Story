@@ -70,7 +70,13 @@ export const StoryManagementTab: React.FC = () => {
   );
 
   useEffect(() => {
-    setSelectedIds((prev) => prev.filter((id) => stories.some((story) => story.id === id)));
+    setSelectedIds((prev) => {
+      const filtered = prev.filter((id) => stories.some((story) => story.id === id));
+      if (filtered.length === prev.length && filtered.every((id, index) => id === prev[index])) {
+        return prev;
+      }
+      return filtered;
+    });
   }, [stories]);
 
   const invalidateStories = () => {

@@ -1,6 +1,6 @@
 // This component protects routes based on the user's role
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, UserRole } from '../../modules/auth/AuthContext';
 
 interface RoleProtectedRouteProps {
@@ -10,7 +10,22 @@ interface RoleProtectedRouteProps {
 
 export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ children, allowedRoles }) => {
   const { user, role, loading } = useAuth();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (loading) return;
+
+    const from = encodeURIComponent(pathname || '/');
+    if (!user) {
+      router.replace(`/401?from=${from}`);
+      return;
+    }
+
+    if (!role || !allowedRoles.includes(role)) {
+      router.replace(`/403?from=${from}`);
+    }
+  }, [allowedRoles, loading, pathname, role, router, user]);
 
   if (loading) {
     return (
@@ -20,12 +35,8 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ children
     );
   }
 
-  if (!user) {
-    return <Navigate to="/401" state={{ from: location }} replace />;
-  }
-
-  if (!role || !allowedRoles.includes(role)) {
-    return <Navigate to="/403" state={{ from: location }} replace />;
+  if (!user || !role || !allowedRoles.includes(role)) {
+    return null;
   }
 
   return <>{children}</>;

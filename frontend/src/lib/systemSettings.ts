@@ -11,6 +11,7 @@ export const SITE_SETTING_KEYS = {
 
 export const DASHBOARD_CONFIGURABLE_TABS = [
   'dashboard',
+  'dashboard_access_logs',
   'audit_logs',
   'operations',
   'operations_data',
@@ -31,7 +32,7 @@ export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
 
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],
-  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile'],
   employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile'],
   user: ['dashboard', 'stories', 'profile'],
 };

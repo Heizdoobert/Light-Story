@@ -3,7 +3,7 @@
   Wraps components to ensure user is authenticated and has the required role.
 */
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../modules/auth/AuthContext';
 
 interface ProtectedRouteProps {
@@ -13,7 +13,22 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles }) => {
   const { user, role, loading } = useAuth();
-  const location = useLocation();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (loading) return;
+
+    const from = encodeURIComponent(pathname || '/');
+    if (!user) {
+      router.replace(`/401?from=${from}`);
+      return;
+    }
+
+    if (allowedRoles && role && !allowedRoles.includes(role)) {
+      router.replace(`/403?from=${from}`);
+    }
+  }, [allowedRoles, loading, pathname, role, router, user]);
 
   if (loading) {
     return (
@@ -23,12 +38,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
     );
   }
 
-  if (!user) {
-    return <Navigate to="/401" state={{ from: location }} replace />;
-  }
-
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    return <Navigate to="/403" replace />;
+  if (!user || (allowedRoles && role && !allowedRoles.includes(role))) {
+    return null;
   }
 
   return <>{children}</>;
