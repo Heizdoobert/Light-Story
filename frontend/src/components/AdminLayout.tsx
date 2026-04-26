@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 /*
   AdminLayout.tsx
@@ -7,11 +7,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, Bell, Sun, Moon, House, LayoutDashboard } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "../modules/auth/AuthContext";
-import { useTheme } from "../modules/theme/ThemeContext";
-import { ThemeToggleButton } from '../components/ThemeToggleButton';
+import { ThemeToggleButton } from './ThemeToggleButton';
 import { toast } from "sonner";
 import { supabase } from "../core/supabase";
 import { ADMIN_MENU_ITEMS } from "../lib/adminNavigation";
@@ -39,68 +38,59 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onTabPrefetch,
 }) => {
   const { profile, role, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const tabVisibilityQuery = useQuery({
-    queryKey: ["site_settings", SITE_SETTING_KEYS.dashboardTabVisibility],
+  const visibilityQuery = useQuery({
+    queryKey: ["site_settings", "admin_visibility_controls"],
     staleTime: 60_000,
     gcTime: 300_000,
     queryFn: async () => {
-      if (!supabase) return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+      if (!supabase) {
+        return {
+          dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+          menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+        };
+      }
 
       try {
         const { data, error } = await supabase
           .from("site_settings")
-          .select("value")
-          .eq("key", SITE_SETTING_KEYS.dashboardTabVisibility)
-          .maybeSingle();
+          .select("key,value")
+          .in("key", [SITE_SETTING_KEYS.dashboardTabVisibility, SITE_SETTING_KEYS.sidebarMenuVisibility]);
 
         if (error) {
-          return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+          return {
+            dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+            menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+          };
         }
 
-        return parseDashboardTabVisibility(data?.value);
+        const map = new Map((data ?? []).map((item: { key: string; value: unknown }) => [item.key, item.value]));
+        return {
+          dashboardVisibility: parseDashboardTabVisibility(map.get(SITE_SETTING_KEYS.dashboardTabVisibility)),
+          menuVisibility: parseSidebarMenuVisibility(map.get(SITE_SETTING_KEYS.sidebarMenuVisibility)),
+        };
       } catch {
-        return DEFAULT_DASHBOARD_TAB_VISIBILITY;
+        return {
+          dashboardVisibility: DEFAULT_DASHBOARD_TAB_VISIBILITY,
+          menuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
+        };
       }
     },
   });
 
-  const menuVisibilityQuery = useQuery({
-    queryKey: ["site_settings", SITE_SETTING_KEYS.sidebarMenuVisibility],
-    staleTime: 60_000,
-    gcTime: 300_000,
-    queryFn: async () => {
-      if (!supabase) return DEFAULT_SIDEBAR_MENU_VISIBILITY;
+  const filteredMenu = React.useMemo(() => {
+    const dashboardVisibility = visibilityQuery.data?.dashboardVisibility ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
+    const menuVisibility = visibilityQuery.data?.menuVisibility ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
 
-      try {
-        const { data, error } = await supabase
-          .from("site_settings")
-          .select("value")
-          .eq("key", SITE_SETTING_KEYS.sidebarMenuVisibility)
-          .maybeSingle();
-
-        if (error) {
-          return DEFAULT_SIDEBAR_MENU_VISIBILITY;
-        }
-
-        return parseSidebarMenuVisibility(data?.value);
-      } catch {
-        return DEFAULT_SIDEBAR_MENU_VISIBILITY;
-      }
-    },
-  });
-
-  const filteredMenu = ADMIN_MENU_ITEMS.filter((item) => {
-    if (!role || !item.roles.includes(role)) return false;
-    const dashboardVisibility = tabVisibilityQuery.data ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
-    const menuVisibility = menuVisibilityQuery.data ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
-    return (
-      isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
-      isAdminMenuVisibleForRole(item.id, role, menuVisibility)
-    );
-  });
+    return ADMIN_MENU_ITEMS.filter((item) => {
+      if (!role || !item.roles.includes(role)) return false;
+      return (
+        isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
+        isAdminMenuVisibleForRole(item.id, role, menuVisibility)
+      );
+    });
+  }, [role, visibilityQuery.data]);
 
   const handleSignOut = async () => {
     try {

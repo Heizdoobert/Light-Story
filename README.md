@@ -1,12 +1,12 @@
 # Light Story
 
-Light Story is an online reading platform with a Vite frontend and a Supabase backend.
+Light Story is an online reading platform with a Next.js frontend and a Supabase backend.
 
 ## Repository Layout
 
 ```text
 /
-  frontend/                # React + Vite application
+  frontend/                # Next.js application (App Router)
   backend-supabase/        # Supabase config, migrations, functions, tests
   agents/                  # Local project memory, ignored by git
   docs/                    # Architecture and release notes
@@ -23,16 +23,17 @@ npm install
 npm run dev
 npm run build
 npm run lint
+npm run ci:verify
 ```
 
 Environment variables:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 ```
 
-The app also accepts `NEXT_PUBLIC_*` keys for compatibility, but `VITE_*` is the primary convention.
+Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
 
 ### Authentication & Access
 
@@ -90,13 +91,24 @@ npm install
 npm run dev
 ```
 
-You can run this from the repository root or from `frontend/`; the root `package.json` forwards the command to the Vite app.
+Default dev server runs on `http://localhost:3001`.
+
+You can run this from the repository root with `npm --prefix frontend run dev` or directly inside `frontend/`.
 
 3. Build and type-check the frontend before shipping:
 
 ```bash
 npm run lint
 npm run build
+npm run ci:verify
+```
+
+4. If you hit intermittent `500` with missing `.next` artifacts (for example `routes-manifest.json`), reset local cache and restart:
+
+```bash
+taskkill /F /IM node.exe
+rm -r frontend/.next
+npm --prefix frontend run dev
 ```
 
 ## Supabase Sync
@@ -118,7 +130,7 @@ The linked project in this workspace is `rwnzsmmfvsetfcnkjoxt`.
 
 The repository uses GitHub Actions to:
 
-- run frontend lint and build
+- clean Next cache, then run frontend `ci:verify` (type-check + build)
 - validate backend file structure
 - open an automatic pull request for non-main pushes after CI succeeds
 

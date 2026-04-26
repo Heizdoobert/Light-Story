@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense, lazy, startTransition, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { AdminLayout } from '../components/AdminLayout';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
@@ -7,6 +7,13 @@ import { Story } from '../domain/entities';
 import { supabase } from '../core/supabase';
 import { useAuth } from '../modules/auth/AuthContext';
 import { parseBooleanSetting, SITE_SETTING_KEYS } from '../lib/systemSettings';
+
+const storyRepo = new SupabaseStoryRepository();
+
+const DEFAULT_UI_SETTINGS = {
+  compactMode: false,
+  showSyncBadge: true,
+};
 
 const StoryForm = lazy(() => import('../components/StoryForm').then((m) => ({ default: m.StoryForm })));
 const StoryManagementTab = lazy(() => import('../components/StoryManagementTab').then((m) => ({ default: m.StoryManagementTab })));
@@ -129,13 +136,12 @@ const AdminDashboardContent: React.FC<{
     queryKey: ['admin-dashboard-metrics'],
     enabled: activeTab === 'dashboard',
     refetchInterval: activeTab === 'dashboard' ? 5000 : false,
-    refetchIntervalInBackground: true,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       if (!supabase) {
         throw new Error('Supabase not initialized');
       }
 
-      const storyRepo = new SupabaseStoryRepository();
       const [stories, chaptersResult] = await Promise.all([
         storyRepo.getStories(),
         supabase.from('chapters').select('id', { count: 'exact', head: true }),
@@ -160,14 +166,12 @@ const AdminDashboardContent: React.FC<{
 
   const uiSettingsQuery = useQuery({
     queryKey: ['site_settings', 'system_ui_controls'],
+    enabled: activeTab === 'dashboard',
     staleTime: 60_000,
     gcTime: 300_000,
     queryFn: async () => {
       if (!supabase) {
-        return {
-          compactMode: false,
-          showSyncBadge: true,
-        };
+        return DEFAULT_UI_SETTINGS;
       }
 
       try {
@@ -177,10 +181,7 @@ const AdminDashboardContent: React.FC<{
           .in('key', [SITE_SETTING_KEYS.uiCompactMode, SITE_SETTING_KEYS.uiShowSyncBadge]);
 
         if (error) {
-          return {
-            compactMode: false,
-            showSyncBadge: true,
-          };
+          return DEFAULT_UI_SETTINGS;
         }
 
         const map = new Map((data ?? []).map((item: any) => [item.key, item.value]));
@@ -190,16 +191,63 @@ const AdminDashboardContent: React.FC<{
           showSyncBadge: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true),
         };
       } catch {
-        return {
-          compactMode: false,
-          showSyncBadge: true,
-        };
+        return DEFAULT_UI_SETTINGS;
       }
     },
   });
 
   const compactMode = uiSettingsQuery.data?.compactMode ?? false;
   const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
+  const statsCards = useMemo(
+    () => [
+      { label: 'Total Reads', value: stats.totalViews.toLocaleString(), color: 'bg-blue-500' },
+      { label: 'Active Stories', value: stats.activeStories.toString(), color: 'bg-purple-500' },
+      { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
+      { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
+    ],
+    [stats],
+  );
+
+  const withSuspense = useCallback((node: React.ReactNode) => (
+    <Suspense fallback={<TabLoadingFallback />}>
+      {node}
+    </Suspense>
+  ), []);
+
+  const renderActiveTab = useCallback(() => {
+    switch (activeTab) {
+      case 'operations':
+        return withSuspense(<OperationsCenterTab onNavigate={onTabChange} />);
+      case 'operations_data':
+        return withSuspense(<OperationsDataTab />);
+      case 'create_story':
+        return withSuspense(<StoryForm />);
+      case 'create_chapter':
+        return withSuspense(<ChapterForm />);
+      case 'ads':
+        return withSuspense(<AdManager />);
+      case 'profile':
+        return withSuspense(<UserProfileTab />);
+      case 'categories':
+        return withSuspense(<CategoryManagementTab />);
+      case 'authors':
+        return withSuspense(<AuthorManagementTab />);
+      case 'settings':
+        return withSuspense(<SystemSettingsTab />);
+      case 'users':
+        return role === 'superadmin' ? withSuspense(<AdminUserManagement />) : null;
+      case 'audit_logs':
+        return role === 'superadmin' ? withSuspense(<AdminAuditLogsTab />) : null;
+      case 'dashboard_access_logs':
+        return role === 'superadmin' || role === 'admin'
+          ? withSuspense(<DashboardAccessLogsTab />)
+          : null;
+      case 'stories':
+        return withSuspense(<StoryManagementTab />);
+      default:
+        return null;
+    }
+  }, [activeTab, onTabChange, role, withSuspense]);
 
   return (
     <AdminLayout activeTab={activeTab} onTabChange={onTabChange} onTabPrefetch={onTabPrefetch}>
@@ -218,13 +266,8 @@ const AdminDashboardContent: React.FC<{
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { label: 'Total Reads', value: stats.totalViews.toLocaleString(), color: 'bg-blue-500' },
-              { label: 'Active Stories', value: stats.activeStories.toString(), color: 'bg-purple-500' },
-              { label: 'Total Chapters', value: stats.totalChapters.toString(), color: 'bg-emerald-500' },
-              { label: 'Active Readers', value: Math.floor(stats.totalViews / 100).toString(), color: 'bg-orange-500' },
-            ].map((stat, i) => (
-              <div key={i} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
+            {statsCards.map((stat) => (
+              <div key={stat.label} className={`bg-white dark:bg-slate-900 ${compactMode ? 'p-4' : 'p-6'} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
                   <div className={`w-2 h-2 rounded-full ${stat.color}`}></div>
@@ -272,83 +315,7 @@ const AdminDashboardContent: React.FC<{
         </div>
       )}
 
-      {activeTab === 'operations' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <OperationsCenterTab onNavigate={onTabChange} />
-        </Suspense>
-      )}
-
-      {activeTab === 'operations_data' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <OperationsDataTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'create_story' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <StoryForm />
-        </Suspense>
-      )}
-
-      {activeTab === 'create_chapter' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <ChapterForm />
-        </Suspense>
-      )}
-
-      {activeTab === 'ads' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdManager />
-        </Suspense>
-      )}
-
-      {activeTab === 'profile' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <UserProfileTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'categories' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <CategoryManagementTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'authors' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AuthorManagementTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'settings' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <SystemSettingsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'users' && role === 'superadmin' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdminUserManagement />
-        </Suspense>
-      )}
-
-      {activeTab === 'audit_logs' && role === 'superadmin' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <AdminAuditLogsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'dashboard_access_logs' && (role === 'superadmin' || role === 'admin') && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <DashboardAccessLogsTab />
-        </Suspense>
-      )}
-
-      {activeTab === 'stories' && (
-        <Suspense fallback={<TabLoadingFallback />}>
-          <StoryManagementTab />
-        </Suspense>
-      )}
+      {activeTab !== 'dashboard' && renderActiveTab()}
     </AdminLayout>
   );
 };

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Helmet } from 'react-helmet-async';
 import { AdRenderer } from '../components/AdRenderer';
 import { IReaderView } from '../presentation/mvp/ReaderContract';
 import { ReaderPresenter } from '../presentation/mvp/ReaderPresenter';
@@ -46,6 +45,20 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
     return () => presenter.detachView();
   }, [presenter, storyId, chapterId]);
 
+  useEffect(() => {
+    const title = `${chapter?.title ?? 'Loading...'} - ${storyMeta?.title || 'Light Story'}`;
+    document.title = title;
+
+    const description = storyMeta?.description || (chapter ? `Read chapter ${chapter.chapter_number} of ${storyMeta?.title || 'this story'}` : 'Read stories on Light Story');
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', description);
+  }, [chapter, storyMeta]);
+
   const getThemeClasses = () => {
     switch (theme) {
       case 'dark':
@@ -63,10 +76,6 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
 
   return (
     <div className={`min-h-screen p-8 transition-colors duration-300 ${getThemeClasses()}`}>
-      <Helmet>
-        <title>{`${chapter.title} - ${storyMeta?.title || 'Loading...'}`}</title>
-        <meta name="description" content={storyMeta?.description || `Read chapter ${chapter.chapter_number} of ${storyMeta?.title}`} />
-      </Helmet>
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">
           <div className="flex gap-4">
