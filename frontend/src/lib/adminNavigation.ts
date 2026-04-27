@@ -7,6 +7,7 @@ export type AdminMenuId =
   | 'audit_logs'
   | 'operations_data'
   | 'create_story'
+  | 'create_chapter'
   | 'stories'
   | 'categories'
   | 'authors'
@@ -61,6 +62,12 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     roles: ['superadmin', 'admin', 'employee'],
   },
   {
+    id: 'create_chapter',
+    label: 'Create Chapter',
+    icon: PlusCircle,
+    roles: ['superadmin', 'admin', 'employee'],
+  },
+  {
     id: 'stories',
     label: 'Stories',
     icon: BookOpen,
@@ -111,7 +118,7 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> = ADMIN_MENU_ITEMS.r
 
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
-  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'ads', 'profile'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'profile'],
   user: [],
 };

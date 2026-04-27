@@ -18,12 +18,12 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ children
 
     const from = encodeURIComponent(pathname || '/');
     if (!user) {
-      router.replace(`/401?from=${from}`);
+      router.replace(`/handle-exception/401?from=${from}`);
       return;
     }
 
     if (!role || !allowedRoles.includes(role)) {
-      router.replace(`/403?from=${from}`);
+      router.replace(`/handle-exception/403?from=${from}`);
     }
   }, [allowedRoles, loading, pathname, role, router, user]);
 

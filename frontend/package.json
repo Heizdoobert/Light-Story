@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3001 -H 0.0.0.0",
+    "dev:clean": "node -e \"require('fs').rmSync('.next-dev',{recursive:true,force:true})\" && next dev -p 3001 -H 0.0.0.0",
+    "dev:rescue": "node scripts/dev-rescue.mjs && next dev -p 3001 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 3001 -H 0.0.0.0",
     "lint": "tsc --noEmit",

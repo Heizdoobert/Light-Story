@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
+  allowedDevOrigins: ['http://127.0.0.1:3001', 'http://localhost:3001'],
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,

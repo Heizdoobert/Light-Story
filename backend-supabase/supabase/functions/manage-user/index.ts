@@ -23,8 +23,8 @@ function isValidRole(value: unknown): value is "superadmin" | "admin" | "employe
   return value === "superadmin" || value === "admin" || value === "employee" || value === "user";
 }
 
-function isCreatableRole(value: unknown): value is "superadmin" | "admin" | "employee" | "user" {
-  return value === "superadmin" || value === "admin" || value === "employee" || value === "user";
+function isCreatableRole(value: unknown): value is "admin" | "employee" | "user" {
+  return value === "admin" || value === "employee" || value === "user";
 }
 
 async function writeAuditLog(
@@ -144,7 +144,7 @@ serve(async (req) => {
       }
 
       if (!isCreatableRole(role)) {
-        return jsonResponse({ error: "invalid role" }, 400);
+        return jsonResponse({ error: "role is not allowed for creation" }, 400);
       }
 
       let created;
@@ -220,7 +220,18 @@ serve(async (req) => {
       return jsonResponse({ error: "You cannot delete your own account" }, 400);
     }
 
-    const { error: deleteError } = await supabase.auth.admin.deleteUser(userId.trim());
+    const targetUserId = userId.trim();
+    const banUntil = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: banError } = await supabase.auth.admin.updateUserById(targetUserId, {
+      banned_until: banUntil,
+    });
+
+    if (banError) {
+      console.warn("manage-user ban before delete failed:", banError);
+    }
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(targetUserId, true);
     if (deleteError) {
       console.error("manage-user deleteUser error:", deleteError);
       return jsonResponse({ error: deleteError.message }, 500);
@@ -229,11 +240,11 @@ serve(async (req) => {
     await writeAuditLog(supabase, {
       actorUserId: verifiedUser.userId,
       action: "user_delete",
-      targetUserId: userId.trim(),
+      targetUserId,
       targetEmail,
     });
 
-    return jsonResponse({ deleted: true, userId: userId.trim() }, 200);
+    return jsonResponse({ deleted: true, userId: targetUserId }, 200);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Unhandled error in manage-user:", message, err);
