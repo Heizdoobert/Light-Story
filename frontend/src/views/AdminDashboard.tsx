@@ -1,7 +1,7 @@
 "use client";
 import React, { Suspense, lazy, startTransition, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AdminLayout } from '../components/AdminLayout';
+import { AdminLayout } from '../components/admin/AdminLayout';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '../domain/entities';
 import { supabase } from '../core/supabase';
