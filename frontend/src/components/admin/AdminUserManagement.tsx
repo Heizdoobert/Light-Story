@@ -12,7 +12,7 @@ interface Profile {
 }
 
 const ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
-const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
+const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin'];
 
 const canManageTargetRole = (actorRole: UserRole | null): boolean => {
   if (actorRole === 'superadmin') return true;
@@ -20,7 +20,7 @@ const canManageTargetRole = (actorRole: UserRole | null): boolean => {
 };
 
 const canAssignRole = (actorRole: UserRole | null, nextRole: UserRole): boolean => {
-  if (actorRole === 'superadmin') return true;
+  if (actorRole === 'superadmin' && nextRole !== 'superadmin') return true;
   return false;
 };
 
@@ -36,7 +36,8 @@ export const AdminUserManagement: React.FC = () => {
   const [newUserFullName, setNewUserFullName] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>('user');
   const [creatingUser, setCreatingUser] = useState(false);
-  const { user: currentUser, role: currentRole } = useAuth();
+  const { user: currentUser, role: currentRole, loading: authLoading } = useAuth();
+  const canAccessUserManagement = currentRole === 'superadmin';
 
   const getSupabaseClient = () => {
     if (!supabase) {
@@ -104,6 +105,12 @@ export const AdminUserManagement: React.FC = () => {
   };
 
   const fetchUsers = useCallback(async () => {
+    if (!canAccessUserManagement) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const client = getSupabaseClient();
       const { data, error } = await client
@@ -118,11 +125,19 @@ export const AdminUserManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [canAccessUserManagement]);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!canAccessUserManagement) {
+      setUsers([]);
+      setLoading(false);
+      return;
+    }
+
     void fetchUsers();
-  }, [fetchUsers]);
+  }, [authLoading, canAccessUserManagement, fetchUsers]);
 
   const handleRoleChange = async (targetUser: Profile, newRole: UserRole) => {
     if (targetUser.id === currentUser?.id) {
@@ -267,7 +282,20 @@ export const AdminUserManagement: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading users...</div>;
+  if (authLoading || (loading && canAccessUserManagement)) {
+    return <div>Loading users...</div>;
+  }
+
+  if (!canAccessUserManagement) {
+    return (
+      <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+        <h1 className="text-xl font-black">Access restricted</h1>
+        <p className="mt-2 text-sm font-medium">
+          User management is available to superadmin accounts only.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -416,7 +444,7 @@ export const AdminUserManagement: React.FC = () => {
                         <option
                           key={roleOption}
                           value={roleOption}
-                          disabled={!canAssignRole(currentRole, roleOption)}
+                          disabled={roleOption === 'superadmin' || !canAssignRole(currentRole, roleOption)}
                         >
                           {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
                         </option>

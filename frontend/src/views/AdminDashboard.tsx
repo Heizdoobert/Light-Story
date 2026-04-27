@@ -142,10 +142,20 @@ const AdminDashboardContent: React.FC<{
         throw new Error('Supabase not initialized');
       }
 
-      const [stories, chaptersResult] = await Promise.all([
+      const [storiesResult, chaptersResult] = await Promise.allSettled([
         storyRepo.getStories(),
         supabase.from('chapters').select('id', { count: 'exact', head: true }),
       ]);
+
+      if (storiesResult.status === 'rejected') {
+        throw storiesResult.reason;
+      }
+
+      const stories = storiesResult.value;
+      const chapterCount =
+        chaptersResult.status === 'fulfilled' && !chaptersResult.value.error
+          ? (chaptersResult.value.count ?? 0)
+          : 0;
 
       const totalViews = stories.reduce((sum, story) => sum + (story.views || 0), 0);
 
@@ -154,7 +164,7 @@ const AdminDashboardContent: React.FC<{
         stats: {
           totalViews,
           activeStories: stories.length,
-          totalChapters: chaptersResult.count ?? 0,
+          totalChapters: chapterCount,
         },
         syncedAt: new Date().toISOString(),
       };

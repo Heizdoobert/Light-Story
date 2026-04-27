@@ -34,11 +34,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return this.props.children;
     }
 
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
     return (
       <StatusErrorPage
         statusCode={500}
         title="Internal Server Error"
-        message={this.state.error?.message || 'An unexpected runtime error occurred. Please reload and try again.'}
+        message={
+          isDevelopment && this.state.error?.message
+            ? this.state.error.message
+            : 'An unexpected runtime error occurred. Please reload and try again.'
+        }
         actionLabel="Return Home"
         actionHref="/"
         showReload
