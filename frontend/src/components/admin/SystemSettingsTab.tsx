@@ -1,13 +1,13 @@
 // System settings tab for UI controls and role-based dashboard tab visibility.
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../core/supabase';
+import { supabase } from '../../core/supabase';
 import { toast } from 'sonner';
 import { Clock3 } from 'lucide-react';
-import { useAuth } from '../modules/auth/AuthContext';
-import { getErrorMessage } from '../lib/errorUtils';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
-import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '../lib/adminNavigation';
+import { useAuth } from '../../modules/auth/AuthContext';
+import { getErrorMessage } from '../../lib/errorUtils';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
+import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '../../lib/adminNavigation';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
   DashboardTabVisibility,
@@ -19,7 +19,7 @@ import {
   parseDashboardTabVisibility,
   parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
-} from '../lib/systemSettings';
+} from '../../lib/systemSettings';
 
 type SiteSettingRow = {
   key: string;
@@ -415,3 +415,4 @@ export const SystemSettingsTab: React.FC = () => {
     </div>
   );
 };
+

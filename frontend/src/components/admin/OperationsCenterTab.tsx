@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../core/supabase';
-import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
-import { Story } from '../domain/entities';
+import { supabase } from '../../core/supabase';
+import { SupabaseStoryRepository } from '../../infrastructure/repositories/SupabaseStoryRepository';
+import { Story } from '../../domain/entities';
 import { ArrowRight, BookOpen, CircleAlert, Coins, FileText, Library, MessageSquare, Shield, Users, Workflow } from 'lucide-react';
 
 const storyRepo = new SupabaseStoryRepository();
@@ -314,3 +314,4 @@ export const OperationsCenterTab: React.FC<OperationsCenterTabProps> = ({ onNavi
     </div>
   );
 };
+
