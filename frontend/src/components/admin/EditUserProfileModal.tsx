@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../modules/auth/AuthContext';
-import { supabase } from '../core/supabase';
+import { useAuth } from '../../modules/auth/AuthContext';
+import { supabase } from '../../core/supabase';
 import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { getErrorMessage } from '../lib/errorUtils';
+import { getErrorMessage } from '../../lib/errorUtils';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;
@@ -277,3 +277,4 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
     </AnimatePresence>
   );
 };
+

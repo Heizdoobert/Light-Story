@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
-import { SupabaseTaxonomyRepository } from "../infrastructure/repositories/SupabaseTaxonomyRepository";
-import { useAuth } from "../modules/auth/AuthContext";
-import { Story } from "../domain/entities";
+import { SupabaseStoryRepository } from "../../infrastructure/repositories/SupabaseStoryRepository";
+import { SupabaseTaxonomyRepository } from "../../infrastructure/repositories/SupabaseTaxonomyRepository";
+import { useAuth } from "../../modules/auth/AuthContext";
+import { Story } from "../../domain/entities";
 import { toast } from "sonner";
-import { getErrorMessage } from "../lib/errorUtils";
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../lib/dbChangeToast";
-import { supabase } from "../core/supabase";
+import { getErrorMessage } from "../../lib/errorUtils";
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../../lib/dbChangeToast";
+import { supabase } from "../../core/supabase";
 import {
   Save,
   X,
@@ -353,3 +353,4 @@ export const StoryForm: React.FC = () => {
     </div>
   );
 };
+

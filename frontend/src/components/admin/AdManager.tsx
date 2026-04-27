@@ -4,11 +4,11 @@
 */
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../core/supabase';
-import { useAuth } from '../modules/auth/AuthContext';
+import { supabase } from '../../core/supabase';
+import { useAuth } from '../../modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../lib/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
 type AdConfigs = Record<AdConfigKey, string>;
@@ -146,3 +146,4 @@ export const AdManager: React.FC = () => {
     </div>
   );
 };
+

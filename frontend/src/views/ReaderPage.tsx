@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { AdRenderer } from '../components/AdRenderer';
+import { AdRenderer } from '../components/reader/AdRenderer';
 import { IReaderView } from '../presentation/mvp/ReaderContract';
 import { ReaderPresenter } from '../presentation/mvp/ReaderPresenter';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
