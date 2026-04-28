@@ -5,6 +5,12 @@
       "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
     ]
   },
+  "app\\admin\\page.tsx -> ../../views/AdminDashboard": {
+    "id": "app\\admin\\page.tsx -> ../../views/AdminDashboard",
+    "files": [
+      "static/chunks/_app-pages-browser_src_views_AdminDashboard_tsx.js"
+    ]
+  },
   "views\\AdminDashboard.tsx -> ../components/admin/AdManager": {
     "id": "views\\AdminDashboard.tsx -> ../components/admin/AdManager",
     "files": [
