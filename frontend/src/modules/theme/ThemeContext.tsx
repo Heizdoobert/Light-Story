@@ -1,8 +1,8 @@
 /*
   ThemeContext.tsx - FOUC-Proof Theme Management
-  Uses a blocking script pattern to prevent white flash on load.
+  Uses a blocking script pattern + useLayoutEffect to prevent white flash on load.
 */
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useLayoutEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -16,7 +16,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>('light');
 
-  useEffect(() => {
+  // Use useLayoutEffect to apply theme before React hydrates (prevents FOUC)
+  useLayoutEffect(() => {
     const saved = localStorage.getItem('theme');
     if (saved === 'light' || saved === 'dark') {
       setTheme(saved);
@@ -27,7 +28,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setTheme(prefersDark ? 'dark' : 'light');
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
