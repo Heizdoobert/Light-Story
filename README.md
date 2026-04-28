@@ -76,6 +76,36 @@ Suggested verification scope:
 - `backend-supabase/supabase/tests/rls_smoke.sql`
 - `backend-supabase/supabase/tests/rpc_smoke.sql`
 
+
+## Security & Performance Updates (April 2026)
+
+Recent comprehensive audit identified and resolved 10 critical security, performance, and reliability issues:
+
+### Database & Security (3 items)
+1. **RLS Policy Hardening** - Fixed critical "select true" leak on site_settings that exposed ad keys and sensitive config to unauthenticated users. Now requires authentication with restricted "public_*" key access.
+2. **View Count Race Condition** - Replaced simple UPDATE with idempotent RPC using story_views tracking table, preventing duplicate increments under high concurrency.
+3. **Profile Role Escalation Prevention** - Verified and maintained trigger-based protection preventing unauthorized role changes; only superadmin can modify user roles.
+
+### Frontend Performance (3 items)
+4. **Ad Injection Optimization** - Deferred ad script injection using requestIdleCallback (fallback setTimeout) to prevent main thread blocking and improve Lighthouse scores.
+5. **Bundle Size Reduction** - Implemented dynamic imports for admin dashboard; non-admin users no longer download admin code (~13KB saved).
+6. **Dark Mode FOUC Prevention** - Applied blocking script pattern + useLayoutEffect to eliminate white flash on load by applying theme before React hydrates.
+
+### Error Handling & UX (4 items)
+7. **Global Error Handling** - Added useGlobalErrorHandler hook and GlobalErrorHandler component to catch unhandled promise rejections and surface Supabase errors via toast UI.
+8. **Chapter Draft Auto-Save** - Implemented useAutoSave hook with 3-second debounced localStorage backup; unsaved work persists across session expiry and tab crashes.
+9. **Client-Side RBAC Audit** - Created RLS audit migration verifying all admin tables enforce role-based access; client-side protections are supplementary only.
+10. **Optimistic Updates Foundation** - Created useOptimisticUpdate hook enabling snappier UI feedback for likes/views; integration examples in `frontend/src/examples/OptimisticUpdateExample.tsx`.
+
+**Commits**: 935242d, a99a3cf (completed April 28, 2026)
+
+### Usage Notes
+- Optimistic updates are ready for integration via `useStoryMutations` hook
+- Auto-save recovery automatically triggers on page reload with user notification
+- Theme blocking script runs before React initialization; check suppressHydrationWarning in html tag if troubleshooting
+- RLS audit migration can be run manually: `SELECT * FROM app_private.check_rls_policies();`
+
+
 ## Local Setup
 
 1. Install frontend dependencies:
@@ -142,3 +172,4 @@ Contributor workflow and PR guidance live in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - `agents/` is intentionally git-ignored for local project memory.
 - Legacy SQL files at the repository root are retained for reference during transition.
+
