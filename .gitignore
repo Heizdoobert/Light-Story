@@ -24,3 +24,4 @@ frontend/out/
 frontend/.turbo/
 frontend/.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
+frontend/.next-dev/

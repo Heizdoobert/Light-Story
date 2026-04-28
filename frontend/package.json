@@ -9,6 +9,7 @@
     "dev:rescue": "node scripts/dev-rescue.mjs && next dev -p 3001 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -p 3001 -H 0.0.0.0",
+    "preview": "next start -p 3001 -H 0.0.0.0",
     "lint": "tsc --noEmit",
     "ci:verify": "npm run lint && npm run build",
     "supabase:start": "supabase start",
