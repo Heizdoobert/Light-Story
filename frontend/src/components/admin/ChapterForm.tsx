@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SupabaseChapterRepository } from "../../infrastructure/repositories/SupabaseChapterRepository";
 import { SupabaseStoryRepository } from "../../infrastructure/repositories/SupabaseStoryRepository";
 import { useAuth } from "../../modules/auth/AuthContext";
+import { useAutoSave } from "../../hooks/useAutoSave";
 import { Chapter, Story } from "../../domain/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errorUtils";
@@ -26,6 +27,14 @@ export const ChapterForm: React.FC = () => {
     title: "",
     content: "",
   });
+  const [isRestoring, setIsRestoring] = useState(true);
+
+  // Auto-save form data to prevent data loss
+  const { restore: restoreAutoSave, clear: clearAutoSave } = useAutoSave(
+    'chapter-form',
+    formData,
+    3000, // Auto-save every 3 seconds
+  );
 
   useEffect(() => {
     const fetchStories = async () => {
@@ -34,10 +43,19 @@ export const ChapterForm: React.FC = () => {
         const data = await repo.getStories();
         setStories(data);
         if (data.length > 0) {
-          setFormData((prev) => ({ ...prev, story_id: data[0].id }));
+          // Try to restore auto-saved data first
+          const restored = restoreAutoSave();
+          if (restored && restored.story_id) {
+            setFormData(restored);
+          } else {
+            // Otherwise set first story as default
+            setFormData((prev) => ({ ...prev, story_id: data[0].id }));
+          }
         }
       } catch (error) {
         console.error("Error fetching stories:", error);
+      } finally {
+        setIsRestoring(false);
       }
     };
     fetchStories();
@@ -56,6 +74,8 @@ export const ChapterForm: React.FC = () => {
     onSuccess: (_data, _variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["chapters"] });
       resolveDbChangeToast(context?.toastId, "Chapter created successfully");
+      // Clear auto-saved data after successful save
+      clearAutoSave();
       setFormData((prev) => ({
         ...prev,
         chapter_number: (prev.chapter_number || 1) + 1,
@@ -81,6 +101,14 @@ export const ChapterForm: React.FC = () => {
     mutation.mutate(formData);
   };
 
+  if (isRestoring) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-2 border-slate-300 dark:border-slate-700 border-t-slate-900 dark:border-t-cyan-400 rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="mb-10">
@@ -88,7 +116,7 @@ export const ChapterForm: React.FC = () => {
           Add New Chapter
         </h2>
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
-          Choose a story and fill in chapter content to publish.
+          Choose a story and fill in chapter content to publish. Your work is auto-saved as you type.
         </p>
       </header>
 

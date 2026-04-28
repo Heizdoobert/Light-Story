@@ -2,10 +2,25 @@
 
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { AuthProvider } from '../modules/auth/AuthContext';
 import { ThemeProvider } from '../modules/theme/ThemeContext';
 import { ErrorBoundary } from '../shared/components/ErrorBoundary';
+import { useGlobalErrorHandler, getErrorMessage } from '../hooks/useGlobalErrorHandler';
+
+/**
+ * Error handler component that displays errors via toast.
+ */
+function GlobalErrorHandler({ children }: { children: React.ReactNode }) {
+  useGlobalErrorHandler((error: Error) => {
+    toast.error(getErrorMessage(error), {
+      duration: 5000,
+      richColors: true,
+    });
+  });
+
+  return <>{children}</>;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -28,7 +43,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <AuthProvider>
           <ThemeProvider>
             <Toaster position="top-right" richColors closeButton />
-            {children}
+            <GlobalErrorHandler>{children}</GlobalErrorHandler>
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>
