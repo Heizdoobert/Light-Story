@@ -2,12 +2,12 @@ import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SupabaseChapterRepository } from '@/services/repositories/SupabaseChapterRepository';
 import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
-import { useAuth } from "../../modules/auth/AuthContext";
-import { useAutoSave } from "../../hooks/useAutoSave";
+import { useAuth } from '@/modules/auth/AuthContext';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { Chapter, Story } from '@/types/entities';
 import { toast } from "sonner";
-import { getErrorMessage } from "../../lib/errorUtils";
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../../lib/dbChangeToast";
+import { getErrorMessage } from '@/lib/errorUtils';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 import {
   Save,
   BookOpen,

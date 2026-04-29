@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminLayout } from "@/app/admin/_components/AdminLayout";
 import { SupabaseStoryRepository } from "@/services/repositories/SupabaseStoryRepository";
 import { Story } from "@/types/entities";
 import { supabase } from "@/lib/supabase/client";
@@ -24,38 +24,38 @@ const DEFAULT_UI_SETTINGS = {
   showSyncBadge: true,
 };
 
-const StoryForm = lazy(() => import("@/components/admin/StoryForm").then((m) => ({ default: m.StoryForm })));
+const StoryForm = lazy(() => import("@/app/admin/_components/StoryForm").then((m) => ({ default: m.StoryForm })));
 const StoryManagementTab = lazy(() =>
-  import("@/components/admin/StoryManagementTab").then((m) => ({ default: m.StoryManagementTab })),
+  import("@/app/admin/_components/StoryManagementTab").then((m) => ({ default: m.StoryManagementTab })),
 );
-const ChapterForm = lazy(() => import("@/components/admin/ChapterForm").then((m) => ({ default: m.ChapterForm })));
-const AdManager = lazy(() => import("@/components/admin/AdManager").then((m) => ({ default: m.AdManager })));
+const ChapterForm = lazy(() => import("@/app/admin/_components/ChapterForm").then((m) => ({ default: m.ChapterForm })));
+const AdManager = lazy(() => import("@/app/admin/_components/AdManager").then((m) => ({ default: m.AdManager })));
 const UserProfileTab = lazy(() =>
-  import("@/components/admin/UserProfileTab").then((m) => ({ default: m.UserProfileTab })),
+  import("@/app/admin/_components/UserProfileTab").then((m) => ({ default: m.UserProfileTab })),
 );
 const CategoryManagementTab = lazy(() =>
-  import("@/components/admin/CategoryManagementTab").then((m) => ({ default: m.CategoryManagementTab })),
+  import("@/app/admin/_components/CategoryManagementTab").then((m) => ({ default: m.CategoryManagementTab })),
 );
 const AuthorManagementTab = lazy(() =>
-  import("@/components/admin/AuthorManagementTab").then((m) => ({ default: m.AuthorManagementTab })),
+  import("@/app/admin/_components/AuthorManagementTab").then((m) => ({ default: m.AuthorManagementTab })),
 );
 const SystemSettingsTab = lazy(() =>
-  import("@/components/admin/SystemSettingsTab").then((m) => ({ default: m.SystemSettingsTab })),
+  import("@/app/admin/_components/SystemSettingsTab").then((m) => ({ default: m.SystemSettingsTab })),
 );
 const AdminUserManagement = lazy(() =>
-  import("@/components/admin/AdminUserManagement").then((m) => ({ default: m.AdminUserManagement })),
+  import("@/app/admin/_components/AdminUserManagement").then((m) => ({ default: m.AdminUserManagement })),
 );
 const OperationsCenterTab = lazy(() =>
-  import("@/components/admin/OperationsCenterTab").then((m) => ({ default: m.OperationsCenterTab })),
+  import("@/app/admin/_components/OperationsCenterTab").then((m) => ({ default: m.OperationsCenterTab })),
 );
 const OperationsDataTab = lazy(() =>
-  import("@/components/admin/OperationsDataTab").then((m) => ({ default: m.OperationsDataTab })),
+  import("@/app/admin/_components/OperationsDataTab").then((m) => ({ default: m.OperationsDataTab })),
 );
 const AdminAuditLogsTab = lazy(() =>
-  import("@/components/admin/AdminAuditLogsTab").then((m) => ({ default: m.AdminAuditLogsTab })),
+  import("@/app/admin/_components/AdminAuditLogsTab").then((m) => ({ default: m.AdminAuditLogsTab })),
 );
 const DashboardAccessLogsTab = lazy(() =>
-  import("@/components/admin/DashboardAccessLogsTab").then((m) => ({ default: m.DashboardAccessLogsTab })),
+  import("@/app/admin/_components/DashboardAccessLogsTab").then((m) => ({ default: m.DashboardAccessLogsTab })),
 );
 
 type AdminTabId =
@@ -75,19 +75,19 @@ type AdminTabId =
   | "operations";
 
 const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
-  create_story: () => import("@/components/admin/StoryForm"),
-  stories: () => import("@/components/admin/StoryManagementTab"),
-  create_chapter: () => import("@/components/admin/ChapterForm"),
-  ads: () => import("@/components/admin/AdManager"),
-  profile: () => import("@/components/admin/UserProfileTab"),
-  categories: () => import("@/components/admin/CategoryManagementTab"),
-  authors: () => import("@/components/admin/AuthorManagementTab"),
-  settings: () => import("@/components/admin/SystemSettingsTab"),
-  users: () => import("@/components/admin/AdminUserManagement"),
-  audit_logs: () => import("@/components/admin/AdminAuditLogsTab"),
-  dashboard_access_logs: () => import("@/components/admin/DashboardAccessLogsTab"),
-  operations: () => import("@/components/admin/OperationsCenterTab"),
-  operations_data: () => import("@/components/admin/OperationsDataTab"),
+  create_story: () => import("@/app/admin/_components/StoryForm"),
+  stories: () => import("@/app/admin/_components/StoryManagementTab"),
+  create_chapter: () => import("@/app/admin/_components/ChapterForm"),
+  ads: () => import("@/app/admin/_components/AdManager"),
+  profile: () => import("@/app/admin/_components/UserProfileTab"),
+  categories: () => import("@/app/admin/_components/CategoryManagementTab"),
+  authors: () => import("@/app/admin/_components/AuthorManagementTab"),
+  settings: () => import("@/app/admin/_components/SystemSettingsTab"),
+  users: () => import("@/app/admin/_components/AdminUserManagement"),
+  audit_logs: () => import("@/app/admin/_components/AdminAuditLogsTab"),
+  dashboard_access_logs: () => import("@/app/admin/_components/DashboardAccessLogsTab"),
+  operations: () => import("@/app/admin/_components/OperationsCenterTab"),
+  operations_data: () => import("@/app/admin/_components/OperationsDataTab"),
 };
 
 const TabLoadingFallback: React.FC = () => (

@@ -9,11 +9,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useAuth } from "../../modules/auth/AuthContext";
+import { useAuth } from '@/modules/auth/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase/client';
-import { ADMIN_MENU_ITEMS } from "../../lib/adminNavigation";
+import { ADMIN_MENU_ITEMS } from '@/lib/adminNavigation';
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
@@ -22,7 +22,7 @@ import {
   parseDashboardTabVisibility,
   parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
-} from "../../lib/systemSettings";
+} from '@/lib/systemSettings';
 
 interface AdminLayoutProps {
   children: React.ReactNode;

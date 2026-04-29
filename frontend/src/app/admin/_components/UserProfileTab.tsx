@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { EditUserProfileModal } from './EditUserProfileModal';
 import { Mail, User, Shield, Edit2 } from 'lucide-react';
 import { motion } from 'motion/react';

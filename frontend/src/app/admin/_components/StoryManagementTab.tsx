@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCw, BookOpenText, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
-import { useAuth, UserRole } from '../../modules/auth/AuthContext';
+import { useAuth, UserRole } from '@/modules/auth/AuthContext';
 import { Story } from '@/types/entities';
-import { getErrorMessage } from '../../lib/errorUtils';
+import { getErrorMessage } from '@/lib/errorUtils';
 import { toast } from 'sonner';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 
 type StatusFilter = 'all' | 'ongoing' | 'completed';
 type SortMode = 'newest' | 'oldest' | 'most_viewed';

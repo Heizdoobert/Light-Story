@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Clock3 } from 'lucide-react';
-import { useAuth } from '../../modules/auth/AuthContext';
-import { getErrorMessage } from '../../lib/errorUtils';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
-import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '../../lib/adminNavigation';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { getErrorMessage } from '@/lib/errorUtils';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
+import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '@/lib/adminNavigation';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
   DashboardTabVisibility,
@@ -19,7 +19,7 @@ import {
   parseDashboardTabVisibility,
   parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
-} from '../../lib/systemSettings';
+} from '@/lib/systemSettings';
 
 type SiteSettingRow = {
   key: string;
