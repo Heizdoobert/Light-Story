@@ -170,6 +170,19 @@ supabase functions deploy manage-chapter
      - Internal secret: send `x-internal-secret: <INTERNAL_ADMIN_SECRET>` from trusted internal services for automation.
   4. Audit access logs and rotate `INTERNAL_ADMIN_SECRET` regularly.
 
+### Testing internal routes locally
+
+To validate the internal admin endpoints return the expected authorization responses during local development, run the dev server and the included smoke test:
+
+```bash
+# from repo root
+npm --prefix frontend run dev
+# in another shell (no secrets set)
+npm --prefix frontend run test:internal-auth
+```
+
+If you need to run the smoke test with service-role credentials, set `SUPABASE_SERVICE_ROLE_KEY` in your `.env.local` (do not commit it) and re-run the test to exercise server-side behavior.
+
 ### Replacing client Edge Function calls
 
 - The previous client call to the `manage-user` Edge Function has been replaced by a proxied internal endpoint at `/api/internal/admin/manage-user` that performs server-side role checks and calls Supabase admin APIs using the service role key.
