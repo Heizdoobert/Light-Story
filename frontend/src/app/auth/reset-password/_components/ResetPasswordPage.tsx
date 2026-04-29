@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../modules/auth/AuthContext';
-import { supabase } from '../core/supabase';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 export const ResetPasswordPage: React.FC = () => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { UnauthorizedPage } from '../../../views/UnauthorizedPage';
+import { UnauthorizedPage } from '../_components/UnauthorizedPage';
 
 export default function Page401() {
   return <UnauthorizedPage />;

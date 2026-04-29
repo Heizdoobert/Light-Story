@@ -1,4 +1,4 @@
-import { Story, Chapter, SiteSetting } from '../domain/entities';
+import { Story, Chapter, SiteSetting } from './entities';
 
 export interface IStoryRepository {
   getStories(): Promise<Story[]>;

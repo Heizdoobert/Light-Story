@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCw, BookOpenText, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { SupabaseStoryRepository } from '../../infrastructure/repositories/SupabaseStoryRepository';
+import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
 import { useAuth, UserRole } from '../../modules/auth/AuthContext';
-import { Story } from '../../domain/entities';
+import { Story } from '@/types/entities';
 import { getErrorMessage } from '../../lib/errorUtils';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';

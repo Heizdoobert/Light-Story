@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '../../modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';

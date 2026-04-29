@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SupabaseTaxonomyRepository } from '../../infrastructure/repositories/SupabaseTaxonomyRepository';
-import { supabase } from '../../core/supabase';
+import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '../../modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
 

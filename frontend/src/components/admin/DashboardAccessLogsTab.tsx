@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 type AccessLog = {
   id: string;

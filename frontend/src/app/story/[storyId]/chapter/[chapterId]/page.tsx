@@ -1,4 +1,4 @@
-import { ReaderPage } from '../../../../../views/ReaderPage';
+import { ReaderPage } from './_components/ReaderPage';
 
 interface StoryChapterPageProps {
   params: Promise<{

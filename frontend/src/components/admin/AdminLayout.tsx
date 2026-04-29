@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useAuth } from "../../modules/auth/AuthContext";
 import { ThemeToggleButton } from './ThemeToggleButton';
 import { toast } from "sonner";
-import { supabase } from "../../core/supabase";
+import { supabase } from '@/lib/supabase/client';
 import { ADMIN_MENU_ITEMS } from "../../lib/adminNavigation";
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,

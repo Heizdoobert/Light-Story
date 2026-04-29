@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptimisticUpdate } from './useOptimisticUpdate';
-import { supabase } from '../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 /**
  * Hook for story-related mutations with optimistic updates.

@@ -25,10 +25,7 @@ export const StatusErrorPage: React.FC<StatusErrorPageProps> = ({
         <p className="mt-4 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{message}</p>
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <a
-            href={actionHref}
-            className="px-6 py-3 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity"
-          >
+          <a href={actionHref} className="px-6 py-3 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity">
             {actionLabel}
           </a>
           {showReload && (

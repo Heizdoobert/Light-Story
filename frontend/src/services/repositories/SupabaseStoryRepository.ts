@@ -1,6 +1,6 @@
-import { supabase } from '../../core/supabase';
-import { Story } from '../../domain/entities';
-import { IStoryRepository } from '../../domain/repositories';
+import { supabase } from '@/lib/supabase/client';
+import { Story } from '@/types/entities';
+import { IStoryRepository } from '@/types/repos';
 
 type StoryStatus = Story['status'];
 
@@ -158,3 +158,5 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (error) throw error;
   }
 }
+
+export default SupabaseStoryRepository;

@@ -1,6 +1,6 @@
-import { supabase } from '../../core/supabase';
-import { Chapter } from '../../domain/entities';
-import { IChapterRepository } from '../../domain/repositories';
+import { supabase } from '@/lib/supabase/client';
+import { Chapter } from '@/types/entities';
+import { IChapterRepository } from '@/types/repos';
 
 export class SupabaseChapterRepository implements IChapterRepository {
   async getChapterById(id: string): Promise<Chapter | null> {
@@ -37,3 +37,5 @@ export class SupabaseChapterRepository implements IChapterRepository {
     return created;
   }
 }
+
+export default SupabaseChapterRepository;

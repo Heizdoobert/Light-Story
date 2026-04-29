@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
 import { useAuth, UserRole } from '../../modules/auth/AuthContext';

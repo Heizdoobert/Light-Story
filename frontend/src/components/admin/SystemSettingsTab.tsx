@@ -1,7 +1,7 @@
 // System settings tab for UI controls and role-based dashboard tab visibility.
 import React, { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { Clock3 } from 'lucide-react';
 import { useAuth } from '../../modules/auth/AuthContext';

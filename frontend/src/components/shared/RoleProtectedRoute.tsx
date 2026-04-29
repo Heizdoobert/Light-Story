@@ -1,7 +1,7 @@
 // This component protects routes based on the user's role
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, UserRole } from '../../modules/auth/AuthContext';
+import { useAuth, UserRole } from '@/modules/auth/AuthContext';
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;

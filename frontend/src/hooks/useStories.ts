@@ -1,45 +1,31 @@
-/*
-  useStories.ts - Hardened Data Hook
-  Implements Optimistic Updates and Error Handling via React Query
-*/
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../core/supabase';
+import * as storyService from '@/services/story.service';
 import { toast } from 'sonner';
 
 export const useStories = () => {
   const queryClient = useQueryClient();
 
-  // Fetch stories with error boundary support
   const storiesQuery = useQuery({
     queryKey: ['stories'],
     queryFn: async () => {
-      if (!supabase) throw new Error('Supabase not initialized');
-      const { data, error } = await supabase
-        .from('stories')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
+      // service handles supabase access
+      const res = await storyService.fetchStories();
+      // if using paged result, adapt as needed
+      return Array.isArray(res) ? res : res.items;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Optimistic View Increment
   const incrementViewMutation = useMutation({
     mutationFn: async (storyId: string) => {
-      if (!supabase) return;
-      const { error } = await supabase.functions.invoke('increment-story-views', {
-        body: { storyId },
-      });
-      if (error) throw error;
+      await storyService.incrementViews(storyId);
     },
     onMutate: async (storyId) => {
       await queryClient.cancelQueries({ queryKey: ['stories'] });
       const previousStories = queryClient.getQueryData(['stories']);
 
-      queryClient.setQueryData(['stories'], (old: any) => 
-        old?.map((s: any) => s.id === storyId ? { ...s, views: s.views + 1 } : s)
+      queryClient.setQueryData(['stories'], (old: any) =>
+        old?.map((s: any) => (s.id === storyId ? { ...s, views: (s.views || 0) + 1 } : s))
       );
 
       return { previousStories };
@@ -47,6 +33,7 @@ export const useStories = () => {
     onError: (err, storyId, context) => {
       queryClient.setQueryData(['stories'], context?.previousStories);
       console.error('Failed to increment view:', err);
+      toast.error('Failed to increment view');
     },
   });
 
@@ -54,6 +41,9 @@ export const useStories = () => {
     stories: storiesQuery.data || [],
     isLoading: storiesQuery.isLoading,
     error: storiesQuery.error,
-    incrementView: incrementViewMutation.mutate
+    incrementView: incrementViewMutation.mutate,
   };
 };
+
+export default useStories;
+
