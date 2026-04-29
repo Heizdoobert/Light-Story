@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
 export const ResetPasswordPage: React.FC = () => {
@@ -21,17 +20,16 @@ export const ResetPasswordPage: React.FC = () => {
     const type = params.get('type');
 
     const verifyRecovery = async () => {
-      if (!supabase) {
-        setVerifying(false);
-        return;
-      }
-
       try {
-        const { data } = await supabase.auth.getSession();
-        const hasSession = Boolean(data.session?.user);
-        const fromRecoveryLink = type === 'recovery';
-
-        setIsRecoveryFlow(fromRecoveryLink || hasSession);
+        const res = await fetch('/api/auth/verify-recovery');
+        if (!res.ok) {
+          setIsRecoveryFlow(type === 'recovery');
+        } else {
+          const json = await res.json();
+          const hasSession = Boolean(json.hasSession);
+          const fromRecoveryLink = type === 'recovery';
+          setIsRecoveryFlow(fromRecoveryLink || hasSession);
+        }
       } finally {
         setVerifying(false);
       }

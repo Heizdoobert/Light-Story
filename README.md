@@ -31,6 +31,10 @@ Environment variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+
+# Server-side (do NOT expose these in the browser):
+# `SUPABASE_SERVICE_ROLE_KEY` — Supabase service_role key used by server internal routes/functions.
+# `INTERNAL_ADMIN_SECRET` — short, high-entropy secret to allow trusted internal requests.
 ```
 
 Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
@@ -153,6 +157,23 @@ supabase functions deploy increment-story-views
 supabase functions deploy manage-story
 supabase functions deploy manage-chapter
 ```
+
+## Deployment & Internal API notes
+
+- The frontend exposes internal server routes under `/api/internal/admin/*` that must be protected in production.
+- Set `SUPABASE_SERVICE_ROLE_KEY` and `INTERNAL_ADMIN_SECRET` in the deployment environment before enabling admin features.
+- Recommended workflow:
+  1. Add `SUPABASE_SERVICE_ROLE_KEY` and `INTERNAL_ADMIN_SECRET` to your hosting provider's secret store (Vercel/Netlify/Cloud run env vars).
+  2. Ensure only server-side code reads `SUPABASE_SERVICE_ROLE_KEY`; never surface this key to the browser.
+  3. The internal routes support two auth paths:
+     - Bearer JWT: client sends `Authorization: Bearer <access_token>`; server verifies token and profile role using the service role client.
+     - Internal secret: send `x-internal-secret: <INTERNAL_ADMIN_SECRET>` from trusted internal services for automation.
+  4. Audit access logs and rotate `INTERNAL_ADMIN_SECRET` regularly.
+
+### Replacing client Edge Function calls
+
+- The previous client call to the `manage-user` Edge Function has been replaced by a proxied internal endpoint at `/api/internal/admin/manage-user` that performs server-side role checks and calls Supabase admin APIs using the service role key.
+- If you deploy the backend Edge Function `manage-user`, it can remain as a fallback for external integrations, but the frontend now prefers the internal route for admin actions.
 
 The linked project in this workspace is `rwnzsmmfvsetfcnkjoxt`.
 

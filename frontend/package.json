@@ -14,6 +14,7 @@
     "ci:verify": "npm run lint && npm run build",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop"
+    ,"test:internal-auth": "node ./tests/check_internal_routes.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",

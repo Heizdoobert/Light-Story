@@ -43,6 +43,25 @@ Include the following in your PR description when applicable:
 - rollback notes for database or auth changes
 - verification results, especially frontend build output and Supabase deploy status
 
+## Deployment & Internal Routes (developers)
+
+- Add the following environment variables to your deployment provider before enabling admin features:
+	- `NEXT_PUBLIC_SUPABASE_URL` (frontend)
+	- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (frontend)
+	- `SUPABASE_SERVICE_ROLE_KEY` (server-only; used by internal routes)
+	- `INTERNAL_ADMIN_SECRET` (server-only; short HMAC-like secret for trusted requests)
+
+- Quick local test for internal-route auth (requires dev server running):
+
+```bash
+# from repo root
+npm --prefix frontend run dev
+# in another shell
+npm --prefix frontend run test:internal-auth
+```
+
+The test simply verifies internal admin endpoints return HTTP 401/403 when no credentials are provided. For full integration tests that exercise Supabase admin operations you must set `SUPABASE_SERVICE_ROLE_KEY` and other Supabase env vars in your test environment.
+
 ## Supabase Rules of Thumb
 
 - Prefer `VITE_*` environment variables for the frontend.
