@@ -1,38 +1,27 @@
-import { supabase } from '@/lib/supabase/client';
 import { Chapter } from '@/types/entities';
 import { IChapterRepository } from '@/types/repos';
 
 export class SupabaseChapterRepository implements IChapterRepository {
   async getChapterById(id: string): Promise<Chapter | null> {
-    if (!supabase) return null;
-    const { data, error } = await supabase.from('chapters').select('*').eq('id', id).single();
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/chapters?id=${encodeURIComponent(id)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
   }
 
   async getChaptersByStoryId(storyId: string): Promise<Chapter[]> {
-    if (!supabase) return [];
-    const { data, error } = await supabase.from('chapters').select('*').eq('story_id', storyId).order('chapter_number', { ascending: true });
-    if (error) throw error;
-    return data || [];
+    const res = await fetch(`/api/chapters?storyId=${encodeURIComponent(storyId)}`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
   }
 
   async saveChapter(chapter: Partial<Chapter>): Promise<Chapter> {
-    if (!supabase) throw new Error('Supabase client not initialized');
-
-    const { data, error } = await supabase.functions.invoke('manage-chapter', {
-      body: {
-        story_id: chapter.story_id,
-        chapter_number: chapter.chapter_number,
-        title: chapter.title,
-        content: chapter.content,
-      },
-    });
-
-    if (error) throw error;
-    if (data?.error) throw new Error(data.error);
-
-    const created = await this.getChapterById(data.chapter.id);
+    const res = await fetch('/api/internal/admin/manage-chapter', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chapter }) });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    if (json.error) throw new Error(json.error);
+    const created = await this.getChapterById(json.chapter.id);
     if (!created) throw new Error('Chapter was created but could not be retrieved');
     return created;
   }

@@ -5,88 +5,88 @@
       "static/chunks/_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
     ]
   },
-  "app\\admin\\page.tsx -> ../../views/AdminDashboard": {
-    "id": "app\\admin\\page.tsx -> ../../views/AdminDashboard",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdManager": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdManager",
     "files": [
-      "static/chunks/_app-pages-browser_src_views_AdminDashboard_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_AdManager_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/AdManager": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/AdManager",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdminAuditLogsTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdminAuditLogsTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_AdManager_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_AdminAuditLogsTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/AdminAuditLogsTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/AdminAuditLogsTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdminUserManagement": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AdminUserManagement",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_AdminAuditLogsTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_AdminUserManagement_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/AdminUserManagement": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/AdminUserManagement",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AuthorManagementTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/AuthorManagementTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_AdminUserManagement_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_AuthorManagementTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/AuthorManagementTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/AuthorManagementTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/CategoryManagementTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/CategoryManagementTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_AuthorManagementTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_CategoryManagementTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/CategoryManagementTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/CategoryManagementTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/ChapterForm": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/ChapterForm",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_CategoryManagementTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_ChapterForm_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/ChapterForm": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/ChapterForm",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/DashboardAccessLogsTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/DashboardAccessLogsTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_ChapterForm_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_DashboardAccessLogsTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/DashboardAccessLogsTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/DashboardAccessLogsTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/OperationsCenterTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/OperationsCenterTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_DashboardAccessLogsTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_OperationsCenterTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/OperationsCenterTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/OperationsCenterTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/OperationsDataTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/OperationsDataTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_OperationsCenterTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_OperationsDataTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/OperationsDataTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/OperationsDataTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/StoryForm": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/StoryForm",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_OperationsDataTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_StoryForm_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/StoryForm": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/StoryForm",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/StoryManagementTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/StoryManagementTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_StoryForm_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_StoryManagementTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/StoryManagementTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/StoryManagementTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/SystemSettingsTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/SystemSettingsTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_StoryManagementTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_SystemSettingsTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/SystemSettingsTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/SystemSettingsTab",
+  "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/UserProfileTab": {
+    "id": "app\\admin\\_components\\AdminDashboard.tsx -> @/app/admin/_components/UserProfileTab",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_SystemSettingsTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_UserProfileTab_tsx.js"
     ]
   },
-  "views\\AdminDashboard.tsx -> ../components/admin/UserProfileTab": {
-    "id": "views\\AdminDashboard.tsx -> ../components/admin/UserProfileTab",
+  "app\\admin\\page.tsx -> ./_components/AdminDashboard": {
+    "id": "app\\admin\\page.tsx -> ./_components/AdminDashboard",
     "files": [
-      "static/chunks/_app-pages-browser_src_components_admin_UserProfileTab_tsx.js"
+      "static/chunks/_app-pages-browser_src_app_admin__components_AdminDashboard_tsx.js"
     ]
   }
 }

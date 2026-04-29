@@ -1,0 +1,91 @@
+name: Test Internal Routes
+
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      
+      - name: Install deps
+        run: npm --prefix frontend ci
+      
+      - name: Build
+        run: npm --prefix frontend run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy_key
+          SUPABASE_SERVICE_ROLE_KEY: dummy_service_key
+          INTERNAL_ADMIN_SECRET: test_secret_12345
+      
+      - name: Start dev server
+        run: npm --prefix frontend run dev &
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy_key
+          SUPABASE_SERVICE_ROLE_KEY: dummy_service_key
+          INTERNAL_ADMIN_SECRET: test_secret_12345
+      
+      - name: Wait for server
+        run: |
+          for i in {1..30}; do
+            curl -f http://localhost:3001 2>/dev/null && exit 0
+            sleep 2
+          done
+          exit 1
+      
+      - name: Test /api/internal/admin/profiles
+        run: |
+          curl -X GET http://localhost:3001/api/internal/admin/profiles \
+            -H "x-internal-secret: test_secret_12345" \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/internal/admin/audit
+        run: |
+          curl -X GET http://localhost:3001/api/internal/admin/audit \
+            -H "x-internal-secret: test_secret_12345" \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/stories
+        run: |
+          curl -X GET "http://localhost:3001/api/stories?page=1&pageSize=10" \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/chapters
+        run: |
+          curl -X GET "http://localhost:3001/api/chapters" \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/taxonomy/categories
+        run: |
+          curl -X GET http://localhost:3001/api/taxonomy/categories \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/site-metrics
+        run: |
+          curl -X GET "http://localhost:3001/api/site-metrics?type=profiles" \
+            -H "Content-Type: application/json" \
+            -f -v
+      
+      - name: Test /api/role-distribution
+        run: |
+          curl -X GET http://localhost:3001/api/role-distribution \
+            -H "Content-Type: application/json" \
+            -f -v

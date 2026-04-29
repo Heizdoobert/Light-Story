@@ -1,67 +1,64 @@
-import { supabase } from '@/lib/supabase/client';
 import { Category } from '@/types/entities';
 
 export class SupabaseTaxonomyRepository {
   async getCategories(): Promise<Category[]> {
-    if (!supabase) return [];
-    const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const res = await fetch('/api/taxonomy/categories');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
   }
 
   async getCategoryById(id: string): Promise<Category | null> {
-    if (!supabase) return null;
-    const { data, error } = await supabase.from('categories').select('*').eq('id', id).single();
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/taxonomy/categories?id=${encodeURIComponent(id)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
   }
 
   async createCategory(payload: { name: string; description?: string | null }) {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.from('categories').insert([{ name: payload.name, description: payload.description }]).select('*').single();
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'category', action: 'create', payload }) });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    return json.data;
   }
 
   async updateCategory(id: string, payload: { name: string; description?: string | null }) {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.from('categories').update({ name: payload.name, description: payload.description }).eq('id', id).select('*').single();
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'category', action: 'update', id, payload }) });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    return json.data;
   }
 
   async deleteCategory(id: string) {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { error } = await supabase.from('categories').delete().eq('id', id);
-    if (error) throw error;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'category', action: 'delete', id }) });
+    if (!res.ok) throw new Error('Request failed');
   }
 
   // Authors management (used by admin UI)
   async getAuthors(): Promise<any[]> {
-    if (!supabase) return [];
-    const { data, error } = await supabase.from('authors').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    const res = await fetch('/api/internal/admin/taxonomy?type=authors');
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
   }
 
   async createAuthor(payload: { name: string; bio?: string | null }): Promise<any> {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.from('authors').insert([{ name: payload.name, bio: payload.bio }]).select('*').single();
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'author', action: 'create', payload }) });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    return json.data;
   }
 
   async updateAuthor(id: string, payload: { name: string; bio?: string | null }): Promise<any> {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { data, error } = await supabase.from('authors').update({ name: payload.name, bio: payload.bio }).eq('id', id).select('*').single();
-    if (error) throw error;
-    return data;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'author', action: 'update', id, payload }) });
+    if (!res.ok) throw new Error('Request failed');
+    const json = await res.json();
+    return json.data;
   }
 
   async deleteAuthor(id: string): Promise<void> {
-    if (!supabase) throw new Error('Supabase client not initialized');
-    const { error } = await supabase.from('authors').delete().eq('id', id);
-    if (error) throw error;
+    const res = await fetch('/api/internal/admin/taxonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ entity: 'author', action: 'delete', id }) });
+    if (!res.ok) throw new Error('Request failed');
   }
 }
 

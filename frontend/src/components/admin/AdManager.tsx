@@ -3,20 +3,13 @@
   Form for managing ad scripts and site settings.
 */
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { useAdConfigsQuery, useUpdateAdConfig } from '@/app/_presenters/useAdManagerPresenter';
 import { useAuth } from '../../modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '../../lib/dbChangeToast';
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
 type AdConfigs = Record<AdConfigKey, string>;
-
-type SiteSettingRow = {
-  key: string;
-  value: string | null;
-};
 
 const AD_SLOTS: ReadonlyArray<{ id: AdConfigKey; label: string; desc: string }> = [
   { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
@@ -31,30 +24,17 @@ const DEFAULT_CONFIGS: AdConfigs = {
 };
 
 export const AdManager: React.FC = () => {
-  const queryClient = useQueryClient();
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
   const [configs, setConfigs] = useState<AdConfigs>(DEFAULT_CONFIGS);
 
-  // Fetch settings
-  const { data, isLoading } = useQuery({
-    queryKey: ['site_settings', 'ad_slots'],
-    queryFn: async () => {
-      if (!supabase) return [] as SiteSettingRow[];
-
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key,value')
-        .in('key', ['ad_header', 'ad_middle', 'ad_sidebar']);
-      if (error) throw error;
-      return (data ?? []) as SiteSettingRow[];
-    }
-  });
+  // Fetch settings via presenter hook (server-backed)
+  const { data, isLoading } = useAdConfigsQuery();
 
   useEffect(() => {
     if (data) {
       const nextConfigs: AdConfigs = { ...DEFAULT_CONFIGS };
-      data.forEach((item) => {
+      data.forEach((item: { key: string; value: string | null }) => {
         if (item.key in nextConfigs) {
           nextConfigs[item.key as AdConfigKey] = item.value ?? '';
         }
@@ -63,32 +43,10 @@ export const AdManager: React.FC = () => {
     }
   }, [data]);
 
-  const mutation = useMutation({
-    mutationFn: async (key: AdConfigKey) => {
-      if (!supabase) {
-        throw new Error('Supabase client is unavailable');
-      }
-
-      const { error } = await supabase
-        .from('site_settings')
-        .upsert({ key, value: configs[key] }, { onConflict: 'key' });
-      if (error) throw error;
-    },
-    onMutate: (key) => {
-      const toastId = startDbChangeToast(`Saving ${key} configuration...`);
-      return { toastId };
-    },
-    onSuccess: (_data, key, context) => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] });
-      resolveDbChangeToast(context?.toastId, `${key} saved successfully`);
-    },
-    onError: (error: any, _key, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'update_settings');
-    }
-  });
+  const mutation = useUpdateAdConfig();
 
   const handleSave = (key: AdConfigKey) => {
-    mutation.mutate(key);
+    mutation.mutate({ key, value: configs[key] });
   };
 
   if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-32 bg-slate-200 rounded-2xl w-full"></div></div>;
@@ -146,4 +104,3 @@ export const AdManager: React.FC = () => {
     </div>
   );
 };
-

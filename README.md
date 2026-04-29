@@ -31,6 +31,10 @@ Environment variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+
+# Server-side (do NOT expose these in the browser):
+# `SUPABASE_SERVICE_ROLE_KEY` — Supabase service_role key used by server internal routes/functions.
+# `INTERNAL_ADMIN_SECRET` — short, high-entropy secret to allow trusted internal requests.
 ```
 
 Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
@@ -49,6 +53,36 @@ Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
 - Operations data tab to validate backend admin tables and row counts in real time.
 - Menu visibility controls for role-based sidebar configuration.
 - System settings backup and restore for the settings surface managed in the UI.
+
+### Architecture: MVP / Clean Separation
+
+Following **zero-leakage principle**, direct Supabase client calls (`supabase.from()`, `.rpc()`) are strictly prohibited in UI components and client services. Instead:
+
+1. **View Layer** (React components in `src/pages/`, `src/components/`) — handles UI rendering only; calls presenters.
+2. **Presenter Layer** (React Query hooks in `src/_presenters/`, `src/hooks/`) — client-side data orchestration; calls server APIs via `fetch()`.
+3. **Server API Layer** (`src/app/api/**/*.ts`) — Next.js App Router routes that perform server-side Supabase queries and role verification.
+4. **Service Layer** (`src/services/**`) — optional server-side helper services (e.g., `siteMetrics.service.ts`); used by API routes, never imported into components.
+
+**Key files:**
+- `src/lib/supabase/server.ts` — lazy server Supabase client factory (avoids build-time env errors).
+- `src/app/api/stories/`, `src/app/api/chapters/`, `src/app/api/rpc/`, `src/app/api/internal/admin/` — public and internal routes (all with role checks and server supabase access).
+- `src/_presenters/useOperationsPresenter.ts`, `useAdManagerPresenter.ts` — React Query hooks for admin views.
+- `src/services/admin.service.ts` — admin client service that calls internal server routes (not direct supabase).
+
+**Internal Routes** (`src/app/api/internal/admin/**`):
+- Accept Bearer token (JWT) or `x-internal-secret` header.
+- Perform server-side role/permission checks.
+- Use service_role key for sensitive operations.
+- Examples: `/api/internal/admin/profiles` (GET/POST), `/api/internal/admin/audit` (GET/POST), `/api/internal/admin/manage-story`, `/api/internal/admin/manage-chapter`, `/api/internal/admin/taxonomy`.
+
+**Public Routes** (`src/app/api/**`):
+- RPC wrappers: `/api/rpc/increment-story-views`, `/api/rpc/like-story`, `/api/rpc/unlike-story`.
+- Data endpoints: `/api/stories`, `/api/chapters`, `/api/taxonomy/categories`, `/api/site-settings`, `/api/system-settings`, `/api/site-metrics`, `/api/role-distribution`.
+- Auth: `/api/auth/verify-recovery`.
+
+**Environmental secrets:**
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only; used in server routes.
+- `INTERNAL_ADMIN_SECRET` — short secret for trusted automation endpoints.
 
 ## Backend
 
@@ -153,6 +187,36 @@ supabase functions deploy increment-story-views
 supabase functions deploy manage-story
 supabase functions deploy manage-chapter
 ```
+
+## Deployment & Internal API notes
+
+- The frontend exposes internal server routes under `/api/internal/admin/*` that must be protected in production.
+- Set `SUPABASE_SERVICE_ROLE_KEY` and `INTERNAL_ADMIN_SECRET` in the deployment environment before enabling admin features.
+- Recommended workflow:
+  1. Add `SUPABASE_SERVICE_ROLE_KEY` and `INTERNAL_ADMIN_SECRET` to your hosting provider's secret store (Vercel/Netlify/Cloud run env vars).
+  2. Ensure only server-side code reads `SUPABASE_SERVICE_ROLE_KEY`; never surface this key to the browser.
+  3. The internal routes support two auth paths:
+     - Bearer JWT: client sends `Authorization: Bearer <access_token>`; server verifies token and profile role using the service role client.
+     - Internal secret: send `x-internal-secret: <INTERNAL_ADMIN_SECRET>` from trusted internal services for automation.
+  4. Audit access logs and rotate `INTERNAL_ADMIN_SECRET` regularly.
+
+### Testing internal routes locally
+
+To validate the internal admin endpoints return the expected authorization responses during local development, run the dev server and the included smoke test:
+
+```bash
+# from repo root
+npm --prefix frontend run dev
+# in another shell (no secrets set)
+npm --prefix frontend run test:internal-auth
+```
+
+If you need to run the smoke test with service-role credentials, set `SUPABASE_SERVICE_ROLE_KEY` in your `.env.local` (do not commit it) and re-run the test to exercise server-side behavior.
+
+### Replacing client Edge Function calls
+
+- The previous client call to the `manage-user` Edge Function has been replaced by a proxied internal endpoint at `/api/internal/admin/manage-user` that performs server-side role checks and calls Supabase admin APIs using the service role key.
+- If you deploy the backend Edge Function `manage-user`, it can remain as a fallback for external integrations, but the frontend now prefers the internal route for admin actions.
 
 The linked project in this workspace is `rwnzsmmfvsetfcnkjoxt`.
 

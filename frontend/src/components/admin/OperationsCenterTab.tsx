@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { useProfileCountQuery, useChapterCountQuery } from '@/app/_presenters/useOperationsPresenter';
+import { useAdConfigsQuery } from '@/app/_presenters/useAdManagerPresenter';
 import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
 import { Story } from '@/types/entities';
 import { ArrowRight, BookOpen, CircleAlert, Coins, FileText, Library, MessageSquare, Shield, Users, Workflow } from 'lucide-react';
@@ -66,53 +67,18 @@ export const OperationsCenterTab: React.FC<OperationsCenterTabProps> = ({ onNavi
     queryFn: () => storyRepo.getStories(),
   });
 
-  const profileCountQuery = useQuery({
-    queryKey: ['operations-center-profile-count'],
-    queryFn: async () => {
-      if (!supabase) return 0;
-      const { count, error } = await supabase.from('profiles').select('id', { count: 'exact', head: true });
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
+  const profileCountQuery = useProfileCountQuery();
+  const chapterCountQuery = useChapterCountQuery();
 
-  const chapterCountQuery = useQuery({
-    queryKey: ['operations-center-chapter-count'],
-    queryFn: async () => {
-      if (!supabase) return 0;
-      const { count, error } = await supabase.from('chapters').select('id', { count: 'exact', head: true });
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  const adSettingsQuery = useQuery({
-    queryKey: ['operations-center-ad-settings'],
-    queryFn: async () => {
-      if (!supabase) return 0;
-      const { count, error } = await supabase
-        .from('site_settings')
-        .select('id', { count: 'exact', head: true })
-        .in('key', ['ad_header', 'ad_middle', 'ad_sidebar']);
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
+  const adSettingsQuery = useAdConfigsQuery();
 
   const roleDistributionQuery = useQuery({
     queryKey: ['operations-center-role-distribution'],
     queryFn: async () => {
-      if (!supabase) return [] as Array<{ role: string; total: number }>;
-      const { data, error } = await supabase.from('profiles').select('role');
-      if (error) throw error;
-      const counts = new Map<string, number>();
-      for (const row of data ?? []) {
-        const role = (row as { role?: string | null }).role || 'user';
-        counts.set(role, (counts.get(role) ?? 0) + 1);
-      }
-      return Array.from(counts.entries())
-        .map(([role, total]) => ({ role, total }))
-        .sort((a, b) => b.total - a.total);
+      const res = await fetch('/api/role-distribution');
+      if (!res.ok) throw new Error('Failed to load role distribution');
+      const json = await res.json();
+      return json.data as Array<{ role: string; total: number }>;
     },
   });
 
