@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import { AdRenderer } from '../components/reader/AdRenderer';
-import { IReaderView } from '../presentation/mvp/ReaderContract';
-import { ReaderPresenter } from '../presentation/mvp/ReaderPresenter';
-import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
-import { SupabaseChapterRepository } from '../infrastructure/repositories/SupabaseChapterRepository';
+import React, { useEffect, useMemo, useState } from 'react';
+import { AdRenderer } from '@/components/reader/AdRenderer';
+import { IReaderView } from '@/presentation/mvp/ReaderContract';
+import { ReaderPresenter } from '@/presentation/mvp/ReaderPresenter';
+import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
+import { SupabaseChapterRepository } from '@/services/repositories/SupabaseChapterRepository';
 import { Chapter } from '@/types/entities';
 
 interface ReaderPageProps {
@@ -15,13 +15,12 @@ interface ReaderPageProps {
 
 export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) => {
   const [chapter, setChapter] = useState<Chapter | null>(null);
-  const [storyMeta, setStoryMeta] = useState<{ title: string, description: string } | null>(null);
+  const [storyMeta, setStoryMeta] = useState<{ title: string; description: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(16);
   const [theme, setTheme] = useState('light');
 
-  // MVP Setup
   const presenter = useMemo(() => {
     const storyRepo = new SupabaseStoryRepository();
     const chapterRepo = new SupabaseChapterRepository();
@@ -34,7 +33,7 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
       hideLoading: () => setLoading(false),
       displayChapter: (data) => setChapter(data),
       displayStoryMetadata: (title, description) => setStoryMeta({ title, description }),
-      showError: (msg) => setError(msg)
+      showError: (msg) => setError(msg),
     };
 
     presenter.attachView(view);
@@ -49,7 +48,9 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
     const title = `${chapter?.title ?? 'Loading...'} - ${storyMeta?.title || 'Light Story'}`;
     document.title = title;
 
-    const description = storyMeta?.description || (chapter ? `Read chapter ${chapter.chapter_number} of ${storyMeta?.title || 'this story'}` : 'Read stories on Light Story');
+    const description =
+      storyMeta?.description ||
+      (chapter ? `Read chapter ${chapter.chapter_number} of ${storyMeta?.title || 'this story'}` : 'Read stories on Light Story');
     let meta = document.querySelector('meta[name="description"]');
     if (!meta) {
       meta = document.createElement('meta');
@@ -79,17 +80,19 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">
           <div className="flex gap-4">
-            <button onClick={() => setFontSize(s => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A-</button>
-            <button onClick={() => setFontSize(s => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">A+</button>
+            <button onClick={() => setFontSize((s) => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
+              A-
+            </button>
+            <button onClick={() => setFontSize((s) => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
+              A+
+            </button>
           </div>
           <div className="flex gap-2">
             {['light', 'sepia', 'dark'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTheme(t)}
-                className={`px-3 py-1 rounded text-xs font-bold uppercase transition-all ${
-                  theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'
-                }`}
+                className={`px-3 py-1 rounded text-xs font-bold uppercase transition-all ${theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'}`}
               >
                 {t}
               </button>

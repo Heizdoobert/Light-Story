@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatusErrorPage } from '../shared/components/StatusErrorPage';
+import { StatusErrorPage } from '@/components/shared/StatusErrorPage';
 
 export const UnauthorizedPage: React.FC = () => {
   return (

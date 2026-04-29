@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 // Lazy-load admin dashboard to prevent bloating client bundle
 // Non-admin users won't download this code
 const AdminDashboard = dynamic(
-  () => import('../../views/AdminDashboard'),
+  () => import('./_components/AdminDashboard'),
   {
     loading: () => (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">

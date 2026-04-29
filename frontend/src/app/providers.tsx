@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
 import { AuthProvider } from '../modules/auth/AuthContext';
 import { ThemeProvider } from '../modules/theme/ThemeContext';
-import { ErrorBoundary } from '../shared/components/ErrorBoundary';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useGlobalErrorHandler, getErrorMessage } from '../hooks/useGlobalErrorHandler';
 
 /**

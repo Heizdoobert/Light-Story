@@ -10,12 +10,12 @@ import React, {
   useState,
 } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "../components/admin/AdminLayout";
-import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
-import { Story } from '@/types/entities';
-import { supabase } from '@/lib/supabase/client';
-import { useAuth } from "../modules/auth/AuthContext";
-import { parseBooleanSetting, SITE_SETTING_KEYS } from "../lib/systemSettings";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { SupabaseStoryRepository } from "@/services/repositories/SupabaseStoryRepository";
+import { Story } from "@/types/entities";
+import { supabase } from "@/lib/supabase/client";
+import { useAuth } from "@/modules/auth/AuthContext";
+import { parseBooleanSetting, SITE_SETTING_KEYS } from "@/lib/systemSettings";
 
 const storyRepo = new SupabaseStoryRepository();
 
@@ -24,70 +24,38 @@ const DEFAULT_UI_SETTINGS = {
   showSyncBadge: true,
 };
 
-const StoryForm = lazy(() =>
-  import("../components/admin/StoryForm").then((m) => ({
-    default: m.StoryForm,
-  })),
-);
+const StoryForm = lazy(() => import("@/components/admin/StoryForm").then((m) => ({ default: m.StoryForm })));
 const StoryManagementTab = lazy(() =>
-  import("../components/admin/StoryManagementTab").then((m) => ({
-    default: m.StoryManagementTab,
-  })),
+  import("@/components/admin/StoryManagementTab").then((m) => ({ default: m.StoryManagementTab })),
 );
-const ChapterForm = lazy(() =>
-  import("../components/admin/ChapterForm").then((m) => ({
-    default: m.ChapterForm,
-  })),
-);
-const AdManager = lazy(() =>
-  import("../components/admin/AdManager").then((m) => ({
-    default: m.AdManager,
-  })),
-);
+const ChapterForm = lazy(() => import("@/components/admin/ChapterForm").then((m) => ({ default: m.ChapterForm })));
+const AdManager = lazy(() => import("@/components/admin/AdManager").then((m) => ({ default: m.AdManager })));
 const UserProfileTab = lazy(() =>
-  import("../components/admin/UserProfileTab").then((m) => ({
-    default: m.UserProfileTab,
-  })),
+  import("@/components/admin/UserProfileTab").then((m) => ({ default: m.UserProfileTab })),
 );
 const CategoryManagementTab = lazy(() =>
-  import("../components/admin/CategoryManagementTab").then((m) => ({
-    default: m.CategoryManagementTab,
-  })),
+  import("@/components/admin/CategoryManagementTab").then((m) => ({ default: m.CategoryManagementTab })),
 );
 const AuthorManagementTab = lazy(() =>
-  import("../components/admin/AuthorManagementTab").then((m) => ({
-    default: m.AuthorManagementTab,
-  })),
+  import("@/components/admin/AuthorManagementTab").then((m) => ({ default: m.AuthorManagementTab })),
 );
 const SystemSettingsTab = lazy(() =>
-  import("../components/admin/SystemSettingsTab").then((m) => ({
-    default: m.SystemSettingsTab,
-  })),
+  import("@/components/admin/SystemSettingsTab").then((m) => ({ default: m.SystemSettingsTab })),
 );
 const AdminUserManagement = lazy(() =>
-  import("../components/admin/AdminUserManagement").then((m) => ({
-    default: m.AdminUserManagement,
-  })),
+  import("@/components/admin/AdminUserManagement").then((m) => ({ default: m.AdminUserManagement })),
 );
 const OperationsCenterTab = lazy(() =>
-  import("../components/admin/OperationsCenterTab").then((m) => ({
-    default: m.OperationsCenterTab,
-  })),
+  import("@/components/admin/OperationsCenterTab").then((m) => ({ default: m.OperationsCenterTab })),
 );
 const OperationsDataTab = lazy(() =>
-  import("../components/admin/OperationsDataTab").then((m) => ({
-    default: m.OperationsDataTab,
-  })),
+  import("@/components/admin/OperationsDataTab").then((m) => ({ default: m.OperationsDataTab })),
 );
 const AdminAuditLogsTab = lazy(() =>
-  import("../components/admin/AdminAuditLogsTab").then((m) => ({
-    default: m.AdminAuditLogsTab,
-  })),
+  import("@/components/admin/AdminAuditLogsTab").then((m) => ({ default: m.AdminAuditLogsTab })),
 );
 const DashboardAccessLogsTab = lazy(() =>
-  import("../components/admin/DashboardAccessLogsTab").then((m) => ({
-    default: m.DashboardAccessLogsTab,
-  })),
+  import("@/components/admin/DashboardAccessLogsTab").then((m) => ({ default: m.DashboardAccessLogsTab })),
 );
 
 type AdminTabId =
@@ -107,20 +75,19 @@ type AdminTabId =
   | "operations";
 
 const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
-  create_story: () => import("../components/admin/StoryForm"),
-  stories: () => import("../components/admin/StoryManagementTab"),
-  create_chapter: () => import("../components/admin/ChapterForm"),
-  ads: () => import("../components/admin/AdManager"),
-  profile: () => import("../components/admin/UserProfileTab"),
-  categories: () => import("../components/admin/CategoryManagementTab"),
-  authors: () => import("../components/admin/AuthorManagementTab"),
-  settings: () => import("../components/admin/SystemSettingsTab"),
-  users: () => import("../components/admin/AdminUserManagement"),
-  audit_logs: () => import("../components/admin/AdminAuditLogsTab"),
-  dashboard_access_logs: () =>
-    import("../components/admin/DashboardAccessLogsTab"),
-  operations: () => import("../components/admin/OperationsCenterTab"),
-  operations_data: () => import("../components/admin/OperationsDataTab"),
+  create_story: () => import("@/components/admin/StoryForm"),
+  stories: () => import("@/components/admin/StoryManagementTab"),
+  create_chapter: () => import("@/components/admin/ChapterForm"),
+  ads: () => import("@/components/admin/AdManager"),
+  profile: () => import("@/components/admin/UserProfileTab"),
+  categories: () => import("@/components/admin/CategoryManagementTab"),
+  authors: () => import("@/components/admin/AuthorManagementTab"),
+  settings: () => import("@/components/admin/SystemSettingsTab"),
+  users: () => import("@/components/admin/AdminUserManagement"),
+  audit_logs: () => import("@/components/admin/AdminAuditLogsTab"),
+  dashboard_access_logs: () => import("@/components/admin/DashboardAccessLogsTab"),
+  operations: () => import("@/components/admin/OperationsCenterTab"),
+  operations_data: () => import("@/components/admin/OperationsDataTab"),
 };
 
 const TabLoadingFallback: React.FC = () => (
@@ -166,7 +133,6 @@ export const AdminDashboard: React.FC = () => {
   );
 };
 
-// Export as default for Next.js page import
 export default AdminDashboard;
 
 const AdminDashboardContent: React.FC<{
@@ -219,10 +185,7 @@ const AdminDashboardContent: React.FC<{
           ? (chaptersResult.value.count ?? 0)
           : 0;
 
-      const totalViews = stories.reduce(
-        (sum, story) => sum + (story.views || 0),
-        0,
-      );
+      const totalViews = stories.reduce((sum, story) => sum + (story.views || 0), 0);
 
       return {
         stories,
@@ -237,11 +200,7 @@ const AdminDashboardContent: React.FC<{
   });
 
   const stories = dashboardQuery.data?.stories ?? [];
-  const stats = dashboardQuery.data?.stats ?? {
-    totalViews: 0,
-    activeStories: 0,
-    totalChapters: 0,
-  };
+  const stats = dashboardQuery.data?.stats ?? { totalViews: 0, activeStories: 0, totalChapters: 0 };
 
   const uiSettingsQuery = useQuery({
     queryKey: ["site_settings", "system_ui_controls"],
@@ -257,28 +216,17 @@ const AdminDashboardContent: React.FC<{
         const { data, error } = await supabase
           .from("site_settings")
           .select("key,value")
-          .in("key", [
-            SITE_SETTING_KEYS.uiCompactMode,
-            SITE_SETTING_KEYS.uiShowSyncBadge,
-          ]);
+          .in("key", [SITE_SETTING_KEYS.uiCompactMode, SITE_SETTING_KEYS.uiShowSyncBadge]);
 
         if (error) {
           return DEFAULT_UI_SETTINGS;
         }
 
-        const map = new Map(
-          (data ?? []).map((item: any) => [item.key, item.value]),
-        );
+        const map = new Map((data ?? []).map((item: any) => [item.key, item.value]));
 
         return {
-          compactMode: parseBooleanSetting(
-            map.get(SITE_SETTING_KEYS.uiCompactMode),
-            false,
-          ),
-          showSyncBadge: parseBooleanSetting(
-            map.get(SITE_SETTING_KEYS.uiShowSyncBadge),
-            true,
-          ),
+          compactMode: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiCompactMode), false),
+          showSyncBadge: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true),
         };
       } catch {
         return DEFAULT_UI_SETTINGS;
@@ -290,36 +238,15 @@ const AdminDashboardContent: React.FC<{
   const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
   const statsCards = useMemo(
     () => [
-      {
-        label: "Total Reads",
-        value: stats.totalViews.toLocaleString(),
-        color: "bg-blue-500",
-      },
-      {
-        label: "Active Stories",
-        value: stats.activeStories.toString(),
-        color: "bg-purple-500",
-      },
-      {
-        label: "Total Chapters",
-        value: stats.totalChapters.toString(),
-        color: "bg-emerald-500",
-      },
-      {
-        label: "Active Readers",
-        value: Math.floor(stats.totalViews / 100).toString(),
-        color: "bg-orange-500",
-      },
+      { label: "Total Reads", value: stats.totalViews.toLocaleString(), color: "bg-blue-500" },
+      { label: "Active Stories", value: stats.activeStories.toString(), color: "bg-purple-500" },
+      { label: "Total Chapters", value: stats.totalChapters.toString(), color: "bg-emerald-500" },
+      { label: "Active Readers", value: Math.floor(stats.totalViews / 100).toString(), color: "bg-orange-500" },
     ],
     [stats],
   );
 
-  const withSuspense = useCallback(
-    (node: React.ReactNode) => (
-      <Suspense fallback={<TabLoadingFallback />}>{node}</Suspense>
-    ),
-    [],
-  );
+  const withSuspense = useCallback((node: React.ReactNode) => <Suspense fallback={<TabLoadingFallback />}>{node}</Suspense>, []);
 
   const renderActiveTab = useCallback(() => {
     switch (activeTab) {
@@ -342,17 +269,11 @@ const AdminDashboardContent: React.FC<{
       case "settings":
         return withSuspense(<SystemSettingsTab />);
       case "users":
-        return role === "superadmin"
-          ? withSuspense(<AdminUserManagement />)
-          : null;
+        return role === "superadmin" ? withSuspense(<AdminUserManagement />) : null;
       case "audit_logs":
-        return role === "superadmin"
-          ? withSuspense(<AdminAuditLogsTab />)
-          : null;
+        return role === "superadmin" ? withSuspense(<AdminAuditLogsTab />) : null;
       case "dashboard_access_logs":
-        return role === "superadmin" || role === "admin"
-          ? withSuspense(<DashboardAccessLogsTab />)
-          : null;
+        return role === "superadmin" || role === "admin" ? withSuspense(<DashboardAccessLogsTab />) : null;
       case "stories":
         return withSuspense(<StoryManagementTab />);
       default:
@@ -361,47 +282,31 @@ const AdminDashboardContent: React.FC<{
   }, [activeTab, onTabChange, role, withSuspense]);
 
   return (
-    <AdminLayout
-      activeTab={activeTab}
-      onTabChange={onTabChange}
-      onTabPrefetch={onTabPrefetch}
-    >
+    <AdminLayout activeTab={activeTab} onTabChange={onTabChange} onTabPrefetch={onTabPrefetch}>
       {activeTab === "dashboard" && (
         <div className={compactMode ? "space-y-5" : "space-y-8"}>
           <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-                Analytics Overview
-              </h1>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Analytics Overview</h1>
               <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
-                AJAX polling updates the dashboard automatically while this tab
-                is open.
+                AJAX polling updates the dashboard automatically while this tab is open.
               </p>
             </div>
             {showSyncBadge && (
               <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                {dashboardQuery.isFetching
-                  ? "Refreshing live data"
-                  : `Synced ${dashboardQuery.data ? "just now" : "waiting"}`}
+                {dashboardQuery.isFetching ? "Refreshing live data" : `Synced ${dashboardQuery.data ? "just now" : "waiting"}`}
               </div>
             )}
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat) => (
-              <div
-                key={stat.label}
-                className={`bg-white dark:bg-slate-900 ${compactMode ? "p-4" : "p-6"} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}
-              >
+              <div key={stat.label} className={`bg-white dark:bg-slate-900 ${compactMode ? "p-4" : "p-6"} rounded-3xl shadow-sm border border-gray-200 dark:border-gray-800 transition-colors`}>
                 <div className="flex justify-between items-start mb-4">
-                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
-                    {stat.label}
-                  </div>
+                  <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">{stat.label}</div>
                   <div className={`w-2 h-2 rounded-full ${stat.color}`}></div>
                 </div>
-                <div className="text-3xl font-black text-slate-900 dark:text-white">
-                  {stat.value}
-                </div>
+                <div className="text-3xl font-black text-slate-900 dark:text-white">{stat.value}</div>
               </div>
             ))}
           </div>
@@ -409,55 +314,30 @@ const AdminDashboardContent: React.FC<{
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm transition-colors">
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <div>
-                <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">
-                  Recent Stories
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
-                  Live-synced every 5 seconds
-                </p>
+                <h3 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-xs">Recent Stories</h3>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">Live-synced every 5 seconds</p>
               </div>
-              <button className="text-xs font-bold text-primary hover:underline">
-                View All
-              </button>
+              <button className="text-xs font-bold text-primary hover:underline">View All</button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-slate-50 dark:bg-slate-800/50">
                   <tr>
-                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">
-                      Title
-                    </th>
-                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">
-                      Status
-                    </th>
-                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">
-                      Views
-                    </th>
+                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">Title</th>
+                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">Status</th>
+                    <th className="px-8 py-4 font-black text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest">Views</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {stories.map((story) => (
-                    <tr
-                      key={story.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    >
-                      <td className="px-8 py-4 font-bold text-slate-900 dark:text-slate-200">
-                        {story.title}
-                      </td>
+                    <tr key={story.id} className="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                      <td className="px-8 py-4 font-bold text-slate-900 dark:text-slate-200">{story.title}</td>
                       <td className="px-8 py-4">
-                        <span
-                          className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                            story.status === "completed"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          }`}
-                        >
+                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${story.status === "completed" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
                           {story.status}
                         </span>
                       </td>
-                      <td className="px-8 py-4 font-black text-slate-500 dark:text-slate-400">
-                        {story.views.toLocaleString()}
-                      </td>
+                      <td className="px-8 py-4 font-black text-slate-500 dark:text-slate-400">{story.views.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

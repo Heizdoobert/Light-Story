@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
-import { SupabaseStoryRepository } from '../../infrastructure/repositories/SupabaseStoryRepository';
+import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
 import { Story } from '@/types/entities';
 import { ArrowRight, BookOpen, CircleAlert, Coins, FileText, Library, MessageSquare, Shield, Users, Workflow } from 'lucide-react';
 

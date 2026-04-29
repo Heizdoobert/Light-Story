@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Lock, Loader2, LogIn, UserPlus, KeyRound } from 'lucide-react';
-import { useAuth } from '../../modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface LoginModalProps {
@@ -95,7 +95,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
             onClick={onClose}
             className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
           />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -116,10 +116,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                     {mode === 'forgot' && 'Enter your email to receive a password reset link.'}
                   </p>
                 </div>
-                <button 
-                  onClick={handleClose}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                >
+                <button onClick={handleClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
                   <X size={20} className="text-slate-400" />
                 </button>
               </div>
@@ -127,9 +124,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {mode === 'register' && (
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Full Name
-                    </label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Full Name</label>
                     <input
                       type="text"
                       required
@@ -142,9 +137,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                    Email Address
-                  </label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email Address</label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
@@ -160,9 +153,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
                 {mode !== 'forgot' && (
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Password
-                    </label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -179,9 +170,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
 
                 {mode === 'register' && (
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Confirm Password
-                    </label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Confirm Password</label>
                     <div className="relative">
                       <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                       <input
@@ -201,18 +190,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
                   disabled={isSubmitting}
                   className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  {isSubmitting ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <>
-                      {mode === 'signin' && <LogIn size={18} />}
-                      {mode === 'register' && <UserPlus size={18} />}
-                      {mode === 'forgot' && <Mail size={18} />}
-                      {mode === 'signin' && 'Sign In'}
-                      {mode === 'register' && 'Create Account'}
-                      {mode === 'forgot' && 'Send Reset Link'}
-                    </>
-                  )}
+                  {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <>
+                    {mode === 'signin' && <LogIn size={18} />}
+                    {mode === 'register' && <UserPlus size={18} />}
+                    {mode === 'forgot' && <Mail size={18} />}
+                    {mode === 'signin' && 'Sign In'}
+                    {mode === 'register' && 'Create Account'}
+                    {mode === 'forgot' && 'Send Reset Link'}
+                  </>}
                 </button>
 
                 {mode === 'signin' && (
@@ -258,19 +243,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
               <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-center gap-3 text-xs font-bold">
                   {mode !== 'signin' && (
-                    <button onClick={() => setMode('signin')} className="text-slate-500 hover:text-primary">
-                      Sign in
-                    </button>
+                    <button onClick={() => setMode('signin')} className="text-slate-500 hover:text-primary">Sign in</button>
                   )}
                   {mode !== 'register' && (
-                    <button onClick={() => setMode('register')} className="text-slate-500 hover:text-primary">
-                      Register
-                    </button>
+                    <button onClick={() => setMode('register')} className="text-slate-500 hover:text-primary">Register</button>
                   )}
                   {mode !== 'forgot' && (
-                    <button onClick={() => setMode('forgot')} className="text-slate-500 hover:text-primary">
-                      Forgot password
-                    </button>
+                    <button onClick={() => setMode('forgot')} className="text-slate-500 hover:text-primary">Forgot password</button>
                   )}
                 </div>
               </div>
