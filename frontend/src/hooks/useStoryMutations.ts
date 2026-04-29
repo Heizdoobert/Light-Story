@@ -2,7 +2,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptimisticUpdate } from './useOptimisticUpdate';
-import { supabase } from '@/lib/supabase/client';
 
 /**
  * Hook for story-related mutations with optimistic updates.
@@ -17,9 +16,8 @@ export const useStoryMutations = () => {
   const useIncrementViewMutation = () => {
     return useMutation({
       mutationFn: async (storyId: string) => {
-        if (!supabase) throw new Error('Supabase not initialized');
-        const { error } = await supabase.rpc('increment_story_views', { story_id: storyId });
-        if (error) throw error;
+        const res = await fetch('/api/rpc/increment-story-views', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storyId }) });
+        if (!res.ok) throw new Error('Request failed');
       },
       onMutate: async (storyId) => {
         // Cancel outgoing refetches
@@ -43,9 +41,8 @@ export const useStoryMutations = () => {
   const useLikeStoryMutation = () => {
     return useMutation({
       mutationFn: async ({ storyId, isCurrentlyLiked }: { storyId: string; isCurrentlyLiked: boolean }) => {
-        if (!supabase) throw new Error('Supabase not initialized');
-        const { error } = await supabase.rpc(isCurrentlyLiked ? 'unlike_story' : 'like_story', { story_id: storyId });
-        if (error) throw error;
+        const res = await fetch(`/api/rpc/${isCurrentlyLiked ? 'unlike-story' : 'like-story'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storyId }) });
+        if (!res.ok) throw new Error('Request failed');
       },
       onMutate: async ({ storyId, isCurrentlyLiked }) => {
         await queryClient.cancelQueries({ queryKey: ['story', storyId] });

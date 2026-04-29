@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { useAuditLogsPresenter } from '@/hooks/useAuditLogsPresenter';
 
 type AuditAction = 'user_create' | 'user_delete';
 
@@ -26,54 +25,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
 };
 
 export const AdminAuditLogsTab: React.FC = () => {
-  const logsQuery = useQuery({
-    queryKey: ['admin_audit_logs'],
-    refetchInterval: 10_000,
-    queryFn: async () => {
-      if (!supabase) return [] as AuditLog[];
-      const { data, error } = await supabase
-        .from('admin_audit_logs')
-        .select('id, actor_user_id, action, target_user_id, target_email, metadata, created_at')
-        .order('created_at', { ascending: false })
-        .limit(200);
-
-      if (error) throw error;
-      return (data ?? []) as AuditLog[];
-    },
-  });
-
-  const actorIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const row of logsQuery.data ?? []) {
-      if (row.actor_user_id) ids.add(row.actor_user_id);
-    }
-    return Array.from(ids);
-  }, [logsQuery.data]);
-
-  const actorsQuery = useQuery({
-    queryKey: ['admin_audit_log_actors', actorIds],
-    enabled: actorIds.length > 0,
-    queryFn: async () => {
-      if (!supabase || actorIds.length === 0) return [] as ProfileRow[];
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .in('id', actorIds);
-
-      if (error) throw error;
-      return (data ?? []) as ProfileRow[];
-    },
-  });
-
-  const actorMap = useMemo(() => {
-    const map = new Map<string, ProfileRow>();
-    for (const row of actorsQuery.data ?? []) {
-      map.set(row.id, row);
-    }
-    return map;
-  }, [actorsQuery.data]);
-
-  const isLoading = logsQuery.isLoading || actorsQuery.isLoading;
+  const { logsQuery, actorsQuery, actorMap, isLoading } = useAuditLogsPresenter();
 
   return (
     <div className="space-y-6">

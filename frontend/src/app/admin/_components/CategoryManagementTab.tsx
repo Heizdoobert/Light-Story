@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
-import { supabase } from '@/lib/supabase/client';
+import { useCategoryPresenter } from '@/hooks/useCategoryPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 
@@ -17,10 +17,7 @@ export const CategoryManagementTab: React.FC = () => {
   const { role } = useAuth();
   const canManageCategories = role === 'superadmin';
 
-  const categoriesQuery = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => taxonomyRepo.getCategories(),
-  });
+  const { categoriesQuery, linkQuery, linkedCounts } = useCategoryPresenter();
 
   const createMutation = useMutation({
     mutationFn: () => taxonomyRepo.createCategory({ name, description }),
@@ -69,24 +66,7 @@ export const CategoryManagementTab: React.FC = () => {
     onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
   });
 
-  const linkQuery = useQuery({
-    queryKey: ['category-story-links'],
-    queryFn: async () => {
-      if (!supabase) return [] as Array<{ category_id: string | null }>;
-      const { data, error } = await supabase.from('stories').select('category_id');
-      if (error) throw error;
-      return (data ?? []) as Array<{ category_id: string | null }>;
-    },
-  });
-
-  const linkedCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const row of linkQuery.data ?? []) {
-      if (!row.category_id) continue;
-      counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [linkQuery.data]);
+  
 
   const startEdit = (id: string, currentName: string, currentDescription: string | null | undefined) => {
     setEditingId(id);

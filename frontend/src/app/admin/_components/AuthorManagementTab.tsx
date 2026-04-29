@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
-import { supabase } from '@/lib/supabase/client';
+import { useAuthorPresenter } from '@/hooks/useAuthorPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 
@@ -17,10 +17,7 @@ export const AuthorManagementTab: React.FC = () => {
   const { role } = useAuth();
   const canManageAuthors = role === 'superadmin';
 
-  const authorsQuery = useQuery({
-    queryKey: ['authors'],
-    queryFn: () => taxonomyRepo.getAuthors(),
-  });
+  const { authorsQuery, linkQuery, linkedCounts } = useAuthorPresenter();
 
   const createMutation = useMutation({
     mutationFn: () => taxonomyRepo.createAuthor({ name, bio }),
@@ -69,24 +66,7 @@ export const AuthorManagementTab: React.FC = () => {
     onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
   });
 
-  const linkQuery = useQuery({
-    queryKey: ['author-story-links'],
-    queryFn: async () => {
-      if (!supabase) return [] as Array<{ author_id: string | null }>;
-      const { data, error } = await supabase.from('stories').select('author_id');
-      if (error) throw error;
-      return (data ?? []) as Array<{ author_id: string | null }>;
-    },
-  });
-
-  const linkedCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const row of linkQuery.data ?? []) {
-      if (!row.author_id) continue;
-      counts.set(row.author_id, (counts.get(row.author_id) ?? 0) + 1);
-    }
-    return counts;
-  }, [linkQuery.data]);
+  
 
   const startEdit = (id: string, currentName: string, currentBio: string | null | undefined) => {
     setEditingId(id);

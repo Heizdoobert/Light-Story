@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 import { useAuth, UserRole } from '@/modules/auth/AuthContext';
+import { useAdminUserPresenter } from '@/hooks/useAdminUserPresenter';
 
 interface Profile {
   id: string;
@@ -25,8 +25,6 @@ const canAssignRole = (actorRole: UserRole | null, nextRole: UserRole): boolean 
 };
 
 export const AdminUserManagement: React.FC = () => {
-  const [users, setUsers] = useState<Profile[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingNameUserId, setEditingNameUserId] = useState<string | null>(null);
   const [editingNameValue, setEditingNameValue] = useState('');
   const [savingNameId, setSavingNameId] = useState<string | null>(null);
@@ -39,105 +37,12 @@ export const AdminUserManagement: React.FC = () => {
   const { user: currentUser, role: currentRole, loading: authLoading } = useAuth();
   const canAccessUserManagement = currentRole === 'superadmin';
 
-  const getSupabaseClient = () => {
-    if (!supabase) {
-      throw new Error('Supabase client is unavailable');
-    }
-    return supabase;
-  };
-
-  const invokeManageUser = async (body: Record<string, unknown>) => {
-    if (!supabase) {
-      throw new Error('Supabase client is unavailable');
-    }
-
-    const { error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw sessionError;
-
-    const accessToken = sessionData.session?.access_token;
-    if (!accessToken) {
-      throw new Error('Your session has expired. Please sign in again.');
-    }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase credentials are not configured.');
-    }
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/manage-user`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        apikey: supabaseKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    const rawResponse = await response.text().catch(() => '');
-    const data = rawResponse ? (() => {
-      try {
-        return JSON.parse(rawResponse);
-      } catch {
-        return { raw: rawResponse };
-      }
-    })() : null;
-
-    if (!response.ok) {
-      console.error('manage-user failed', {
-        status: response.status,
-        statusText: response.statusText,
-        rawResponse,
-        data,
-      });
-      return {
-        data,
-        error: new Error(data?.error ?? `Request failed with status ${response.status}`),
-      };
-    }
-
-    return { data, error: null };
-  };
-
-  const fetchUsers = useCallback(async () => {
-    if (!canAccessUserManagement) {
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const client = getSupabaseClient();
-      const { data, error } = await client
-        .from('profiles')
-        .select('id,email,role,full_name')
-        .order('role', { ascending: true });
-      
-      if (error) throw error;
-      setUsers(data || []);
-    } catch (error: any) {
-      toast.error('Error fetching users: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [canAccessUserManagement]);
+  const { profilesQuery, roleMutation, nameMutation, deleteMutation, createMutation } = useAdminUserPresenter(canAccessUserManagement);
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!canAccessUserManagement) {
-      setUsers([]);
-      setLoading(false);
-      return;
-    }
-
-    void fetchUsers();
-  }, [authLoading, canAccessUserManagement, fetchUsers]);
+    // profilesQuery will load when canAccessUserManagement is true
+  }, [authLoading, canAccessUserManagement, profilesQuery.isFetching]);
 
   const handleRoleChange = async (targetUser: Profile, newRole: UserRole) => {
     if (targetUser.id === currentUser?.id) {
@@ -157,15 +62,8 @@ export const AdminUserManagement: React.FC = () => {
 
     const toastId = startDbChangeToast(`Updating role to ${newRole}...`);
     try {
-      const client = getSupabaseClient();
-      const { error } = await client
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', targetUser.id);
-      
-      if (error) throw error;
+      await roleMutation.mutateAsync({ id: targetUser.id, role: newRole });
       resolveDbChangeToast(toastId, 'Role updated successfully');
-      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     }
@@ -190,16 +88,9 @@ export const AdminUserManagement: React.FC = () => {
     setSavingNameId(targetUser.id);
     const toastId = startDbChangeToast('Updating user profile...');
     try {
-      const client = getSupabaseClient();
-      const { error } = await client
-        .from('profiles')
-        .update({ full_name: editingNameValue.trim() || null })
-        .eq('id', targetUser.id);
-
-      if (error) throw error;
+      await nameMutation.mutateAsync({ id: targetUser.id, full_name: editingNameValue.trim() || null });
       resolveDbChangeToast(toastId, 'User profile updated successfully');
       cancelNameEdit();
-      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
@@ -224,17 +115,9 @@ export const AdminUserManagement: React.FC = () => {
     setDeletingUserId(targetUser.id);
     const toastId = startDbChangeToast('Deleting user profile...');
     try {
-      const { data, error } = await invokeManageUser({
-        action: 'delete',
-        userId: targetUser.id,
-        targetEmail: targetUser.email,
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(String(data.error));
-
+      const result = await deleteMutation.mutateAsync({ id: targetUser.id, email: targetUser.email });
+      if (result?.error) throw result.error;
       resolveDbChangeToast(toastId, 'User deleted successfully');
-      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
@@ -258,23 +141,13 @@ export const AdminUserManagement: React.FC = () => {
     setCreatingUser(true);
     const toastId = startDbChangeToast(`Creating user ${email}...`);
     try {
-      const { data, error } = await invokeManageUser({
-        action: 'create',
-        email,
-        password,
-        fullName: newUserFullName.trim() || null,
-        role: newUserRole,
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(String(data.error));
-
+      const result = await createMutation.mutateAsync({ email, password, fullName: newUserFullName.trim() || null, role: newUserRole });
+      if (result?.error) throw result.error;
       resolveDbChangeToast(toastId, 'User created successfully');
       setNewUserEmail('');
       setNewUserPassword('');
       setNewUserFullName('');
       setNewUserRole('user');
-      void fetchUsers();
     } catch (error: any) {
       rejectDbChangeToast(toastId, error);
     } finally {
@@ -282,7 +155,7 @@ export const AdminUserManagement: React.FC = () => {
     }
   };
 
-  if (authLoading || (loading && canAccessUserManagement)) {
+  if (authLoading || (profilesQuery.isLoading && canAccessUserManagement)) {
     return <div>Loading users...</div>;
   }
 
@@ -360,7 +233,7 @@ export const AdminUserManagement: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {(profilesQuery.data ?? []).map((user: any) => (
               <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
                 <td className="px-6 py-4 rounded-l-2xl">
                   {editingNameUserId === user.id ? (

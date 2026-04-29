@@ -13,7 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "@/app/admin/_components/AdminLayout";
 import { SupabaseStoryRepository } from "@/services/repositories/SupabaseStoryRepository";
 import { Story } from "@/types/entities";
-import { supabase } from "@/lib/supabase/client";
+import { useAdminDashboardPresenter } from '@/hooks/useAdminDashboardPresenter';
 import { useAuth } from "@/modules/auth/AuthContext";
 import { parseBooleanSetting, SITE_SETTING_KEYS } from "@/lib/systemSettings";
 
@@ -142,97 +142,10 @@ const AdminDashboardContent: React.FC<{
   role: string | null;
   userId: string | null;
 }> = ({ activeTab, onTabChange, onTabPrefetch, role, userId }) => {
-  const lastAccessLogAtRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!supabase || !userId || activeTab !== "dashboard") return;
-
-    const now = Date.now();
-    if (now - lastAccessLogAtRef.current < 60_000) return;
-    lastAccessLogAtRef.current = now;
-
-    void supabase.from("admin_audit_logs").insert({
-      actor_user_id: userId,
-      action: "dashboard_access",
-      metadata: {
-        page: "/admin",
-      },
-    });
-  }, [activeTab, userId]);
-
-  const dashboardQuery = useQuery<DashboardData>({
-    queryKey: ["admin-dashboard-metrics"],
-    enabled: activeTab === "dashboard",
-    refetchInterval: activeTab === "dashboard" ? 5000 : false,
-    refetchIntervalInBackground: false,
-    queryFn: async () => {
-      if (!supabase) {
-        throw new Error("Supabase not initialized");
-      }
-
-      const [storiesResult, chaptersResult] = await Promise.allSettled([
-        storyRepo.getStories(),
-        supabase.from("chapters").select("id", { count: "exact", head: true }),
-      ]);
-
-      if (storiesResult.status === "rejected") {
-        throw storiesResult.reason;
-      }
-
-      const stories = storiesResult.value;
-      const chapterCount =
-        chaptersResult.status === "fulfilled" && !chaptersResult.value.error
-          ? (chaptersResult.value.count ?? 0)
-          : 0;
-
-      const totalViews = stories.reduce((sum, story) => sum + (story.views || 0), 0);
-
-      return {
-        stories,
-        stats: {
-          totalViews,
-          activeStories: stories.length,
-          totalChapters: chapterCount,
-        },
-        syncedAt: new Date().toISOString(),
-      };
-    },
-  });
+  const { dashboardQuery, uiSettingsQuery } = useAdminDashboardPresenter(userId, activeTab === 'dashboard');
 
   const stories = dashboardQuery.data?.stories ?? [];
   const stats = dashboardQuery.data?.stats ?? { totalViews: 0, activeStories: 0, totalChapters: 0 };
-
-  const uiSettingsQuery = useQuery({
-    queryKey: ["site_settings", "system_ui_controls"],
-    enabled: activeTab === "dashboard",
-    staleTime: 60_000,
-    gcTime: 300_000,
-    queryFn: async () => {
-      if (!supabase) {
-        return DEFAULT_UI_SETTINGS;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("site_settings")
-          .select("key,value")
-          .in("key", [SITE_SETTING_KEYS.uiCompactMode, SITE_SETTING_KEYS.uiShowSyncBadge]);
-
-        if (error) {
-          return DEFAULT_UI_SETTINGS;
-        }
-
-        const map = new Map((data ?? []).map((item: any) => [item.key, item.value]));
-
-        return {
-          compactMode: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiCompactMode), false),
-          showSyncBadge: parseBooleanSetting(map.get(SITE_SETTING_KEYS.uiShowSyncBadge), true),
-        };
-      } catch {
-        return DEFAULT_UI_SETTINGS;
-      }
-    },
-  });
 
   const compactMode = uiSettingsQuery.data?.compactMode ?? false;
   const showSyncBadge = uiSettingsQuery.data?.showSyncBadge ?? true;
