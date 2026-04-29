@@ -1,4 +1,4 @@
-import { Story } from '../../domain/entities';
+import { Story } from '@/types/entities';
 
 export interface IAdminView {
   showLoading(): void;

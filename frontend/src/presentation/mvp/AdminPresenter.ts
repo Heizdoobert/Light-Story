@@ -1,9 +1,5 @@
 import { IAdminView } from "./AdminContract";
-import {
-  IStoryRepository,
-  IChapterRepository,
-  ISettingsRepository,
-} from "../../domain/repositories";
+import { IStoryRepository, IChapterRepository, ISettingsRepository } from '@/types/repos';
 import { getErrorMessage } from "../../lib/errorUtils";
 
 export class AdminPresenter {

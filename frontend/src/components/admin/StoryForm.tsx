@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SupabaseStoryRepository } from "../../infrastructure/repositories/SupabaseStoryRepository";
 import { SupabaseTaxonomyRepository } from "../../infrastructure/repositories/SupabaseTaxonomyRepository";
 import { useAuth } from "../../modules/auth/AuthContext";
-import { Story } from "../../domain/entities";
+import { Story } from '@/types/entities';
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errorUtils";
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../../lib/dbChangeToast";
-import { supabase } from "../../core/supabase";
+import { supabase } from '@/lib/supabase/client';
 import {
   Save,
   X,

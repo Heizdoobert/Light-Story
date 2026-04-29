@@ -1,6 +1,6 @@
 // This file manages the global authentication state and Role-Based Access Control (RBAC)
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "../../core/supabase";
+import { supabase } from '@/lib/supabase/client';
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errorUtils";

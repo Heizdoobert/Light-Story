@@ -1,4 +1,4 @@
-import { Chapter } from '../../domain/entities';
+import { Chapter } from '@/types/entities';
 
 export interface IReaderView {
   showLoading(): void;

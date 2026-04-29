@@ -6,7 +6,7 @@ import { IReaderView } from '../presentation/mvp/ReaderContract';
 import { ReaderPresenter } from '../presentation/mvp/ReaderPresenter';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
 import { SupabaseChapterRepository } from '../infrastructure/repositories/SupabaseChapterRepository';
-import { Chapter } from '../domain/entities';
+import { Chapter } from '@/types/entities';
 
 interface ReaderPageProps {
   storyId: string;

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { motion } from 'motion/react';
 import { LogIn, LogOut, LayoutDashboard, BookOpen, User as UserIcon, ChevronRight } from 'lucide-react';
 import { SupabaseStoryRepository } from '../infrastructure/repositories/SupabaseStoryRepository';
-import { Story } from '../domain/entities';
+import { Story } from '@/types/entities';
 import { useAuth } from '../modules/auth/AuthContext';
 import { toast } from 'sonner';
 import { getErrorMessage } from '../lib/errorUtils';

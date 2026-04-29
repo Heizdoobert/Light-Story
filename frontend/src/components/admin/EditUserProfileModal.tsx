@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../modules/auth/AuthContext';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';

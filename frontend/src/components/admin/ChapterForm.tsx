@@ -4,7 +4,7 @@ import { SupabaseChapterRepository } from "../../infrastructure/repositories/Sup
 import { SupabaseStoryRepository } from "../../infrastructure/repositories/SupabaseStoryRepository";
 import { useAuth } from "../../modules/auth/AuthContext";
 import { useAutoSave } from "../../hooks/useAutoSave";
-import { Chapter, Story } from "../../domain/entities";
+import { Chapter, Story } from '@/types/entities';
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errorUtils";
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from "../../lib/dbChangeToast";

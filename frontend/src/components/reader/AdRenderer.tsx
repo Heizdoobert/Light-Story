@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../core/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 interface AdRendererProps {
   position: 'header' | 'middle' | 'sidebar';

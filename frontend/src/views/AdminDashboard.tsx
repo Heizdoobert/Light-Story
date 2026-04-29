@@ -12,8 +12,8 @@ import React, {
 import { useQuery } from "@tanstack/react-query";
 import { AdminLayout } from "../components/admin/AdminLayout";
 import { SupabaseStoryRepository } from "../infrastructure/repositories/SupabaseStoryRepository";
-import { Story } from "../domain/entities";
-import { supabase } from "../core/supabase";
+import { Story } from '@/types/entities';
+import { supabase } from '@/lib/supabase/client';
 import { useAuth } from "../modules/auth/AuthContext";
 import { parseBooleanSetting, SITE_SETTING_KEYS } from "../lib/systemSettings";
 
