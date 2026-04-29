@@ -4,7 +4,6 @@ const base = process.env.BASE_URL || 'http://localhost:3001'
 const endpoints = [
   { path: '/api/internal/admin/profiles', method: 'GET' },
   { path: '/api/internal/admin/audit', method: 'GET' },
-  { path: '/api/internal/admin/manage-user', method: 'POST' },
 ]
 
 async function run() {

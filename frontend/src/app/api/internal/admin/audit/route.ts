@@ -1,22 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient as createSessionClient } from '@/lib/server';
 import { getServerSupabase } from '@/lib/supabase/server';
 
-async function getRequester(request: Request) {
+async function getRequester(request: NextRequest) {
   const internalSecret = request.headers.get('x-internal-secret');
   if (internalSecret && process.env.INTERNAL_ADMIN_SECRET && internalSecret === process.env.INTERNAL_ADMIN_SECRET) {
     return { ok: true, role: 'internal' };
   }
 
-  const auth = request.headers.get('authorization') || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return { ok: false };
-
   try {
-    const parts = token.split('.');
-    if (parts.length < 2) return { ok: false };
-    const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString());
-    const userId = payload.sub || payload.user_id || payload?.sub;
-    if (!userId) return { ok: false };
+    const sessionClient = await createSessionClient();
+    const { data: userData, error: userError } = await sessionClient.auth.getUser();
+    const userId = userData.user?.id;
+    if (userError || !userId) return { ok: false };
 
     const supabase = getServerSupabase();
     if (!supabase) return { ok: false };
@@ -28,7 +24,7 @@ async function getRequester(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const supRequester = await getRequester(request);
   if (!supRequester.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
@@ -49,7 +45,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const supRequester = await getRequester(request);
   if (!supRequester.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 

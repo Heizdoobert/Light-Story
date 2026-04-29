@@ -3,8 +3,8 @@
   Form for managing ad scripts and site settings.
 */
 import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { useQuery } from '@tanstack/react-query';
+import { useAdConfigsQuery, useUpdateAdConfig } from '@/app/_presenters/useAdManagerPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -31,25 +31,12 @@ const DEFAULT_CONFIGS: AdConfigs = {
 };
 
 export const AdManager: React.FC = () => {
-  const queryClient = useQueryClient();
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
   const [configs, setConfigs] = useState<AdConfigs>(DEFAULT_CONFIGS);
 
-  // Fetch settings
-  const { data, isLoading } = useQuery({
-    queryKey: ['site_settings', 'ad_slots'],
-    queryFn: async () => {
-      if (!supabase) return [] as SiteSettingRow[];
-
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('key,value')
-        .in('key', ['ad_header', 'ad_middle', 'ad_sidebar']);
-      if (error) throw error;
-      return (data ?? []) as SiteSettingRow[];
-    }
-  });
+  // Fetch settings via presenter hook
+  const { data, isLoading } = useAdConfigsQuery();
 
   useEffect(() => {
     if (data) {
@@ -63,36 +50,20 @@ export const AdManager: React.FC = () => {
     }
   }, [data]);
 
-  const mutation = useMutation({
-    mutationFn: async (key: AdConfigKey) => {
-      if (!supabase) {
-        throw new Error('Supabase client is unavailable');
-      }
-
-      const { error } = await supabase
-        .from('site_settings')
-        .upsert({ key, value: configs[key] }, { onConflict: 'key' });
-      if (error) throw error;
-    },
-    onMutate: (key) => {
-      const toastId = startDbChangeToast(`Saving ${key} configuration...`);
-      return { toastId };
-    },
-    onSuccess: (_data, key, context) => {
-      queryClient.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] });
-      resolveDbChangeToast(context?.toastId, `${key} saved successfully`);
-    },
-    onError: (error: any, _key, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'update_settings');
-    }
-  });
+  // Mutation via presenter hook
+  const mutation = useUpdateAdConfig();
 
   const handleSave = (key: AdConfigKey) => {
-    mutation.mutate(key);
+    const toastId = startDbChangeToast(`Saving ${key} configuration...`);
+    mutation.mutate(
+      { key, value: configs[key] },
+      {
+        onSuccess: () => resolveDbChangeToast(toastId, `${key} saved successfully`),
+        onError: (error: any) => rejectDbChangeToast(toastId, error, 'update_settings'),
+      }
+    );
   };
-
-  if (isLoading) return <div className="animate-pulse space-y-4"><div className="h-32 bg-slate-200 rounded-2xl w-full"></div></div>;
-
+  // Render UI
   return (
     <div className="max-w-4xl space-y-8">
       <header>
@@ -102,7 +73,7 @@ export const AdManager: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6">
         {AD_SLOTS.map((ad) => (
-          <motion.div 
+          <motion.div
             key={ad.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -110,7 +81,7 @@ export const AdManager: React.FC = () => {
           >
             <div className="flex justify-between items-start">
               <div className="flex gap-3">
-                  <div className="p-2 bg-primary text-white rounded-lg h-fit">
+                <div className="p-2 bg-primary text-white rounded-lg h-fit">
                   <Info size={18} />
                 </div>
                 <div>
@@ -118,7 +89,7 @@ export const AdManager: React.FC = () => {
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-bold mt-1">{ad.desc}</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => handleSave(ad.id)}
                 disabled={mutation.isPending || !canManageAds}
                 className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
@@ -129,7 +100,7 @@ export const AdManager: React.FC = () => {
             </div>
 
             <div className="relative">
-              <textarea 
+              <textarea
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-5 font-mono text-[12px] h-40 resize-none focus:outline-none focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all shadow-inner text-slate-900 dark:text-slate-200"
                 value={configs[ad.id]}
                 onChange={(e) => setConfigs((prev) => ({ ...prev, [ad.id]: e.target.value }))}

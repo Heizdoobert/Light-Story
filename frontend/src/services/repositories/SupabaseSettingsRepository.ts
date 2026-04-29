@@ -1,9 +1,10 @@
-import { supabase } from '@/lib/supabase/client';
+import { getServerSupabase } from '@/lib/supabase/server';
 import { SiteSetting } from '@/types/entities';
 import { ISettingsRepository } from '@/types/repos';
 
 export class SupabaseSettingsRepository implements ISettingsRepository {
   async getSettingByKey(key: string): Promise<SiteSetting | null> {
+    const supabase = getServerSupabase();
     if (!supabase) return null;
     const { data, error } = await supabase.from('site_settings').select('*').eq('key', key).single();
     if (error) throw error;
@@ -11,7 +12,8 @@ export class SupabaseSettingsRepository implements ISettingsRepository {
   }
 
   async updateSetting(key: string, value: string): Promise<void> {
-    if (!supabase) throw new Error('Supabase client not initialized');
+    const supabase = getServerSupabase();
+    if (!supabase) throw new Error('Server supabase client not available');
     const { error } = await supabase
       .from('site_settings')
       .update({ value })

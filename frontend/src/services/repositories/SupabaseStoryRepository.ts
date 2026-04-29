@@ -1,5 +1,6 @@
 import { Story } from '@/types/entities';
 import { IStoryRepository } from '@/types/repos';
+import { supabase } from '@/lib/supabase/client';
 
 type StoryStatus = Story['status'];
 
@@ -18,17 +19,29 @@ type StoryPageResult = {
 
 export class SupabaseStoryRepository implements IStoryRepository {
   async getStories(): Promise<Story[]> {
-    const res = await fetch('/api/stories');
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.items ?? json.data ?? [];
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('stories')
+      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) return [];
+    return (data ?? []) as Story[];
   }
 
   async getStoryById(id: string): Promise<Story | null> {
-    const res = await fetch(`/api/stories?id=${encodeURIComponent(id)}`);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data ?? null;
+    if (!supabase) return null;
+
+    const { data, error } = await supabase
+      .from('stories')
+      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) return null;
+    return (data ?? null) as Story | null;
   }
 
   async incrementViews(storyId: string): Promise<void> {
@@ -45,16 +58,35 @@ export class SupabaseStoryRepository implements IStoryRepository {
   }
 
   async getStoriesPage(params: StoryPageParams): Promise<StoryPageResult> {
-    const q = new URLSearchParams();
-    q.set('page', String(params.page ?? 1));
-    q.set('pageSize', String(params.pageSize ?? 10));
-    if (params.keyword) q.set('keyword', params.keyword);
-    if (params.status) q.set('status', params.status);
-    if (params.sort) q.set('sort', params.sort);
-    const res = await fetch(`/api/stories?${q.toString()}`);
-    if (!res.ok) return { items: [], total: 0 };
-    const json = await res.json();
-    return { items: json.items ?? [], total: json.total ?? 0 };
+    if (!supabase) return { items: [], total: 0 };
+
+    const page = Math.max(1, params.page ?? 1);
+    const pageSize = Math.min(50, Math.max(1, params.pageSize ?? 10));
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    let query = supabase
+      .from('stories')
+      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at', { count: 'exact' });
+
+    if (params.keyword) {
+      const escaped = params.keyword.replace(/[%_]/g, (match) => `\\${match}`);
+      query = query.or(
+        `title.ilike.%${escaped}%,author.ilike.%${escaped}%,category.ilike.%${escaped}%,description.ilike.%${escaped}%`,
+      );
+    }
+
+    if (params.status && params.status !== 'all') {
+      query = query.eq('status', params.status);
+    }
+
+    if (params.sort === 'oldest') query = query.order('created_at', { ascending: true });
+    else if (params.sort === 'most_viewed') query = query.order('views', { ascending: false, nullsFirst: false });
+    else query = query.order('created_at', { ascending: false });
+
+    const { data, error, count } = await query.range(from, to);
+    if (error) return { items: [], total: 0 };
+    return { items: (data ?? []) as Story[], total: count ?? 0 };
   }
 
   async updateStory(id: string, payload: Pick<Story, 'title' | 'description' | 'status'>): Promise<Story> {

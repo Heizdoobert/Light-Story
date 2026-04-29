@@ -13,14 +13,16 @@
     "lint": "tsc --noEmit",
     "ci:verify": "npm run lint && npm run build",
     "supabase:start": "supabase start",
-    "supabase:stop": "supabase stop"
-    ,"test:internal-auth": "node ./tests/check_internal_routes.mjs"
+    "supabase:stop": "supabase stop",
+    "test:internal-auth": "node ./tests/check_internal_routes.mjs",
+    "env:add-service-key": "node ./scripts/add_service_key.mjs",
+    "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.29.0",
     "@supabase/ssr": "^0.10.2",
-    "@supabase/supabase-js": "^2.105.0",
+    "@supabase/supabase-js": "^2.105.1",
     "@tanstack/react-query": "^5.100.5",
     "@vercel/analytics": "^2.0.1",
     "class-variance-authority": "^0.7.1",
@@ -47,6 +49,7 @@
     "autoprefixer": "^10.4.21",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.4",
+    "supabase": "^2.95.6",
     "tailwindcss": "^4.2.3",
     "tsx": "^4.21.0",
     "typescript": "~6.0.3"
