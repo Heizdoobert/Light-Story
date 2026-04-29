@@ -16,25 +16,40 @@
       "static/chunks/main-app.js",
       "static/chunks/app/admin/page.js"
     ],
-    "/page": [
+    "/api/site-settings/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
-    ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/api/site-settings/route.js"
     ],
     "/api/internal/admin/audit/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/internal/admin/audit/route.js"
     ],
-    "/api/site-settings/route": [
+    "/_not-found/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/site-settings/route.js"
+      "static/chunks/app/_not-found/page.js"
+    ],
+    "/api/stories/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/stories/route.js"
+    ],
+    "/api/internal/admin/taxonomy/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/internal/admin/taxonomy/route.js"
+    ],
+    "/api/system-settings/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/system-settings/route.js"
+    ],
+    "/api/taxonomy/categories/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/taxonomy/categories/route.js"
     ],
     "/api/site-metrics/route": [
       "static/chunks/webpack.js",
@@ -45,6 +60,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/role-distribution/route.js"
+    ],
+    "/api/internal/admin/profiles/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/internal/admin/profiles/route.js"
     ]
   }
 }

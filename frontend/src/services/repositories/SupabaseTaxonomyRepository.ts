@@ -1,18 +1,30 @@
 import { Category } from '@/types/entities';
+import { supabase } from '@/lib/supabase/client';
 
 export class SupabaseTaxonomyRepository {
   async getCategories(): Promise<Category[]> {
-    const res = await fetch('/api/taxonomy/categories');
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.data ?? [];
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id,name,description,created_at,updated_at')
+      .order('name', { ascending: true });
+
+    if (error) return [];
+    return (data ?? []) as Category[];
   }
 
   async getCategoryById(id: string): Promise<Category | null> {
-    const res = await fetch(`/api/taxonomy/categories?id=${encodeURIComponent(id)}`);
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data ?? null;
+    if (!supabase) return null;
+
+    const { data, error } = await supabase
+      .from('categories')
+      .select('id,name,description,created_at,updated_at')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) return null;
+    return (data ?? null) as Category | null;
   }
 
   async createCategory(payload: { name: string; description?: string | null }) {
@@ -36,10 +48,15 @@ export class SupabaseTaxonomyRepository {
 
   // Authors management (used by admin UI)
   async getAuthors(): Promise<any[]> {
-    const res = await fetch('/api/internal/admin/taxonomy?type=authors');
-    if (!res.ok) return [];
-    const json = await res.json();
-    return json.data ?? [];
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('authors')
+      .select('id,name,bio,created_at,updated_at')
+      .order('name', { ascending: true });
+
+    if (error) return [];
+    return (data ?? []) as any[];
   }
 
   async createAuthor(payload: { name: string; bio?: string | null }): Promise<any> {
