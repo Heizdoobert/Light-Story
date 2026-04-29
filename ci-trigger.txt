@@ -1,0 +1,1 @@
+CI trigger: added after SUPABASE_SERVICE_ROLE_KEY set in GitHub secrets on 2026-04-29
