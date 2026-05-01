@@ -8,9 +8,24 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
+import { AD_CONTROL_KEYS } from '@/lib/adPolicy';
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
 type AdConfigs = Record<AdConfigKey, string>;
+type RuntimeControlKey =
+  | typeof AD_CONTROL_KEYS.enabled
+  | typeof AD_CONTROL_KEYS.minHeight
+  | typeof AD_CONTROL_KEYS.refreshSeconds
+  | typeof AD_CONTROL_KEYS.allowedHosts
+  | typeof AD_CONTROL_KEYS.blockedTerms;
+
+type RuntimeControls = {
+  enabled: boolean;
+  minHeight: string;
+  refreshSeconds: string;
+  allowedHosts: string;
+  blockedTerms: string;
+};
 
 const AD_SLOTS: ReadonlyArray<{ id: AdConfigKey; label: string; desc: string }> = [
   { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
@@ -24,10 +39,31 @@ const DEFAULT_CONFIGS: AdConfigs = {
   ad_sidebar: '',
 };
 
+const DEFAULT_CONTROLS: RuntimeControls = {
+  enabled: true,
+  minHeight: '120',
+  refreshSeconds: '120',
+  allowedHosts: 'pagead2.googlesyndication.com',
+  blockedTerms: 'adult, xxx, porn, casino, betting, violence, hate',
+};
+
+const normalizeToString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map((item) => String(item)).join(', ');
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '';
+  }
+};
+
 export const AdManager: React.FC = () => {
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
   const [configs, setConfigs] = useState<AdConfigs>(DEFAULT_CONFIGS);
+  const [controls, setControls] = useState<RuntimeControls>(DEFAULT_CONTROLS);
 
   // Fetch settings via presenter hook
   const { data } = useAdConfigsQuery();
@@ -35,12 +71,32 @@ export const AdManager: React.FC = () => {
   useEffect(() => {
     if (data) {
       const nextConfigs: AdConfigs = { ...DEFAULT_CONFIGS };
-      data.forEach((item) => {
+      const nextControls: RuntimeControls = { ...DEFAULT_CONTROLS };
+
+      data.forEach((item: { key: string; value: unknown }) => {
         if (item.key in nextConfigs) {
-          nextConfigs[item.key as AdConfigKey] = item.value ?? '';
+          nextConfigs[item.key as AdConfigKey] = normalizeToString(item.value);
+        }
+
+        if (item.key === AD_CONTROL_KEYS.enabled) {
+          nextControls.enabled = String(item.value).toLowerCase() !== 'false';
+        }
+        if (item.key === AD_CONTROL_KEYS.minHeight) {
+          nextControls.minHeight = normalizeToString(item.value) || DEFAULT_CONTROLS.minHeight;
+        }
+        if (item.key === AD_CONTROL_KEYS.refreshSeconds) {
+          nextControls.refreshSeconds = normalizeToString(item.value) || DEFAULT_CONTROLS.refreshSeconds;
+        }
+        if (item.key === AD_CONTROL_KEYS.allowedHosts) {
+          nextControls.allowedHosts = normalizeToString(item.value) || DEFAULT_CONTROLS.allowedHosts;
+        }
+        if (item.key === AD_CONTROL_KEYS.blockedTerms) {
+          nextControls.blockedTerms = normalizeToString(item.value) || DEFAULT_CONTROLS.blockedTerms;
         }
       });
+
       setConfigs(nextConfigs);
+      setControls(nextControls);
     }
   }, [data]);
 
@@ -57,6 +113,18 @@ export const AdManager: React.FC = () => {
       }
     );
   };
+
+  const handleSaveControl = (key: RuntimeControlKey, value: unknown) => {
+    const toastId = startDbChangeToast(`Saving ${key}...`);
+    mutation.mutate(
+      { key, value },
+      {
+        onSuccess: () => resolveDbChangeToast(toastId, `${key} saved successfully`),
+        onError: (error: unknown) => rejectDbChangeToast(toastId, error, 'update_settings'),
+      },
+    );
+  };
+
   // Render UI
   return (
     <div className="max-w-4xl space-y-8">
@@ -108,6 +176,106 @@ export const AdManager: React.FC = () => {
           </motion.div>
         ))}
       </div>
+
+      <section className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-5 transition-colors">
+        <header className="space-y-1">
+          <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 dark:text-white">Runtime Controls</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Dynamic controls are read by the reader SPA without redeploy.</p>
+        </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <label className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3">
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Ads enabled</span>
+            <input
+              type="checkbox"
+              checked={controls.enabled}
+              onChange={(e) => setControls((prev) => ({ ...prev, enabled: e.target.checked }))}
+              className="h-4 w-4"
+            />
+          </label>
+
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Min ad height (px)</label>
+            <input
+              value={controls.minHeight}
+              onChange={(e) => setControls((prev) => ({ ...prev, minHeight: e.target.value }))}
+              className="mt-2 w-full bg-transparent outline-none text-slate-900 dark:text-slate-100"
+              placeholder="120"
+            />
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Refresh interval (seconds)</label>
+            <input
+              value={controls.refreshSeconds}
+              onChange={(e) => setControls((prev) => ({ ...prev, refreshSeconds: e.target.value }))}
+              className="mt-2 w-full bg-transparent outline-none text-slate-900 dark:text-slate-100"
+              placeholder="120"
+            />
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 md:col-span-2">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Allowed script hosts (comma separated)</label>
+            <input
+              value={controls.allowedHosts}
+              onChange={(e) => setControls((prev) => ({ ...prev, allowedHosts: e.target.value }))}
+              className="mt-2 w-full bg-transparent outline-none text-slate-900 dark:text-slate-100"
+            />
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 md:col-span-2">
+            <label className="text-xs font-black uppercase tracking-widest text-slate-500">Blocked terms (comma separated)</label>
+            <input
+              value={controls.blockedTerms}
+              onChange={(e) => setControls((prev) => ({ ...prev, blockedTerms: e.target.value }))}
+              className="mt-2 w-full bg-transparent outline-none text-slate-900 dark:text-slate-100"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => handleSaveControl(AD_CONTROL_KEYS.enabled, controls.enabled)}
+            disabled={mutation.isPending || !canManageAds}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
+          >
+            <Save size={14} />
+            Save Enabled
+          </button>
+          <button
+            onClick={() => handleSaveControl(AD_CONTROL_KEYS.minHeight, controls.minHeight)}
+            disabled={mutation.isPending || !canManageAds}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
+          >
+            <Save size={14} />
+            Save Height
+          </button>
+          <button
+            onClick={() => handleSaveControl(AD_CONTROL_KEYS.refreshSeconds, controls.refreshSeconds)}
+            disabled={mutation.isPending || !canManageAds}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
+          >
+            <Save size={14} />
+            Save Refresh
+          </button>
+          <button
+            onClick={() => handleSaveControl(AD_CONTROL_KEYS.allowedHosts, controls.allowedHosts)}
+            disabled={mutation.isPending || !canManageAds}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
+          >
+            <Save size={14} />
+            Save Hosts
+          </button>
+          <button
+            onClick={() => handleSaveControl(AD_CONTROL_KEYS.blockedTerms, controls.blockedTerms)}
+            disabled={mutation.isPending || !canManageAds}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-800 dark:hover:bg-cyan-300 transition-all disabled:opacity-50"
+          >
+            <Save size={14} />
+            Save Terms
+          </button>
+        </div>
+      </section>
     </div>
   );
 };
