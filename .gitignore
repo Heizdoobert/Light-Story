@@ -15,6 +15,7 @@ docs/
 .grapuco/
 .agent/
 agent/
+*.agents/
 *.agent.md
 *.agent.original.md
 
