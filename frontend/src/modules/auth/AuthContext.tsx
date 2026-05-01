@@ -1,3 +1,5 @@
+"use client";
+
 // This file manages the global authentication state and Role-Based Access Control (RBAC)
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase/client';
@@ -101,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabase!.auth.getSession();
 
         if (!isActive) return;
 

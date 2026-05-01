@@ -30,9 +30,9 @@ export const useStories = () => {
 
       return { previousStories };
     },
-    onError: (err, storyId, context) => {
+    onError: (_err, _storyId, context) => {
       queryClient.setQueryData(['stories'], context?.previousStories);
-      console.error('Failed to increment view:', err);
+      console.error('Failed to increment view:', _err);
       toast.error('Failed to increment view');
     },
   });

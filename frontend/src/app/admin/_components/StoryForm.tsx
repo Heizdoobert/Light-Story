@@ -1,13 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
-import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { Story } from '@/types/entities';
 import { toast } from "sonner";
-import { getErrorMessage } from '@/lib/errorUtils';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
-import { supabase } from '@/lib/supabase/client';
 import {
   Save,
   X,
@@ -19,9 +13,9 @@ import {
   Activity,
   Upload,
 } from "lucide-react";
+import { useStoryFormPresenter } from '@/hooks/useStoryFormPresenter';
 
 export const StoryForm: React.FC = () => {
-  const queryClient = useQueryClient();
   const { role } = useAuth();
   const canManageStories = role === 'superadmin' || role === 'admin';
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -39,18 +33,7 @@ export const StoryForm: React.FC = () => {
     views: 0,
   });
 
-  const storyRepo = new SupabaseStoryRepository();
-  const taxonomyRepo = new SupabaseTaxonomyRepository();
-
-  const authorsQuery = useQuery({
-    queryKey: ["authors"],
-    queryFn: () => taxonomyRepo.getAuthors(),
-  });
-
-  const categoriesQuery = useQuery({
-    queryKey: ["categories"],
-    queryFn: () => taxonomyRepo.getCategories(),
-  });
+  const { authorsQuery, categoriesQuery, createStoryMutation } = useStoryFormPresenter();
 
   useEffect(() => {
     if (!coverFile) {
@@ -80,60 +63,6 @@ export const StoryForm: React.FC = () => {
     setFileInputKey((current) => current + 1);
   };
 
-  const uploadCoverImage = async (file: File): Promise<string> => {
-    if (!supabase) {
-      throw new Error("Supabase not initialized");
-    }
-
-    const fileExtension = file.name.split(".").pop() || "png";
-    const filePath = `story-covers/${crypto.randomUUID()}.${fileExtension}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("story-covers")
-      .upload(filePath, file, {
-        contentType: file.type || "image/png",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    const { data } = supabase.storage.from("story-covers").getPublicUrl(filePath);
-
-    if (!data?.publicUrl) {
-      throw new Error("Unable to resolve uploaded image URL");
-    }
-
-    return data.publicUrl;
-  };
-
-  const mutation = useMutation({
-    mutationFn: async (newStory: Partial<Story>) => {
-      if (!coverFile) {
-        throw new Error("Cover image is required");
-      }
-
-      const coverUrl = await uploadCoverImage(coverFile);
-      return storyRepo.saveStory({ ...newStory, cover_url: coverUrl });
-    },
-    onMutate: (newStory) => {
-      const title = newStory.title?.trim() || 'new story';
-      const toastId = startDbChangeToast(`Creating \"${title}\"...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-dashboard-metrics"] });
-      queryClient.invalidateQueries({ queryKey: ["stories"] });
-      queryClient.invalidateQueries({ queryKey: ["admin_stories"] });
-      resolveDbChangeToast(context?.toastId, "Story created successfully");
-      resetForm();
-    },
-    onError: (error: any, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, "save_story");
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.author || !formData.description) {
@@ -148,7 +77,10 @@ export const StoryForm: React.FC = () => {
       toast.error("Please upload a cover image");
       return;
     }
-    mutation.mutate(formData);
+    createStoryMutation.mutate(
+      { story: formData, coverFile },
+      { onSuccess: () => resetForm() },
+    );
   };
 
   return (
@@ -334,10 +266,10 @@ export const StoryForm: React.FC = () => {
             <div className="md:col-span-2 pt-4">
               <button
                 type="submit"
-                disabled={mutation.isPending || !canManageStories}
+                disabled={createStoryMutation.isPending || !canManageStories}
                 className="w-full bg-slate-900 dark:bg-cyan-400 py-5 rounded-3xl text-white dark:text-slate-950 font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
-                {mutation.isPending ? (
+                {createStoryMutation.isPending ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>

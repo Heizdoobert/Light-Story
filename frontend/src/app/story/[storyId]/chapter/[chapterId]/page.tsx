@@ -1,4 +1,4 @@
-import { ReaderPage } from './_components/ReaderPage';
+import { ReaderPageContainer } from './_presenters/ReaderPageContainer';
 
 interface StoryChapterPageProps {
   params: Promise<{
@@ -9,5 +9,5 @@ interface StoryChapterPageProps {
 
 export default async function StoryChapterPage({ params }: StoryChapterPageProps) {
   const { storyId, chapterId } = await params;
-  return <ReaderPage storyId={storyId} chapterId={chapterId} />;
+  return <ReaderPageContainer storyId={storyId} chapterId={chapterId} />;
 }
