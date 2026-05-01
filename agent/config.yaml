@@ -1,0 +1,8 @@
+# MAS Orchestrator config
+project_path: "d:/Light-Story"
+git_repo: "Heizdoobert/Light-Story"
+auto_pr: true
+ci_smoke_tests_on_pr: true
+include_backend_supabase: true
+agent_owner: "orchestrator"
+created_by: "mas-orchestrator"
