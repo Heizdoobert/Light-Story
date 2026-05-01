@@ -11,7 +11,9 @@
     "start": "next start -p 3001 -H 0.0.0.0",
     "preview": "next start -p 3001 -H 0.0.0.0",
     "lint": "tsc --noEmit",
-    "ci:verify": "npm run lint && npm run build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "ci:verify": "npm run lint && npm run build && npm run test:run",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
     "test:internal-auth": "node ./tests/check_internal_routes.mjs",
@@ -46,12 +48,16 @@
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/ui": "^4.1.5",
     "autoprefixer": "^10.4.21",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.4",
+    "happy-dom": "^20.9.0",
     "supabase": "^2.95.6",
     "tailwindcss": "^4.2.3",
     "tsx": "^4.21.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.5"
   }
 }
