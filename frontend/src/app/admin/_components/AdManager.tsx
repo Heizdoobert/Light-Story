@@ -3,7 +3,6 @@
   Form for managing ad scripts and site settings.
 */
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { useAdConfigsQuery, useUpdateAdConfig } from '@/app/_presenters/useAdManagerPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
@@ -12,11 +11,6 @@ import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
 type AdConfigs = Record<AdConfigKey, string>;
-
-type SiteSettingRow = {
-  key: string;
-  value: string | null;
-};
 
 const AD_SLOTS: ReadonlyArray<{ id: AdConfigKey; label: string; desc: string }> = [
   { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
@@ -36,7 +30,7 @@ export const AdManager: React.FC = () => {
   const [configs, setConfigs] = useState<AdConfigs>(DEFAULT_CONFIGS);
 
   // Fetch settings via presenter hook
-  const { data, isLoading } = useAdConfigsQuery();
+  const { data } = useAdConfigsQuery();
 
   useEffect(() => {
     if (data) {

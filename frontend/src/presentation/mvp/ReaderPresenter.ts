@@ -1,5 +1,5 @@
 import { IReaderView } from './ReaderContract';
-import { IStoryRepository, IChapterRepository } from '@/types/repos';
+import { IStoryRepository, IChapterRepository } from '@/domain/interfaces';
 
 export class ReaderPresenter {
   private view: IReaderView | null = null;

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { LogIn, LogOut, LayoutDashboard, BookOpen, ChevronRight } from 'lucide-react';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
 import { Story } from '@/types/entities';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/errorUtils';
 import { LoginModal } from '@/components/shared/LoginModal';
 
 const STAFF_ROLES = new Set(['superadmin', 'admin', 'employee']);
@@ -15,41 +15,18 @@ function isStaffRole(role: string | null | undefined): boolean {
   return STAFF_ROLES.has(role ?? '');
 }
 
-export const HomePage: React.FC = () => {
-  const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { user, profile, signIn, signOut, role } = useAuth();
+type HomePageProps = {
+  initialStories: Story[];
+};
 
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const repo = new SupabaseStoryRepository();
-        const data = await repo.getStories();
-        setStories(data);
-      } catch (error) {
-        console.error('Error fetching stories:', error);
-        toast.error(getErrorMessage(error, 'fetch_stories'));
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStories();
-  }, []);
+export const HomePage: React.FC<HomePageProps> = ({ initialStories }) => {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const { user, profile, signOut, role } = useAuth();
 
   const bounceClick = {
     whileTap: { scale: 0.95 },
     whileHover: { scale: 1.02 },
   };
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-screen space-y-4 bg-slate-50 dark:bg-slate-950">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-text-muted dark:text-slate-400 font-bold animate-pulse">Loading story list...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -130,7 +107,7 @@ export const HomePage: React.FC = () => {
           </motion.p>
         </header>
 
-        {stories.length === 0 ? (
+        {initialStories.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -148,7 +125,7 @@ export const HomePage: React.FC = () => {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {stories.map((story, i) => (
+            {initialStories.map((story, i) => (
               <motion.div
                 key={story.id}
                 initial={{ opacity: 0, y: 20 }}

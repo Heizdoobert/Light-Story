@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import * as adminService from '@/services/admin.service';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
+import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
 
 const storyRepo = new SupabaseStoryRepository();
 

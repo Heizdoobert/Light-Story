@@ -1,13 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { SupabaseChapterRepository } from '@/services/repositories/SupabaseChapterRepository';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { Chapter, Story } from '@/types/entities';
 import { toast } from "sonner";
-import { getErrorMessage } from '@/lib/errorUtils';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 import {
   Save,
   BookOpen,
@@ -15,9 +10,9 @@ import {
   Type,
   AlignLeft,
 } from "lucide-react";
+import { useChapterFormPresenter } from '@/hooks/useChapterFormPresenter';
 
 export const ChapterForm: React.FC = () => {
-  const queryClient = useQueryClient();
   const { role } = useAuth();
   const canManageChapters = role === 'superadmin' || role === 'admin';
   const [stories, setStories] = useState<Story[]>([]);
@@ -36,57 +31,24 @@ export const ChapterForm: React.FC = () => {
     3000, // Auto-save every 3 seconds
   );
 
+  const { storiesQuery, saveChapterMutation } = useChapterFormPresenter();
+
   useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const repo = new SupabaseStoryRepository();
-        const data = await repo.getStories();
-        setStories(data);
-        if (data.length > 0) {
-          // Try to restore auto-saved data first
-          const restored = restoreAutoSave();
-          if (restored && restored.story_id) {
-            setFormData(restored);
-          } else {
-            // Otherwise set first story as default
-            setFormData((prev) => ({ ...prev, story_id: data[0].id }));
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching stories:", error);
-      } finally {
-        setIsRestoring(false);
+    const storiesData = storiesQuery.data ?? [];
+    if (storiesQuery.isLoading) return;
+
+    setStories(storiesData);
+    if (storiesData.length > 0) {
+      const restored = restoreAutoSave();
+      if (restored && restored.story_id) {
+        setFormData(restored);
+      } else {
+        setFormData((prev) => ({ ...prev, story_id: storiesData[0].id }));
       }
-    };
-    fetchStories();
-  }, []);
+    }
 
-  const chapterRepo = new SupabaseChapterRepository();
-
-  const mutation = useMutation({
-    mutationFn: (newChapter: Partial<Chapter>) =>
-      chapterRepo.saveChapter(newChapter),
-    onMutate: (newChapter) => {
-      const title = newChapter.title?.trim() || 'new chapter';
-      const toastId = startDbChangeToast(`Creating \"${title}\"...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ["chapters"] });
-      resolveDbChangeToast(context?.toastId, "Chapter created successfully");
-      // Clear auto-saved data after successful save
-      clearAutoSave();
-      setFormData((prev) => ({
-        ...prev,
-        chapter_number: (prev.chapter_number || 1) + 1,
-        title: "",
-        content: "",
-      }));
-    },
-    onError: (error: any, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, "save_chapter");
-    },
-  });
+    setIsRestoring(false);
+  }, [storiesQuery.data, storiesQuery.isLoading, restoreAutoSave]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +60,17 @@ export const ChapterForm: React.FC = () => {
       toast.error("Chapter number must be a positive integer!");
       return;
     }
-    mutation.mutate(formData);
+    saveChapterMutation.mutate(formData, {
+      onSuccess: () => {
+        clearAutoSave();
+        setFormData((prev) => ({
+          ...prev,
+          chapter_number: (prev.chapter_number || 1) + 1,
+          title: "",
+          content: "",
+        }));
+      },
+    });
   };
 
   if (isRestoring) {
@@ -203,10 +175,10 @@ export const ChapterForm: React.FC = () => {
             <div className="md:col-span-2 pt-4">
               <button
                 type="submit"
-                disabled={mutation.isPending || stories.length === 0 || !canManageChapters}
+                disabled={saveChapterMutation.isPending || stories.length === 0 || !canManageChapters}
                 className="w-full bg-slate-900 dark:bg-cyan-400 py-5 rounded-3xl text-white dark:text-slate-950 font-black text-sm shadow-2xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-3 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
-                {mutation.isPending ? (
+                {saveChapterMutation.isPending ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 ) : (
                   <>

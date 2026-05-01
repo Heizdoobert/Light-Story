@@ -1,5 +1,5 @@
 import { IAdminView } from "./AdminContract";
-import { IStoryRepository, IChapterRepository, ISettingsRepository } from '@/types/repos';
+import { IStoryRepository, ISettingsRepository } from '@/domain/interfaces';
 import { getErrorMessage } from "../../lib/errorUtils";
 
 export class AdminPresenter {
@@ -7,7 +7,6 @@ export class AdminPresenter {
 
   constructor(
     private storyRepo: IStoryRepository,
-    private chapterRepo: IChapterRepository,
     private settingsRepo: ISettingsRepository,
   ) {}
 
@@ -48,6 +47,11 @@ export class AdminPresenter {
       };
     } catch (error: any) {
       this.view.showError(getErrorMessage(error, "fetch_stories"));
+      return {
+        header: "",
+        middle: "",
+        sidebar: "",
+      };
     } finally {
       this.view.hideLoading();
     }

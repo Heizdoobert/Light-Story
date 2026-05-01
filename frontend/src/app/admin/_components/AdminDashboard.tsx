@@ -3,26 +3,13 @@ import React, {
   Suspense,
   lazy,
   startTransition,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
   useState,
+  useCallback,
+  useMemo,
 } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { AdminLayout } from "@/app/admin/_components/AdminLayout";
-import { SupabaseStoryRepository } from "@/services/repositories/SupabaseStoryRepository";
-import { Story } from "@/types/entities";
 import { useAdminDashboardPresenter } from '@/hooks/useAdminDashboardPresenter';
 import { useAuth } from "@/modules/auth/AuthContext";
-import { parseBooleanSetting, SITE_SETTING_KEYS } from "@/lib/systemSettings";
-
-const storyRepo = new SupabaseStoryRepository();
-
-const DEFAULT_UI_SETTINGS = {
-  compactMode: false,
-  showSyncBadge: true,
-};
+import { AdminLayout } from './AdminLayout';
 
 const StoryForm = lazy(() => import("@/app/admin/_components/StoryForm").then((m) => ({ default: m.StoryForm })));
 const StoryManagementTab = lazy(() =>
@@ -96,17 +83,6 @@ const TabLoadingFallback: React.FC = () => (
   </div>
 );
 
-type DashboardStats = {
-  totalViews: number;
-  activeStories: number;
-  totalChapters: number;
-};
-
-type DashboardData = {
-  stories: Story[];
-  stats: DashboardStats;
-  syncedAt: string;
-};
 
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTabId>("dashboard");

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
+import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
 import { useAuthorPresenter } from '@/hooks/useAuthorPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
@@ -17,7 +17,7 @@ export const AuthorManagementTab: React.FC = () => {
   const { role } = useAuth();
   const canManageAuthors = role === 'superadmin';
 
-  const { authorsQuery, linkQuery, linkedCounts } = useAuthorPresenter();
+  const { authorsQuery, linkedCounts } = useAuthorPresenter();
 
   const createMutation = useMutation({
     mutationFn: () => taxonomyRepo.createAuthor({ name, bio }),
