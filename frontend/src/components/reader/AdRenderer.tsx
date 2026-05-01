@@ -44,9 +44,12 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   const pathname = usePathname();
   const containerRef = useRef<HTMLDivElement>(null);
   const hasInjectedRef = useRef(false);
-  const pendingTaskRef = useRef<number | ReturnType<typeof setTimeout> | null>(null);
+  const pendingTaskRef = useRef<number | null>(null);
+  const refreshTaskRef = useRef<number | null>(null);
+  const previousMarkupRef = useRef<string>('');
   const [isVisible, setIsVisible] = useState(false);
   const [policyError, setPolicyError] = useState<string | null>(null);
+  const [renderCycle, setRenderCycle] = useState(0);
 
   const { data } = useQuery({
     queryKey: ['site_settings', 'ad_runtime'],
@@ -64,9 +67,32 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   const runtime = parsed.runtime;
   const markup = parsed.slotMarkup[slotKey].trim();
 
+  const clearInjectionTask = () => {
+    if (pendingTaskRef.current === null) return;
+
+    if (typeof pendingTaskRef.current === 'number' && 'cancelIdleCallback' in window) {
+      window.cancelIdleCallback(pendingTaskRef.current);
+    } else {
+      globalThis.clearTimeout(pendingTaskRef.current);
+    }
+
+    pendingTaskRef.current = null;
+  };
+
+  const clearRefreshTask = () => {
+    if (refreshTaskRef.current !== null) {
+      globalThis.clearTimeout(refreshTaskRef.current);
+      refreshTaskRef.current = null;
+    }
+  };
+
   useEffect(() => {
     hasInjectedRef.current = false;
+    setIsVisible(false);
     setPolicyError(null);
+    clearInjectionTask();
+    clearRefreshTask();
+    previousMarkupRef.current = '';
 
     if (containerRef.current) {
       containerRef.current.innerHTML = '';
@@ -74,6 +100,39 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   }, [pathname, slotKey]);
 
   useEffect(() => {
+    if (!runtime.enabled) {
+      hasInjectedRef.current = false;
+      setIsVisible(false);
+      setPolicyError(null);
+      clearInjectionTask();
+      clearRefreshTask();
+      previousMarkupRef.current = markup;
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+
+      return;
+    }
+
+    if (previousMarkupRef.current && previousMarkupRef.current !== markup) {
+      hasInjectedRef.current = false;
+      setIsVisible(false);
+      setPolicyError(null);
+      clearInjectionTask();
+      clearRefreshTask();
+
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    }
+
+    previousMarkupRef.current = markup;
+  }, [markup, runtime.enabled]);
+
+  useEffect(() => {
+    clearInjectionTask();
+
     const node = containerRef.current;
     if (!node) return;
 
@@ -92,6 +151,8 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   }, [pathname, slotKey]);
 
   useEffect(() => {
+    clearInjectionTask();
+
     if (!runtime.enabled || !markup || !isVisible) return;
     const node = containerRef.current;
     if (!node || hasInjectedRef.current) return;
@@ -109,6 +170,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       try {
         injectMarkup(current, markup);
         hasInjectedRef.current = true;
+        setRenderCycle((value) => value + 1);
       } catch {
         setPolicyError('Failed to render ad markup.');
       }
@@ -125,20 +187,40 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       };
     }
 
-    const timeoutId = setTimeout(run, 0);
+    const timeoutId = globalThis.setTimeout(run, 0) as unknown as number;
     pendingTaskRef.current = timeoutId;
     return () => {
-      if (pendingTaskRef.current !== null) {
-        clearTimeout(pendingTaskRef.current);
-        pendingTaskRef.current = null;
-      }
+      clearInjectionTask();
     };
-  }, [isVisible, markup, runtime]);
+  }, [isVisible, markup, renderCycle, runtime.enabled, runtime.allowedHosts, runtime.blockedTerms, runtime.minHeight, runtime.refreshSeconds]);
+
+  useEffect(() => {
+    clearRefreshTask();
+
+    if (!runtime.enabled || !markup || !isVisible || !hasInjectedRef.current) return;
+
+    refreshTaskRef.current = window.setTimeout(() => {
+      const current = containerRef.current;
+      if (current) {
+        current.innerHTML = '';
+      }
+
+      hasInjectedRef.current = false;
+      setRenderCycle((value) => value + 1);
+    }, runtime.refreshSeconds * 1000);
+
+    return () => {
+      clearRefreshTask();
+    };
+  }, [isVisible, markup, renderCycle, runtime.enabled, runtime.refreshSeconds]);
 
   useEffect(() => {
     if (!runtime.enabled) {
       hasInjectedRef.current = false;
       setPolicyError(null);
+      setIsVisible(false);
+      clearInjectionTask();
+      clearRefreshTask();
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 
@@ -19,7 +19,6 @@ type ProfileRow = {
 export const DashboardAccessLogsTab: React.FC = () => {
   const logsQuery = useQuery({
     queryKey: ['dashboard_access_logs'],
-    refetchInterval: 10_000,
     queryFn: async () => {
       if (!supabase) return [] as AccessLog[];
 
@@ -34,6 +33,30 @@ export const DashboardAccessLogsTab: React.FC = () => {
       return (data ?? []) as AccessLog[];
     },
   });
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const channel = supabase
+      .channel('dashboard-access-logs-live')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'admin_audit_logs',
+          filter: 'action=eq.dashboard_access',
+        },
+        () => {
+          void logsQuery.refetch();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [logsQuery.refetch]);
 
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
@@ -79,7 +102,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Recent Access Events</h2>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Auto refresh 10s</span>
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Live via Supabase Realtime</span>
         </div>
 
         {isLoading && <div className="p-6 text-sm text-slate-500">Loading dashboard access logs...</div>}

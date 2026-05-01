@@ -3,6 +3,7 @@ import {
   validateAdMarkup,
   sanitizeAdSettingValue,
   parseSiteSettingsRows,
+  parseAdManagerState,
   buildDefaultAdRows,
   toSafeAdRows,
   isAllowedAdSettingKey,
@@ -218,6 +219,32 @@ describe('adPolicy', () => {
       expect(result.slotMarkup.ad_header).toBe('');
       expect(result.slotMarkup.ad_middle).toBe('');
       expect(result.slotMarkup.ad_sidebar).toBe('');
+    });
+  });
+
+  describe('parseAdManagerState', () => {
+    it('parses reusable admin form state from site settings rows', () => {
+      const rows = [
+        { key: 'ad_header', value: '<p>Header</p>' },
+        { key: 'ad_middle', value: '<p>Middle</p>' },
+        { key: 'ad_sidebar', value: '<p>Sidebar</p>' },
+        { key: AD_CONTROL_KEYS.enabled, value: false },
+        { key: AD_CONTROL_KEYS.minHeight, value: 180 },
+        { key: AD_CONTROL_KEYS.refreshSeconds, value: 90 },
+        { key: AD_CONTROL_KEYS.allowedHosts, value: ['example.com', 'cdn.example.com'] },
+        { key: AD_CONTROL_KEYS.blockedTerms, value: ['adult', 'casino'] },
+      ];
+
+      const result = parseAdManagerState(rows);
+
+      expect(result.configs.ad_header).toContain('Header');
+      expect(result.configs.ad_middle).toContain('Middle');
+      expect(result.configs.ad_sidebar).toContain('Sidebar');
+      expect(result.controls.enabled).toBe(false);
+      expect(result.controls.minHeight).toBe('180');
+      expect(result.controls.refreshSeconds).toBe('90');
+      expect(result.controls.allowedHosts).toBe('example.com, cdn.example.com');
+      expect(result.controls.blockedTerms).toBe('adult, casino');
     });
   });
 

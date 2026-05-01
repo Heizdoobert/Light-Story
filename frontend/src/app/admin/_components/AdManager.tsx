@@ -8,7 +8,7 @@ import { useAuth } from '@/modules/auth/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
-import { AD_CONTROL_KEYS } from '@/lib/adPolicy';
+import { AD_CONTROL_KEYS, parseAdManagerState } from '@/lib/adPolicy';
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
 type AdConfigs = Record<AdConfigKey, string>;
@@ -47,18 +47,6 @@ const DEFAULT_CONTROLS: RuntimeControls = {
   blockedTerms: 'adult, xxx, porn, casino, betting, violence, hate',
 };
 
-const normalizeToString = (value: unknown): string => {
-  if (typeof value === 'string') return value;
-  if (value === null || value === undefined) return '';
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (Array.isArray(value)) return value.map((item) => String(item)).join(', ');
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return '';
-  }
-};
-
 export const AdManager: React.FC = () => {
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
@@ -70,33 +58,9 @@ export const AdManager: React.FC = () => {
 
   useEffect(() => {
     if (data) {
-      const nextConfigs: AdConfigs = { ...DEFAULT_CONFIGS };
-      const nextControls: RuntimeControls = { ...DEFAULT_CONTROLS };
-
-      data.forEach((item: { key: string; value: unknown }) => {
-        if (item.key in nextConfigs) {
-          nextConfigs[item.key as AdConfigKey] = normalizeToString(item.value);
-        }
-
-        if (item.key === AD_CONTROL_KEYS.enabled) {
-          nextControls.enabled = String(item.value).toLowerCase() !== 'false';
-        }
-        if (item.key === AD_CONTROL_KEYS.minHeight) {
-          nextControls.minHeight = normalizeToString(item.value) || DEFAULT_CONTROLS.minHeight;
-        }
-        if (item.key === AD_CONTROL_KEYS.refreshSeconds) {
-          nextControls.refreshSeconds = normalizeToString(item.value) || DEFAULT_CONTROLS.refreshSeconds;
-        }
-        if (item.key === AD_CONTROL_KEYS.allowedHosts) {
-          nextControls.allowedHosts = normalizeToString(item.value) || DEFAULT_CONTROLS.allowedHosts;
-        }
-        if (item.key === AD_CONTROL_KEYS.blockedTerms) {
-          nextControls.blockedTerms = normalizeToString(item.value) || DEFAULT_CONTROLS.blockedTerms;
-        }
-      });
-
-      setConfigs(nextConfigs);
-      setControls(nextControls);
+      const parsed = parseAdManagerState(data);
+      setConfigs(parsed.configs);
+      setControls(parsed.controls);
     }
   }, [data]);
 

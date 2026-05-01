@@ -37,6 +37,17 @@ export interface AdRuntimeSettings {
   blockedTerms: string[];
 }
 
+export interface AdManagerState {
+  configs: Record<AdSlotKey, string>;
+  controls: {
+    enabled: boolean;
+    minHeight: string;
+    refreshSeconds: string;
+    allowedHosts: string;
+    blockedTerms: string;
+  };
+}
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
@@ -211,6 +222,25 @@ export const parseSiteSettingsRows = (rows: Array<{ key: string; value: unknown 
   };
 
   return { map, runtime, slotMarkup };
+};
+
+export const parseAdManagerState = (rows: Array<{ key: string; value: unknown }>): AdManagerState => {
+  const { runtime, slotMarkup } = parseSiteSettingsRows(rows);
+
+  return {
+    configs: {
+      ad_header: slotMarkup.ad_header,
+      ad_middle: slotMarkup.ad_middle,
+      ad_sidebar: slotMarkup.ad_sidebar,
+    },
+    controls: {
+      enabled: runtime.enabled,
+      minHeight: String(runtime.minHeight),
+      refreshSeconds: String(runtime.refreshSeconds),
+      allowedHosts: runtime.allowedHosts.join(', '),
+      blockedTerms: runtime.blockedTerms.join(', '),
+    },
+  };
 };
 
 export const isAdSlotKey = (value: string): value is AdSlotKey =>
