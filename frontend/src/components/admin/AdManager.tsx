@@ -23,6 +23,18 @@ const DEFAULT_CONFIGS: AdConfigs = {
   ad_sidebar: '',
 };
 
+const normalizeToString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map((item) => String(item)).join(', ');
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '';
+  }
+};
+
 export const AdManager: React.FC = () => {
   const { role } = useAuth();
   const canManageAds = role === 'superadmin' || role === 'admin';
@@ -34,9 +46,9 @@ export const AdManager: React.FC = () => {
   useEffect(() => {
     if (data) {
       const nextConfigs: AdConfigs = { ...DEFAULT_CONFIGS };
-      data.forEach((item: { key: string; value: string | null }) => {
+      data.forEach((item: { key: string; value: unknown }) => {
         if (item.key in nextConfigs) {
-          nextConfigs[item.key as AdConfigKey] = item.value ?? '';
+          nextConfigs[item.key as AdConfigKey] = normalizeToString(item.value);
         }
       });
       setConfigs(nextConfigs);

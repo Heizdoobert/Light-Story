@@ -1,13 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+export type AdSettingItem = { key: string; value: unknown };
+
 async function fetchAdConfigs() {
-  const res = await fetch('/api/site-settings', { cache: 'no-store' });
+  const res = await fetch('/api/site-settings?scope=admin', { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch ad settings');
   const json = await res.json();
-  return json.data as Array<{ key: string; value: string | null }>;
+  return (json.data ?? []) as AdSettingItem[];
 }
 
-async function postAdConfig(key: string, value: string) {
+async function postAdConfig(key: string, value: unknown) {
   const res = await fetch('/api/site-settings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -18,13 +20,23 @@ async function postAdConfig(key: string, value: string) {
 }
 
 export function useAdConfigsQuery() {
-  return useQuery({ queryKey: ['site_settings', 'ad_slots'], queryFn: fetchAdConfigs, staleTime: 60_000 });
+  return useQuery({
+    queryKey: ['site_settings', 'ad_slots'],
+    queryFn: fetchAdConfigs,
+    staleTime: 20_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,
+  });
 }
 
 export function useUpdateAdConfig() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, value }: { key: string; value: string }) => postAdConfig(key, value),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] }),
+    mutationFn: ({ key, value }: { key: string; value: unknown }) => postAdConfig(key, value),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] });
+      qc.invalidateQueries({ queryKey: ['site_settings', 'ad_runtime'] });
+    },
   });
 }
