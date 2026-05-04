@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useProfileCountQuery, useChapterCountQuery } from '@/app/_presenters/useOperationsPresenter';
 import { useAdConfigsQuery } from '@/app/_presenters/useAdManagerPresenter';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
+import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
 import { Story } from '@/types/entities';
 import { ArrowRight, BookOpen, CircleAlert, Coins, FileText, Library, MessageSquare, Shield, Users, Workflow } from 'lucide-react';
 

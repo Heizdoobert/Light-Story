@@ -1,12 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCw, BookOpenText, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
-import { useAuth, UserRole } from '@/modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
 import { Story } from '@/types/entities';
 import { getErrorMessage } from '@/lib/errorUtils';
-import { toast } from 'sonner';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
+import { useStoryManagementPresenter } from '@/hooks/useStoryManagementPresenter';
 
 type StatusFilter = 'all' | 'ongoing' | 'completed';
 type SortMode = 'newest' | 'oldest' | 'most_viewed';
@@ -19,7 +16,6 @@ type StoryEditForm = {
   status: StoryStatus;
 };
 
-const storyRepo = new SupabaseStoryRepository();
 const PAGE_SIZE = 10;
 
 export const StoryManagementTab: React.FC = () => {
@@ -33,7 +29,18 @@ export const StoryManagementTab: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingStory, setEditingStory] = useState<StoryEditForm | null>(null);
 
-  const queryClient = useQueryClient();
+  const {
+    storiesQuery,
+    updateStoryMutation,
+    deleteStoryMutation,
+    bulkStatusMutation,
+    bulkDeleteMutation,
+  } = useStoryManagementPresenter({
+    page,
+    statusFilter,
+    sortMode,
+    keyword: debouncedKeyword,
+  });
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -46,20 +53,6 @@ export const StoryManagementTab: React.FC = () => {
   useEffect(() => {
     setPage(1);
   }, [statusFilter, sortMode]);
-
-  const storiesQuery = useQuery({
-    queryKey: ['admin_stories', { page, statusFilter, sortMode, keyword: debouncedKeyword }],
-    queryFn: () => storyRepo.getStoriesPage({
-      page,
-      pageSize: PAGE_SIZE,
-      keyword: debouncedKeyword,
-      status: statusFilter,
-      sort: sortMode,
-    }),
-    placeholderData: (prev) => prev,
-    staleTime: 30_000,
-    gcTime: 300_000,
-  });
 
   const stories = storiesQuery.data?.items ?? [];
   const totalStories = storiesQuery.data?.total ?? 0;
@@ -78,80 +71,6 @@ export const StoryManagementTab: React.FC = () => {
       return filtered;
     });
   }, [stories]);
-
-  const invalidateStories = () => {
-    queryClient.invalidateQueries({ queryKey: ['admin_stories'] });
-    queryClient.invalidateQueries({ queryKey: ['admin-dashboard-metrics'] });
-  };
-
-  const updateStoryMutation = useMutation({
-    mutationFn: (payload: StoryEditForm) =>
-      storyRepo.updateStory(payload.id, {
-        title: payload.title,
-        description: payload.description,
-        status: payload.status,
-      }),
-    onMutate: (payload) => {
-      const toastId = startDbChangeToast(`Updating \"${payload.title}\"...`);
-      return { toastId };
-    },
-    onSuccess: () => {
-      resolveDbChangeToast(undefined, 'Story updated successfully');
-      setEditingStory(null);
-      invalidateStories();
-    },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
-
-  const deleteStoryMutation = useMutation({
-    mutationFn: (id: string) => storyRepo.deleteStory(id),
-    onMutate: () => {
-      const toastId = startDbChangeToast('Deleting story...');
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Story deleted successfully');
-      invalidateStories();
-    },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
-
-  const bulkStatusMutation = useMutation({
-    mutationFn: ({ ids, status }: { ids: string[]; status: StoryStatus }) =>
-      storyRepo.bulkUpdateStatus(ids, status),
-    onMutate: ({ ids, status }) => {
-      const toastId = startDbChangeToast(`Updating ${ids.length} stories to ${status}...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Bulk status updated');
-      setSelectedIds([]);
-      invalidateStories();
-    },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
-
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => storyRepo.bulkDeleteStories(ids),
-    onMutate: (ids) => {
-      const toastId = startDbChangeToast(`Deleting ${ids.length} selected stories...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Selected stories deleted');
-      setSelectedIds([]);
-      invalidateStories();
-    },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
 
   const allVisibleSelected = stories.length > 0 && stories.every((story) => selectedIds.includes(story.id));
 
@@ -172,13 +91,15 @@ export const StoryManagementTab: React.FC = () => {
 
   const handleDeleteOne = (story: Story) => {
     if (!window.confirm(`Delete story \"${story.title}\"? This action cannot be undone.`)) return;
-    deleteStoryMutation.mutate(story.id);
+    deleteStoryMutation.mutate(story.id, {
+      onSuccess: () => setSelectedIds((prev) => prev.filter((id) => id !== story.id)),
+    });
   };
 
   const handleBulkDelete = () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`Delete ${selectedIds.length} selected stories? This action cannot be undone.`)) return;
-    bulkDeleteMutation.mutate(selectedIds);
+    bulkDeleteMutation.mutate(selectedIds, { onSuccess: () => setSelectedIds([]) });
   };
 
   const isMutating =
@@ -255,7 +176,7 @@ export const StoryManagementTab: React.FC = () => {
           <button
             type="button"
             disabled={selectedIds.length === 0 || isMutating || !canManageStories}
-            onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'ongoing' })}
+            onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'ongoing' }, { onSuccess: () => setSelectedIds([]) })}
             className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 disabled:opacity-50"
           >
             Mark Ongoing ({selectedIds.length})
@@ -263,7 +184,7 @@ export const StoryManagementTab: React.FC = () => {
           <button
             type="button"
             disabled={selectedIds.length === 0 || isMutating || !canManageStories}
-            onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'completed' })}
+            onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'completed' }, { onSuccess: () => setSelectedIds([]) })}
             className="px-3 py-2 rounded-xl text-xs font-black uppercase tracking-wider border border-slate-200 dark:border-slate-700 disabled:opacity-50"
           >
             Mark Completed ({selectedIds.length})
@@ -454,7 +375,11 @@ export const StoryManagementTab: React.FC = () => {
                 <button
                   type="button"
                   disabled={!canManageStories || updateStoryMutation.isPending || !editingStory.title.trim()}
-                  onClick={() => updateStoryMutation.mutate(editingStory)}
+                  onClick={() =>
+                    updateStoryMutation.mutate(editingStory, {
+                      onSuccess: () => setEditingStory(null),
+                    })
+                  }
                   className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2 text-sm font-bold disabled:opacity-50"
                 >
                   {updateStoryMutation.isPending ? 'Saving...' : 'Save Changes'}

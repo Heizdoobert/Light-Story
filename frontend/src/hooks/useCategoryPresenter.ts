@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as adminService from '@/services/admin.service';
-import { SupabaseTaxonomyRepository } from '@/services/repositories/SupabaseTaxonomyRepository';
+import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
 
 const taxonomyRepo = new SupabaseTaxonomyRepository();
 

@@ -26,10 +26,10 @@ export const useStoryMutations = () => {
         const rollback = optimisticIncrementViews(storyId);
         return { rollback };
       },
-      onError: (err, storyId, context) => {
+      onError: (_err, _storyId, context) => {
         if (context?.rollback) context.rollback();
       },
-      onSettled: (data, error, storyId) => {
+      onSettled: (_data, _error, storyId) => {
         queryClient.invalidateQueries({ queryKey: ['story', storyId] });
       },
     });
@@ -49,10 +49,10 @@ export const useStoryMutations = () => {
         const rollback = optimisticToggleLike(storyId, isCurrentlyLiked);
         return { rollback };
       },
-      onError: (err, { storyId }, context) => {
+      onError: (_err, { storyId: _storyId }, context) => {
         if (context?.rollback) context.rollback();
       },
-      onSettled: (data, error, { storyId }) => {
+      onSettled: (_data, _error, { storyId }) => {
         queryClient.invalidateQueries({ queryKey: ['story', storyId] });
       },
     });

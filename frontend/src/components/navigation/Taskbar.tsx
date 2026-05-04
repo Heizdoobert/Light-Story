@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard } from 'lucide-react';
 
 interface TaskbarProps {
   searchTerm: string;
@@ -20,7 +20,6 @@ export const Taskbar: React.FC<TaskbarProps> = ({
   setSortOption,
   user,
   signOut,
-  isLoginModalOpen,
   setIsLoginModalOpen,
 }) => {
   return (

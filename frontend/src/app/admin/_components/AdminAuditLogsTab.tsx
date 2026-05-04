@@ -1,23 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useAuditLogsPresenter } from '@/hooks/useAuditLogsPresenter';
 
 type AuditAction = 'user_create' | 'user_delete';
-
-type AuditLog = {
-  id: string;
-  actor_user_id: string | null;
-  action: AuditAction;
-  target_user_id: string | null;
-  target_email: string | null;
-  metadata: Record<string, unknown> | null;
-  created_at: string;
-};
-
-type ProfileRow = {
-  id: string;
-  email: string;
-  full_name: string | null;
-};
 
 const ACTION_LABELS: Record<AuditAction, string> = {
   user_create: 'User Created',
@@ -25,7 +9,7 @@ const ACTION_LABELS: Record<AuditAction, string> = {
 };
 
 export const AdminAuditLogsTab: React.FC = () => {
-  const { logsQuery, actorsQuery, actorMap, isLoading } = useAuditLogsPresenter();
+  const { logsQuery, actorMap, isLoading } = useAuditLogsPresenter();
 
   return (
     <div className="space-y-6">
@@ -71,7 +55,7 @@ export const AdminAuditLogsTab: React.FC = () => {
                       <td className="px-6 py-3 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">{new Date(log.created_at).toISOString()}</td>
                       <td className="px-6 py-3">
                         <span className="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
-                          {ACTION_LABELS[log.action] ?? log.action}
+                          {ACTION_LABELS[log.action as keyof typeof ACTION_LABELS] ?? log.action}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-slate-700 dark:text-slate-300">{actorDisplay}</td>

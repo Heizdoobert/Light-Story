@@ -1,9 +1,12 @@
+"use client";
+
 // This file manages the global authentication state and Role-Based Access Control (RBAC)
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase/client';
 import { User } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { getErrorMessage } from "../../lib/errorUtils";
+import { type AdminProfileDto } from '@/types/dto';
 
 export type UserRole = "superadmin" | "admin" | "employee" | "user";
 
@@ -29,8 +32,13 @@ const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null 
   return null;
 };
 
-const buildProfile = (user: User, profileData?: any) => ({
-  ...(profileData || {}),
+type AuthProfile = Omit<AdminProfileDto, 'full_name' | 'role'> & {
+  full_name: string;
+  avatar_url: string | null;
+  role: UserRole | null;
+};
+
+const buildProfile = (user: User, profileData?: ProfileRow): AuthProfile => ({
   id: profileData?.id ?? user.id,
   email: profileData?.email ?? user.email ?? "",
   full_name:
@@ -55,7 +63,7 @@ type ProfileRow = {
 
 interface AuthContextType {
   user: User | null;
-  profile: any | null;
+  profile: AuthProfile | null;
   role: UserRole | null;
   loading: boolean;
   signIn: () => Promise<void>;
@@ -81,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any | null>(null);
+  const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -101,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabase!.auth.getSession();
 
         if (!isActive) return;
 

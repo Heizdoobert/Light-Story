@@ -1,65 +1,30 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { AdRenderer } from '@/components/reader/AdRenderer';
-import { IReaderView } from '@/presentation/mvp/ReaderContract';
-import { ReaderPresenter } from '@/presentation/mvp/ReaderPresenter';
-import { SupabaseStoryRepository } from '@/services/repositories/SupabaseStoryRepository';
-import { SupabaseChapterRepository } from '@/services/repositories/SupabaseChapterRepository';
 import { Chapter } from '@/types/entities';
 
 interface ReaderPageProps {
-  storyId: string;
-  chapterId: string;
+  chapter: Chapter | null;
+  loading: boolean;
+  error: string | null;
+  fontSize: number;
+  theme: string;
+  onDecrementFontSize: () => void;
+  onIncrementFontSize: () => void;
+  onThemeChange: (theme: string) => void;
 }
 
-export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) => {
-  const [chapter, setChapter] = useState<Chapter | null>(null);
-  const [storyMeta, setStoryMeta] = useState<{ title: string; description: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(16);
-  const [theme, setTheme] = useState('light');
-
-  const presenter = useMemo(() => {
-    const storyRepo = new SupabaseStoryRepository();
-    const chapterRepo = new SupabaseChapterRepository();
-    return new ReaderPresenter(storyRepo, chapterRepo);
-  }, []);
-
-  useEffect(() => {
-    const view: IReaderView = {
-      showLoading: () => setLoading(true),
-      hideLoading: () => setLoading(false),
-      displayChapter: (data) => setChapter(data),
-      displayStoryMetadata: (title, description) => setStoryMeta({ title, description }),
-      showError: (msg) => setError(msg),
-    };
-
-    presenter.attachView(view);
-    if (storyId && chapterId) {
-      presenter.loadChapterData(storyId, chapterId);
-    }
-
-    return () => presenter.detachView();
-  }, [presenter, storyId, chapterId]);
-
-  useEffect(() => {
-    const title = `${chapter?.title ?? 'Loading...'} - ${storyMeta?.title || 'Light Story'}`;
-    document.title = title;
-
-    const description =
-      storyMeta?.description ||
-      (chapter ? `Read chapter ${chapter.chapter_number} of ${storyMeta?.title || 'this story'}` : 'Read stories on Light Story');
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.setAttribute('name', 'description');
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', description);
-  }, [chapter, storyMeta]);
-
+export const ReaderPage: React.FC<ReaderPageProps> = ({
+  chapter,
+  loading,
+  error,
+  fontSize,
+  theme,
+  onDecrementFontSize,
+  onIncrementFontSize,
+  onThemeChange,
+}) => {
   const getThemeClasses = () => {
     switch (theme) {
       case 'dark':
@@ -77,34 +42,41 @@ export const ReaderPage: React.FC<ReaderPageProps> = ({ storyId, chapterId }) =>
 
   return (
     <div className={`min-h-screen p-8 transition-colors duration-300 ${getThemeClasses()}`}>
-      <div className="max-w-3xl mx-auto">
-        <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">
-          <div className="flex gap-4">
-            <button onClick={() => setFontSize((s) => Math.max(12, s - 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
-              A-
-            </button>
-            <button onClick={() => setFontSize((s) => Math.min(32, s + 2))} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
-              A+
-            </button>
-          </div>
-          <div className="flex gap-2">
-            {['light', 'sepia', 'dark'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setTheme(t)}
-                className={`px-3 py-1 rounded text-xs font-bold uppercase transition-all ${theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'}`}
-              >
-                {t}
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <article>
+          <div className="flex justify-between items-center mb-8 glass-panel p-4 rounded-xl border border-slate-200/50 dark:border-white/10">
+            <div className="flex gap-4">
+              <button onClick={onDecrementFontSize} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
+                A-
               </button>
-            ))}
+              <button onClick={onIncrementFontSize} className="px-3 py-1 rounded bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 font-bold transition-colors">
+                A+
+              </button>
+            </div>
+            <div className="flex gap-2">
+              {['light', 'sepia', 'dark'].map((t) => (
+                <button
+                  key={t}
+                  onClick={() => onThemeChange(t)}
+                  className={`px-3 py-1 rounded text-xs font-bold uppercase transition-all ${theme === t ? 'bg-primary text-white scale-105 shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'}`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-        <AdRenderer position="header" />
-        <h1 className="text-3xl font-bold">{chapter.title}</h1>
-        <div className="mt-4 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
-          {chapter.content}
-        </div>
-        <AdRenderer position="middle" />
+
+          <AdRenderer position="header" />
+          <h1 className="text-3xl font-bold">{chapter.title}</h1>
+          <div className="mt-4 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
+            {chapter.content}
+          </div>
+          <AdRenderer position="middle" />
+        </article>
+
+        <aside className="hidden lg:block">
+          <AdRenderer position="sidebar" />
+        </aside>
       </div>
     </div>
   );
