@@ -24,6 +24,9 @@ jobs:
 
       - name: Build frontend
         run: npm --prefix frontend run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy_key
 
       - name: Run smoke tests (if provided)
         run: |

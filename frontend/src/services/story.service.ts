@@ -1,10 +1,13 @@
-import SupabaseStoryRepository from './repositories/SupabaseStoryRepository';
+import SupabaseStoryRepository from "./repositories/SupabaseStoryRepository";
 
 const repo = new SupabaseStoryRepository();
 
-export async function fetchStories(params?: { page?: number; pageSize?: number; keyword?: string }) {
+export async function fetchStories(params?: {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+}) {
   if (!params) return repo.getStories();
-  // default to page 1 if requesting paged results
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 10;
   return repo.getStoriesPage({ page, pageSize, keyword: params.keyword });
