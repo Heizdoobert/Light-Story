@@ -23,12 +23,14 @@ function emptyDashboardData(): DashboardData {
 
 export async function logDashboardAccess(actorUserId: string) {
   try {
-    if (!supabase) return;
-
-    await supabase.from('admin_audit_logs').insert({
-      actor_user_id: actorUserId,
-      action: 'dashboard_access',
-      metadata: { page: '/admin' },
+    await fetch('/api/internal/admin/audit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        actor_user_id: actorUserId,
+        action: 'dashboard_access',
+        metadata: { page: '/admin' },
+      }),
     });
   } catch (e) {
     // best-effort logging

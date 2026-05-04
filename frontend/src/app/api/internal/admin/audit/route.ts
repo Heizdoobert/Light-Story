@@ -51,10 +51,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { actor_user_id, action, metadata, target_user_id, target_email } = body as any;
+    const { action, metadata, target_user_id, target_email } = body as any;
     const supabase = getServerSupabase();
     if (!supabase) return NextResponse.json({ error: 'server-supabase-missing' }, { status: 500 });
-    const { error } = await supabase.from('admin_audit_logs').insert({ actor_user_id, action, metadata, target_user_id, target_email });
+    const { error } = await supabase.from('admin_audit_logs').insert({
+      actor_user_id: supRequester.id,
+      action,
+      metadata,
+      target_user_id,
+      target_email,
+    });
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err: any) {
