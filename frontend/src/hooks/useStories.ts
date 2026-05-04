@@ -8,9 +8,7 @@ export const useStories = () => {
   const storiesQuery = useQuery({
     queryKey: ['stories'],
     queryFn: async () => {
-      // service handles supabase access
       const res = await storyService.fetchStories();
-      // if using paged result, adapt as needed
       return Array.isArray(res) ? res : res.items;
     },
     staleTime: 1000 * 60 * 5,

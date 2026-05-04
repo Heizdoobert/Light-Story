@@ -1,15 +1,16 @@
-import { Story } from '@/types/entities';
-import { IStoryRepository } from '@/types/repos';
-import { supabase } from '@/lib/supabase/client';
+import { Story } from "@/types/entities";
+import { IStoryRepository } from "@/types/repos";
+import { supabase } from "@/lib/supabase/client";
 
-type StoryStatus = Story['status'];
+type StoryStatus = Story["status"];
 
 type StoryPageParams = {
   page: number;
   pageSize: number;
   keyword?: string;
-  status?: 'all' | StoryStatus;
-  sort?: 'newest' | 'oldest' | 'most_viewed';
+  status?: "all" | StoryStatus;
+  sort?: "newest" | "oldest" | "most_viewed";
+  category?: string;
 };
 
 type StoryPageResult = {
@@ -22,10 +23,12 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (!supabase) return [];
 
     const { data, error } = await supabase
-      .from('stories')
-      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at')
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .from("stories")
+      .select(
+        "id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(15);
 
     if (error) return [];
     return (data ?? []) as Story[];
@@ -35,9 +38,11 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (!supabase) return null;
 
     const { data, error } = await supabase
-      .from('stories')
-      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at')
-      .eq('id', id)
+      .from("stories")
+      .select(
+        "id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at",
+      )
+      .eq("id", id)
       .maybeSingle();
 
     if (error) return null;
@@ -45,15 +50,26 @@ export class SupabaseStoryRepository implements IStoryRepository {
   }
 
   async incrementViews(storyId: string): Promise<void> {
-    await fetch('/api/rpc/increment-story-views', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ storyId }) });
+    await fetch("/api/rpc/increment-story-views", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ storyId }),
+    });
   }
 
   async saveStory(story: Partial<Story>): Promise<Story> {
-    const res = await fetch('/api/internal/admin/manage-story', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ story }) });
-    if (!res.ok) throw new Error('Request failed');
+    const res = await fetch("/api/internal/admin/manage-story", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ story }),
+    });
+    if (!res.ok) throw new Error("Request failed");
     const json = await res.json();
     if (json.error) throw new Error(json.error);
-    if (!json.story) throw new Error('Story was created but the server did not return the record');
+    if (!json.story)
+      throw new Error(
+        "Story was created but the server did not return the record",
+      );
     return json.story as Story;
   }
 
@@ -61,13 +77,16 @@ export class SupabaseStoryRepository implements IStoryRepository {
     if (!supabase) return { items: [], total: 0 };
 
     const page = Math.max(1, params.page ?? 1);
-    const pageSize = Math.min(50, Math.max(1, params.pageSize ?? 10));
+    const pageSize = Math.min(15, Math.max(1, params.pageSize ?? 10));
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
     let query = supabase
-      .from('stories')
-      .select('id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at', { count: 'exact' });
+      .from("stories")
+      .select(
+        "id,title,author,author_id,description,cover_url,category,category_id,status,views,created_at",
+        { count: "exact" },
+      );
 
     if (params.keyword) {
       const escaped = params.keyword.replace(/[%_]/g, (match) => `\\${match}`);
@@ -76,42 +95,67 @@ export class SupabaseStoryRepository implements IStoryRepository {
       );
     }
 
-    if (params.status && params.status !== 'all') {
-      query = query.eq('status', params.status);
+    if (params.status && params.status !== "all") {
+      query = query.eq("status", params.status);
     }
 
-    if (params.sort === 'oldest') query = query.order('created_at', { ascending: true });
-    else if (params.sort === 'most_viewed') query = query.order('views', { ascending: false, nullsFirst: false });
-    else query = query.order('created_at', { ascending: false });
+    if (params.category && params.category !== "all") {
+      query = query.eq("category", params.category);
+    }
+
+    if (params.sort === "oldest")
+      query = query.order("created_at", { ascending: true });
+    else if (params.sort === "most_viewed")
+      query = query.order("views", { ascending: false, nullsFirst: false });
+    else query = query.order("created_at", { ascending: false });
 
     const { data, error, count } = await query.range(from, to);
     if (error) return { items: [], total: 0 };
     return { items: (data ?? []) as Story[], total: count ?? 0 };
   }
 
-  async updateStory(id: string, payload: Pick<Story, 'title' | 'description' | 'status'>): Promise<Story> {
-    const res = await fetch(`/api/internal/admin/manage-story`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id, payload }) });
-    if (!res.ok) throw new Error('Request failed');
+  async updateStory(
+    id: string,
+    payload: Pick<Story, "title" | "description" | "status">,
+  ): Promise<Story> {
+    const res = await fetch(`/api/internal/admin/manage-story`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update", id, payload }),
+    });
+    if (!res.ok) throw new Error("Request failed");
     const json = await res.json();
     if (json.error) throw new Error(json.error);
     return json.story as Story;
   }
 
   async deleteStory(id: string): Promise<void> {
-    const res = await fetch(`/api/internal/admin/manage-story`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id }) });
-    if (!res.ok) throw new Error('Request failed');
+    const res = await fetch(`/api/internal/admin/manage-story`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", id }),
+    });
+    if (!res.ok) throw new Error("Request failed");
   }
 
   async bulkUpdateStatus(ids: string[], status: StoryStatus): Promise<void> {
     if (ids.length === 0) return;
-    const res = await fetch(`/api/internal/admin/manage-story`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bulkUpdateStatus', ids, status }) });
-    if (!res.ok) throw new Error('Request failed');
+    const res = await fetch(`/api/internal/admin/manage-story`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "bulkUpdateStatus", ids, status }),
+    });
+    if (!res.ok) throw new Error("Request failed");
   }
 
   async bulkDeleteStories(ids: string[]): Promise<void> {
     if (ids.length === 0) return;
-    const res = await fetch(`/api/internal/admin/manage-story`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'bulkDelete', ids }) });
-    if (!res.ok) throw new Error('Request failed');
+    const res = await fetch(`/api/internal/admin/manage-story`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "bulkDelete", ids }),
+    });
+    if (!res.ok) throw new Error("Request failed");
   }
 }
 
