@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ChevronLeft, Info } from "lucide-react";

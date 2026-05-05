@@ -22,6 +22,7 @@ export const DASHBOARD_CONFIGURABLE_TABS = [
   'authors',
   'ads',
   'profile',
+  'create_comic',
 ] as const;
 
 export type DashboardTabId = (typeof DASHBOARD_CONFIGURABLE_TABS)[number];
@@ -32,15 +33,15 @@ export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
 
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],
-  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile'],
-  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile', 'create_comic'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile', 'create_comic'],
   user: ['dashboard', 'stories', 'profile'],
 };
 
 export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile'],
-  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile'],
+  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile', 'create_comic'],
+  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
   user: [],
 };
 

@@ -4,7 +4,7 @@
  */
 
 import { Category } from '@/types/entities';
-import { supabase } from '@/infrastructure/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 export class SupabaseTaxonomyRepository {
   async getCategories(): Promise<Category[]> {

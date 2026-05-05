@@ -121,15 +121,19 @@ serve(async (req) => {
       return jsonResponse({ error: "Unable to load user profile" }, 403);
     }
 
-    if (profile?.role !== "superadmin") {
-      return jsonResponse({ error: "Forbidden" }, 403);
-    }
-
     if (action === "create") {
+          if (profile?.role !== "superadmin" && profile?.role !== "admin") {
+            return jsonResponse({ error: "Forbidden" }, 403);
+          }
+
       const email = payload?.email;
       const password = payload?.password;
       const role = payload?.role;
       const fullName = payload?.fullName;
+
+          const creatableRoles = profile?.role === "admin"
+            ? new Set(["user", "employee"])
+            : new Set(["user", "employee", "admin"]);
 
       if (typeof email !== "string" || !email.trim()) {
         return jsonResponse({ error: "email is required" }, 400);
@@ -145,6 +149,10 @@ serve(async (req) => {
 
       if (!isCreatableRole(role)) {
         return jsonResponse({ error: "role is not allowed for creation" }, 400);
+      }
+
+      if (!creatableRoles.has(role)) {
+        return jsonResponse({ error: "role is not allowed for your account type" }, 403);
       }
 
       let created;
@@ -208,6 +216,10 @@ serve(async (req) => {
       }
 
       return jsonResponse({ userId, email: email.trim(), role }, 200);
+    }
+
+    if (profile?.role !== "superadmin") {
+      return jsonResponse({ error: "Forbidden" }, 403);
     }
 
     const userId = payload?.userId;

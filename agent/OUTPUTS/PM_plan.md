@@ -1,64 +1,27 @@
-# PM Plan
+# Project Manager – PM_plan
 
-## Objective
+## Task List
 
-Execute the MAS agent workflow for the command "do agent workflow" and deliver all required artifacts.
+| ID | Description | Priority | Est. Hours | Dependencies |
+| --- | ----------- | -------- | ---------- | ------------ |
+| T1 | Add migration for `comics` and `chapters` tables (including RLS policies) | High | 2 | – |
+| T2 | Update `upload_to_r2` edge function to validate auth token for comic images | Medium | 1 | T1 |
+| T3 | Implement `create_comic` edge function to accept `cover_url` and store in Supabase | High | 2 | T1, T2 |
+| T4 | Implement `add_chapter` edge function that receives an array of image URLs and stores them in a new `chapter_images` table (or JSONB column) | High | 3 | T1, T2 |
+| T5 | Frontend UI – **Create Comic** tab with cover upload flow (R2 upload → `create_comic`) | High | 3 | T2, T3 |
+| T6 | Frontend UI – **Add Chapter** tab with multi‑image upload (R2 → `add_chapter`) | High | 4 | T2, T4, T5 |
+| T7 | Write unit tests for new migrations, edge functions, and UI components | Medium | 3 | T1‑T6 |
+| T8 | Update CI pipeline to run Supabase smoke tests and new unit tests | Low | 1 | T7 |
 
-## Work Breakdown
+## Roadmap (phases)
 
-1. Initialization.
+1. **Database & Security** – T1, T2
+2. **Backend Edge Functions** – T3, T4
+3. **Frontend UI** – T5, T6
+4. **Testing & CI** – T7, T8
 
-2. Analysis.
+## Risk Assessment
 
-3. Planning and design.
-
-4. Development.
-
-5. Verification.
-
-6. Audit.
-
-- Initialization: Update session state with run metadata and confirm `.gitignore` contains `agent/`.
-- Analysis: Capture request intent and formalize FR/NFR and acceptance criteria.
-- Planning and design: Define execution phases and ownership mapping for BA, PM, TechLead, Dev, QA, and Audit.
-- Development: Generate `Code_changes.diff` reflecting actual edits made in this run.
-- Verification: Validate artifacts exist and are coherent, then produce QA pass/fail summary.
-- Audit: Compare outputs across roles and emit a Ready-for-Commit recommendation.
-
-## Timeline (Lightweight)
-
-1. T0-T10m: Initialize + analyze.
-
-1. T10-T20m: Plan + architecture notes.
-
-1. T20-T30m: Update artifacts and verify consistency.
-
-## Risks and Mitigations
-
-- Risk: No explicit feature scope.
-- Mitigation: Treat run as orchestration-only and avoid product code edits.
-
-- Risk: Approval gate ambiguity (PM approval before development).
-- Mitigation: Use user command itself as implicit approval for this run and record assumption.
-
-## Deliverables
-
-1. `agent/SESSION.md`
-
-1. `agent/TASKS.md`
-
-1. `agent/OUTPUTS/BA_analysis.md`
-
-1. `agent/OUTPUTS/PM_plan.md`
-
-1. `agent/OUTPUTS/TechLead_architecture.md`
-
-1. `agent/OUTPUTS/Code_changes.diff`
-
-1. `agent/OUTPUTS/Test_report.md`
-
-1. `agent/OUTPUTS/CrossCheck_report.md`
-
-## Approval Note
-
-This run assumes implicit approval to proceed through all workflow steps because the command requested full execution directly.
+- RLS misconfiguration could block legitimate owners – mitigate by writing explicit tests (T7).
+- R2 upload latency – use async parallel uploads in the UI.
+- Schema changes may affect existing story modules – ensure migrations are additive and run in a maintenance window.

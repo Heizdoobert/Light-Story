@@ -20,6 +20,8 @@ if (Get-Command supabase -ErrorAction SilentlyContinue) {
   supabase functions deploy increment-story-views
   supabase functions deploy manage-story
   supabase functions deploy manage-chapter
+  supabase functions deploy create_comic
+  supabase functions deploy upload_to_r2
   Pop-Location
 } else {
   Write-Output "Supabase CLI not found. Please run the following from backend-supabase:"

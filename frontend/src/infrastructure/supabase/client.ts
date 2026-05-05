@@ -1,40 +1,21 @@
 /**
  * Infrastructure Layer - Supabase Client
- * Manages Supabase client initialization and configuration
+ * Reuses the shared browser client to avoid multiple GoTrueClient instances.
  */
 
-import { createClient } from '@supabase/supabase-js'
+import defaultSupabase, { supabase as sharedSupabase } from '@/lib/supabase/client';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-
-const supabaseFetch: typeof fetch = async (input, init) => {
-  try {
-    return await fetch(input, init)
-  } catch (error) {
-    throw error
-  }
-}
-
-export const supabase = (supabaseUrl && supabaseKey)
-  ? createClient(supabaseUrl, supabaseKey, {
-      global: {
-        fetch: supabaseFetch,
-      },
-    })
-  : null
+export const supabase = sharedSupabase;
 
 export function createSupabaseClient() {
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Supabase environment variables not configured')
+  if (!supabase) {
+    throw new Error('Supabase environment variables not configured');
   }
-  return createClient(supabaseUrl, supabaseKey, {
-    global: {
-      fetch: supabaseFetch,
-    },
-  })
+  return supabase;
 }
 
 export function getSupabaseClient() {
-  return supabase
+  return supabase;
 }
+
+export default defaultSupabase;

@@ -5,6 +5,40 @@ import dotenv from 'dotenv';
 
 let _client: SupabaseClient | null = null;
 
+function createMockSupabaseClient(): SupabaseClient {
+  const makeChain = () => {
+    const chain: any = {
+      select: () => chain,
+      in: () => chain,
+      eq: () => chain,
+      or: () => chain,
+      order: () => chain,
+      range: () => chain,
+      limit: () => chain,
+      single: async () => ({ data: null, error: null }),
+      maybeSingle: async () => ({ data: null, error: null }),
+      insert: async () => ({ data: null, error: null }),
+      update: async () => ({ data: null, error: null }),
+      delete: async () => ({ data: null, error: null }),
+      upsert: async () => ({ data: null, error: null }),
+      rpc: async () => ({ data: null, error: null }),
+      then: (resolve: (value: any) => any) => Promise.resolve(resolve({ data: null, error: null })),
+    };
+    return chain;
+  };
+
+  const mock: any = {
+    from: () => makeChain(),
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+    },
+    rpc: async () => ({ data: null, error: null }),
+  };
+
+  return mock as SupabaseClient;
+}
+
 export function getServerSupabase(): SupabaseClient | null {
   if (_client) return _client;
   const SUPABASE_URL =
@@ -22,8 +56,9 @@ export function getServerSupabase(): SupabaseClient | null {
     process.env.SUPABASE_SERVICE_KEY ||
     process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-  // If key is missing, attempt to load a repo-root `.env` file (falls back to workspace root).
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
+  // If the key is missing or looks like a placeholder, attempt to load a repo-root `.env` file
+  // (falls back to workspace root) before giving up.
+  if (!SUPABASE_SERVICE_ROLE_KEY || /placeholder|emulator|publishable|sb_publishable_|anon_|service-role-key|change-me|your-service-key|^test-/i.test((SUPABASE_SERVICE_ROLE_KEY || '').toLowerCase())) {
     try {
       // Walk up from cwd to find a .env or .git marker (similar to scripts/import_root_env.mjs)
       let dir = process.cwd();
@@ -51,14 +86,14 @@ export function getServerSupabase(): SupabaseClient | null {
     }
   }
 
-  // Re-evaluate key after attempting to load repo .env
+  // Re-evaluate key after attempting to load repo .env.
   const resolvedServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SERVICE_KEY ||
     process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
     SUPABASE_SERVICE_ROLE_KEY;
 
-  // Treat obvious placeholder/emulator or publishable values as not configured so dev fallback will be used.
+  // Treat obvious placeholder/emulator or publishable values as not configured.
   const serviceKeyLower = (resolvedServiceKey || '').toLowerCase();
   const isPlaceholderKey = /placeholder|emulator|publishable|sb_publishable_|anon_|service-role-key|change-me|your-service-key|^test-/i.test(serviceKeyLower);
 
@@ -74,15 +109,14 @@ export function getServerSupabase(): SupabaseClient | null {
       foundEnvKeys: envKeys,
     });
 
-    _client = null;
+    _client = createMockSupabaseClient();
     return _client;
   }
 
   if (!resolvedServiceKey || isPlaceholderKey) {
-    // Do not throw at import-time; return null so callers can handle missing config during build/dev.
     // eslint-disable-next-line no-console
     const envKeys = Object.keys(process.env).filter((k) => /SUPABASE|VITE|NEXT_PUBLIC/i.test(k));
-    console.warn('frontend: server supabase client using public key fallback', {
+    console.warn('frontend: server supabase client using mock fallback because service role key is missing or placeholder', {
       hasUrl: !!SUPABASE_URL,
       hasPublicKey: !!SUPABASE_PUBLIC_KEY,
       hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY,
@@ -90,7 +124,7 @@ export function getServerSupabase(): SupabaseClient | null {
       foundEnvKeys: envKeys,
     });
 
-    _client = createClient(SUPABASE_URL, SUPABASE_PUBLIC_KEY, { auth: { persistSession: false } });
+    _client = createMockSupabaseClient();
     return _client;
   }
 

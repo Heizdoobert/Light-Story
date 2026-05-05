@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react"; 
@@ -27,9 +29,13 @@ function isStaffRole(role: string | null | undefined): boolean {
   return STAFF_ROLES.has(role ?? "");
 }
 
-export const HomePage: React.FC = () => {
+type HomePageProps = {
+  initialStories?: Story[];
+};
+
+export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
+  const [stories, setStories] = useState<Story[]>(initialStories);
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
@@ -37,9 +43,9 @@ export const HomePage: React.FC = () => {
   const [showFilter, setShowFilter] = useState(false);
 
   const [trendingStories, setTrendingStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(initialStories.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { user, profile, signIn, signOut, role } = useAuth();
+  const { user, profile, signOut, role } = useAuth();
 
   const [filterParams, setFilterParams] = useState({
     keyword: "",

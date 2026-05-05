@@ -7,13 +7,17 @@ create table if not exists public.story_views (
   id uuid primary key default gen_random_uuid(),
   story_id uuid not null references public.stories(id) on delete cascade,
   viewed_by uuid not null references public.profiles(id) on delete cascade,
-  viewed_at timestamp default now() not null,
-  
-  -- Prevent same user viewing same story multiple times (in 1 hour window)
-  unique(story_id, viewed_by, date_trunc('hour', viewed_at))
+  viewed_at timestamp default now() not null
 );
 
-enable row level security on public.story_views;
+-- Enforce uniqueness per-story/per-user per hour via a unique expression index
+create unique index if not exists idx_story_views_unique_hour on public.story_views (
+  story_id,
+  viewed_by,
+  (date_trunc('hour', viewed_at))
+);
+
+alter table public.story_views enable row level security;
 
 -- Users can view their own view records
 create policy "story_views_self_read"

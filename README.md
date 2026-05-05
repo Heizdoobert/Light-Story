@@ -54,6 +54,29 @@ Use `NEXT_PUBLIC_*` keys for frontend runtime configuration.
 - Menu visibility controls for role-based sidebar configuration.
 - System settings backup and restore for the settings surface managed in the UI.
 
+### Comic Management (New)
+
+Comic management system with multi-chapter support and Cloudflare R2 image storage:
+
+**Features:**
+- Create comics with metadata and cover image upload to R2
+- Add chapters with ordered multi-image uploads (1→2→...→end)
+- Row-level security enforcing owner-only CRUD operations
+- Numeric image ordering UI with move/remove controls
+- Dashboard integration with role-based access
+
+**Backend:**
+- Tables: `comics` (id, owner_id, title, description, cover_url), `chapters` (id, comic_id, chapter_number, title, content), `chapter_images` (id, chapter_id, image_url)
+- RLS policies: owners can only create/modify their own comics and chapters
+- Edge functions:
+  - `create_comic` — validates bearer token, inserts comic with owner_id set from JWT
+  - `upload_to_r2` — handles multi-file uploads to Cloudflare R2, returns public URLs
+
+**Frontend:**
+- Pages: `frontend/src/app/comics/create/page.tsx`, `frontend/src/app/comics/[comicId]/add-chapter/page.tsx`
+- Dashboard tabs: accessible from admin menu when user has creator role
+- Tailwind-styled responsive UI with file preview and drag-reorder support
+
 ### Architecture: MVP / Clean Separation
 
 Following **zero-leakage principle**, direct Supabase client calls (`supabase.from()`, `.rpc()`) are strictly prohibited in UI components and client services. Instead:
@@ -110,22 +133,24 @@ Suggested verification scope:
 - `backend-supabase/supabase/tests/rls_smoke.sql`
 - `backend-supabase/supabase/tests/rpc_smoke.sql`
 
-
 ## Security & Performance Updates (April 2026)
 
 Recent comprehensive audit identified and resolved 10 critical security, performance, and reliability issues:
 
 ### Database & Security (3 items)
+
 1. **RLS Policy Hardening** - Fixed critical "select true" leak on site_settings that exposed ad keys and sensitive config to unauthenticated users. Now requires authentication with restricted "public_*" key access.
 2. **View Count Race Condition** - Replaced simple UPDATE with idempotent RPC using story_views tracking table, preventing duplicate increments under high concurrency.
 3. **Profile Role Escalation Prevention** - Verified and maintained trigger-based protection preventing unauthorized role changes; only superadmin can modify user roles.
 
 ### Frontend Performance (3 items)
+
 4. **Ad Injection Optimization** - Deferred ad script injection using requestIdleCallback (fallback setTimeout) to prevent main thread blocking and improve Lighthouse scores.
 5. **Bundle Size Reduction** - Implemented dynamic imports for admin dashboard; non-admin users no longer download admin code (~13KB saved).
 6. **Dark Mode FOUC Prevention** - Applied blocking script pattern + useLayoutEffect to eliminate white flash on load by applying theme before React hydrates.
 
 ### Error Handling & UX (4 items)
+
 7. **Global Error Handling** - Added useGlobalErrorHandler hook and GlobalErrorHandler component to catch unhandled promise rejections and surface Supabase errors via toast UI.
 8. **Chapter Draft Auto-Save** - Implemented useAutoSave hook with 3-second debounced localStorage backup; unsaved work persists across session expiry and tab crashes.
 9. **Client-Side RBAC Audit** - Created RLS audit migration verifying all admin tables enforce role-based access; client-side protections are supplementary only.

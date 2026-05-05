@@ -46,15 +46,27 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const supRequester = await getRequester(request);
-  if (!supRequester.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-
   try {
     const body = await request.json();
-    const { actor_user_id, action, metadata, target_user_id, target_email } = body as any;
+    const { action, metadata, target_user_id, target_email } = body as any;
+    const supRequester = await getRequester(request);
+
+    // Dashboard access logging is best-effort and should not fail the request with auth noise.
+    if (!supRequester.ok && action === 'dashboard_access') {
+      return NextResponse.json({ ok: false, skipped: 'unauthorized-dashboard-access' });
+    }
+
+    if (!supRequester.ok) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+
     const supabase = getServerSupabase();
     if (!supabase) return NextResponse.json({ error: 'server-supabase-missing' }, { status: 500 });
-    const { error } = await supabase.from('admin_audit_logs').insert({ actor_user_id, action, metadata, target_user_id, target_email });
+    const { error } = await supabase.from('admin_audit_logs').insert({
+      actor_user_id: supRequester.id,
+      action,
+      metadata,
+      target_user_id,
+      target_email,
+    });
     if (error) throw error;
     return NextResponse.json({ ok: true });
   } catch (err: any) {

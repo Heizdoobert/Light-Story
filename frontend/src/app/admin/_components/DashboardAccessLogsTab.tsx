@@ -35,9 +35,10 @@ export const DashboardAccessLogsTab: React.FC = () => {
   });
 
   useEffect(() => {
-    if (!supabase) return;
+    const client = supabase;
+    if (!client) return;
 
-    const channel = supabase
+    const channel = client
       .channel('dashboard-access-logs-live')
       .on(
         'postgres_changes',
@@ -54,7 +55,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
       .subscribe();
 
     return () => {
-      void supabase.removeChannel(channel);
+      void client.removeChannel(channel);
     };
   }, [logsQuery.refetch]);
 

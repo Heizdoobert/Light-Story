@@ -18,6 +18,7 @@ agent/
 *.agents/
 *.agent.md
 *.agent.original.md
+!.github/agents/*.agent.md
 
 # Frontend generated artifacts
 frontend/.next/
