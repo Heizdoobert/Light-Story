@@ -75,7 +75,7 @@ export default function AddChapter({ params }: { params: { comicId: string } }) 
     const { urls } = await uploadRes.json();
 
     // insert chapter record; use chapter_number column
-    const { data, error } = await supabase.from("chapters").insert({
+    const { error } = await supabase.from("chapters").insert({
       comic_id: comicId,
       title,
       chapter_number: chapterNumber,

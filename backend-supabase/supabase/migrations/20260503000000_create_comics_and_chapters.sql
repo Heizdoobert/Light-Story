@@ -1,7 +1,7 @@
 -- Migration: create comics and chapters tables
 -- Generated for Comic Management module
 
-create table public.comics (
+create table if not exists public.comics (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   description text,
@@ -10,7 +10,7 @@ create table public.comics (
   updated_at timestamp with time zone default now()
 );
 
-create table public.chapters (
+create table if not exists public.chapters (
   id uuid primary key default gen_random_uuid(),
   comic_id uuid references public.comics(id) on delete cascade,
   title text not null,
