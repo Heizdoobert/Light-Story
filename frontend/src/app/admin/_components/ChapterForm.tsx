@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from '@/modules/auth/AuthContext';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { Chapter, Story } from '@/types/entities';
@@ -14,8 +16,7 @@ import { useChapterFormPresenter } from '@/hooks/useChapterFormPresenter';
 
 export const ChapterForm: React.FC = () => {
   const { role } = useAuth();
-  const canManageChapters = role === 'superadmin' || role === 'admin';
-  const [stories, setStories] = useState<Story[]>([]);
+  const canManageChapters = role === 'superadmin' || role === 'admin' || role === 'employee';
   const [formData, setFormData] = useState<Partial<Chapter>>({
     story_id: "",
     chapter_number: 1,
@@ -23,6 +24,7 @@ export const ChapterForm: React.FC = () => {
     content: "",
   });
   const [isRestoring, setIsRestoring] = useState(true);
+  const hasInitializedRef = useRef(false);
 
   // Auto-save form data to prevent data loss
   const { restore: restoreAutoSave, clear: clearAutoSave } = useAutoSave(
@@ -32,23 +34,25 @@ export const ChapterForm: React.FC = () => {
   );
 
   const { storiesQuery, saveChapterMutation } = useChapterFormPresenter();
+  const stories: Story[] = storiesQuery.data ?? [];
 
   useEffect(() => {
-    const storiesData = storiesQuery.data ?? [];
-    if (storiesQuery.isLoading) return;
+    if (storiesQuery.isLoading || hasInitializedRef.current) return;
 
-    setStories(storiesData);
-    if (storiesData.length > 0) {
+    if (stories.length > 0) {
       const restored = restoreAutoSave();
       if (restored && restored.story_id) {
-        setFormData(restored);
+        setFormData((prev) => ({ ...prev, ...restored }));
       } else {
-        setFormData((prev) => ({ ...prev, story_id: storiesData[0].id }));
+        setFormData((prev) =>
+          prev.story_id ? prev : { ...prev, story_id: stories[0].id },
+        );
       }
     }
 
+    hasInitializedRef.current = true;
     setIsRestoring(false);
-  }, [storiesQuery.data, storiesQuery.isLoading, restoreAutoSave]);
+  }, [stories, storiesQuery.isLoading, restoreAutoSave]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

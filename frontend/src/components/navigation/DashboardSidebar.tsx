@@ -16,7 +16,7 @@ const menuItems: SidebarItem[] = [
     icon: "📊",
     roles: ["superadmin", "admin", "employee"],
   },
-  { id: "users", label: "User Management", icon: "👥", roles: ["superadmin"] },
+  { id: "users", label: "User Management", icon: "👥", roles: ["superadmin", "admin"] },
   {
     id: "stories",
     label: "Story Management",

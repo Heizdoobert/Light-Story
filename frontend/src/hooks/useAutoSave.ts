@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 /**
@@ -59,7 +59,7 @@ export const useAutoSave = <T extends Record<string, any>>(
   /**
    * Restore data from localStorage if it exists.
    */
-  const restore = (): T | null => {
+  const restore = useCallback((): T | null => {
     try {
       const storageKey = `autosave_${key}`;
       const saved = localStorage.getItem(storageKey);
@@ -80,19 +80,19 @@ export const useAutoSave = <T extends Record<string, any>>(
       console.warn('Failed to restore auto-saved data:', error);
     }
     return null;
-  };
+  }, [key]);
 
   /**
    * Clear auto-saved data (call after successful save).
    */
-  const clear = () => {
+  const clear = useCallback(() => {
     try {
       const storageKey = `autosave_${key}`;
       localStorage.removeItem(storageKey);
     } catch (error) {
       console.warn('Failed to clear auto-save:', error);
     }
-  };
+  }, [key]);
 
   return {
     lastSavedTime,

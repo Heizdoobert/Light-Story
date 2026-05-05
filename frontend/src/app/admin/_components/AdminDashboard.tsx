@@ -157,8 +157,13 @@ const AdminDashboardContent: React.FC<{
         return withSuspense(<AuthorManagementTab />);
       case "settings":
         return withSuspense(<SystemSettingsTab />);
+      case "create_comic":
+        // Lazy‑load the comic creation page component
+        // The page component is exported as default from src/app/comics/create/page.tsx
+        const CreateComicPage = React.lazy(() => import('@/app/comics/create/page'));
+        return withSuspense(<CreateComicPage />);
       case "users":
-        return role === "superadmin" ? withSuspense(<AdminUserManagement />) : null;
+        return role === "superadmin" || role === "admin" ? withSuspense(<AdminUserManagement />) : null;
       case "audit_logs":
         return role === "superadmin" ? withSuspense(<AdminAuditLogsTab />) : null;
       case "dashboard_access_logs":

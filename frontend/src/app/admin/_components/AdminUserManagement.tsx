@@ -12,7 +12,12 @@ interface Profile {
 }
 
 const ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin', 'superadmin'];
-const CREATE_ROLE_OPTIONS: UserRole[] = ['user', 'employee', 'admin'];
+
+const getCreateRoleOptions = (actorRole: UserRole | null): UserRole[] => {
+  if (actorRole === 'superadmin') return ['user', 'employee', 'admin'];
+  if (actorRole === 'admin') return ['user', 'employee'];
+  return ['user'];
+};
 
 const canManageTargetRole = (actorRole: UserRole | null): boolean => {
   if (actorRole === 'superadmin') return true;
@@ -35,7 +40,10 @@ export const AdminUserManagement: React.FC = () => {
   const [newUserRole, setNewUserRole] = useState<UserRole>('user');
   const [creatingUser, setCreatingUser] = useState(false);
   const { user: currentUser, role: currentRole, loading: authLoading } = useAuth();
-  const canAccessUserManagement = currentRole === 'superadmin';
+  const canAccessUserManagement = currentRole === 'superadmin' || currentRole === 'admin';
+  const canCreateUsers = currentRole === 'superadmin' || currentRole === 'admin';
+  const canManageExistingUsers = currentRole === 'superadmin';
+  const createRoleOptions = getCreateRoleOptions(currentRole);
 
   const { profilesQuery, roleMutation, nameMutation, deleteMutation, createMutation } = useAdminUserPresenter(canAccessUserManagement);
 
@@ -50,7 +58,7 @@ export const AdminUserManagement: React.FC = () => {
       return;
     }
 
-    if (!canManageTargetRole(currentRole)) {
+    if (!canManageExistingUsers || !canManageTargetRole(currentRole)) {
       toast.error('You do not have permission to modify this user.');
       return;
     }
@@ -80,7 +88,7 @@ export const AdminUserManagement: React.FC = () => {
   };
 
   const handleNameSave = async (targetUser: Profile) => {
-    if (currentRole !== 'superadmin') {
+    if (!canManageExistingUsers) {
       toast.error('Only superadmin can update user profiles.');
       return;
     }
@@ -99,7 +107,7 @@ export const AdminUserManagement: React.FC = () => {
   };
 
   const handleDeleteUser = async (targetUser: Profile) => {
-    if (currentRole !== 'superadmin') {
+    if (!canManageExistingUsers) {
       toast.error('Only superadmin can delete users.');
       return;
     }
@@ -126,8 +134,8 @@ export const AdminUserManagement: React.FC = () => {
   };
 
   const handleCreateUser = async () => {
-    if (currentRole !== 'superadmin') {
-      toast.error('Only superadmin can create users.');
+    if (!canCreateUsers) {
+      toast.error('Only superadmin and admin can create users.');
       return;
     }
 
@@ -135,6 +143,11 @@ export const AdminUserManagement: React.FC = () => {
     const password = newUserPassword.trim();
     if (!email || !password) {
       toast.error('Email and password are required.');
+      return;
+    }
+
+    if (!createRoleOptions.includes(newUserRole)) {
+      toast.error('You do not have permission to assign that role.');
       return;
     }
 
@@ -164,7 +177,7 @@ export const AdminUserManagement: React.FC = () => {
       <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
         <h1 className="text-xl font-black">Access restricted</h1>
         <p className="mt-2 text-sm font-medium">
-          User management is available to superadmin accounts only.
+          User management is available to superadmin and admin accounts.
         </p>
       </div>
     );
@@ -174,8 +187,18 @@ export const AdminUserManagement: React.FC = () => {
     <div className="space-y-6">
       <header>
         <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">User Management</h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Manage user profiles and roles (superadmin only).</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">
+          Admins can create employee and user accounts. Superadmins can also manage roles and deletions.
+        </p>
       </header>
+
+      {currentRole === 'admin' && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+          <p className="text-sm font-medium">
+            Admin accounts can create new <strong>user</strong> and <strong>employee</strong> accounts only. Role edits and deletions remain superadmin-only.
+          </p>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-6 space-y-4">
         <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Create User</h2>
@@ -204,9 +227,10 @@ export const AdminUserManagement: React.FC = () => {
           <select
             value={newUserRole}
             onChange={(e) => setNewUserRole(e.target.value as UserRole)}
+            disabled={!canCreateUsers}
             className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm font-bold"
           >
-            {CREATE_ROLE_OPTIONS.map((roleOption) => (
+            {createRoleOptions.map((roleOption) => (
               <option key={roleOption} value={roleOption}>
                 {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
               </option>
@@ -216,7 +240,7 @@ export const AdminUserManagement: React.FC = () => {
         <button
           type="button"
           onClick={handleCreateUser}
-          disabled={currentRole !== 'superadmin' || creatingUser || !newUserEmail.trim() || !newUserPassword.trim()}
+          disabled={!canCreateUsers || creatingUser || !newUserEmail.trim() || !newUserPassword.trim()}
           className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-2.5 text-sm font-bold disabled:opacity-50"
         >
           {creatingUser ? 'Creating...' : 'Create User'}
@@ -248,7 +272,7 @@ export const AdminUserManagement: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => handleNameSave(user)}
-                          disabled={savingNameId === user.id || currentRole !== 'superadmin'}
+                          disabled={savingNameId === user.id || !canManageExistingUsers}
                           className="rounded-lg bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-3 py-1 text-xs font-bold disabled:opacity-50"
                         >
                           Save
@@ -287,7 +311,7 @@ export const AdminUserManagement: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => startNameEdit(user)}
-                      disabled={currentRole !== 'superadmin' || editingNameUserId === user.id}
+                      disabled={!canManageExistingUsers || editingNameUserId === user.id}
                       className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-50"
                     >
                       Edit
@@ -296,7 +320,7 @@ export const AdminUserManagement: React.FC = () => {
                       type="button"
                       onClick={() => handleDeleteUser(user)}
                       disabled={
-                        currentRole !== 'superadmin' ||
+                        !canManageExistingUsers ||
                         user.id === currentUser?.id ||
                         deletingUserId === user.id
                       }
@@ -310,6 +334,7 @@ export const AdminUserManagement: React.FC = () => {
                       onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
                       disabled={
                         user.id === currentUser?.id ||
+                        !canManageExistingUsers ||
                         !canManageTargetRole(currentRole)
                       }
                     >

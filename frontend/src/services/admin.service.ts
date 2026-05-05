@@ -22,16 +22,27 @@ function emptyDashboardData(): DashboardData {
 }
 
 export async function logDashboardAccess(actorUserId: string) {
+  if (!supabase || !actorUserId) return;
+
   try {
-    await fetch('/api/internal/admin/audit', {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session?.access_token) return;
+
+    const response = await fetch('/api/internal/admin/audit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({
         actor_user_id: actorUserId,
         action: 'dashboard_access',
         metadata: { page: '/admin' },
       }),
     });
+
+    if (response.status === 401 || response.status === 403) return;
   } catch (e) {
     // best-effort logging
   }
@@ -165,16 +176,58 @@ export async function updateProfileName(id: string, full_name: string | null) {
 }
 
 export async function callManageUserFunction(body: Record<string, unknown>) {
-  // Use internal server route which will perform server-side auth & role checks
+  // Use the internal server route first; fall back to the Supabase Edge Function when local
+  // service-role configuration is missing or a mock server client is returned.
+  let accessToken: string | null = null;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  try {
+    if (supabase) {
+      const sessionResult = await supabase.auth.getSession();
+      accessToken = sessionResult.data.session?.access_token ?? null;
+    }
+  } catch {
+    accessToken = null;
+  }
+
   const response = await fetch('/api/internal/admin/manage-user', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
 
   const json = await response.json().catch(() => ({ raw: '' }));
   if (!response.ok) {
-    return { data: json, error: new Error(json?.error ?? `Request failed ${response.status}`) };
+    const errorMessage = json?.error ?? `Request failed ${response.status}`;
+    const shouldFallbackToEdgeFunction =
+      response.status >= 500 &&
+      /server supabase unavailable|createUser failed|createUser exception|Internal error|Cannot read properties of undefined/i.test(errorMessage);
+
+    if (shouldFallbackToEdgeFunction && supabaseUrl && supabaseKey && accessToken) {
+      const edgeResponse = await fetch(`${supabaseUrl}/functions/v1/manage-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: supabaseKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const edgeJson = await edgeResponse.json().catch(() => ({ raw: '' }));
+      if (!edgeResponse.ok) {
+        return { data: edgeJson, error: new Error(edgeJson?.error ?? `Request failed ${edgeResponse.status}`) };
+      }
+
+      return { data: edgeJson, error: null };
+    }
+
+    return { data: json, error: new Error(errorMessage) };
   }
   return { data: json, error: null };
 }

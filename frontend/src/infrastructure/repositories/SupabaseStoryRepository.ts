@@ -5,7 +5,7 @@
 
 import { Story } from '@/types/entities';
 import { IStoryRepository } from '@/domain/interfaces';
-import { supabase } from '@/infrastructure/supabase';
+import { supabase } from '@/lib/supabase/client';
 
 type StoryStatus = Story['status'];
 

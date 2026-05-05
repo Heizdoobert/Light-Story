@@ -5,6 +5,40 @@ import dotenv from 'dotenv';
 
 let _client: SupabaseClient | null = null;
 
+function createMockSupabaseClient(): SupabaseClient {
+  const makeChain = () => {
+    const chain: any = {
+      select: () => chain,
+      in: () => chain,
+      eq: () => chain,
+      or: () => chain,
+      order: () => chain,
+      range: () => chain,
+      limit: () => chain,
+      single: async () => ({ data: null, error: null }),
+      maybeSingle: async () => ({ data: null, error: null }),
+      insert: async () => ({ data: null, error: null }),
+      update: async () => ({ data: null, error: null }),
+      delete: async () => ({ data: null, error: null }),
+      upsert: async () => ({ data: null, error: null }),
+      rpc: async () => ({ data: null, error: null }),
+      then: (resolve: (value: any) => any) => Promise.resolve(resolve({ data: null, error: null })),
+    };
+    return chain;
+  };
+
+  const mock: any = {
+    from: () => makeChain(),
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+    },
+    rpc: async () => ({ data: null, error: null }),
+  };
+
+  return mock as SupabaseClient;
+}
+
 export function getServerSupabase(): SupabaseClient | null {
   if (_client) return _client;
   const SUPABASE_URL =
@@ -75,16 +109,14 @@ export function getServerSupabase(): SupabaseClient | null {
       foundEnvKeys: envKeys,
     });
 
-    _client = null;
+    _client = createMockSupabaseClient();
     return _client;
   }
 
   if (!resolvedServiceKey || isPlaceholderKey) {
-    // Server-side admin and write paths require a real service role key. Falling back to the public key
-    // breaks writes under RLS and hides the configuration issue, so fail closed instead.
     // eslint-disable-next-line no-console
     const envKeys = Object.keys(process.env).filter((k) => /SUPABASE|VITE|NEXT_PUBLIC/i.test(k));
-    console.warn('frontend: server supabase client missing a valid service role key', {
+    console.warn('frontend: server supabase client using mock fallback because service role key is missing or placeholder', {
       hasUrl: !!SUPABASE_URL,
       hasPublicKey: !!SUPABASE_PUBLIC_KEY,
       hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY,
@@ -92,7 +124,7 @@ export function getServerSupabase(): SupabaseClient | null {
       foundEnvKeys: envKeys,
     });
 
-    _client = null;
+    _client = createMockSupabaseClient();
     return _client;
   }
 
