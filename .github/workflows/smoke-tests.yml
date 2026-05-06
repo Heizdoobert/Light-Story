@@ -1,0 +1,57 @@
+name: Smoke tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke-tests:
+    runs-on: ubuntu-latest
+    env:
+      BACKEND_URL: http://localhost:8787
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (backend-d1-saas)
+        run: |
+          npm --prefix backend-d1-saas ci
+
+      - name: Install dependencies (frontend)
+        run: |
+          npm --prefix frontend ci
+
+      - name: Download Supabase CLI
+        run: |
+          REL_JSON=$(curl -s https://api.github.com/repos/supabase/cli/releases/latest)
+          URL=$(echo "$REL_JSON" | jq -r '.assets[] | select(.name | test("linux.*amd64")) | .browser_download_url' | head -n1)
+          echo "Found supabase URL: $URL"
+          curl -L "$URL" -o supabase.tar.gz
+          mkdir supabase-cli && tar -xzf supabase.tar.gz -C supabase-cli --strip-components=1
+          ls -la supabase-cli
+          sudo mv supabase-cli/supabase /usr/local/bin/supabase
+
+      - name: Supabase CLI version
+        run: supabase --version
+
+      - name: Start Supabase emulator
+        run: |
+          cd backend-supabase
+          supabase start &
+          sleep 10
+
+      - name: Start frontend (dev)
+        run: |
+          npm --prefix frontend run dev &
+          sleep 5
+
+      - name: Run smoke tests
+        env:
+          ADMIN_KEY: ${{ secrets.SAAS_ADMIN_KEY }}
+          BACKEND_URL: http://localhost:8787
+        run: |
+          npm --prefix backend-d1-saas run test:smoke
