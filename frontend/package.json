@@ -54,7 +54,7 @@
     "eslint": "10.3.0",
     "eslint-config-next": "16.2.4",
     "happy-dom": "^20.9.0",
-    "supabase": "^2.95.6",
+    "supabase": "^2.98.2",
     "tailwindcss": "^4.2.3",
     "tsx": "^4.21.0",
     "typescript": "~6.0.3",
