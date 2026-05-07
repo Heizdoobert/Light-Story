@@ -10,8 +10,9 @@ async function readJsonBody<T>(request: Request): Promise<T> {
 
 export async function POST(request: Request, context: { params: Promise<{ comicId: string }> }) {
   const backendUrl = process.env.BACKEND_D1_SAAS_URL;
+  const allowDevFallback = process.env.ENABLE_LOCAL_DEV_FALLBACK === "true";
   const isBackendConfigured = Boolean(backendUrl);
-  if (!isBackendConfigured && process.env.NODE_ENV === "production") {
+  if (!isBackendConfigured && (process.env.NODE_ENV === "production" || !allowDevFallback)) {
     return NextResponse.json({ error: "D1 SaaS backend is not configured" }, { status: 500 });
   }
 

@@ -20,12 +20,13 @@ async function readJsonBody<T>(request: Request): Promise<T> {
 export async function POST(request: Request) {
   const backendUrl = process.env.BACKEND_D1_SAAS_URL;
   const backendAdminKey = process.env.BACKEND_D1_SAAS_ADMIN_KEY;
+  const allowDevFallback = process.env.ENABLE_LOCAL_DEV_FALLBACK === "true";
 
   // If the D1 SaaS control plane isn't configured, provide a local dev fallback
   // so the admin UI remains usable during local development. In production
   // we must fail fast with an error to avoid accidental drift.
   const isBackendConfigured = Boolean(backendUrl && backendAdminKey);
-  if (!isBackendConfigured && process.env.NODE_ENV === "production") {
+  if (!isBackendConfigured && (process.env.NODE_ENV === "production" || !allowDevFallback)) {
     return NextResponse.json({ error: "D1 SaaS backend is not configured" }, { status: 500 });
   }
 

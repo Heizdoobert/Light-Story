@@ -50,10 +50,11 @@ type ChapterCreateResponse = {
 };
 
 async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]> {
-  // If bucket is not configured, allow a developer-friendly fallback in
-  // non-production so local development and UI testing work without R2.
+  const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === "true";
+
+  // If bucket is not configured, only allow local mock URLs when explicitly enabled.
   if (!bucket) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production" || !allowDevFallback) {
       throw new Error("R2 bucket is not configured");
     }
 
