@@ -21,7 +21,11 @@ export async function POST(request: Request) {
   const backendUrl = process.env.BACKEND_D1_SAAS_URL;
   const backendAdminKey = process.env.BACKEND_D1_SAAS_ADMIN_KEY;
 
-  if (!backendUrl || !backendAdminKey) {
+  // If the D1 SaaS control plane isn't configured, provide a local dev fallback
+  // so the admin UI remains usable during local development. In production
+  // we must fail fast with an error to avoid accidental drift.
+  const isBackendConfigured = Boolean(backendUrl && backendAdminKey);
+  if (!isBackendConfigured && process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "D1 SaaS backend is not configured" }, { status: 500 });
   }
 
@@ -51,69 +55,84 @@ export async function POST(request: Request) {
       ? body.category.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
       : [];
 
-    const tenantResponse = await fetch(`${backendUrl}/tenants`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Admin-Key": backendAdminKey,
-      },
-      body: JSON.stringify({ name: title }),
-    });
+    let tenantId: string;
+    let tenantKey: string;
+    let storyData: any;
 
-    const tenantData = (await tenantResponse.json()) as {
-      tenant?: { id: string; name: string };
-      tenantKey?: string;
-      error?: string;
-    };
+    if (isBackendConfigured) {
+      const tenantResponse = await fetch(`${backendUrl}/tenants`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Key": String(backendAdminKey),
+        },
+        body: JSON.stringify({ name: title }),
+      });
 
-    if (!tenantResponse.ok || tenantData.error || !tenantData.tenant || !tenantData.tenantKey) {
-      return NextResponse.json(
-        { error: tenantData.error || `HTTP ${tenantResponse.status}` },
-        { status: tenantResponse.status },
-      );
-    }
-
-    const tenantId = tenantData.tenant.id;
-    const tenantKey = tenantData.tenantKey;
-    const storyResponse = await fetch(`${backendUrl}/tenants/${tenantId}/stories`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Tenant-Key": tenantKey,
-      },
-      body: JSON.stringify({
-        title,
-        slug,
-        description,
-        cover_url: coverUrl,
-        status,
-        author,
-        category: JSON.stringify(categoryArray),
-      }),
-    });
-
-    const storyData = (await storyResponse.json()) as {
-      story?: {
-        id: string;
-        title: string;
-        slug?: string;
-        description?: string | null;
-        cover_url?: string | null;
-        author?: string | null;
-        status?: string | null;
-        category?: string | null;
-        view_count?: number;
-        created_at?: string;
-        updated_at?: string;
+      const tenantRespData = (await tenantResponse.json()) as {
+        tenant?: { id: string; name: string };
+        tenantKey?: string;
+        error?: string;
       };
-      error?: string;
-    };
 
-    if (!storyResponse.ok || storyData.error || !storyData.story) {
-      return NextResponse.json(
-        { error: storyData.error || `HTTP ${storyResponse.status}` },
-        { status: storyResponse.status },
-      );
+      if (!tenantResponse.ok || tenantRespData.error || !tenantRespData.tenant || !tenantRespData.tenantKey) {
+        return NextResponse.json(
+          { error: tenantRespData.error || `HTTP ${tenantResponse.status}` },
+          { status: tenantResponse.status },
+        );
+      }
+
+      tenantId = tenantRespData.tenant.id;
+      tenantKey = tenantRespData.tenantKey;
+
+      const storyResponse = await fetch(`${backendUrl}/tenants/${tenantId}/stories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Tenant-Key": String(tenantKey),
+        },
+        body: JSON.stringify({
+          title,
+          slug,
+          description,
+          cover_url: coverUrl,
+          status,
+          author,
+          category: JSON.stringify(categoryArray),
+        }),
+      });
+
+      storyData = await storyResponse.json();
+
+      if (!storyResponse.ok || storyData.error || !storyData.story) {
+        return NextResponse.json(
+          { error: storyData.error || `HTTP ${storyResponse.status}` },
+          { status: storyResponse.status },
+        );
+      }
+    } else {
+      // Dev fallback: synthesize tenant/story data so the UI can continue working
+      const randomId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `dev-${Date.now()}`;
+      tenantId = randomId;
+      tenantKey = `dev-${randomId}`;
+      const now = new Date().toISOString();
+      storyData = {
+        story: {
+          id: randomId,
+          title,
+          slug,
+          description,
+          cover_url: coverUrl,
+          status,
+          author,
+          category: JSON.stringify(categoryArray),
+          view_count: 0,
+          created_at: now,
+          updated_at: now,
+        },
+      };
     }
 
     let normalizedCategory: string[] = [];
