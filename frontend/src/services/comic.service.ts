@@ -50,8 +50,18 @@ type ChapterCreateResponse = {
 };
 
 async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]> {
+  // If bucket is not configured, allow a developer-friendly fallback in
+  // non-production so local development and UI testing work without R2.
   if (!bucket) {
-    throw new Error("R2 bucket is not configured");
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("R2 bucket is not configured");
+    }
+
+    // Dev fallback: return placeholder image URLs so the UI can render images.
+    return files.map((file, i) => {
+      const safeName = encodeURIComponent(file.name.replace(/\s+/g, "-"));
+      return `https://placehold.co/600x800?text=dev+${safeName}+${Date.now() + i}`;
+    });
   }
 
   const form = new FormData();
