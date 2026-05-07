@@ -50,9 +50,31 @@ export async function POST(request: Request, context: { params: Promise<{ comicI
 
       const chapterData = (await chapterResponse.json()) as { chapter?: unknown; error?: string };
       if (!chapterResponse.ok || chapterData.error || !chapterData.chapter) {
+        if (!allowDevFallback || process.env.NODE_ENV === "production") {
+          return NextResponse.json(
+            { error: chapterData.error || `HTTP ${chapterResponse.status}` },
+            { status: chapterResponse.status },
+          );
+        }
+
+        const id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `dev-ch-${Date.now()}`;
+        const now = new Date().toISOString();
+        const chapter = {
+          id,
+          story_id: body.storyId,
+          chapter_number: body.chapterNumber,
+          title: body.title,
+          content: body.content,
+          view_count: 0,
+          created_at: now,
+          updated_at: now,
+        };
+
         return NextResponse.json(
-          { error: chapterData.error || `HTTP ${chapterResponse.status}` },
-          { status: chapterResponse.status },
+          { chapter, warning: "Created in local fallback mode because D1 SaaS backend call failed." },
+          { status: 201 },
         );
       }
 

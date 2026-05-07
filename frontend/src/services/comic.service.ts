@@ -52,36 +52,48 @@ type ChapterCreateResponse = {
 async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === "true";
 
+  const toDevUrls = (): string[] =>
+    files.map((file, i) => {
+      const safeName = encodeURIComponent(file.name.replace(/\s+/g, "-"));
+      return `https://placehold.co/600x800?text=dev+${safeName}+${Date.now() + i}`;
+    });
+
   // If bucket is not configured, only allow local mock URLs when explicitly enabled.
   if (!bucket) {
     if (process.env.NODE_ENV === "production" || !allowDevFallback) {
       throw new Error("R2 bucket is not configured");
     }
 
-    // Dev fallback: return placeholder image URLs so the UI can render images.
-    return files.map((file, i) => {
-      const safeName = encodeURIComponent(file.name.replace(/\s+/g, "-"));
-      return `https://placehold.co/600x800?text=dev+${safeName}+${Date.now() + i}`;
-    });
+    return toDevUrls();
   }
 
   const form = new FormData();
   files.forEach((file) => form.append("file", file));
 
-  const response = await fetch("/functions/v1/upload_to_r2", {
-    method: "POST",
-    headers: {
-      "x-r2-bucket": bucket,
-    },
-    body: form,
-  });
+  try {
+    const response = await fetch("/api/internal/admin/upload-to-r2", {
+      method: "POST",
+      headers: {
+        "x-r2-bucket": bucket,
+      },
+      body: form,
+    });
 
-  const data = (await response.json()) as { urls?: string[]; error?: string };
-  if (!response.ok || data.error) {
-    throw new Error(data.error || `HTTP ${response.status}`);
+    const data = (await response.json()) as { urls?: string[]; error?: string };
+    if (!response.ok || data.error) {
+      if (allowDevFallback && process.env.NODE_ENV !== "production") {
+        return toDevUrls();
+      }
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+
+    return data.urls ?? [];
+  } catch (error) {
+    if (allowDevFallback && process.env.NODE_ENV !== "production") {
+      return toDevUrls();
+    }
+    throw error;
   }
-
-  return data.urls ?? [];
 }
 
 export async function uploadComicCover(cover: File): Promise<string> {

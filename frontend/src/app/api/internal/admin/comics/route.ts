@@ -77,9 +77,56 @@ export async function POST(request: Request) {
       };
 
       if (!tenantResponse.ok || tenantRespData.error || !tenantRespData.tenant || !tenantRespData.tenantKey) {
+        if (!allowDevFallback || process.env.NODE_ENV === "production") {
+          return NextResponse.json(
+            { error: tenantRespData.error || `HTTP ${tenantResponse.status}` },
+            { status: tenantResponse.status },
+          );
+        }
+
+        const randomId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `dev-${Date.now()}`;
+        tenantId = randomId;
+        tenantKey = `dev-${randomId}`;
+        const now = new Date().toISOString();
+        storyData = {
+          story: {
+            id: randomId,
+            title,
+            slug,
+            description,
+            cover_url: coverUrl,
+            status,
+            author,
+            category: JSON.stringify(categoryArray),
+            view_count: 0,
+            created_at: now,
+            updated_at: now,
+          },
+        };
+
+        const normalizedCategory = categoryArray;
         return NextResponse.json(
-          { error: tenantRespData.error || `HTTP ${tenantResponse.status}` },
-          { status: tenantResponse.status },
+          {
+            comic: {
+              id: tenantId,
+              tenantKey,
+              storyId: storyData.story.id,
+              title: storyData.story.title,
+              slug: storyData.story.slug ?? slug,
+              description: storyData.story.description ?? description,
+              author: storyData.story.author ?? author,
+              status: storyData.story.status === "completed" ? "completed" : status,
+              category: normalizedCategory,
+              viewCount: Number(storyData.story.view_count ?? 0),
+              coverUrl: storyData.story.cover_url ?? coverUrl,
+              createdAt: storyData.story.created_at,
+              updatedAt: storyData.story.updated_at,
+            },
+            warning: "Created in local fallback mode because D1 SaaS backend call failed.",
+          },
+          { status: 201 },
         );
       }
 
@@ -106,10 +153,34 @@ export async function POST(request: Request) {
       storyData = await storyResponse.json();
 
       if (!storyResponse.ok || storyData.error || !storyData.story) {
-        return NextResponse.json(
-          { error: storyData.error || `HTTP ${storyResponse.status}` },
-          { status: storyResponse.status },
-        );
+        if (!allowDevFallback || process.env.NODE_ENV === "production") {
+          return NextResponse.json(
+            { error: storyData.error || `HTTP ${storyResponse.status}` },
+            { status: storyResponse.status },
+          );
+        }
+
+        const randomId = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : `dev-${Date.now()}`;
+        tenantId = randomId;
+        tenantKey = `dev-${randomId}`;
+        const now = new Date().toISOString();
+        storyData = {
+          story: {
+            id: randomId,
+            title,
+            slug,
+            description,
+            cover_url: coverUrl,
+            status,
+            author,
+            category: JSON.stringify(categoryArray),
+            view_count: 0,
+            created_at: now,
+            updated_at: now,
+          },
+        };
       }
     } else {
       // Dev fallback: synthesize tenant/story data so the UI can continue working
