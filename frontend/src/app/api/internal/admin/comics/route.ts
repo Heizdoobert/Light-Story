@@ -171,6 +171,16 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unexpected error";
+    if (message.toLowerCase().includes("fetch failed")) {
+      return NextResponse.json(
+        {
+          error:
+            "D1 SaaS backend is unreachable. Verify BACKEND_D1_SAAS_URL and start backend-d1-saas before creating comics.",
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

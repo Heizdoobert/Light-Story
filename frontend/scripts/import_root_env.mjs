@@ -2,18 +2,12 @@
 import fs from 'fs';
 import path from 'path';
 
-// Find the repo root by walking up until we find a .env or a .git folder
-function findUp(startDir) {
+// Find the repo root by walking up until we find a .git folder.
+function findRepoRoot(startDir) {
   let dir = startDir;
   while (true) {
-    const checkEnv = path.join(dir, '.env');
     const checkGit = path.join(dir, '.git');
-    if (fs.existsSync(checkEnv)) return checkEnv;
-    if (fs.existsSync(checkGit)) {
-      // if .env not present but .git found, check root .env
-      const maybe = path.join(dir, '.env');
-      if (fs.existsSync(maybe)) return maybe;
-    }
+    if (fs.existsSync(checkGit)) return dir;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -21,9 +15,11 @@ function findUp(startDir) {
   return null;
 }
 
-const rootEnv = findUp(process.cwd()) || path.resolve('D:/Light-Story/.env');
-// Target the frontend/.env.local file in the repository
-const targetEnv = path.resolve(process.cwd(), 'frontend', '.env.local');
+const repoRoot = findRepoRoot(process.cwd()) || path.resolve('D:/Light-Story');
+const rootEnvLocal = path.join(repoRoot, '.env.local');
+const rootEnvDefault = path.join(repoRoot, '.env');
+const rootEnv = fs.existsSync(rootEnvLocal) ? rootEnvLocal : rootEnvDefault;
+const targetEnv = path.join(repoRoot, 'frontend', '.env.local');
 
 if (!fs.existsSync(rootEnv)) {
   console.error('Root .env not found at', rootEnv);
@@ -48,12 +44,24 @@ if (fs.existsSync(targetEnv)) {
   }
 }
 
-// Copy public and vite keys, but do not overwrite SUPABASE_SERVICE_ROLE_KEY if present
-const keysToCopy = ['NEXT_PUBLIC_SUPABASE_URL','NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY','VITE_SUPABASE_URL','VITE_SUPABASE_PUBLISHABLE_KEY','SUPABASE_URL'];
+// Copy keys required by frontend runtime and internal proxy routes.
+const keysToCopy = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+  'VITE_SUPABASE_URL',
+  'VITE_SUPABASE_PUBLISHABLE_KEY',
+  'SUPABASE_URL',
+  'BACKEND_D1_SAAS_URL',
+  'BACKEND_D1_SAAS_ADMIN_KEY',
+  'NEXT_PUBLIC_R2_BUCKET_COVERS',
+  'NEXT_PUBLIC_R2_BUCKET_CHAPTERS',
+  'ENABLE_LOCAL_DEV_FALLBACK',
+  'NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK',
+];
 for (const k of keysToCopy) {
   if (entries[k]) existing[k] = entries[k];
 }
 
 const out = Object.entries(existing).map(([k,v]) => `${k}=${v}`);
 fs.writeFileSync(targetEnv, out.join('\n') + '\n', 'utf8');
-console.log('Imported root .env entries into frontend/.env.local (did not overwrite SUPABASE_SERVICE_ROLE_KEY if present).');
+console.log('Imported selected root env entries into frontend/.env.local.');
