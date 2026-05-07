@@ -44,6 +44,9 @@ const AdminAuditLogsTab = lazy(() =>
 const DashboardAccessLogsTab = lazy(() =>
   import("@/app/admin/_components/DashboardAccessLogsTab").then((m) => ({ default: m.DashboardAccessLogsTab })),
 );
+const ComicManagementTab = lazy(() =>
+  import("@/app/admin/_components/ComicManagementTab").then((m) => ({ default: m.ComicManagementTab })),
+);
 
 type AdminTabId =
   | "dashboard"
@@ -53,6 +56,7 @@ type AdminTabId =
   | "create_story"
   | "stories"
   | "create_chapter"
+  | "create_comic"
   | "categories"
   | "authors"
   | "ads"
@@ -65,6 +69,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   create_story: () => import("@/app/admin/_components/StoryForm"),
   stories: () => import("@/app/admin/_components/StoryManagementTab"),
   create_chapter: () => import("@/app/admin/_components/ChapterForm"),
+  create_comic: () => import("@/app/admin/_components/ComicManagementTab"),
   ads: () => import("@/app/admin/_components/AdManager"),
   profile: () => import("@/app/admin/_components/UserProfileTab"),
   categories: () => import("@/app/admin/_components/CategoryManagementTab"),
@@ -158,10 +163,7 @@ const AdminDashboardContent: React.FC<{
       case "settings":
         return withSuspense(<SystemSettingsTab />);
       case "create_comic":
-        // Lazy‑load the comic creation page component
-        // The page component is exported as default from src/app/comics/create/page.tsx
-        const CreateComicPage = React.lazy(() => import('@/app/comics/create/page'));
-        return withSuspense(<CreateComicPage />);
+        return withSuspense(<ComicManagementTab />);
       case "users":
         return role === "superadmin" || role === "admin" ? withSuspense(<AdminUserManagement />) : null;
       case "audit_logs":

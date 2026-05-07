@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "backend-d1-saas",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-05",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "CF_ACCOUNT_ID": "<cloudflare-account-id>",
+    "TENANT_DATABASE_PREFIX": "tenant"
+  },
+  "d1_databases": [
+    {
+      "binding": "CONTROL_DB",
+      "database_name": "saas-control-plane",
+      "database_id": "<control-db-id>"
+    }
+  ]
+}

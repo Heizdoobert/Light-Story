@@ -27,3 +27,7 @@ frontend/.turbo/
 frontend/.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
 frontend/.next-dev/
+LOCAL_TESTING_GUIDE.md
+API_Testing_Instructions.md
+backend-d1-saas/RECOVERY.md
+backend-d1-saas/TESTING.md

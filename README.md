@@ -118,6 +118,12 @@ Contains:
 - `tests/` for SQL smoke checks
 - `config.toml` for local Supabase settings
 
+## Cloudflare SaaS Backend
+
+Location: `backend-d1-saas/`
+
+Contains a standalone Cloudflare Workers backend that provisions one D1 database per tenant and keeps the tenant registry in a control-plane D1 database.
+
 Current baseline migration:
 
 - `backend-supabase/supabase/migrations/202604200001_mvp_init.sql`

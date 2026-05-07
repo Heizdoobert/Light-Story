@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createComic, saveComicContext, uploadComicCover } from "@/services/comic.service";
 
 export default function CreateComic() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [cover, setCover] = useState<File | null>(null);
@@ -13,27 +16,17 @@ export default function CreateComic() {
     if (!cover) return alert("Cover image required");
     setLoading(true);
 
-    // upload cover to R2 via edge function
-    const form = new FormData();
-    form.append("file", cover);
-    const uploadRes = await fetch("/functions/v1/upload_to_r2", {
-      method: "POST",
-      headers: { "x-r2-bucket": process.env.NEXT_PUBLIC_R2_BUCKET_COVERS! },
-      body: form,
-    });
-    const { urls } = await uploadRes.json();
-    const coverUrl = urls[0];
-
-    // create comic via edge function
-    const createRes = await fetch("/functions/v1/create_comic", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, coverUrl }),
-    });
-    const result = await createRes.json();
-    if (result.error) alert(result.error);
-    else alert(`Comic created: ${result.comic.id}`);
-    setLoading(false);
+    try {
+      const coverUrl = await uploadComicCover(cover);
+      const comic = await createComic({ title, description, coverUrl });
+      saveComicContext(comic);
+      alert(`Comic created: ${comic.title}`);
+      router.push(`/comics/${comic.id}/add-chapter`);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to create comic");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

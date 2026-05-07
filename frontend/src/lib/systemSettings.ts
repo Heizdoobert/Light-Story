@@ -105,7 +105,7 @@ export const parseDashboardTabVisibility = (
       .filter(isDashboardTabId);
 
     if (filtered.length > 0) {
-      next[role] = filtered;
+      next[role] = Array.from(new Set([...fallback[role], ...filtered]));
     }
   });
 
@@ -136,7 +136,7 @@ export const parseSidebarMenuVisibility = (
       .filter(isAdminMenuId);
 
     if (filtered.length > 0) {
-      next[role] = filtered;
+      next[role] = Array.from(new Set([...fallback[role], ...filtered]));
     }
   });
 

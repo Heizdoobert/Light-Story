@@ -12,16 +12,17 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  const { title, description, cover_url } = await req.json();
+  const { title, description, cover_url, coverUrl } = await req.json();
+  const resolvedCoverUrl = cover_url ?? coverUrl;
   const { data, error } = await supabase.from("comics").insert({
     title,
     description,
-    cover_url,
+    cover_url: resolvedCoverUrl,
     owner_id: token.sub,
   }).select();
 
   if (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 400 });
   }
-  return new Response(JSON.stringify(data[0]), { status: 201 });
+  return new Response(JSON.stringify({ comic: data[0] }), { status: 201 });
 });

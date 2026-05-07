@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+import { createComicChapter, loadComicContext, type ComicContext, uploadChapterImages } from "@/services/comic.service";
 
 type ImageEntry = {
   id: string;
@@ -18,6 +18,16 @@ export default function AddChapter({ params }: { params: { comicId: string } }) 
   const [chapterNumber, setChapterNumber] = useState(1);
   const [images, setImages] = useState<ImageEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [comicContext, setComicContext] = useState<ComicContext | null>(null);
+  const [comicError, setComicError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next = loadComicContext(comicId);
+    setComicContext(next);
+    if (!next) {
+      setComicError("Comic context was not found. Please create the comic again from the dashboard.");
+    }
+  }, [comicId]);
 
   const handleFiles = (fileList: FileList | null) => {
     if (!fileList) return;
@@ -59,40 +69,35 @@ export default function AddChapter({ params }: { params: { comicId: string } }) 
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!comicContext) return alert("Comic context was not found");
     if (images.length === 0) return alert("Select at least one image");
     setLoading(true);
 
-    // prepare FormData with files in the numeric order
     const ordered = [...images].sort((a, b) => a.order - b.order);
-    const form = new FormData();
-    ordered.forEach((entry) => form.append("file", entry.file));
+    const urls = await uploadChapterImages(ordered.map((entry) => entry.file));
 
-    const uploadRes = await fetch("/functions/v1/upload_to_r2", {
-      method: "POST",
-      headers: { "x-r2-bucket": process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS! },
-      body: form,
-    });
-    const { urls } = await uploadRes.json();
-
-    // insert chapter record; use chapter_number column
-    const { error } = await supabase.from("chapters").insert({
-      comic_id: comicId,
-      title,
-      chapter_number: chapterNumber,
-      content: urls, // store as jsonb array
-    }).select();
-
-    if (error) alert(error.message);
-    else {
+    try {
+      await createComicChapter({
+        comicId,
+        tenantKey: comicContext.tenantKey,
+        storyId: comicContext.storyId,
+        chapterNumber,
+        title,
+        content: urls,
+      });
       alert("Chapter added!");
       router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Failed to add chapter");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
     <section className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-extrabold mb-4">Add Chapter</h2>
+      {comicError && <p className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">{comicError}</p>}
       <form onSubmit={handleAdd} className="space-y-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
         <div className="grid grid-cols-2 gap-4">
           <label className="block">
@@ -130,7 +135,7 @@ export default function AddChapter({ params }: { params: { comicId: string } }) 
         )}
 
         <div>
-          <button type="submit" disabled={loading} className="w-full inline-flex items-center justify-center rounded-md bg-primary-600 text-white py-2 px-4">
+          <button type="submit" disabled={loading || !comicContext} className="w-full inline-flex items-center justify-center rounded-md bg-primary-600 text-white py-2 px-4 disabled:opacity-60">
             {loading ? 'Saving…' : 'Add Chapter'}
           </button>
         </div>
