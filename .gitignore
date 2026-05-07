@@ -27,6 +27,14 @@ frontend/.turbo/
 frontend/.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
 frontend/.next-dev/
+
+# Local test artifacts
+.e2e-*.json
+test_*.txt
+upload_results.txt
+frontend/.e2e-test-full.mjs
+frontend/.upload_test.txt
+scripts/full_flow_test.mjs
 LOCAL_TESTING_GUIDE.md
 API_Testing_Instructions.md
 backend-d1-saas/RECOVERY.md
