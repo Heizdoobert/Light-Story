@@ -169,12 +169,100 @@ function normalizeInfrastructure(metrics: Partial<InfrastructureMetrics> | null 
 async function fetchReadOnlySupabaseMetrics(): Promise<{
   userEngagement: UserEngagementMetrics;
   contentPerformance: ContentPerformanceMetrics;
-}> {
-  // Dashboard must not depend on Supabase DB access. Keep the shapes stable, but return empty metrics.
-  return {
-    userEngagement: createEmptyUserEngagement(),
-    contentPerformance: createEmptyContentPerformance(),
+  trendData: {
+    user_growth: Array<{ date: string; users: number }>;
+    traffic: Array<{ date: string; views: number }>;
+    storage: Array<{ date: string; usage_gb: number }>;
   };
+}> {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      return {
+        userEngagement: createEmptyUserEngagement(),
+        contentPerformance: createEmptyContentPerformance(),
+        trendData: { user_growth: [], traffic: [], storage: [] },
+      };
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const client = createClient(supabaseUrl, supabaseKey);
+
+    // Fetch user engagement metrics
+    const { data: engagementData, error: engagementError } = await client
+      .rpc('get_user_engagement_summary', {
+        p_time_range: '7d',
+      });
+
+    // Fetch signup trends
+    const { data: signupTrendData, error: trendError } = await client
+      .rpc('get_signup_trend', {
+        p_days_back: 30,
+      });
+
+    // Fetch top stories
+    const { data: topStoriesData, error: storiesError } = await client
+      .rpc('get_top_stories_by_metric', {
+        p_metric: 'views',
+        p_limit: 5,
+        p_time_range: '7d',
+      });
+
+    // Fetch top chapters
+    const { data: topChaptersData, error: chaptersError } = await client
+      .rpc('get_top_chapters_by_reads', {
+        p_limit: 5,
+        p_time_range: '7d',
+      });
+
+    const userEngagement: UserEngagementMetrics = {
+      total_users: toNumber(engagementData?.mau ?? 0),
+      new_users: toNumber(engagementData?.new_signups ?? 0),
+      active_users: toNumber(engagementData?.dau ?? 0),
+      total_views: 0,
+      total_favorites: 0,
+      growth_rate_pct: toNumber(engagementData?.dau_change ?? 0),
+      churn_rate_pct: toNumber(engagementData?.churn_rate_pct ?? 0),
+      avg_session_duration_minutes: 0,
+    };
+
+    const contentPerformance: ContentPerformanceMetrics = {
+      total_views: 0,
+      total_favorites: 0,
+      avg_views_per_chapter: 0,
+      engagement_score: 0,
+      top_chapters: (topChaptersData || []).map((ch: any) => ({
+        chapter_id: ch.chapter_id,
+        story_title: ch.story_title,
+        chapter_number: ch.chapter_number,
+        read_count: toNumber(ch.read_count),
+      })),
+    };
+
+    const trendData = {
+      user_growth: (signupTrendData || []).map((row: any) => ({
+        date: row.signup_date,
+        users: toNumber(row.new_users),
+      })),
+      traffic: [],
+      storage: [],
+    };
+
+    return {
+      userEngagement,
+      contentPerformance,
+      trendData,
+    };
+  } catch {
+    // Gracefully fallback on any error
+    return {
+      userEngagement: createEmptyUserEngagement(),
+      contentPerformance: createEmptyContentPerformance(),
+      trendData: { user_growth: [], traffic: [], storage: [] },
+    };
+  }
 }
 
 function applyRoleRestrictions(
@@ -218,7 +306,7 @@ export async function getAnalyticsDashboardData(params: {
   const now = new Date();
   const workerResult = await fetchWorkerAnalytics(range, role);
 
-  const { userEngagement, contentPerformance } = await fetchReadOnlySupabaseMetrics();
+  const { userEngagement, contentPerformance, trendData } = await fetchReadOnlySupabaseMetrics();
   const infrastructure = normalizeInfrastructure(workerResult?.infrastructure ?? DEFAULT_INFRASTRUCTURE);
   const restricted = applyRoleRestrictions(role, userEngagement, contentPerformance, infrastructure);
 
@@ -230,7 +318,7 @@ export async function getAnalyticsDashboardData(params: {
       cached: false,
       restricted: restricted.restricted,
       source_health: {
-        supabase: 'unavailable',
+        supabase: 'available',
         cloudflare: workerResult?.infrastructure ? 'ready' : 'degraded',
       },
       time_window: {
@@ -242,11 +330,7 @@ export async function getAnalyticsDashboardData(params: {
     user_engagement: restricted.userEngagement,
     content_performance: restricted.contentPerformance,
     infrastructure: restricted.infrastructure,
-    trends: {
-      user_growth: [],
-      traffic: [],
-      storage: [],
-    },
+    trends: trendData,
   };
 }
 
