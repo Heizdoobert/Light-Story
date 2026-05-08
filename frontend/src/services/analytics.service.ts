@@ -170,9 +170,9 @@ async function fetchReadOnlySupabaseMetrics(): Promise<{
   userEngagement: UserEngagementMetrics;
   contentPerformance: ContentPerformanceMetrics;
   trendData: {
-    user_growth: Array<{ date: string; users: number }>;
-    traffic: Array<{ date: string; views: number }>;
-    storage: Array<{ date: string; usage_gb: number }>;
+    user_growth: Array<{ timestamp: string; value: number; label: string }>;
+    traffic: Array<{ timestamp: string; value: number; label: string }>;
+    storage: Array<{ timestamp: string; value: number; label: string }>;
   };
 }> {
   try {
@@ -191,27 +191,19 @@ async function fetchReadOnlySupabaseMetrics(): Promise<{
     const client = createClient(supabaseUrl, supabaseKey);
 
     // Fetch user engagement metrics
-    const { data: engagementData, error: engagementError } = await client
+    const { data: engagementData } = await client
       .rpc('get_user_engagement_summary', {
         p_time_range: '7d',
       });
 
     // Fetch signup trends
-    const { data: signupTrendData, error: trendError } = await client
+    const { data: signupTrendData } = await client
       .rpc('get_signup_trend', {
         p_days_back: 30,
       });
 
-    // Fetch top stories
-    const { data: topStoriesData, error: storiesError } = await client
-      .rpc('get_top_stories_by_metric', {
-        p_metric: 'views',
-        p_limit: 5,
-        p_time_range: '7d',
-      });
-
     // Fetch top chapters
-    const { data: topChaptersData, error: chaptersError } = await client
+    const { data: topChaptersData } = await client
       .rpc('get_top_chapters_by_reads', {
         p_limit: 5,
         p_time_range: '7d',
@@ -243,8 +235,9 @@ async function fetchReadOnlySupabaseMetrics(): Promise<{
 
     const trendData = {
       user_growth: (signupTrendData || []).map((row: any) => ({
-        date: row.signup_date,
-        users: toNumber(row.new_users),
+        timestamp: row.signup_date,
+        value: toNumber(row.new_users),
+        label: `${toNumber(row.new_users)} signups`,
       })),
       traffic: [],
       storage: [],
@@ -318,7 +311,7 @@ export async function getAnalyticsDashboardData(params: {
       cached: false,
       restricted: restricted.restricted,
       source_health: {
-        supabase: 'available',
+        supabase: 'ready',
         cloudflare: workerResult?.infrastructure ? 'ready' : 'degraded',
       },
       time_window: {
