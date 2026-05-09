@@ -31,6 +31,7 @@ Environment variables:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+CLOUDFLARE_ANALYTICS_WORKER_URL=your_analytics_worker_url
 
 # Server-side (do NOT expose these in the browser):
 # `SUPABASE_SERVICE_ROLE_KEY` — Supabase service_role key used by server internal routes/functions.

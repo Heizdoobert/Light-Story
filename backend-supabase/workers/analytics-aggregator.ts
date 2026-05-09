@@ -38,7 +38,6 @@ interface AnalyticsResponse {
 interface Env {
   CF_ACCOUNT_ID: string;
   CF_API_TOKEN: string;
-  ANALYTICS_ENGINE_DB: Analytics;
 }
 
 /**

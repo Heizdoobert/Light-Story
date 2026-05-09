@@ -21,6 +21,7 @@ This document is the repository-wide reference for how Light Story code is organ
 - `frontend/src/application` contains DTOs and use cases.
 - `frontend/src/infrastructure` contains Supabase adapters and other external integrations.
 - `frontend/src/presentation` and `frontend/src/app` handle UI and API entry points.
+- `frontend/src/services/analytics.service.ts` reads `CLOUDFLARE_ANALYTICS_WORKER_URL` for infrastructure analytics data and must stay browser-safe.
 
 ### Backend D1 SaaS
 
@@ -32,6 +33,7 @@ This document is the repository-wide reference for how Light Story code is organ
 - `backend-supabase/supabase/functions` contains deployed function handlers and their shared helpers.
 - `backend-supabase/supabase/migrations` owns schema changes.
 - `backend-supabase/docs` captures database and policy notes.
+- `backend-supabase/workers/analytics-aggregator.ts` is the Cloudflare Worker that powers the analytics dashboard's infrastructure metrics endpoint.
 
 ## Standard Practices
 

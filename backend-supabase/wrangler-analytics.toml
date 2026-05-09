@@ -1,30 +1,10 @@
 name = "analytics-aggregator"
 main = "workers/analytics-aggregator.ts"
-compatibility_date = "2024-12-16"
+compatibility_date = "2026-05-09"
+compatibility_flags = ["nodejs_compat"]
 
-# Variables that will be set at deployment time
-[env.production]
-vars = { CF_ACCOUNT_ID = "YOUR_ACCOUNT_ID" }
-
-[env.staging]
-vars = { CF_ACCOUNT_ID = "YOUR_ACCOUNT_ID" }
-
-[env.development]
-vars = { CF_ACCOUNT_ID = "YOUR_ACCOUNT_ID" }
-
-# Build configuration
-[build]
-command = "npm run build"
-
-[build.upload]
-format = "service-worker"
-main = "./dist/analytics-aggregator.js"
-
-# Observe configuration for production
 [observability]
 enabled = true
 
-# Routes configuration (these would be registered in Cloudflare)
-[[routes]]
-pattern = "api.example.com/api/analytics*"
-zone_id = "YOUR_ZONE_ID"
+[vars]
+TENANT_DATABASE_PREFIX = "tenant"

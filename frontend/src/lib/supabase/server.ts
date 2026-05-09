@@ -1,7 +1,4 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
 
 let _client: SupabaseClient | null = null;
 
@@ -55,36 +52,6 @@ export function getServerSupabase(): SupabaseClient | null {
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.SUPABASE_SERVICE_KEY ||
     process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-  // If the key is missing or looks like a placeholder, attempt to load a repo-root `.env` file
-  // (falls back to workspace root) before giving up.
-  if (!SUPABASE_SERVICE_ROLE_KEY || /placeholder|emulator|publishable|sb_publishable_|anon_|service-role-key|change-me|your-service-key|^test-/i.test((SUPABASE_SERVICE_ROLE_KEY || '').toLowerCase())) {
-    try {
-      // Walk up from cwd to find a .env or .git marker (similar to scripts/import_root_env.mjs)
-      let dir = process.cwd();
-      let found = null;
-      while (dir) {
-        const maybe = path.join(dir, '.env');
-        const maybeGit = path.join(dir, '.git');
-        if (fs.existsSync(maybe)) { found = maybe; break; }
-        if (fs.existsSync(maybeGit) && fs.existsSync(maybe)) { found = maybe; break; }
-        const parent = path.dirname(dir);
-        if (parent === dir) break;
-        dir = parent;
-      }
-      // last-resort: common workspace path
-      if (!found) {
-        const fallback = path.resolve('D:/Light-Story/.env');
-        if (fs.existsSync(fallback)) found = fallback;
-      }
-
-      if (found) {
-        dotenv.config({ path: found });
-      }
-    } catch (err) {
-      // ignore errors reading root env
-    }
-  }
 
   // Re-evaluate key after attempting to load repo .env.
   const resolvedServiceKey =
