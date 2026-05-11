@@ -2,6 +2,7 @@
 // Superadmin-only admin endpoint for creating and deleting users.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { UserActionSchema } from "../lib/validators/user.validator.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -96,11 +97,13 @@ serve(async (req) => {
     }
 
     const payload = await req.json().catch(() => null);
-    const action = payload?.action;
 
-    if (action !== "create" && action !== "delete") {
-      return jsonResponse({ error: "action must be one of: create, delete" }, 400);
+    const parsed = UserActionSchema.safeParse(payload);
+    if (!parsed.success) {
+      return jsonResponse({ error: 'Invalid input', details: parsed.error.errors }, 400);
     }
+
+    const body = parsed.data;
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     let verifiedUser;
@@ -121,35 +124,16 @@ serve(async (req) => {
       return jsonResponse({ error: "Unable to load user profile" }, 403);
     }
 
-    if (action === "create") {
-          if (profile?.role !== "superadmin" && profile?.role !== "admin") {
-            return jsonResponse({ error: "Forbidden" }, 403);
-          }
-
-      const email = payload?.email;
-      const password = payload?.password;
-      const role = payload?.role;
-      const fullName = payload?.fullName;
-
-          const creatableRoles = profile?.role === "admin"
-            ? new Set(["user", "employee"])
-            : new Set(["user", "employee", "admin"]);
-
-      if (typeof email !== "string" || !email.trim()) {
-        return jsonResponse({ error: "email is required" }, 400);
+    if (body.action === 'create') {
+      if (profile?.role !== "superadmin" && profile?.role !== "admin") {
+        return jsonResponse({ error: "Forbidden" }, 403);
       }
 
-      if (typeof password !== "string" || password.trim().length < 6) {
-        return jsonResponse({ error: "password must be at least 6 characters" }, 400);
-      }
+      const { email, password, role, fullName } = body;
 
-      if (!isValidRole(role)) {
-        return jsonResponse({ error: "invalid role" }, 400);
-      }
-
-      if (!isCreatableRole(role)) {
-        return jsonResponse({ error: "role is not allowed for creation" }, 400);
-      }
+      const creatableRoles = profile?.role === "admin"
+        ? new Set(["user", "employee"])
+        : new Set(["user", "employee", "admin"]);
 
       if (!creatableRoles.has(role)) {
         return jsonResponse({ error: "role is not allowed for your account type" }, 403);

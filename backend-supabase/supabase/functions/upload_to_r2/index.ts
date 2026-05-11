@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { z } from "npm:zod@3.22.4";
 
 const R2_ACCESS_KEY_ID = Deno.env.get("R2_ACCESS_KEY_ID");
 const R2_SECRET_ACCESS_KEY = Deno.env.get("R2_SECRET_ACCESS_KEY");
@@ -14,12 +15,13 @@ serve(async (req) => {
 
   const form = await req.formData();
   const bucketName = req.headers.get("x-r2-bucket");
-  if (!bucketName) {
-    return new Response(
-      JSON.stringify({ error: "Missing x-r2-bucket header" }),
-      { status: 400 }
-    );
+
+  const bucketValidation = z.string().min(1, 'x-r2-bucket header is required').safeParse(bucketName);
+  if (!bucketValidation.success) {
+    return new Response(JSON.stringify({ error: 'Missing or invalid x-r2-bucket header' }), { status: 400 });
   }
+
+  const bucket = bucketValidation.data;
 
   const urls: string[] = [];
   const errors: string[] = [];
@@ -31,9 +33,7 @@ serve(async (req) => {
       const buffer = await file.arrayBuffer();
       const key = `${crypto.randomUUID()}_${file.name}`;
       const endpoint = `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
-      const url = new URL(
-        `https://${bucketName}.r2.cloudflarestorage.com/${key}`
-      );
+      const url = new URL(`https://${bucket}.r2.cloudflarestorage.com/${key}`);
 
       // Simple PUT request to R2 with credentials in Auth header
       const authHeader = btoa(
@@ -55,8 +55,7 @@ serve(async (req) => {
         );
         continue;
       }
-
-      urls.push(url.toString());
+        urls.push(url.toString());
     } catch (e) {
       errors.push(`Error uploading ${file.name}: ${e.message}`);
     }
