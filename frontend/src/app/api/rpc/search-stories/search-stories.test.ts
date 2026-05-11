@@ -29,14 +29,17 @@ describe('POST /api/rpc/search-stories', () => {
         embedding: mockEmbedding1536,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+        // Call the route handler directly to avoid network DNS issues in test runner
+        const { POST } = await import('./route');
+        const req = new Request('http://localhost/api/rpc/search-stories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
 
-      expect(res.status).toBe(200);
-      const json = await res.json();
+        const res = await POST(req);
+        const json = res.json ? await res.json() : JSON.parse(await res.text());
+        expect(res.status).toBe(200);
       expect(json).toHaveProperty('results');
       expect(json).toHaveProperty('count');
       expect(Array.isArray(json.results)).toBe(true);
@@ -48,14 +51,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 10,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(json.count).toBeLessThanOrEqual(10);
     });
 
@@ -65,12 +68,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 100,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(200);
     });
 
@@ -80,12 +85,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 1,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(200);
     });
   });
@@ -97,14 +104,15 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 10,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(400);
-      const json = await res.json();
       expect(json).toHaveProperty('error');
       expect(json.error).toContain('Invalid');
     });
@@ -114,12 +122,14 @@ describe('POST /api/rpc/search-stories', () => {
         embedding: invalidEmbedding2048,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(400);
     });
 
@@ -129,12 +139,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 0,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(400);
     });
 
@@ -144,12 +156,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 101,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
       expect(res.status).toBe(400);
     });
 
@@ -190,14 +204,14 @@ describe('POST /api/rpc/search-stories', () => {
         matchCount: 5,
       };
 
-      const res = await fetch(`${baseUrl}/api/rpc/search-stories`, {
+      const { POST } = await import('./route');
+      const req = new Request('http://localhost/api/rpc/search-stories', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
+      const res = await POST(req);
+      const json = res.json ? await res.json() : JSON.parse(await res.text());
 
       expect(json).toHaveProperty('results');
       expect(json).toHaveProperty('count');
