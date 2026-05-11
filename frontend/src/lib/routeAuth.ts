@@ -89,6 +89,8 @@ async function trySessionRequester(request: NextRequest): Promise<RouteRequester
 }
 
 export function isAllowedRouteRole(role: string, allowedRoles: readonly string[] = DEFAULT_ROUTE_ROLES): boolean {
+  // Superadmin always has access to everything
+  if (role === 'superadmin') return true;
   return allowedRoles.includes(role);
 }
 
