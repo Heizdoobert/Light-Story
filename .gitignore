@@ -38,3 +38,72 @@ LOCAL_TESTING_GUIDE.md
 API_Testing_Instructions.md
 backend-d1-saas/RECOVERY.md
 backend-d1-saas/TESTING.md
+
+# Unused root-level documentation (canonical copies in docs/)
+ACCESS_REAL_DATA.md
+ARCHITECTURE.md
+CODE_REVIEW_COMIC_CMS.md
+DASHBOARD_NO_DATA_FIX.md
+DASHBOARD_ZERO_DATA_ANALYSIS.md
+DELIVERY_SUMMARY.md
+DEPLOYMENT_CHECKLIST_COMEDY_CMS.md
+DEPLOYMENT_CHECKLIST_COMICS.md
+PROJECT_STRUCTURE.md
+REAL_DATA_DIAGNOSTIC.md
+REAL_DATA_QUICKSTART.md
+REAL_DATA_READY.md
+REAL_DATA_SETUP.md
+metadata.json
+
+# Orphaned frontend code
+frontend/src/lib/middleware.ts
+frontend/src/examples/
+frontend/scripts/DEPRECATED.md
+frontend/scripts/dedupe_env.mjs
+frontend/scripts/force_srk.mjs
+frontend/scripts/localize_srk.mjs
+frontend/scripts/run_checks.mjs
+frontend/scripts/set_service_role_key.mjs
+
+# Orphaned backend code
+backend-d1-saas/src/provisioning.ts
+backend-d1-saas/schema/
+backend-d1-saas/smoke-tests.mjs
+
+# Duplicate nested packages
+backend-supabase/backend-supabase/
+
+# Temp / cache artifacts
+frontend/supabase/.temp/
+.venv/
+frontend/frontend/
+
+# Env key instruction document (contains example values)
+Instruction_create_key.md
+
+# Orphaned root configs / docs
+CONTRIBUTING.md
+skills-lock.json
+backend-d1-saas/README.md
+frontend/README.dev.md
+
+# Dead code / duplicate modules
+src/shared/components/Register.tsx
+frontend/src/lib/supabaseClient.ts
+frontend/src/utils/supabase.ts
+
+# Cleanup analysis artifacts (temporary)
+docs/CLEANUP/
+
+# Archived documentation (superseded or historical)
+docs/ARCHIVE/
+
+# Git filter-branch / history rewrite backups
+.git-rewrite/
+
+# Manual test files (no CI integration, standalone scripts)
+workers/r2-signed-url/worker.test.js
+frontend/tests/
+
+# Operational scripts (no active references, no CI integration)
+scripts/

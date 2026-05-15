@@ -17,7 +17,6 @@
     "ci:verify": "npm run lint && npm run build && npm run test:run",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
-    "test:internal-auth": "node ./tests/check_internal_routes.mjs",
     "env:add-service-key": "node ./scripts/add_service_key.mjs",
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
