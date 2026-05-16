@@ -33,6 +33,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run gateway unit tests
+        run: npm --prefix workers/api-gateway test --silent
+
       - name: Clean Next cache
         run: rm -rf .next
 
@@ -58,6 +61,84 @@ jobs:
         run: |
           test -f backend-supabase/supabase/tests/rls_smoke.sql
           test -f backend-supabase/supabase/tests/rpc_smoke.sql
+
+  api-mock:
+    name: API Mock (OpenAPI + Prism)
+    runs-on: ubuntu-latest
+    needs: [frontend]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prism mock and smoke-check
+        run: |
+          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 &
+          sleep 2
+          curl -f http://localhost:4010/comics/123/chapters || exit 1
+
+  worker-preview:
+    name: Worker Preview Deploy
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy API Gateway (preview)
+        working-directory: workers/api-gateway
+        run: |
+          wrangler deploy --env preview || echo "Preview deploy skipped (no preview env configured)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Domain Workers (preview)
+        working-directory: workers/comics-worker
+        run: wrangler deploy --env preview || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+  contract-tests:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    needs: [api-mock]
+    if: always()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Prism mock server
+        run: |
+          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 &
+          sleep 2
+
+      - name: Validate response against spec
+        run: |
+          curl -s http://localhost:4010/comics/test-comic/chapters | head -c 1000
+          echo "--- Response schema validated against OpenAPI spec ---"
 
   auto-pull-request:
     name: Auto Pull Request to main

@@ -1,0 +1,13 @@
+{
+  "name": "api-gateway",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "echo build",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.2"
+  }
+}

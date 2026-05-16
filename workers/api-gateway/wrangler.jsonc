@@ -1,0 +1,16 @@
+{
+  "name": "api-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-16",
+  "services": [
+    { "binding": "COMICS_WORKER", "service": "comics-worker" },
+    { "binding": "STORIES_WORKER", "service": "stories-worker" },
+    { "binding": "ADMIN_WORKER", "service": "admin-worker" },
+    { "binding": "ANALYTICS_WORKER", "service": "analytics-worker" }
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://<your-supabase-project>.supabase.co",
+    "SUPABASE_ANON_KEY": "<your-supabase-anon-key>",
+    "SUPABASE_JWKS_URL": "https://<your-supabase-project>.supabase.co/.well-known/jwks.json"
+  }
+}
