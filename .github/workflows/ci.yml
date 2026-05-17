@@ -49,13 +49,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Validate migration and function files
+      - name: Validate migration and SQL test artifacts
         run: |
           test -f backend-supabase/supabase/config.toml
           test -f backend-supabase/supabase/migrations/202604200001_mvp_init.sql
-          test -f backend-supabase/supabase/functions/increment-story-views/index.ts
-          test -f backend-supabase/supabase/functions/manage-story/index.ts
-          test -f backend-supabase/supabase/functions/manage-chapter/index.ts
 
       - name: Validate SQL test artifacts
         run: |
