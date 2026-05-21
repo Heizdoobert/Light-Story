@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1044.0",
-    "@fontsource-variable/geist": "^5.2.8",
+    "@fontsource-variable/geist": "^5.2.9",
     "@google/genai": "^1.52.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
