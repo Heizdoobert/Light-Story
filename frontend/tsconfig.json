@@ -28,6 +28,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@light-story/api-types": [
+        "../packages/api-types"
       ]
     },
     "noEmit": true,

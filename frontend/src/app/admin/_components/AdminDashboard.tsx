@@ -48,6 +48,9 @@ const ComicManagementTab = lazy(() =>
 const AnalyticsDashboardTab = lazy(() =>
   import("@/app/admin/_components/AnalyticsDashboardTab").then((m) => ({ default: m.AnalyticsDashboardTab })),
 );
+const RecruitmentTab = lazy(() =>
+  import("@/app/admin/_components/RecruitmentTab").then((m) => ({ default: m.RecruitmentTab })),
+);
 
 type AdminTabId =
   | "dashboard"
@@ -64,7 +67,8 @@ type AdminTabId =
   | "settings"
   | "profile"
   | "users"
-  | "operations";
+  | "operations"
+  | "recruitment";
 
 const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   create_story: () => import("@/app/admin/_components/StoryForm"),
@@ -81,6 +85,7 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   dashboard_access_logs: () => import("@/app/admin/_components/DashboardAccessLogsTab"),
   operations: () => import("@/app/admin/_components/OperationsCenterTab"),
   operations_data: () => import("@/app/admin/_components/OperationsDataTab"),
+  recruitment: () => import("@/app/admin/_components/RecruitmentTab"),
 };
 
 const TabLoadingFallback: React.FC = () => (
@@ -160,6 +165,8 @@ const AdminDashboardContent: React.FC<{
         return role === "superadmin" || role === "admin" ? withSuspense(<DashboardAccessLogsTab />) : null;
       case "stories":
         return withSuspense(<StoryManagementTab />);
+      case "recruitment":
+        return withSuspense(<RecruitmentTab />);
       default:
         return null;
     }

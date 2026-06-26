@@ -1,18 +1,4 @@
-/**
- * API Response envelope from backend (all endpoints wrap responses).
- * This mirrors packages/api-types/index.ts ApiResponse<T>
- */
-interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: Record<string, any>;
-  };
-  timestamp: string;
-  correlationId?: string;
-}
+import type { ApiResponse } from '@light-story/api-types';
 
 export class ApiError extends Error {
   constructor(

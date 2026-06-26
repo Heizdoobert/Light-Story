@@ -102,4 +102,4 @@ src/presentation/mvp/  - MVP pattern (ReaderPresenter, AdminPresenter)
 
 ## DB
 
-Supabase project `cxpncsyemokysodgoojh`. 26 tables. Supabase client via `@supabase/ssr`. Service role key for worker-to-Supabase, anon key for client.
+Supabase project `xgtlrztskoomimvfpdoy` (truyentranh3x, Singapore). 26 tables. Supabase client via `@supabase/ssr`. Service role key for worker-to-Supabase, anon key for client. JWKS at `/auth/v1/.well-known/jwks.json`.

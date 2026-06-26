@@ -14,6 +14,7 @@
     "lint": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:auth": "playwright test auth-boundary",
     "test:e2e:ui": "playwright test --ui",
@@ -24,6 +25,7 @@
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
+    "@light-story/api-types": "file:../packages/api-types",
     "@aws-sdk/client-s3": "^3.1044.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.52.0",
