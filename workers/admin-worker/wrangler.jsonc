@@ -1,9 +1,0 @@
-{
-  "name": "admin-worker",
-  "main": "src/index.ts",
-  "compatibility_date": "2026-05-16",
-  "vars": {
-    "SUPABASE_URL": "",
-    "SUPABASE_ANON_KEY": ""
-  }
-}

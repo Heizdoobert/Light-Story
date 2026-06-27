@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "dev:gateway": "npx wrangler dev --port 8787 --config workers/api-gateway/wrangler.jsonc",
+    "dev:gateway": "npx wrangler dev --port 8787 --config workers/unified-gateway/wrangler.jsonc",
     "dev:all": "concurrently -n fe,gw \"npm run dev\" \"npm run dev:gateway\"",
     "dev:comics": "npx wrangler dev --port 9001 --config workers/comics-worker/wrangler.jsonc",
     "dev:stories": "npx wrangler dev --port 9002 --config workers/stories-worker/wrangler.jsonc",
@@ -22,6 +22,7 @@
     "generate:types": "npm --prefix packages/api-types run generate"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.106.1",
     "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "wrangler": "^4.92.0"

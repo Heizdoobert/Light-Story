@@ -13,10 +13,10 @@ values
   (
     'dashboard_tab_visibility',
     '{
-      "superadmin": ["dashboard", "create_story", "stories", "create_chapter", "categories", "authors", "ads", "profile"],
-      "admin": ["dashboard", "create_story", "stories", "create_chapter", "categories", "authors", "ads", "profile"],
+      "superadmin": ["dashboard", "dashboard_access_logs", "audit_logs", "operations", "operations_data", "create_story", "stories", "create_chapter", "categories", "authors", "ads", "settings", "profile", "create_comic"],
+      "admin": ["dashboard", "dashboard_access_logs", "operations", "operations_data", "create_story", "stories", "create_chapter", "categories", "authors", "ads", "settings", "profile", "create_comic"],
       "employee": ["dashboard", "create_story", "stories", "create_chapter", "categories", "authors", "profile"],
-      "user": ["dashboard", "stories", "profile"]
+      "user": []
     }'::jsonb
   )
 on conflict (key) do nothing;

@@ -4,7 +4,7 @@
   AdminLayout.tsx
   Main layout for the Admin Dashboard with dynamic sidebar and topbar.
 */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
@@ -39,6 +39,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const { profile, role, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setIsSidebarOpen(!mobile);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const visibilityQuery = useQuery({
     queryKey: ["site_settings", "admin_visibility_controls"],
@@ -102,12 +114,32 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] dark:bg-slate-950 overflow-hidden transition-colors duration-300">
+    <div className="flex h-screen bg-[#F1F5F9] dark:bg-slate-950 overflow-hidden transition-colors duration-300 relative">
+      {/* Backdrop for mobile */}
+      <AnimatePresence>
+        {isMobile && isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-20"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ width: isSidebarOpen ? 280 : 80 }}
-        className="bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col relative z-20 shadow-xl overflow-hidden"
+        animate={
+          isMobile
+            ? { x: isSidebarOpen ? 0 : -280, width: 280 }
+            : { x: 0, width: isSidebarOpen ? 280 : 80 }
+        }
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden ${
+          isMobile ? "fixed inset-y-0 left-0 z-30" : "relative z-20"
+        }`}
       >
         <div className="p-6 flex items-center justify-between">
           <AnimatePresence mode="wait">
@@ -148,7 +180,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           {filteredMenu.map((item) => (
             <button
               key={item.id}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                onTabChange(item.id);
+                if (isMobile) {
+                  setIsSidebarOpen(false);
+                }
+              }}
               onMouseEnter={() => onTabPrefetch?.(item.id)}
               onFocus={() => onTabPrefetch?.(item.id)}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
@@ -191,8 +228,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between z-10 transition-colors">
-          <div className="flex items-center gap-4">
+        <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-8 flex items-center justify-between z-10 transition-colors">
+          <div className="flex items-center gap-3 sm:gap-4">
+            {/* Mobile Sidebar Toggle */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500 md:hidden"
+            >
+              <Menu size={18} />
+            </button>
             <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
               <LayoutDashboard size={20} />
             </div>
@@ -235,7 +279,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-8 dark:text-slate-100">
+        <main className="flex-1 overflow-auto p-4 sm:p-8 dark:text-slate-100">
           {children}
         </main>
       </div>

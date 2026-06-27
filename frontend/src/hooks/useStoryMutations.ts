@@ -17,7 +17,7 @@ export const useStoryMutations = () => {
   const useIncrementViewMutation = () => {
     return useMutation({
       mutationFn: async (storyId: string) => {
-        await apiClient.post('/api/rpc/increment-story-views', { storyId });
+        await apiClient.post('/api/stories/views', { storyId });
       },
       onMutate: async (storyId) => {
         // Cancel outgoing refetches
@@ -40,12 +40,14 @@ export const useStoryMutations = () => {
    */
   const useLikeStoryMutation = () => {
     return useMutation({
-      mutationFn: async ({ storyId, isCurrentlyLiked }: { storyId: string; isCurrentlyLiked: boolean }) => {
-        await apiClient.post(`/api/rpc/${isCurrentlyLiked ? 'unlike-story' : 'like-story'}`, { storyId });
+      mutationFn: async ({ storyId }: { storyId: string; isCurrentlyLiked?: boolean }) => {
+        await apiClient.post('/api/rpc/toggle_story_like', { story_id_param: storyId });
       },
       onMutate: async ({ storyId, isCurrentlyLiked }) => {
         await queryClient.cancelQueries({ queryKey: ['story', storyId] });
-        const rollback = optimisticToggleLike(storyId, isCurrentlyLiked);
+        const cached = queryClient.getQueryData(['story', storyId]) as any;
+        const liked = isCurrentlyLiked ?? cached?.is_liked_by_user ?? false;
+        const rollback = optimisticToggleLike(storyId, liked);
         return { rollback };
       },
       onError: (_err, { storyId: _storyId }, context) => {

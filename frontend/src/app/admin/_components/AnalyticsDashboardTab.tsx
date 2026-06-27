@@ -221,7 +221,7 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
 
 export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ role, userId }) => {
   const [timeRange, setTimeRange] = useState<AnalyticsTimeRange>('7d');
-  const dashboardQuery = useAnalyticsDashboard(timeRange);
+  const dashboardQuery = useAnalyticsDashboard(timeRange, role);
 
   const isAdmin = role === 'superadmin' || role === 'admin';
   const limitedView = role === 'employee';

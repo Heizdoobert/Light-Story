@@ -21,6 +21,7 @@ export const DASHBOARD_CONFIGURABLE_TABS = [
   'categories',
   'authors',
   'ads',
+  'settings',
   'profile',
   'create_comic',
 ] as const;
@@ -33,14 +34,14 @@ export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
 
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],
-  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'profile', 'create_comic'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
   employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'create_chapter', 'categories', 'authors', 'profile', 'create_comic'],
-  user: ['dashboard', 'stories', 'profile'],
+  user: [],
 };
 
 export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'profile', 'create_comic'],
+  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
   employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
   user: [],
 };
@@ -97,6 +98,11 @@ export const parseDashboardTabVisibility = (
   };
 
   (['superadmin', 'admin', 'employee', 'user'] as const).forEach((role) => {
+    if (role === 'user') {
+      next[role] = [];
+      return;
+    }
+
     const incoming = source[role];
     if (!Array.isArray(incoming)) return;
 
@@ -128,6 +134,11 @@ export const parseSidebarMenuVisibility = (
   };
 
   (['superadmin', 'admin', 'employee', 'user'] as const).forEach((role) => {
+    if (role === 'user') {
+      next[role] = [];
+      return;
+    }
+
     const incoming = source[role];
     if (!Array.isArray(incoming)) return;
 
@@ -147,6 +158,10 @@ export const getRoleVisibleTabs = (
   visibility: DashboardTabVisibility,
   role: keyof DashboardTabVisibility,
 ): DashboardTabId[] => {
+  if (role === 'user') {
+    return [];
+  }
+
   const maybeTabs = visibility[role];
   if (!Array.isArray(maybeTabs)) {
     return [...DEFAULT_DASHBOARD_TAB_VISIBILITY[role]];
@@ -161,6 +176,7 @@ export const isDashboardTabVisibleForRole = (
   role: UserRole,
   visibility: DashboardTabVisibility,
 ): boolean => {
+  if (role === 'user') return false;
   if (role === 'superadmin') return true;
   return visibility[role]?.includes(tabId as DashboardTabId) ?? false;
 };
@@ -170,6 +186,7 @@ export const isAdminMenuVisibleForRole = (
   role: UserRole,
   visibility: SidebarMenuVisibility,
 ): boolean => {
+  if (role === 'user') return false;
   if (role === 'superadmin') return true;
   return visibility[role]?.includes(menuId as AdminMenuId) ?? false;
 };

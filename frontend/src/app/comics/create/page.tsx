@@ -20,7 +20,7 @@ export default function CreateComic() {
       const coverUrl = await uploadComicCover(cover);
       const comic = await createComic({ title, description, coverUrl });
       alert(`Comic created: ${comic.title}`);
-      router.push(`/comics/${comic.id}/add-chapter?storyId=${comic.storyId}&tenantKey=${comic.tenantKey}`);
+      router.push(`/comics/${comic.id}/add-chapter?storyId=${comic.id}`);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Failed to create comic");
     } finally {

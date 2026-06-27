@@ -9,5 +9,4 @@
 - public URL access allowed only for published assets.
 
 ## Future Enhancements
-- signed URLs for premium chapter assets.
 - image optimization pipeline using edge functions.

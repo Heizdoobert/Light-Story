@@ -4,7 +4,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 
 type AccessLog = {
   id: string;
-  actor_user_id: string | null;
+  user_id: string | null;
   action: 'dashboard_access';
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -23,8 +23,8 @@ export const DashboardAccessLogsTab: React.FC = () => {
       if (!supabase) return [] as AccessLog[];
 
       const { data, error } = await supabase
-        .from('admin_audit_logs')
-        .select('id, actor_user_id, action, metadata, created_at')
+        .from('audit_logs')
+        .select('id, user_id, action, metadata, created_at')
         .eq('action', 'dashboard_access')
         .order('created_at', { ascending: false })
         .limit(200);
@@ -45,7 +45,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'admin_audit_logs',
+          table: 'audit_logs',
           filter: 'action=eq.dashboard_access',
         },
         () => {
@@ -62,7 +62,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
     for (const row of logsQuery.data ?? []) {
-      if (row.actor_user_id) ids.add(row.actor_user_id);
+      if (row.user_id) ids.add(row.user_id);
     }
     return Array.from(ids);
   }, [logsQuery.data]);
@@ -124,8 +124,8 @@ export const DashboardAccessLogsTab: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {(logsQuery.data ?? []).map((log) => {
-                  const actor = log.actor_user_id ? actorMap.get(log.actor_user_id) : null;
-                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.actor_user_id || 'Unknown';
+                  const actor = log.user_id ? actorMap.get(log.user_id) : null;
+                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.user_id || 'Unknown';
                   const page = typeof log.metadata?.page === 'string' ? log.metadata.page : '/admin';
 
                   return (

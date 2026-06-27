@@ -24,7 +24,7 @@ export function useAdminUserPresenter(canAccess: boolean) {
 
   const deleteMutation = useMutation({
     mutationFn: ({ id, email }: { id: string; email: string }) =>
-      adminService.callManageUserFunction({ action: 'delete', userId: id, targetEmail: email }),
+      adminService.callManageUserFunction({ action: 'delete', id, targetEmail: email }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
   });
 

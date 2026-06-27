@@ -1,24 +1,22 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SupabaseChapterRepository } from '@/infrastructure/repositories/SupabaseChapterRepository';
-import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
+import { fetchStories } from '@/services/story.service';
+import { saveChapter } from '@/services/chapter.service';
 import { Chapter } from '@/types/entities';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 
 export function useChapterFormPresenter() {
   const queryClient = useQueryClient();
-  const storyRepo = new SupabaseStoryRepository();
-  const chapterRepo = new SupabaseChapterRepository();
 
   const storiesQuery = useQuery({
     queryKey: ['stories'],
-    queryFn: () => storyRepo.getStories(),
+    queryFn: () => fetchStories(),
     staleTime: 30_000,
   });
 
   const saveChapterMutation = useMutation({
-    mutationFn: (newChapter: Partial<Chapter>) => chapterRepo.saveChapter(newChapter),
+    mutationFn: (newChapter: Partial<Chapter>) => saveChapter(newChapter),
     onMutate: (newChapter) => {
       const title = newChapter.title?.trim() || 'new chapter';
       const toastId = startDbChangeToast(`Creating \"${title}\"...`);

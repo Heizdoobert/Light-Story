@@ -163,21 +163,19 @@ export const OperationsCenterTab: React.FC<OperationsCenterTabProps> = ({ onNavi
 
         <SectionCard
           title="Commerce & Interaction"
-          description="Prepare transactions, VIP plans, promotions, ads, comments, and rating workflows."
+          description="Prepare transactions, promotions, ads, comments, and rating workflows."
           icon={<Coins size={18} />}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <MetricCard label="Ad slots" value={String(totalAdSlots)} description="Monetization configs already in site settings" />
-            <MetricCard label="VIP plans" value="0" description="Schema pending for subscription tiers" />
             <MetricCard label="Promotions" value="0" description="Event/campaign structures pending" />
             <MetricCard label="Comment queues" value="0" description="Moderation schema pending" />
           </div>
           <div className="flex flex-wrap gap-3">
             <ActionButton label="Open Ads" onClick={() => onNavigate('ads')} variant="primary" />
-            <ActionButton label="Prepare VIP" onClick={() => onNavigate('operations')} />
           </div>
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">
-            Transaction, VIP, promo, event, and rating workflows are surfaced here as an operations hub until dedicated schema is added.
+            Transaction, promo, event, and rating workflows are surfaced here as an operations hub until dedicated schema is added.
           </div>
         </SectionCard>
 

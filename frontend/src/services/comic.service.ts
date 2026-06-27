@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/apiClient';
+import { supabase } from '@/infrastructure/supabase/client';
 
 export type ComicContext = {
   id: string;
@@ -34,10 +35,6 @@ type ChapterCreateInput = {
   content: unknown;
 };
 
-type ComicCreateResponse = {
-  comic: ComicContext;
-};
-
 type ChapterCreateResponse = {
   chapter: {
     id: string;
@@ -69,7 +66,7 @@ async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]>
   files.forEach((file) => form.append('file', file));
 
   try {
-    const token = getAccessToken();
+    const token = await getAccessToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     headers['x-r2-bucket'] = bucket;
@@ -80,12 +77,12 @@ async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]>
       body: form,
     });
 
-    const data = (await response.json()) as { urls?: string[]; error?: string };
-    if (!response.ok || data.error) {
+    const body = (await response.json()) as { success?: boolean; data?: { urls?: string[] }; urls?: string[]; error?: { message?: string } };
+    if (!response.ok || (body.success === false)) {
       if (allowDevFallback && process.env.NODE_ENV !== 'production') return toDevUrls();
-      throw new Error(data.error || `HTTP ${response.status}`);
+      throw new Error(body.error?.message || `HTTP ${response.status}`);
     }
-    return data.urls ?? [];
+    return body.data?.urls ?? body.urls ?? [];
   } catch (error) {
     if (allowDevFallback && process.env.NODE_ENV !== 'production') return toDevUrls();
     throw error;
@@ -96,17 +93,24 @@ function getGatewayUrl(): string {
   return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
 }
 
-function getAccessToken(): string | null {
+async function getAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   try {
     const sbKeys = Object.keys(localStorage).filter((k) =>
       k.startsWith('sb-') && k.endsWith('-auth-token'),
     );
-    if (sbKeys.length === 0) return null;
-    const raw = localStorage.getItem(sbKeys[0]);
-    if (!raw) return null;
-    const session = JSON.parse(raw);
-    return session?.access_token ?? null;
+    if (sbKeys.length > 0) {
+      const raw = localStorage.getItem(sbKeys[0]);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session?.access_token) return session.access_token;
+      }
+    }
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token ?? null;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -125,7 +129,7 @@ export async function uploadChapterImages(images: File[]): Promise<string[]> {
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {
-  const data = await apiClient.post<ComicCreateResponse>('/api/comics', {
+  const result = await apiClient.post<any>('/api/comics', {
     title: input.title,
     description: input.description,
     cover_url: input.coverUrl,
@@ -133,18 +137,20 @@ export async function createComic(input: CreateComicInput): Promise<ComicContext
     status: input.status ?? 'ongoing',
     category: input.category ?? [],
   });
-  if (!data.comic) throw new Error('Comic creation succeeded but no comic was returned');
-  return data.comic;
+  const comic = Array.isArray(result) ? result[0] : result.comic;
+  if (!comic) throw new Error('Comic creation succeeded but no comic was returned');
+  return comic;
 }
 
 export async function createComicChapter(input: ChapterCreateInput): Promise<ChapterCreateResponse['chapter']> {
-  const data = await apiClient.post<ChapterCreateResponse>(`/api/comics/${input.comicId}/chapters`, {
+  const result = await apiClient.post<any>(`/api/comics/${input.comicId}/chapters`, {
     storyId: input.storyId,
     tenantKey: input.tenantKey,
     chapterNumber: input.chapterNumber,
     title: input.title,
     content: input.content,
   });
-  if (!data.chapter) throw new Error('Chapter creation succeeded but no chapter was returned');
-  return data.chapter;
+  const chapter = Array.isArray(result) ? result[0] : result.chapter;
+  if (!chapter) throw new Error('Chapter creation succeeded but no chapter was returned');
+  return chapter;
 }

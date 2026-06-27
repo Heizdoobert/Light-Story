@@ -1,56 +1,22 @@
 openapi: "3.1.0"
 info:
-  title: Light Story API (skeleton)
-  version: "0.1.0"
+  title: Light Story API
+  version: "0.2.0"
+  description: |
+    Light Story reading platform API.
+    All endpoints return the standard ApiResponse envelope.
+    Success: { success: true, data: T, timestamp, correlationId? }
+    Error:   { success: false, error: { code, message, details? }, timestamp, correlationId? }
 servers:
   - url: https://api.lightstory.app/api/v1
     description: Production
-  - url: http://localhost:4010/api/v1
+  - url: http://localhost:8787
+    description: Local (via api-gateway)
+  - url: http://localhost:4010
     description: Mock
+
 paths:
-  /comics/{comicId}/chapters:
-    post:
-      summary: Upload a new chapter (skeleton)
-      operationId: createChapter
-      tags:
-        - comics
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: comicId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                title:
-                  type: string
-                pages:
-                  type: string
-                cover:
-                  type: string
-                  format: binary
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    enum: [success]
-                  data:
-                    type: object
-        "401":
-          description: Unauthorized
+  # ── Stories ──────────────────────────────────────────────
   /stories:
     get:
       summary: List or get stories
@@ -59,95 +25,192 @@ paths:
       parameters:
         - name: id
           in: query
-          schema:
-            type: string
+          schema: { type: string }
         - name: page
           in: query
-          schema:
-            type: integer
+          schema: { type: integer, minimum: 1 }
         - name: pageSize
           in: query
+          schema: { type: integer, minimum: 1, maximum: 100 }
+        - name: keyword
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
           schema:
-            type: integer
+            type: string
+            enum: [draft, published, ongoing, completed, archived]
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, oldest, most_viewed]
       responses:
         "200":
-          description: OK
+          description: Story list
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponse_StoryListData"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /stories/{id}:
+    get:
+      summary: Get story detail
+      operationId: getStoryDetail
+      tags: [stories]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Story detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Story"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    post:
+      summary: Create or update a story
+      operationId: manageStory
+      tags: [stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StoryManageRequest"
+      responses:
+        "200":
+          description: Story saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Story"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ── Chapters ─────────────────────────────────────────────
   /chapters:
     get:
-      summary: Get chapters or by story
+      summary: List chapters, optionally filtered by story
       operationId: listChapters
       tags: [chapters]
       parameters:
         - name: id
           in: query
-          schema:
-            type: string
+          schema: { type: string }
         - name: storyId
           in: query
-          schema:
-            type: string
+          schema: { type: string }
       responses:
         "200":
-          description: OK
+          description: Chapter list
           content:
             application/json:
               schema:
-                type: object
+                $ref: "#/components/schemas/ApiResponse_ChapterListData"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /chapters/{id}:
+    get:
+      summary: Get chapter detail
+      operationId: getChapterDetail
+      tags: [chapters]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Chapter detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Chapter"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # ── Taxonomy ─────────────────────────────────────────────
   /taxonomy/categories:
     get:
-      summary: Get categories
+      summary: Get all categories
       operationId: getCategories
       tags: [taxonomy]
       responses:
         "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_CategoryList"
+
+  # ── RPC ──────────────────────────────────────────────────
+  /rpc/like-story:
+    post:
+      summary: Like a story
+      operationId: likeStory
+      tags: [rpc]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RpcLikeStoryRequest"
+      responses:
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-  /rpc/like-story:
-    post:
-      summary: Like a story (RPC)
-      operationId: likeStory
-      tags: [rpc]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                storyId:
-                  type: string
-      responses:
-        "200":
-          description: OK
+                $ref: "#/components/schemas/ApiResponse_Empty"
+
   /rpc/unlike-story:
     post:
-      summary: Unlike a story (RPC)
+      summary: Unlike a story
       operationId: unlikeStory
       tags: [rpc]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                storyId:
-                  type: string
+              $ref: "#/components/schemas/RpcUnlikeStoryRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Empty"
+
   /rpc/increment-story-views:
     post:
-      summary: Increment story views (RPC)
+      summary: Increment story view count
       operationId: incrementStoryViews
       tags: [rpc]
       requestBody:
@@ -155,40 +218,943 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                storyId:
-                  type: string
+              $ref: "#/components/schemas/RpcIncrementViewsRequest"
       responses:
         "200":
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Empty"
+
+  # ── Site Metrics ─────────────────────────────────────────
   /site-metrics:
     get:
-      summary: Site metrics
+      summary: Get site metrics (story count etc.)
       operationId: getSiteMetrics
       tags: [site-metrics]
       responses:
         "200":
-          description: OK
+          description: Site metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_SiteMetrics"
+
   /site-settings:
     get:
-      summary: Site settings
+      summary: Get site settings
       operationId: getSiteSettings
       tags: [system]
       responses:
         "200":
-          description: OK
+          description: Site settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_SiteSettings"
+
+  # ── Role Distribution ────────────────────────────────────
   /role-distribution:
     get:
-      summary: Role distribution
+      summary: Get user role distribution
       operationId: getRoleDistribution
       tags: [system]
       responses:
         "200":
-          description: OK
+          description: Role distribution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_RoleDistribution"
+
+  # ── Admin ────────────────────────────────────────────────
+  /admin/profiles:
+    get:
+      summary: List admin profiles
+      operationId: listAdminProfiles
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin profile list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_AdminProfileList"
+
+  /admin/profiles/{id}:
+    patch:
+      summary: Update admin profile (role, name)
+      operationId: updateAdminProfile
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminProfileUpdateRequest"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Empty"
+
+  /admin/audit-logs:
+    get:
+      summary: List admin audit logs
+      operationId: listAdminAuditLogs
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Audit log list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_AuditLogList"
+    post:
+      summary: Create audit log entry
+      operationId: createAdminAuditLog
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminAuditLogCreateRequest"
+      responses:
+        "200":
+          description: Audit log created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_Empty"
+
+  # ── Analytics ────────────────────────────────────────────
+  /analytics/dashboard:
+    get:
+      summary: Get analytics dashboard data
+      operationId: getAnalyticsDashboard
+      tags: [analytics]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: range
+          in: query
+          schema:
+            type: string
+            enum: [24h, 7d, 30d]
+            default: 7d
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [superadmin, admin, employee]
+            default: admin
+      responses:
+        "200":
+          description: Analytics dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_AnalyticsDashboard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  # ── Auth ─────────────────────────────────────────────────
+  /auth/verify-recovery:
+    post:
+      summary: Verify password recovery token
+      operationId: verifyRecovery
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyRecoveryRequest"
+      responses:
+        "200":
+          description: Recovery token verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiResponse_VerifyRecovery"
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse_ErrorOnly"
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse_ErrorOnly"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse_ErrorOnly"
+
+  schemas:
+    # ── Response Envelope ──────────────────────────────────
+    ApiResponse:
+      type: object
+      required: [success, timestamp]
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the request succeeded
+        data:
+          description: Response payload (present on success)
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+          description: Error details (present on failure)
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+          description: Request correlation ID for tracing
+
+    # Concrete ApiResponse wrappers (avoids complex generics in OpenAPI 3.1)
+    ApiResponse_Empty:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              nullable: true
+
+    ApiResponse_ErrorOnly:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: "#/components/schemas/ApiError"
+        timestamp:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+      required: [success, error, timestamp]
+
+    ApiResponse_Story:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/Story"
+
+    ApiResponse_StoryListData:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Story"
+                total:
+                  type: integer
+
+    ApiResponse_Chapter:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/Chapter"
+
+    ApiResponse_ChapterListData:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Chapter"
+                total:
+                  type: integer
+
+    ApiResponse_CategoryList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: "#/components/schemas/Category"
+
+    ApiResponse_SiteMetrics:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/SiteMetricsResponse"
+
+    ApiResponse_SiteSettings:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                key:
+                  type: string
+                value:
+                  type: string
+
+    ApiResponse_RoleDistribution:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/RoleDistributionResponse"
+
+    ApiResponse_AdminProfileList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AdminProfileListResponse"
+
+    ApiResponse_AuditLogList:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AdminAuditLogListResponse"
+
+    ApiResponse_AnalyticsDashboard:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/AnalyticsDashboardResponse"
+
+    ApiResponse_VerifyRecovery:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponse"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/VerifyRecoveryResponse"
+
+    # ── Error ──────────────────────────────────────────────
+    ApiError:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Machine-readable error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error context
+
+    # ── Entities ───────────────────────────────────────────
+    Story:
+      type: object
+      required: [id, title, author, description, cover_url, category, status, views, created_at]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        author_id:
+          type: string
+          nullable: true
+        description:
+          type: string
+        cover_url:
+          type: string
+          format: uri
+        category:
+          type: string
+        category_id:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [draft, published, ongoing, completed, archived]
+        views:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    Chapter:
+      type: object
+      required: [id, story_id, chapter_number, title, content, created_at]
+      properties:
+        id:
+          type: string
+        story_id:
+          type: string
+        chapter_number:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Author:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        bio:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SiteSetting:
+      type: object
+      required: [id, key, value]
+      properties:
+        id:
+          type: integer
+        key:
+          type: string
+        value:
+          type: string
+
+    # ── Story DTOs ─────────────────────────────────────────
+    StoryListRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        keyword:
+          type: string
+        status:
+          type: string
+          enum: [all, draft, published, ongoing, completed, archived]
+        sort:
+          type: string
+          enum: [newest, oldest, most_viewed]
+
+    StoryCreateUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        author_id:
+          type: string
+        author:
+          type: string
+        category:
+          type: string
+        cover_url:
+          type: string
+        status:
+          type: string
+          enum: [draft, published, ongoing, completed, archived]
+
+    StoryManageRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [create, update, delete, bulkUpdateStatus, bulkDelete]
+        story:
+          $ref: "#/components/schemas/StoryCreateUpdateRequest"
+        id:
+          type: string
+        ids:
+          type: array
+          items:
+            type: string
+        payload:
+          $ref: "#/components/schemas/StoryCreateUpdateRequest"
+        status:
+          type: string
+          enum: [draft, published, ongoing, completed, archived]
+
+    # ── Chapter DTOs ───────────────────────────────────────
+    ChapterListRequest:
+      type: object
+      properties:
+        storyId:
+          type: string
+
+    ChapterCreateUpdateRequest:
+      type: object
+      properties:
+        story_id:
+          type: string
+        chapter_number:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+
+    ChapterManageRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [create, update, delete]
+        chapter:
+          $ref: "#/components/schemas/ChapterCreateUpdateRequest"
+        id:
+          type: string
+
+    # ── Taxonomy DTOs ──────────────────────────────────────
+    TaxonomyCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    TaxonomyUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+
+    TaxonomyManageRequest:
+      type: object
+      required: [entity, action]
+      properties:
+        entity:
+          type: string
+          enum: [category, author]
+        action:
+          type: string
+          enum: [create, update, delete]
+        id:
+          type: string
+        payload:
+          oneOf:
+            - $ref: "#/components/schemas/TaxonomyCreateRequest"
+            - $ref: "#/components/schemas/TaxonomyUpdateRequest"
+
+    # ── Admin DTOs ─────────────────────────────────────────
+    AdminProfileDto:
+      type: object
+      required: [id, email, role]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+
+    AdminProfileListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminProfileDto"
+
+    AdminProfileUpdateRequest:
+      type: object
+      required: [action, id]
+      properties:
+        action:
+          type: string
+          enum: [updateRole, updateName]
+        id:
+          type: string
+        role:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+
+    AdminAuditLogDto:
+      type: object
+      required: [id, user_id, action, created_at]
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        action:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+
+    AdminAuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminAuditLogDto"
+
+    AdminAuditLogCreateRequest:
+      type: object
+      required: [user_id, action]
+      properties:
+        user_id:
+          type: string
+        action:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+
+    # ── RPC DTOs ───────────────────────────────────────────
+    RpcLikeStoryRequest:
+      type: object
+      required: [storyId]
+      properties:
+        storyId:
+          type: string
+
+    RpcUnlikeStoryRequest:
+      type: object
+      required: [storyId]
+      properties:
+        storyId:
+          type: string
+
+    RpcIncrementViewsRequest:
+      type: object
+      required: [storyId]
+      properties:
+        storyId:
+          type: string
+
+    # ── Metrics DTOs ───────────────────────────────────────
+    SiteMetricsResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+
+    RoleDistributionItem:
+      type: object
+      properties:
+        role:
+          type: string
+        total:
+          type: integer
+
+    RoleDistributionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleDistributionItem"
+
+    # ── Auth DTOs ──────────────────────────────────────────
+    VerifyRecoveryRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+
+    VerifyRecoveryResponse:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        email:
+          type: string
+
+    # ── Analytics Types ────────────────────────────────────
+    AnalyticsDashboardResponse:
+      type: object
+      properties:
+        meta:
+          $ref: "#/components/schemas/AnalyticsMeta"
+        user_engagement:
+          $ref: "#/components/schemas/UserEngagementMetrics"
+        content_performance:
+          $ref: "#/components/schemas/ContentPerformanceMetrics"
+        infrastructure:
+          $ref: "#/components/schemas/InfrastructureMetrics"
+        trends:
+          type: object
+          properties:
+            user_growth:
+              type: array
+              items:
+                $ref: "#/components/schemas/AnalyticsTrendPoint"
+            traffic:
+              type: array
+              items:
+                $ref: "#/components/schemas/AnalyticsTrendPoint"
+            storage:
+              type: array
+              items:
+                $ref: "#/components/schemas/AnalyticsTrendPoint"
+
+    AnalyticsMeta:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        range:
+          type: string
+          enum: [24h, 7d, 30d]
+        role:
+          type: string
+          enum: [superadmin, admin, employee]
+        cached:
+          type: boolean
+        restricted:
+          type: boolean
+        source_health:
+          type: object
+          properties:
+            supabase:
+              $ref: "#/components/schemas/AnalyticsSourceHealth"
+            cloudflare:
+              $ref: "#/components/schemas/AnalyticsSourceHealth"
+
+    AnalyticsSourceHealth:
+      type: string
+      enum: [ready, degraded, unavailable]
+
+    UserEngagementMetrics:
+      type: object
+      properties:
+        total_users:
+          type: integer
+        new_users:
+          type: integer
+        active_users:
+          type: integer
+        total_views:
+          type: integer
+        total_favorites:
+          type: integer
+        growth_rate_pct:
+          type: number
+          format: float
+        churn_rate_pct:
+          type: number
+          format: float
+        avg_session_duration_minutes:
+          type: number
+          format: float
+
+    TopChapterMetric:
+      type: object
+      properties:
+        chapter_id:
+          type: string
+        story_id:
+          type: string
+        title:
+          type: string
+        chapter_number:
+          type: integer
+        views:
+          type: integer
+        favorites:
+          type: integer
+        engagement_score:
+          type: number
+          format: float
+        growth_rate_pct:
+          type: number
+          format: float
+
+    ContentPerformanceMetrics:
+      type: object
+      properties:
+        total_views:
+          type: integer
+        total_favorites:
+          type: integer
+        avg_views_per_chapter:
+          type: number
+          format: float
+        engagement_score:
+          type: number
+          format: float
+        top_chapters:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopChapterMetric"
+
+    InfrastructureMetrics:
+      type: object
+      properties:
+        r2_usage_gb:
+          type: number
+          format: float
+        r2_allocated_gb:
+          type: number
+          format: float
+        r2_object_count:
+          type: integer
+        r2_egress_gb:
+          type: number
+          format: float
+        d1_queries_count:
+          type: integer
+        d1_avg_latency_ms:
+          type: number
+          format: float
+        page_views:
+          type: integer
+        bandwidth_gb:
+          type: number
+          format: float
+        cache_hit_ratio_pct:
+          type: number
+          format: float
+        storage_efficiency_pct:
+          type: number
+          format: float
+        device_mobile:
+          type: integer
+        device_desktop:
+          type: integer
+        device_tablet:
+          type: integer
+        top_zones:
+          type: array
+          items:
+            type: object
+            properties:
+              zone:
+                type: string
+              requests:
+                type: integer
+              cache_hit_ratio_pct:
+                type: number
+                format: float
+
+    AnalyticsTrendPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        label:
+          type: string

@@ -44,11 +44,13 @@ export const AdminAuditLogsTab: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {(logsQuery.data ?? []).map((log) => {
-                  const actor = log.actor_user_id ? actorMap.get(log.actor_user_id) : null;
-                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.actor_user_id || 'Unknown';
+                  const actor = log.user_id ? actorMap.get(log.user_id) : null;
+                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.user_id || 'Unknown';
                   const metadataText = log.metadata && Object.keys(log.metadata).length > 0
                     ? JSON.stringify(log.metadata)
                     : '-';
+                  const targetEmail = log.metadata?.target_email as string | undefined;
+                  const targetDisplay = targetEmail || (log.entity_id as string) || '-';
 
                   return (
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
@@ -59,7 +61,7 @@ export const AdminAuditLogsTab: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-6 py-3 text-slate-700 dark:text-slate-300">{actorDisplay}</td>
-                      <td className="px-6 py-3 text-slate-700 dark:text-slate-300">{log.target_email || log.target_user_id || '-'}</td>
+                      <td className="px-6 py-3 text-slate-700 dark:text-slate-300">{targetDisplay}</td>
                       <td className="px-6 py-3 text-slate-500 dark:text-slate-400 max-w-[420px] truncate" title={metadataText}>{metadataText}</td>
                     </tr>
                   );

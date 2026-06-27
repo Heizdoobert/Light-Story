@@ -23,8 +23,7 @@ const slotKeyByPosition: Record<AdRendererProps['position'], AdSlotKey> = {
 };
 
 const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => {
-  const result = await apiClient.get<{ data?: SiteSettingItem[] }>('/api/admin/site-settings?scope=public');
-  return result.data ?? [];
+  return apiClient.get<SiteSettingItem[]>('/api/admin/site-settings?scope=public');
 };
 
 const injectMarkup = (container: HTMLDivElement, markup: string): void => {

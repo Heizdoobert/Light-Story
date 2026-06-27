@@ -7,7 +7,7 @@ export interface Story {
   cover_url: string;
   category: string;
   category_id?: string | null;
-  status: 'ongoing' | 'completed';
+  status: 'draft' | 'published' | 'ongoing' | 'completed' | 'archived';
   views: number;
   created_at: string;
 }

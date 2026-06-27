@@ -1,0 +1,20 @@
+{
+  "name": "recruitment-agent",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-12",
+  "compatibility_flags": ["nodejs_compat"],
+  "durable_objects": {
+    "bindings": [
+      { "name": "RecruitmentAgent", "class_name": "RecruitmentAgent" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RecruitmentAgent"] }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "send_email": [
+    { "name": "SEND_EMAIL_BINDING" }
+  ]
+}

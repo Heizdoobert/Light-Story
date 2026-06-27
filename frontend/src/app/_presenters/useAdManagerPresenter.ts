@@ -4,8 +4,7 @@ import { apiClient } from '@/lib/apiClient';
 export type AdSettingItem = { key: string; value: unknown };
 
 async function fetchAdConfigs() {
-  const result = await apiClient.get<{ data?: AdSettingItem[] }>('/api/admin/site-settings?scope=admin');
-  return result.data ?? [];
+  return apiClient.get<AdSettingItem[]>('/api/admin/site-settings?scope=admin');
 }
 
 async function postAdConfig(key: string, value: unknown) {

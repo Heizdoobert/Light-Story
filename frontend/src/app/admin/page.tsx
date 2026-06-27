@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
+import { RoleProtectedRoute } from '@/components/shared/RoleProtectedRoute';
 
 // Lazy-load admin dashboard to prevent bloating client bundle
 // Non-admin users won't download this code
@@ -19,14 +20,16 @@ const AdminDashboard = dynamic(
 
 export default function AdminPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }
-    >
-      <AdminDashboard />
-    </Suspense>
+    <RoleProtectedRoute allowedRoles={['superadmin', 'admin', 'employee']}>
+      <Suspense
+        fallback={
+          <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        }
+      >
+        <AdminDashboard />
+      </Suspense>
+    </RoleProtectedRoute>
   );
 }

@@ -13,7 +13,7 @@ export function useAuditLogsPresenter() {
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
     for (const row of logsQuery.data ?? []) {
-      if (row.actor_user_id) ids.add(row.actor_user_id);
+      if (row.user_id) ids.add(row.user_id);
     }
     return Array.from(ids);
   }, [logsQuery.data]);

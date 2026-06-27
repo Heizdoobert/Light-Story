@@ -39,7 +39,7 @@ Canonical reference for all Supabase PostgreSQL tables, relationships, RLS polic
 | `description` | `text` | |
 | `cover_url` | `text` | |
 | `category` | `text` | |
-| `status` | `text` | NOT NULL DEFAULT 'ongoing' CHECK (`draft`, `ongoing`, `completed`, `archived`) |
+| `status` | `text` | NOT NULL DEFAULT 'ongoing' CHECK (`draft`, `published`, `ongoing`, `completed`, `archived`) |
 | `views` | `bigint` | NOT NULL DEFAULT 0 |
 | `like_count` | `bigint` | NOT NULL DEFAULT 0 |
 | `created_by` | `uuid` | → `profiles(id)` |
@@ -64,7 +64,7 @@ Canonical reference for all Supabase PostgreSQL tables, relationships, RLS polic
 
 **Indexes:** `idx_chapters_story_id`, `idx_chapters_story_chapter_number`
 **Triggers:** `trg_chapters_updated_at`
-**RLS:** `chapters_select_public_or_staff` (public if story is public), `chapters_write_staff`
+**RLS:** `chapters_select_published` (story status = 'published'), staff write
 
 ### `story_likes`
 | Column | Type | Constraints |
@@ -111,19 +111,19 @@ Canonical reference for all Supabase PostgreSQL tables, relationships, RLS polic
 
 ## Admin & Operations
 
-### `admin_audit_logs`
+### `audit_logs`
 | Column | Type | Constraints |
 |---|---|---|
-| `id` | `uuid` | PK DEFAULT gen_random_uuid() |
-| `actor_user_id` | `uuid` | |
-| `action` | `text` | NOT NULL CHECK (`user_create`, `user_delete`) |
-| `target_user_id` | `uuid` | |
-| `target_email` | `text` | |
+| `id` | `bigint` | PK GENERATED ALWAYS AS IDENTITY |
+| `user_id` | `uuid` | NOT NULL → `profiles(id)` |
+| `action` | `text` | NOT NULL |
+| `entity_type` | `text` | NOT NULL |
+| `entity_id` | `uuid` | → stories/chapters/etc |
+| `ip_address` | `inet` | |
 | `metadata` | `jsonb` | NOT NULL DEFAULT '{}' |
 | `created_at` | `timestamptz` | NOT NULL DEFAULT now() |
 
-**Indexes:** `idx_admin_audit_logs_actor_user_id`, `idx_admin_audit_logs_created_at`
-**RLS:** superadmin-only select + insert
+**RLS:** admin+ select + insert
 
 ### `collections`
 Story groupings for curated lists.
@@ -191,12 +191,6 @@ External content source tracking.
 
 ## Monetization
 
-### `vip_plans`
-- `id` (uuid PK), `code` (text UNIQUE), `name`, `description`, `price` (numeric(12,2)), `billing_period` (daily/weekly/monthly/yearly), `is_active`, timestamps
-
-### `vip_subscriptions`
-- `id`, `user_id` → profiles, `plan_id` → vip_plans, `status` (active/paused/canceled/expired), `started_at`, `ends_at`, timestamps
-
 ### `promotions`
 Discount codes: `code`, `title`, `discount_type` (percent/fixed), `discount_value`, date range, `is_active`
 
@@ -218,13 +212,13 @@ Time-limited events: `slug` (UNIQUE), `title`, `starts_at`, `ends_at`, `status` 
 | `title` | `text` | NOT NULL |
 | `summary` | `text` | |
 | `cover_url` | `text` | |
-| `status` | `text` | NOT NULL DEFAULT 'draft' (draft/published/archived) |
+| `status` | `text` | NOT NULL DEFAULT 'draft' (draft/published/ongoing/completed/archived) |
 | `author_id` | `uuid` | → `profiles(id)` ON DELETE SET NULL |
 | `search_vector` | `vector(1536)` | pgvector embedding for semantic search |
 | timestamps | | |
 
 **Indexes:** `idx_stories_search_vector` (ivfflat, cosine_ops, lists=100)
-**RLS:** `read_published_stories` (status = 'published')
+**RLS:** `stories_select_public_or_staff` (published/ongoing/completed public, all staff)
 
 ### `chapters` (Comic Platform)
 | Column | Type | Constraints |
@@ -234,13 +228,11 @@ Time-limited events: `slug` (UNIQUE), `title`, `starts_at`, `ends_at`, `status` 
 | `chapter_number` | `integer` | NOT NULL, UNIQUE(story_id, chapter_number) |
 | `title` | `text` | NOT NULL |
 | `content` | `text` | |
-| `vip_content` | `boolean` | NOT NULL DEFAULT false |
 | `published_at` | `timestamptz` | |
 | timestamps | | |
 
 **RLS:**
-- `read_free_chapters`: VIP=false AND story is published
-- `read_vip_chapters_premium_admin`: VIP=true AND role IN (premium, admin, superadmin)
+- `chapters_select_published`: story status = published
 
 ## Analytics
 
@@ -258,9 +250,7 @@ Cached analytics data for dashboard.
 | `app_private.has_role(text[])` | Various | Check if current user has any of the given roles |
 | `public.is_superadmin(uuid)` | `202605110002_add_superadmin_helpers.sql` | Fast-path superadmin check |
 | `public.is_admin_or_higher(uuid)` | `202605110002_add_superadmin_helpers.sql` | admin OR superadmin |
-| `public.is_premium_or_higher(uuid)` | `202605110002_add_superadmin_helpers.sql` | premium OR admin OR superadmin |
 | `public.user_has_role(uuid, text)` | `202605110001_security_hardening_comments_ratings.sql` | Check specific role |
-| `public.user_has_premium(uuid)` | `202605110001_security_hardening_comments_ratings.sql` | Check premium+ |
 | `public.can_read_chapter(uuid, uuid)` | `202605110001_security_hardening_comments_ratings.sql` | IDOR protection for chapter access |
 | `app_private.set_user_role(uuid, text)` | `202604200001_mvp_init.sql` | Superadmin-only role change |
 
@@ -329,22 +319,19 @@ auth.users
        ├─ comments.user_id → profiles.id (ON DELETE CASCADE)
        ├─ ratings.story_id → stories.id
        ├─ ratings.user_id → profiles.id
-       ├─ vip_subscriptions.user_id → profiles.id
-       ├─ vip_subscriptions.plan_id → vip_plans.id
-       ├─ transactions.user_id → profiles.id
-       └─ moderation_queue.story_id/chapter_id → stories/chapters
+        ├─ transactions.user_id → profiles.id
+        └─ moderation_queue.story_id/chapter_id → stories/chapters
 ```
 
 ## Role-Based Access Control
 
-| Role | Stories (read) | Chapters (read) | VIP Content | Comments | Admin Panels |
+| Role | Stories (read) | Chapters (read) | Comments | Admin Panels |
 |---|---|---|---|---|---|
-| anonymous | Published only | Free only | — | — | — |
-| user | Published only | Free only | — | Own CRUD | — |
-| premium | Published only | Free + VIP | ✅ | Own CRUD | — |
-| employee | All | All | ✅ | Own CRUD | Limited |
-| admin | All | All | ✅ | All CRUD | Full |
-| superadmin | All | All | ✅ | All CRUD | Full (bypass) |
+| anonymous | Published only | Published only | — | — |
+| user | Published only | Published only | Own CRUD | — |
+| employee | All | All | Own CRUD | Limited |
+| admin | All | All | All CRUD | Full |
+| superadmin | All | All | All CRUD | Full (bypass) |
 
 ## D1 Database Schemas (Workers)
 
