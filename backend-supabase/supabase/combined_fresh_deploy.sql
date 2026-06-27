@@ -11,8 +11,7 @@ drop table if exists public.comments cascade;
 drop table if exists public.transactions cascade;
 drop table if exists public.events cascade;
 drop table if exists public.promotions cascade;
-drop table if exists public.vip_subscriptions cascade;
-drop table if exists public.vip_plans cascade;
+
 drop table if exists public.crawler_runs cascade;
 drop table if exists public.crawler_sources cascade;
 drop table if exists public.moderation_queue cascade;
@@ -44,10 +43,8 @@ drop function if exists public.can_read_chapter(uuid, uuid);
 drop function if exists public.increment_story_views(uuid);
 drop function if exists public.toggle_story_like(uuid);
 drop function if exists public.user_has_role(uuid, text);
-drop function if exists public.user_has_premium(uuid);
 drop function if exists public.is_superadmin(uuid);
 drop function if exists public.is_admin_or_higher(uuid);
-drop function if exists public.is_premium_or_higher(uuid);
 drop function if exists public.touch_updated_at();
 
 -- 1. EXTENSIONS
@@ -74,7 +71,7 @@ create table if not exists public.profiles (
   email text unique not null,
   full_name text,
   avatar_url text,
-  role text not null default 'user' check (role in ('superadmin', 'admin', 'employee', 'premium', 'user')),
+  role text not null default 'user' check (role in ('superadmin', 'admin', 'employee', 'user')),
   created_at timestamptz not null default timezone('utc'::text, now()),
   updated_at timestamptz not null default timezone('utc'::text, now())
 );
@@ -101,11 +98,6 @@ returns boolean language sql stable as $$
   select exists(select 1 from public.profiles p where p.id = uid and p.role = role_name);
 $$;
 
-create or replace function public.user_has_premium(uid uuid)
-returns boolean language sql stable as $$
-  select exists(select 1 from public.profiles p where p.id = uid and p.role in ('premium', 'admin', 'superadmin'));
-$$;
-
 create or replace function public.is_superadmin(uid uuid)
 returns boolean language sql stable as $$
   select exists(select 1 from public.profiles p where p.id = uid and p.role = 'superadmin');
@@ -114,11 +106,6 @@ $$;
 create or replace function public.is_admin_or_higher(uid uuid)
 returns boolean language sql stable as $$
   select exists(select 1 from public.profiles p where p.id = uid and p.role in ('admin', 'superadmin'));
-$$;
-
-create or replace function public.is_premium_or_higher(uid uuid)
-returns boolean language sql stable as $$
-  select exists(select 1 from public.profiles p where p.id = uid and p.role in ('premium', 'admin', 'superadmin'));
 $$;
 
 create or replace function app_private.handle_new_user()
@@ -167,7 +154,7 @@ create table if not exists public.stories (
   summary text,
   description text,
   cover_url text,
-  status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
+  status text not null default 'draft' check (status in ('draft', 'published', 'ongoing', 'completed', 'archived')),
   author_id uuid references public.profiles(id) on delete set null,
   author text,
   category text,
@@ -192,7 +179,7 @@ create table if not exists public.chapters (
   chapter_number integer not null check (chapter_number > 0),
   title text not null,
   content text,
-  vip_content boolean not null default false,
+
   published_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -301,32 +288,7 @@ create table if not exists public.crawler_runs (
 );
 create index if not exists idx_crawler_runs_source_id on public.crawler_runs(source_id);
 
--- 15. VIP PLANS & SUBSCRIPTIONS
-create table if not exists public.vip_plans (
-  id uuid primary key default gen_random_uuid(),
-  code text not null unique,
-  name text not null,
-  description text,
-  price numeric(12,2) not null default 0,
-  billing_period text not null default 'monthly' check (billing_period in ('daily', 'weekly', 'monthly', 'yearly')),
-  is_active boolean not null default true,
-  created_at timestamptz not null default timezone('utc'::text, now()),
-  updated_at timestamptz not null default timezone('utc'::text, now())
-);
-
-create table if not exists public.vip_subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.profiles(id) on delete cascade,
-  plan_id uuid not null references public.vip_plans(id),
-  status text not null default 'active' check (status in ('active', 'paused', 'canceled', 'expired')),
-  started_at timestamptz not null default timezone('utc'::text, now()),
-  ends_at timestamptz,
-  created_at timestamptz not null default timezone('utc'::text, now()),
-  updated_at timestamptz not null default timezone('utc'::text, now())
-);
-create index if not exists idx_vip_subscriptions_user_id on public.vip_subscriptions(user_id);
-
--- 16. PROMOTIONS
+-- 15. PROMOTIONS
 create table if not exists public.promotions (
   id uuid primary key default gen_random_uuid(),
   code text not null unique,
@@ -534,7 +496,7 @@ begin
   if caller_role is distinct from 'superadmin' then
     raise exception 'Only superadmin can change roles';
   end if;
-  if new_role not in ('superadmin', 'admin', 'employee', 'premium', 'user') then
+  if new_role not in ('superadmin', 'admin', 'employee', 'user') then
     raise exception 'Invalid role value';
   end if;
   update public.profiles
@@ -543,18 +505,14 @@ begin
 end;
 $$;
 
--- can_read_chapter (IDOR protection)
+-- can_read_chapter (IDOR protection) - all published chapters readable
 create or replace function public.can_read_chapter(_chapter_id uuid, _uid uuid)
 returns boolean language sql stable as $$
-  select case
-    when (select vip_content from public.chapters where id = _chapter_id) = false then
-      exists (
-        select 1 from public.chapters c
-        join public.stories s on s.id = c.story_id
-        where c.id = _chapter_id and s.status = 'published'
-      )
-    else public.user_has_premium(_uid)
-  end;
+  select exists (
+    select 1 from public.chapters c
+    join public.stories s on s.id = c.story_id
+    where c.id = _chapter_id and s.status = 'published'
+  );
 $$;
 
 -- search_stories (pgvector semantic search)
@@ -772,8 +730,7 @@ alter table public.collection_stories enable row level security;
 alter table public.moderation_queue enable row level security;
 alter table public.crawler_sources enable row level security;
 alter table public.crawler_runs enable row level security;
-alter table public.vip_plans enable row level security;
-alter table public.vip_subscriptions enable row level security;
+
 alter table public.promotions enable row level security;
 alter table public.events enable row level security;
 alter table public.transactions enable row level security;
@@ -807,33 +764,26 @@ create policy "categories_write_staff" on public.categories for all to authentic
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
 with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]));
 
--- Stories: V2 RLS — published readable, staff write
+-- Stories: V2 RLS — published + ongoing readable, staff write
 drop policy if exists "stories_select_public_or_staff" on public.stories;
 drop policy if exists "stories_write_staff" on public.stories;
 drop policy if exists "read_published_stories" on public.stories;
 create policy "read_published_stories" on public.stories for select
-using (status = 'published');
+using (status in ('published', 'ongoing', 'completed'));
 create policy "stories_write_staff" on public.stories for all
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
 with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]));
 
--- Chapters: V2 RLS — free chapters public, vip chapters premium+ only, staff write
+-- Chapters: V2 RLS — published chapters public, staff write
 drop policy if exists "chapters_select_public_or_staff" on public.chapters;
 drop policy if exists "chapters_write_staff" on public.chapters;
 drop policy if exists "read_free_chapters" on public.chapters;
-drop policy if exists "read_vip_chapters_premium_admin" on public.chapters;
-create policy "read_free_chapters" on public.chapters for select
+create policy "chapters_select_published" on public.chapters for select
 using (
-  vip_content = false
-  and exists (
+  exists (
     select 1 from public.stories s
     where s.id = public.chapters.story_id and s.status = 'published'
   )
-);
-create policy "read_vip_chapters_premium_admin" on public.chapters for select
-using (
-  vip_content = true
-  and app_private.has_role(array['premium', 'admin', 'superadmin']::text[])
 );
 create policy "chapters_write_staff" on public.chapters for all
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
@@ -900,23 +850,6 @@ with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[
 create policy "crawler_runs_staff" on public.crawler_runs for all
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
 with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]));
-
--- VIP plans: public select, admin write
-drop policy if exists "vip_plans_select_public" on public.vip_plans;
-drop policy if exists "vip_plans_write_staff" on public.vip_plans;
-create policy "vip_plans_select_public" on public.vip_plans for select using (true);
-create policy "vip_plans_write_staff" on public.vip_plans for all
-using (app_private.has_role(array['superadmin', 'admin']::text[]))
-with check (app_private.has_role(array['superadmin', 'admin']::text[]));
-
--- VIP subscriptions: own or admin select, staff write
-drop policy if exists "vip_subscriptions_select_own_or_staff" on public.vip_subscriptions;
-drop policy if exists "vip_subscriptions_write_staff" on public.vip_subscriptions;
-create policy "vip_subscriptions_select_own_or_staff" on public.vip_subscriptions for select
-using (user_id = auth.uid() or app_private.has_role(array['superadmin', 'admin']::text[]));
-create policy "vip_subscriptions_write_staff" on public.vip_subscriptions for all
-using (app_private.has_role(array['superadmin', 'admin']::text[]))
-with check (app_private.has_role(array['superadmin', 'admin']::text[]));
 
 -- Promotions: public select, admin write
 drop policy if exists "promotions_select_public" on public.promotions;
@@ -1024,12 +957,7 @@ for each row execute function public.touch_updated_at();
 drop trigger if exists touch_crawler_runs_updated_at on public.crawler_runs;
 create trigger touch_crawler_runs_updated_at before update on public.crawler_runs
 for each row execute function public.touch_updated_at();
-drop trigger if exists touch_vip_plans_updated_at on public.vip_plans;
-create trigger touch_vip_plans_updated_at before update on public.vip_plans
-for each row execute function public.touch_updated_at();
-drop trigger if exists touch_vip_subscriptions_updated_at on public.vip_subscriptions;
-create trigger touch_vip_subscriptions_updated_at before update on public.vip_subscriptions
-for each row execute function public.touch_updated_at();
+
 drop trigger if exists touch_promotions_updated_at on public.promotions;
 create trigger touch_promotions_updated_at before update on public.promotions
 for each row execute function public.touch_updated_at();

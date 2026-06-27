@@ -52,6 +52,10 @@ const TIME_RANGE_DAYS: Record<AnalyticsTimeRange, number> = {
   '30d': 30,
 };
 
+function computeEngagementScore(views: number, favorites: number): number {
+  return round(views * 1.0 + favorites * 5.0);
+}
+
 function createEmptyUserEngagement(): UserEngagementMetrics {
   return {
     total_users: 0,
@@ -112,30 +116,13 @@ function computeEfficiency(usedGb: number, allocatedGb: number): number {
   return round((usedGb / allocatedGb) * 100);
 }
 
-async function fetchWorkerAnalytics(range: AnalyticsTimeRange, role: AnalyticsRole): Promise<WorkerAnalyticsPayload | null> {
-  const workerUrl = process.env.CLOUDFLARE_ANALYTICS_WORKER_URL;
-  if (!workerUrl) return null;
-
-  const url = new URL(workerUrl);
-  url.searchParams.set('range', range);
-  url.searchParams.set('role', role);
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 3500);
-
+async function fetchWorkerAnalytics(_range: AnalyticsTimeRange, _role: AnalyticsRole): Promise<WorkerAnalyticsPayload | null> {
   try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      signal: controller.signal,
-      cache: 'no-store',
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as WorkerAnalyticsPayload;
+    const inf = await apiClient.get<any>('/api/analytics/infrastructure');
+    if (!inf) return null;
+    return { infrastructure: inf, source_health: { cloudflare: 'ready' } };
   } catch {
     return null;
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
@@ -163,7 +150,7 @@ function normalizeInfrastructure(metrics: Partial<InfrastructureMetrics> | null 
   return next;
 }
 
-async function fetchReadOnlySupabaseMetrics(): Promise<{
+async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<{
   userEngagement: UserEngagementMetrics;
   contentPerformance: ContentPerformanceMetrics;
   trendData: {
@@ -172,35 +159,51 @@ async function fetchReadOnlySupabaseMetrics(): Promise<{
     storage: Array<{ timestamp: string; value: number; label: string }>;
   };
 }> {
+  const timeRangeStr = range;
   try {
-    const [engagementData, signupTrendData, topChaptersData] = await Promise.all([
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_user_engagement_summary', { p_time_range: '7d' }).catch(() => null),
+    const [engagementData, signupTrendData, topChaptersData, totalViewsData, totalFavoritesData] = await Promise.all([
+      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_user_engagement_summary', { p_days_back: 7 }).catch(() => null),
       apiClient.post<any>('/api/supabase/rest/v1/rpc/get_signup_trend', { p_days_back: 30 }).catch(() => null),
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_top_chapters_by_reads', { p_limit: 5, p_time_range: '7d' }).catch(() => null),
+      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_top_chapters_by_reads', { p_limit: 5, p_time_range: timeRangeStr }).catch(() => null),
+      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_total_views', { p_time_range: timeRangeStr }).catch(() => null),
+      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_total_favorites', {}).catch(() => null),
     ]);
+
+    const totalViews = toNumber(totalViewsData ?? 0);
+    const totalFavorites = toNumber(totalFavoritesData ?? 0);
 
     const userEngagement: UserEngagementMetrics = {
       total_users: toNumber(engagementData?.mau ?? 0),
       new_users: toNumber(engagementData?.new_signups ?? 0),
       active_users: toNumber(engagementData?.dau ?? 0),
-      total_views: 0,
-      total_favorites: 0,
+      total_views: totalViews,
+      total_favorites: totalFavorites,
       growth_rate_pct: toNumber(engagementData?.dau_change ?? 0),
       churn_rate_pct: toNumber(engagementData?.churn_rate_pct ?? 0),
-      avg_session_duration_minutes: 0,
+      avg_session_duration_minutes: totalViews > 0 && toNumber(engagementData?.dau ?? 0) > 0 ? round(totalViews / toNumber(engagementData?.dau ?? 0)) : 0,
     };
 
+    const rawChapters = Array.isArray(topChaptersData) ? topChaptersData : [];
+    const topChapters = rawChapters.map((ch: any) => ({
+      chapter_id: ch.chapter_id || '',
+      story_id: ch.story_id || '',
+      title: ch.story_title || ch.chapter_title || '',
+      chapter_number: toNumber(ch.chapter_number),
+      views: toNumber(ch.read_count ?? 0),
+      favorites: toNumber(ch.favorite_count ?? 0),
+      engagement_score: computeEngagementScore(toNumber(ch.read_count ?? 0), toNumber(ch.favorite_count ?? 0)),
+      growth_rate_pct: 0,
+    }));
+
+    const chViews = topChapters.reduce((s, c) => s + c.views, 0);
+    const chFavs = topChapters.reduce((s, c) => s + c.favorites, 0);
+
     const contentPerformance: ContentPerformanceMetrics = {
-      total_views: 0,
-      total_favorites: 0,
-      avg_views_per_chapter: 0,
-      engagement_score: 0,
-      top_chapters: (topChaptersData || []).map((ch: any) => ({
-        chapter_id: ch.chapter_id,
-        story_title: ch.story_title,
-        chapter_number: ch.chapter_number,
-        read_count: toNumber(ch.read_count),
-      })),
+      total_views: chViews > 0 ? chViews : totalViews,
+      total_favorites: chFavs > 0 ? chFavs : totalFavorites,
+      avg_views_per_chapter: topChapters.length > 0 ? round(chViews / topChapters.length) : 0,
+      engagement_score: computeEngagementScore(chViews || totalViews, chFavs || totalFavorites),
+      top_chapters: topChapters,
     };
 
     const trendData = {
@@ -263,7 +266,7 @@ export async function getAnalyticsDashboardData(params: {
   const now = new Date();
   const workerResult = await fetchWorkerAnalytics(range, role);
 
-  const { userEngagement, contentPerformance, trendData } = await fetchReadOnlySupabaseMetrics();
+  const { userEngagement, contentPerformance, trendData } = await fetchReadOnlySupabaseMetrics(range);
   const infrastructure = normalizeInfrastructure(workerResult?.infrastructure ?? DEFAULT_INFRASTRUCTURE);
   const restricted = applyRoleRestrictions(role, userEngagement, contentPerformance, infrastructure);
 
@@ -275,7 +278,7 @@ export async function getAnalyticsDashboardData(params: {
       cached: false,
       restricted: restricted.restricted,
       source_health: {
-        supabase: 'ready',
+        supabase: userEngagement.total_users > 0 || contentPerformance.top_chapters.length > 0 ? 'ready' : 'degraded',
         cloudflare: workerResult?.infrastructure ? 'ready' : 'degraded',
       },
       time_window: {

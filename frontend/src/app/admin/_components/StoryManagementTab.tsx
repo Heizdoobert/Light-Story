@@ -5,7 +5,7 @@ import { Story } from '@/types/entities';
 import { getErrorMessage } from '@/lib/errorUtils';
 import { useStoryManagementPresenter } from '@/hooks/useStoryManagementPresenter';
 
-type StatusFilter = 'all' | 'ongoing' | 'completed';
+type StatusFilter = 'all' | 'draft' | 'published' | 'ongoing' | 'completed';
 type SortMode = 'newest' | 'oldest' | 'most_viewed';
 type StoryStatus = Story['status'];
 
@@ -25,7 +25,7 @@ export const StoryManagementTab: React.FC = () => {
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [page, setPage] = useState(1);
   const { role } = useAuth();
-  const canManageStories = role === 'superadmin' || role === 'admin';
+  const canManageStories = role === 'superadmin' || role === 'admin' || role === 'employee';
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingStory, setEditingStory] = useState<StoryEditForm | null>(null);
 
@@ -146,6 +146,8 @@ export const StoryManagementTab: React.FC = () => {
             className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/30"
           >
             <option value="all">All status</option>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
             <option value="ongoing">Ongoing</option>
             <option value="completed">Completed</option>
           </select>
@@ -324,7 +326,7 @@ export const StoryManagementTab: React.FC = () => {
 
       {editingStory && (
         <div className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Edit Story</h2>
               <button type="button" onClick={() => setEditingStory(null)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
@@ -359,6 +361,8 @@ export const StoryManagementTab: React.FC = () => {
                   onChange={(e) => setEditingStory({ ...editingStory, status: e.target.value as StoryStatus })}
                   className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-4 py-3 text-sm font-semibold"
                 >
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
                   <option value="ongoing">Ongoing</option>
                   <option value="completed">Completed</option>
                 </select>
@@ -392,4 +396,3 @@ export const StoryManagementTab: React.FC = () => {
     </div>
   );
 };
-

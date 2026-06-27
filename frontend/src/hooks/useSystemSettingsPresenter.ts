@@ -222,7 +222,7 @@ export const useSystemSettingsPresenter = () => {
     restoreBackup,
     copyBackup,
     downloadBackup,
-    roleTargets: ['admin', 'employee', 'user'] as Array<keyof DashboardTabVisibility>,
+    roleTargets: ['admin', 'employee'] as Array<keyof DashboardTabVisibility>,
     dashTabs: DASHBOARD_CONFIGURABLE_TABS,
     adminMenuIds: ADMIN_MENU_IDS,
     adminMenuLabels: ADMIN_MENU_LABELS,

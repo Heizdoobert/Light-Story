@@ -1,59 +1,85 @@
-import { supabase } from '@/infrastructure/supabase/client';
 import { apiClient } from '@/lib/apiClient';
-import { AdminDashboardQueryGateway } from '@/infrastructure/query/AdminDashboardQueryGateway';
-
-const dashboardGateway = new AdminDashboardQueryGateway();
+import { fetchSystemSettingsSnapshot } from '@/services/systemSettings.service';
 
 export async function logDashboardAccess(actorUserId: string) {
   void actorUserId;
 }
 
 export async function getDashboardData() {
-  void supabase;
-  return dashboardGateway.loadDashboardData();
+  try {
+    const data = await apiClient.get<{
+      stories?: Array<Record<string, unknown>>;
+      stats?: { totalStories?: number; totalChapters?: number; activeStories?: number; totalViews?: number };
+    }>('/api/admin/analytics/dashboard?range=7d');
+
+    const stories = Array.isArray(data?.stories) ? data.stories : [];
+    const totalViews = Number(data?.stats?.totalViews ?? stories.reduce((sum: number, s: any) => sum + (Number(s.views) || 0), 0));
+    const activeStories = Number(data?.stats?.activeStories ?? 0);
+    const totalChapters = Number(data?.stats?.totalChapters ?? 0);
+
+    return {
+      stories,
+      stats: { totalViews, activeStories, totalChapters },
+      syncedAt: new Date().toISOString(),
+    };
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') console.warn('[AdminDashboardQueryGateway]', e);
+    return {
+      stories: [],
+      stats: { totalViews: 0, activeStories: 0, totalChapters: 0 },
+      syncedAt: new Date().toISOString(),
+    };
+  }
 }
 
 export async function getUiSettings() {
-  void supabase;
-  return { compactMode: false, showSyncBadge: true };
+  return fetchSystemSettingsSnapshot();
 }
 
-export async function getStoriesFieldValues(field: 'category_id' | 'author_id') {
-  if (!supabase) return [] as Array<Record<string, string | null>>;
-
-  const { data, error } = await supabase.from('stories').select(field).limit(1000);
-  if (error) return [] as Array<Record<string, string | null>>;
-  return (data ?? []) as Array<Record<string, string | null>>;
+export async function getStoriesFieldValues(field: 'category' | 'author_id') {
+  return apiClient.get<Array<Record<string, string | null>>>(`/api/admin/stories/field-values?field=${encodeURIComponent(field)}`);
 }
 
 export async function getProfileCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.profileCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=profiles');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getChapterCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.chapterCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=chapters');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getAdSettingsCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.adSettingsCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=site-settings');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getRoleDistribution() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.roleDistribution);
+  try {
+    const res = await apiClient.get<Array<{ role: string; total: number }>>('/api/admin/role-distribution');
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
+  }
 }
 
 export default {};
 
 export async function fetchProfiles() {
-  if (!supabase) return [] as Array<any>;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('id,email,role,full_name')
-    .order('role', { ascending: true })
-    .limit(500);
-  if (error) return [] as Array<any>;
-  return (data ?? []) as Array<any>;
+  return apiClient.get<Array<any>>('/api/admin/profiles?page=1&pageSize=500');
 }
 
 export async function updateProfileRole(id: string, role: string) {
@@ -120,23 +146,10 @@ export async function callManageUserFunction(body: Record<string, unknown>) {
 }
 
 export async function getAuditLogs(limit = 200) {
-  if (!supabase) return [] as Array<any>;
-
-  const { data, error } = await supabase
-    .from('admin_audit_logs')
-    .select('id,actor_user_id,action,target_user_id,target_email,metadata,created_at')
-    .order('created_at', { ascending: false })
-    .limit(limit);
-  if (error) return [] as Array<any>;
-  return (data ?? []) as Array<any>;
+  return apiClient.get<Array<any>>(`/api/admin/audit?limit=${limit}`);
 }
 
 export async function getProfilesByIds(ids: string[]) {
   if (ids.length === 0) return [] as Array<any>;
-
-  if (!supabase) return [] as Array<any>;
-
-  const { data, error } = await supabase.from('profiles').select('id,email,full_name').in('id', ids);
-  if (error) return [] as Array<any>;
-  return (data ?? []) as Array<any>;
+  return apiClient.get<Array<any>>(`/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids.join(','))}`);
 }

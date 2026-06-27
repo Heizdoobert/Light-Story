@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as adminService from '@/services/admin.service';
-import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
-
-const taxonomyRepo = new SupabaseTaxonomyRepository();
+import { fetchAuthors } from '@/services/taxonomy.service';
 
 export function useAuthorPresenter() {
   const authorsQuery = useQuery({
     queryKey: ['authors'],
-    queryFn: () => taxonomyRepo.getAuthors(),
+    queryFn: () => fetchAuthors(),
   });
 
   const linkQuery = useQuery({

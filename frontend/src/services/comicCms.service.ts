@@ -208,10 +208,8 @@ export async function createComicFromMetadata(
   const record = buildRecordFromForm(id, storyId, input);
 
   try {
-    const created = await apiClient.post<ComicCmsRecord>('/api/admin/comics', {
-      id: record.id,
+    const result = await apiClient.post<any>('/api/admin/comics', {
       slug: record.slug,
-      storyId: record.storyId,
       title: record.title,
       author: record.author,
       description: record.description,
@@ -219,6 +217,7 @@ export async function createComicFromMetadata(
       genres: record.genres,
       tags: record.tags,
     });
+    const created = Array.isArray(result) ? result[0] : result;
     const catalog = readCatalog();
     catalog.unshift(created);
     writeCatalog(catalog);
@@ -232,37 +231,27 @@ export async function createComicFromMetadata(
 }
 
 export async function updateComicRecord(record: ComicCmsRecord): Promise<ComicCmsRecord> {
-  try {
-    const updated = await apiClient.patch<ComicCmsRecord>(`/api/admin/comics/${record.id}`, {
-      title: record.title,
-      author: record.author,
-      description: record.description,
-      status: record.status,
-      genres: record.genres,
-      tags: record.tags,
-      coverUrl: record.coverUrl,
-      lastUpdatedAt: record.lastUpdatedAt,
-    });
-    const catalog = readCatalog();
-    const index = catalog.findIndex((r) => r.id === record.id);
-    if (index !== -1) catalog[index] = updated;
-    else catalog.unshift(updated);
-    writeCatalog(catalog);
-    return updated;
-  } catch {
-    const catalog = readCatalog();
-    const index = catalog.findIndex((r) => r.id === record.id);
-    if (index !== -1) catalog[index] = record;
-    else catalog.unshift(record);
-    writeCatalog(catalog);
-    return record;
-  }
+  const result = await apiClient.patch<any>(`/api/admin/comics/${record.id}`, {
+    title: record.title,
+    author: record.author,
+    description: record.description,
+    status: record.status,
+    genres: record.genres,
+    tags: record.tags,
+    coverUrl: record.coverUrl,
+    lastUpdatedAt: record.lastUpdatedAt,
+  });
+  const updated = Array.isArray(result) ? result[0] : result;
+  const catalog = readCatalog();
+  const index = catalog.findIndex((r) => r.id === record.id);
+  if (index !== -1) catalog[index] = updated;
+  else catalog.unshift(updated);
+  writeCatalog(catalog);
+  return updated;
 }
 
 export async function deleteComic(record: ComicCmsRecord): Promise<void> {
-  try {
-    await apiClient.delete(`/api/admin/comics/${record.id}`);
-  } catch {}
+  await apiClient.delete(`/api/admin/comics/${record.id}`);
   const catalog = readCatalog();
   writeCatalog(catalog.filter((r) => r.id !== record.id));
 }
@@ -298,7 +287,7 @@ export async function createComicChapterFromFiles(
   };
 
   try {
-    const created = await apiClient.post<ComicCmsChapterRecord>(
+    const raw = await apiClient.post<any>(
       `/api/admin/comics/${comic.id}/chapters`,
       {
         comicId: comic.id,
@@ -307,6 +296,28 @@ export async function createComicChapterFromFiles(
         pageUrls: imageUrls,
       },
     );
+    const row = Array.isArray(raw) ? raw[0] : raw;
+    const created: ComicCmsChapterRecord = {
+      id: row.id || chapter.id,
+      chapterNumber: row.chapter_number ?? chapter.chapterNumber,
+      title: row.title || chapter.title,
+      status: chapter.status,
+      scheduledAt: chapter.scheduledAt,
+      updatedAt: row.updated_at || new Date().toISOString(),
+      pages: (() => {
+        try {
+          const urls = JSON.parse(row.content || '[]');
+          return Array.isArray(urls) ? urls.map((url: string) => ({
+            id: generateId(),
+            assetUrl: url,
+            previewUrl: url,
+            fileName: url.split('/').pop() || 'page',
+          })) : chapter.pages;
+        } catch {
+          return chapter.pages;
+        }
+      })(),
+    };
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
@@ -330,22 +341,24 @@ export async function createComicChapterFromFiles(
 export async function recordComicAudit(
   action: string,
   metadata: Record<string, unknown>,
+  entityType = 'comic',
+  entityId?: string,
 ): Promise<void> {
   try {
     await apiClient.post('/api/admin/audit', {
       action,
       metadata,
+      entity_type: entityType,
+      entity_id: entityId,
       timestamp: new Date().toISOString(),
     });
   } catch {}
 }
 
-export async function requestComicCachePurge(params: {
+export async function requestComicCachePurge(_params: {
   comicId: string;
   chapterId?: string;
   assetKeys: string[];
 }): Promise<void> {
-  try {
-    await apiClient.post('/api/admin/comics/purge-cache', params);
-  } catch {}
+  // CF cache purge requires zone ID + API token — not configured yet
 }

@@ -1,7 +1,8 @@
 {
   "name": "@light-story/api-types",
   "version": "0.1.0",
-  "main": "src/generated/index.ts",
+  "main": "index.ts",
+  "types": "index.ts",
   "scripts": {
     "generate": "npx openapi-typescript openapi.yaml -o src/generated/index.ts",
     "typecheck": "npx tsc --noEmit"

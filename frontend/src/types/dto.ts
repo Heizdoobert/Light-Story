@@ -62,7 +62,6 @@ export type StoryCreateUpdateRequest = {
   description?: string;
   author_id?: string;
   author?: string;
-  category_id?: string;
   category?: string;
   cover_url?: string;
   status?: Story['status'];
@@ -147,10 +146,10 @@ export type AdminProfileUpdateRequest = {
 
 export type AdminAuditLogDto = {
   id: string;
-  actor_user_id: string;
+  user_id: string;
   action: string;
-  target_user_id?: string;
-  target_email?: string;
+  entity_type: string;
+  entity_id?: string;
   metadata?: Record<string, unknown>;
   created_at: string;
 };
@@ -160,10 +159,10 @@ export type AdminAuditLogListResponse = {
 };
 
 export type AdminAuditLogCreateRequest = {
-  actor_user_id: string;
+  user_id: string;
   action: string;
-  target_user_id?: string;
-  target_email?: string;
+  entity_type?: string;
+  entity_id?: string;
   metadata?: Record<string, unknown>;
 };
 

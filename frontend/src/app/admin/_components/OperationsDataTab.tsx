@@ -34,11 +34,9 @@ const DATA_GROUPS: DataGroup[] = [
   },
   {
     key: 'commerce-ops',
-    title: 'Commerce & VIP',
+    title: 'Commerce',
     description: 'Plans, subscriptions, promotions, events, and transactions.',
     tables: [
-      { table: 'vip_plans', label: 'VIP plans' },
-      { table: 'vip_subscriptions', label: 'VIP subscriptions' },
       { table: 'promotions', label: 'Promotions' },
       { table: 'events', label: 'Events' },
       { table: 'transactions', label: 'Transactions' },

@@ -95,7 +95,7 @@ workers/r2-signed-url/worker.test.js
 frontend/tests/
 
 # Operational scripts (no active references, no CI integration)
-scripts/
+/scripts/
 .github/copilot-instructions.md
 .opencode/opencode.json
 .opencode/plugins/graphify.js
@@ -117,3 +117,4 @@ test.txt
 .cursor/
 .opencode/
 .windsurf/
+graphify-out/

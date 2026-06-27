@@ -17,10 +17,11 @@ import { useStoryFormPresenter } from '@/hooks/useStoryFormPresenter';
 
 export const StoryForm: React.FC = () => {
   const { role } = useAuth();
-  const canManageStories = role === 'superadmin' || role === 'admin';
+  const canManageStories = role === 'superadmin' || role === 'admin' || role === 'employee';
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string>("");
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [formData, setFormData] = useState<Partial<Story>>({
     title: "",
     description: "",
@@ -28,7 +29,6 @@ export const StoryForm: React.FC = () => {
     author_id: null,
     cover_url: "",
     category: "",
-    category_id: null,
     status: "ongoing",
     views: 0,
   });
@@ -55,10 +55,10 @@ export const StoryForm: React.FC = () => {
       author_id: null,
       cover_url: "",
       category: "",
-      category_id: null,
       status: "ongoing",
       views: 0,
     });
+    setSelectedCategoryId("");
     setCoverFile(null);
     setFileInputKey((current) => current + 1);
   };
@@ -69,7 +69,7 @@ export const StoryForm: React.FC = () => {
       toast.error("Please write full form required!!!");
       return;
     }
-    if (!formData.author_id || !formData.category_id) {
+    if (!formData.author_id || !selectedCategoryId) {
       toast.error("Please choose an author and category from linked records");
       return;
     }
@@ -78,7 +78,7 @@ export const StoryForm: React.FC = () => {
       return;
     }
     createStoryMutation.mutate(
-      { story: formData, coverFile },
+      { story: { ...formData, category_id: selectedCategoryId || null }, coverFile },
       { onSuccess: () => resetForm() },
     );
   };
@@ -152,13 +152,13 @@ export const StoryForm: React.FC = () => {
               </label>
               <select
                 required
-                value={formData.category_id ?? ""}
+                value={selectedCategoryId}
                 onChange={(e) => {
                   const selectedId = e.target.value;
                   const selectedCategory = categoriesQuery.data?.find((item) => item.id === selectedId);
+                  setSelectedCategoryId(selectedId);
                   setFormData({
                     ...formData,
-                    category_id: selectedId || null,
                     category: selectedCategory?.name || "",
                   });
                 }}
@@ -242,6 +242,8 @@ export const StoryForm: React.FC = () => {
                 }
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               >
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
                 <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
               </select>
@@ -285,4 +287,3 @@ export const StoryForm: React.FC = () => {
     </div>
   );
 };
-

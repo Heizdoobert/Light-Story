@@ -48,13 +48,12 @@ import {
   loadComicRecord,
   proxiedR2ImageUrl,
   recordComicAudit,
-  requestComicCachePurge,
+
   saveComicDraft,
   saveComicModerationState,
   sortFilesByFilename,
   updateComicRecord,
   type ComicCatalogFilters,
-  type ComicCmsChapterRecord,
   type ComicCmsRecord,
 } from "@/services/comicCms.service";
 import { uploadComicCover } from "@/services/comic.service";
@@ -830,46 +829,6 @@ export const ComicManagementTab: React.FC = () => {
     }
   }, [autoSave, chapterPages, chapterValues, resetChapterPages, selectedComic]);
 
-  const handlePurgeChapter = useCallback(async (chapter: ComicCmsChapterRecord) => {
-    if (!selectedComic) return;
-
-    try {
-      await requestComicCachePurge({
-        comicId: selectedComic.id,
-        chapterId: chapter.id,
-        assetKeys: chapter.pages.map((page) => page.assetUrl).filter((x): x is string => x != null),
-      });
-      await recordComicAudit("comic.cache.purge", {
-        comicId: selectedComic.id,
-        chapterId: chapter.id,
-        chapterNumber: chapter.chapterNumber,
-        target_user_id: selectedComic.storyId,
-      });
-      toast.success(`Cache purge queued for chapter ${chapter.chapterNumber}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to queue cache purge");
-    }
-  }, [selectedComic]);
-
-  const handleComicPurge = useCallback(async () => {
-    if (!selectedComic) return;
-
-    try {
-      await requestComicCachePurge({
-        comicId: selectedComic.id,
-        assetKeys: [selectedComic.coverUrl].filter(Boolean),
-      });
-      await recordComicAudit("comic.cache.purge", {
-        comicId: selectedComic.id,
-        target_user_id: selectedComic.storyId,
-        title: selectedComic.title,
-      });
-      toast.success(`Cache purge queued for ${selectedComic.title}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to queue cache purge");
-    }
-  }, [selectedComic]);
-
   const handleModerationAction = useCallback(async (commentId: string, nextStatus: ComicReportedComment["status"]) => {
     if (!canModerate) return;
 
@@ -1131,14 +1090,6 @@ export const ComicManagementTab: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleComicPurge}
-                  disabled={!selectedComic}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 disabled:opacity-50"
-                >
-                  <Sparkles size={14} /> Purge cache
-                </button>
                 <button
                   type="button"
                   onClick={() => selectedComic && openComic(selectedComic.id, "editor")}
@@ -1623,13 +1574,6 @@ export const ComicManagementTab: React.FC = () => {
                         <span className="rounded-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">
                           {chapter.pages.length} pages
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => handlePurgeChapter(chapter)}
-                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200"
-                        >
-                          <Sparkles size={12} /> Purge cache
-                        </button>
                       </div>
                     </div>
 

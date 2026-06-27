@@ -6,7 +6,6 @@
  * Tests Row Level Security policies for all roles:
  * - anonymous (no auth)
  * - user (basic)
- * - premium (paid content)
  * - admin (moderation)
  * - superadmin (full access)
  * 
@@ -26,7 +25,6 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik
 const testUsers = {
   anonymous: { token: null, role: 'anonymous' },
   user: { token: process.env.TEST_USER_TOKEN, role: 'user' },
-  premium: { token: process.env.TEST_PREMIUM_TOKEN, role: 'premium' },
   admin: { token: process.env.TEST_ADMIN_TOKEN, role: 'admin' },
   superadmin: { token: process.env.TEST_SUPERADMIN_TOKEN, role: 'superadmin' },
 };
@@ -53,35 +51,18 @@ async function testRLSForRole(roleName, token) {
       })
     : createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // Test 1: Read published free chapters (should pass for all)
+  // Test 1: Read published chapters (should pass for all)
   try {
-    const { data: freeChapters, error } = await client
+    const { data: chapters, error } = await client
       .from('chapters')
-      .select('id, title, vip_content')
-      .eq('vip_content', false)
+      .select('id, title')
       .limit(1);
-    await assert(!error && freeChapters?.length >= 0, `${roleName}: Can read free chapters`);
+    await assert(!error && chapters?.length >= 0, `${roleName}: Can read published chapters`);
   } catch (e) {
-    await assert(false, `${roleName}: Can read free chapters (error: ${e.message})`);
+    await assert(false, `${roleName}: Can read published chapters (error: ${e.message})`);
   }
 
-  // Test 2: Read VIP chapters (should pass for premium/admin/superadmin)
-  try {
-    const { data: vipChapters, error } = await client
-      .from('chapters')
-      .select('id, title, vip_content')
-      .eq('vip_content', true)
-      .limit(1);
-
-    const shouldPass = ['premium', 'admin', 'superadmin'].includes(roleName);
-    const didPass = !error;
-    await assert(didPass === shouldPass, `${roleName}: VIP chapter access ${shouldPass ? 'allowed' : 'denied'}`);
-  } catch (e) {
-    const shouldPass = ['premium', 'admin', 'superadmin'].includes(roleName);
-    await assert(!shouldPass, `${roleName}: VIP chapter access denied (error: ${e.message})`);
-  }
-
-  // Test 3: Insert comment (should pass for authenticated users)
+  // Test 2: Insert comment (should pass for authenticated users)
   if (roleName !== 'anonymous') {
     try {
       const { error } = await client
@@ -95,7 +76,7 @@ async function testRLSForRole(roleName, token) {
     }
   }
 
-  // Test 4: Update/delete comment (owner or admin/superadmin only)
+  // Test 3: Update/delete comment (owner or admin/superadmin only)
   if (['admin', 'superadmin'].includes(roleName)) {
     try {
       const { error } = await client
@@ -115,7 +96,7 @@ async function runTests() {
   console.log('🔒 Light Story RLS Integration Tests');
   console.log('=====================================\n');
 
-  const roles = ['anonymous', 'user', 'premium', 'admin', 'superadmin'];
+  const roles = ['anonymous', 'user', 'admin', 'superadmin'];
   
   for (const role of roles) {
     const testUser = testUsers[role];

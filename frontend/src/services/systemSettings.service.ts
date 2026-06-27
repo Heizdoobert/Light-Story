@@ -34,8 +34,9 @@ const toRows = (input: unknown): SiteSettingDto[] => {
 export async function fetchSystemSettingsSnapshot(): Promise<SystemSettingsSnapshotDto> {
   try {
     const keysParam = SETTINGS_KEYS.join(',');
-    const data = await apiClient.get<{ data?: SiteSettingDto[] }>(`/api/admin/site-settings?keys=${encodeURIComponent(keysParam)}`).catch(() => null);
-    const rows = toRows(data?.data);
+    const rows = toRows(
+      await apiClient.get<SiteSettingDto[]>(`/api/admin/site-settings?keys=${encodeURIComponent(keysParam)}`).catch(() => null),
+    );
     const map = new Map(rows.map((item) => [item.key, item.value]));
 
     return {

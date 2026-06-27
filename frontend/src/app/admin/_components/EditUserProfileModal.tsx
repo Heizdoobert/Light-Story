@@ -134,7 +134,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-0 flex items-center justify-center z-50 p-4"
           >
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-y-auto max-h-[90vh]">
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800">
                 <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Edit Profile</h2>

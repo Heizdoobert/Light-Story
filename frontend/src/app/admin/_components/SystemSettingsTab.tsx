@@ -28,12 +28,12 @@ export const SystemSettingsTab: React.FC = () => {
     adminMenuLabels,
   } = useSystemSettingsPresenter();
 
-  if (role !== 'superadmin') {
+  if (role !== 'superadmin' && role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="text-6xl">🔒</div>
         <h2 className="text-2xl font-black text-slate-900 dark:text-white">Restricted Access</h2>
-        <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">Only superadmin can edit system settings.</p>
+        <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">Only admin and superadmin can edit system settings.</p>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export const SystemSettingsTab: React.FC = () => {
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Sidebar Menu Visibility</h4>
-              {(['admin', 'employee', 'user'] as Array<keyof typeof menuVisibility>).map((targetRole) => (
+              {(['admin', 'employee'] as Array<keyof typeof menuVisibility>).map((targetRole) => (
                 <div key={targetRole} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                   <p className="text-sm font-black uppercase text-slate-900 dark:text-white mb-3">{targetRole}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

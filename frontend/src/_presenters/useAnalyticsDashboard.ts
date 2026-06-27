@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from '@tanstack/react-query';
-import type { AnalyticsDashboardResponse, AnalyticsTimeRange } from '@/types/analytics';
-import { apiClient } from '@/lib/apiClient';
+import type { AnalyticsDashboardResponse, AnalyticsRole, AnalyticsTimeRange } from '@/types/analytics';
+import { getAnalyticsDashboardData } from '@/services/analytics.service';
 
 function createFallbackAnalyticsDashboard(range: AnalyticsTimeRange): AnalyticsDashboardResponse {
   const now = new Date().toISOString();
@@ -53,19 +53,18 @@ function createFallbackAnalyticsDashboard(range: AnalyticsTimeRange): AnalyticsD
   };
 }
 
-export function useAnalyticsDashboard(range: AnalyticsTimeRange, enabled: boolean = true) {
+export function useAnalyticsDashboard(range: AnalyticsTimeRange, role: AnalyticsRole | null) {
   return useQuery({
-    queryKey: ['analytics-dashboard', range],
+    queryKey: ['analytics-dashboard', range, role],
     queryFn: async () => {
+      if (!role) return createFallbackAnalyticsDashboard(range);
       try {
-        return await apiClient.get<AnalyticsDashboardResponse>(
-          `/api/admin/analytics/dashboard?range=${encodeURIComponent(range)}`,
-        );
+        return await getAnalyticsDashboardData({ range, role });
       } catch {
         return createFallbackAnalyticsDashboard(range);
       }
     },
-    enabled,
+    enabled: !!role,
     staleTime: 30_000,
     retry: 2,
     refetchOnWindowFocus: false,
