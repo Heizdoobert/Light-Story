@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "dev:gateway": "npx wrangler dev --port 8787 --config workers/api-gateway/wrangler.jsonc",
+    "dev:gateway": "npx wrangler dev --port 8787 --config workers/unified-gateway/wrangler.jsonc",
     "dev:all": "concurrently -n fe,gw \"npm run dev\" \"npm run dev:gateway\"",
     "dev:comics": "npx wrangler dev --port 9001 --config workers/comics-worker/wrangler.jsonc",
     "dev:stories": "npx wrangler dev --port 9002 --config workers/stories-worker/wrangler.jsonc",

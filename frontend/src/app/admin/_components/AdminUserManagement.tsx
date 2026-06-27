@@ -250,113 +250,115 @@ export const AdminUserManagement: React.FC = () => {
       </div>
 
       <div className="glass-panel rounded-3xl overflow-hidden shadow-sm dark:bg-slate-900/40 dark:border-slate-800">
-        <table className="w-full text-sm text-left border-separate border-spacing-y-2 px-4">
-          <thead>
-            <tr>
-              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">User</th>
-              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">Current Role</th>
-              <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(profilesQuery.data ?? []).map((user: any) => (
-              <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
-                <td className="px-6 py-4 rounded-l-2xl">
-                  {editingNameUserId === user.id ? (
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={editingNameValue}
-                        onChange={(e) => setEditingNameValue(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-sm font-bold text-slate-900 dark:text-slate-200"
-                      />
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleNameSave(user)}
-                          disabled={savingNameId === user.id || !canManageExistingUsers}
-                          className="rounded-lg bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-3 py-1 text-xs font-bold disabled:opacity-50"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelNameEdit}
-                          disabled={savingNameId === user.id}
-                          className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="font-bold text-slate-900 dark:text-slate-200">{user.full_name || 'No Name'}</div>
-                  )}
-                  <div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
-                    user.role === 'superadmin' ? 'bg-red-100 text-red-700' :
-                    user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                    user.role === 'employee' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 rounded-r-2xl text-right">
-                  {user.id === currentUser?.id && (
-                    <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">
-                      Current account
-                    </div>
-                  )}
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => startNameEdit(user)}
-                      disabled={!canManageExistingUsers || !canManageTargetRole(currentRole, user.role) || editingNameUserId === user.id}
-                      className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-50"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteUser(user)}
-                      disabled={
-                        !canManageExistingUsers ||
-                        !canManageTargetRole(currentRole, user.role) ||
-                        user.id === currentUser?.id ||
-                        deletingUserId === user.id
-                      }
-                      className="rounded-lg border border-red-300 text-red-600 dark:border-red-700 dark:text-red-300 px-3 py-1 text-xs font-bold disabled:opacity-50"
-                    >
-                      Delete
-                    </button>
-                    <select
-                      className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
-                      disabled={
-                        user.id === currentUser?.id ||
-                        !canManageExistingUsers ||
-                        !canManageTargetRole(currentRole, user.role)
-                      }
-                    >
-                      {ROLE_OPTIONS.map((roleOption) => (
-                        <option
-                          key={roleOption}
-                          value={roleOption}
-                          disabled={roleOption === 'superadmin' || !canAssignRole(currentRole, roleOption)}
-                        >
-                          {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left border-separate border-spacing-y-2 px-4 min-w-[600px]">
+            <thead>
+              <tr>
+                <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">User</th>
+                <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest">Current Role</th>
+                <th className="px-6 py-4 font-black text-slate-400 dark:text-slate-500 text-[11px] uppercase tracking-widest text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(profilesQuery.data ?? []).map((user: any) => (
+                <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
+                  <td className="px-6 py-4 rounded-l-2xl">
+                    {editingNameUserId === user.id ? (
+                      <div className="space-y-2">
+                        <input
+                          type="text"
+                          value={editingNameValue}
+                          onChange={(e) => setEditingNameValue(e.target.value)}
+                          className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-sm font-bold text-slate-900 dark:text-slate-200"
+                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleNameSave(user)}
+                            disabled={savingNameId === user.id || !canManageExistingUsers}
+                            className="rounded-lg bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelNameEdit}
+                            disabled={savingNameId === user.id}
+                            className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="font-bold text-slate-900 dark:text-slate-200">{user.full_name || 'No Name'}</div>
+                    )}
+                    <div className="text-xs text-slate-400 dark:text-slate-500">{user.email}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${
+                      user.role === 'superadmin' ? 'bg-red-100 text-red-700' :
+                      user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                      user.role === 'employee' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 rounded-r-2xl text-right">
+                    {user.id === currentUser?.id && (
+                      <div className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">
+                        Current account
+                      </div>
+                    )}
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => startNameEdit(user)}
+                        disabled={!canManageExistingUsers || !canManageTargetRole(currentRole, user.role) || editingNameUserId === user.id}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteUser(user)}
+                        disabled={
+                          !canManageExistingUsers ||
+                          !canManageTargetRole(currentRole, user.role) ||
+                          user.id === currentUser?.id ||
+                          deletingUserId === user.id
+                        }
+                        className="rounded-lg border border-red-300 text-red-600 dark:border-red-700 dark:text-red-300 px-3 py-1 text-xs font-bold disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                      <select
+                        className="bg-white dark:bg-slate-800 border border-glass-border dark:border-slate-700 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-900 dark:text-slate-200"
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user, e.target.value as UserRole)}
+                        disabled={
+                          user.id === currentUser?.id ||
+                          !canManageExistingUsers ||
+                          !canManageTargetRole(currentRole, user.role)
+                        }
+                      >
+                        {ROLE_OPTIONS.map((roleOption) => (
+                          <option
+                            key={roleOption}
+                            value={roleOption}
+                            disabled={roleOption === 'superadmin' || !canAssignRole(currentRole, roleOption)}
+                          >
+                            {roleOption === 'superadmin' ? 'SuperAdmin' : roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

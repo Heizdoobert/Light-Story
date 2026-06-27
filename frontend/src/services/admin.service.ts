@@ -1,15 +1,35 @@
 import { apiClient } from '@/lib/apiClient';
-import { AdminDashboardQueryGateway } from '@/infrastructure/query/AdminDashboardQueryGateway';
 import { fetchSystemSettingsSnapshot } from '@/services/systemSettings.service';
-
-const dashboardGateway = new AdminDashboardQueryGateway();
 
 export async function logDashboardAccess(actorUserId: string) {
   void actorUserId;
 }
 
 export async function getDashboardData() {
-  return dashboardGateway.loadDashboardData();
+  try {
+    const data = await apiClient.get<{
+      stories?: Array<Record<string, unknown>>;
+      stats?: { totalStories?: number; totalChapters?: number; activeStories?: number; totalViews?: number };
+    }>('/api/admin/analytics/dashboard?range=7d');
+
+    const stories = Array.isArray(data?.stories) ? data.stories : [];
+    const totalViews = Number(data?.stats?.totalViews ?? stories.reduce((sum: number, s: any) => sum + (Number(s.views) || 0), 0));
+    const activeStories = Number(data?.stats?.activeStories ?? 0);
+    const totalChapters = Number(data?.stats?.totalChapters ?? 0);
+
+    return {
+      stories,
+      stats: { totalViews, activeStories, totalChapters },
+      syncedAt: new Date().toISOString(),
+    };
+  } catch (e) {
+    if (process.env.NODE_ENV === 'development') console.warn('[AdminDashboardQueryGateway]', e);
+    return {
+      stories: [],
+      stats: { totalViews: 0, activeStories: 0, totalChapters: 0 },
+      syncedAt: new Date().toISOString(),
+    };
+  }
 }
 
 export async function getUiSettings() {
@@ -21,19 +41,39 @@ export async function getStoriesFieldValues(field: 'category' | 'author_id') {
 }
 
 export async function getProfileCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.profileCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=profiles');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getChapterCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.chapterCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=chapters');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getAdSettingsCount() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.adSettingsCount);
+  try {
+    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=site-settings');
+    return Number(res?.count ?? 0);
+  } catch {
+    return 0;
+  }
 }
 
 export async function getRoleDistribution() {
-  return dashboardGateway.loadOverviewMetrics().then((metrics) => metrics.roleDistribution);
+  try {
+    const res = await apiClient.get<Array<{ role: string; total: number }>>('/api/admin/role-distribution');
+    return Array.isArray(res) ? res : [];
+  } catch {
+    return [];
+  }
 }
 
 export default {};

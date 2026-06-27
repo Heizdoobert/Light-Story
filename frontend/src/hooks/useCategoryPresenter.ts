@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import * as adminService from '@/services/admin.service';
-import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
-
-const taxonomyRepo = new SupabaseTaxonomyRepository();
+import { fetchCategories } from '@/services/taxonomy.service';
 
 export function useCategoryPresenter() {
   const categoriesQuery = useQuery({
     queryKey: ['categories'],
-    queryFn: () => taxonomyRepo.getCategories(),
+    queryFn: () => fetchCategories(),
   });
 
   const linkQuery = useQuery({

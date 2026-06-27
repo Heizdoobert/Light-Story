@@ -1,0 +1,23 @@
+{
+  "name": "recruitment-agent",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler build",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@cloudflare/ai-chat": "^0.8.0",
+    "agents": "^0.14.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.92.0"
+  }
+}

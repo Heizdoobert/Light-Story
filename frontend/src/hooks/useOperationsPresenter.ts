@@ -1,13 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import * as adminService from '@/services/admin.service';
-import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
-
-const storyRepo = new SupabaseStoryRepository();
+import { fetchStories } from '@/services/story.service';
 
 export function useOperationsPresenter() {
   const storiesQuery = useQuery({
     queryKey: ['operations-center-stories'],
-    queryFn: () => storyRepo.getStories(),
+    queryFn: () => fetchStories(),
   });
 
   const profileCountQuery = useQuery({

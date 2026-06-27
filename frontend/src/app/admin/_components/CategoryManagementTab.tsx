@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
+import { createCategory, updateCategory, deleteCategory } from '@/services/taxonomy.service';
 import { useCategoryPresenter } from '@/hooks/useCategoryPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
-
-const taxonomyRepo = new SupabaseTaxonomyRepository();
 
 export const CategoryManagementTab: React.FC = () => {
   const queryClient = useQueryClient();
@@ -20,7 +18,7 @@ export const CategoryManagementTab: React.FC = () => {
   const { categoriesQuery, linkedCounts } = useCategoryPresenter();
 
   const createMutation = useMutation({
-    mutationFn: () => taxonomyRepo.createCategory({ name, description }),
+    mutationFn: () => createCategory({ name, description }),
     onMutate: () => {
       const toastId = startDbChangeToast(`Creating category \"${name.trim() || 'new'}\"...`);
       return { toastId };
@@ -37,7 +35,7 @@ export const CategoryManagementTab: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: (payload: { id: string; name: string; description?: string }) =>
-      taxonomyRepo.updateCategory(payload.id, { name: payload.name, description: payload.description }),
+      updateCategory(payload.id, { name: payload.name, description: payload.description }),
     onMutate: (payload) => {
       const toastId = startDbChangeToast(`Updating category \"${payload.name.trim() || 'category'}\"...`);
       return { toastId };
@@ -53,7 +51,7 @@ export const CategoryManagementTab: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => taxonomyRepo.deleteCategory(id),
+    mutationFn: (id: string) => deleteCategory(id),
     onMutate: () => {
       const toastId = startDbChangeToast('Deleting category...');
       return { toastId };

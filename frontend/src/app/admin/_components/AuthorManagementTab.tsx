@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { SupabaseTaxonomyRepository } from '@/infrastructure/repositories/SupabaseTaxonomyRepository';
+import { createAuthor, updateAuthor, deleteAuthor } from '@/services/taxonomy.service';
 import { useAuthorPresenter } from '@/hooks/useAuthorPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
-
-const taxonomyRepo = new SupabaseTaxonomyRepository();
 
 export const AuthorManagementTab: React.FC = () => {
   const queryClient = useQueryClient();
@@ -20,7 +18,7 @@ export const AuthorManagementTab: React.FC = () => {
   const { authorsQuery, linkedCounts } = useAuthorPresenter();
 
   const createMutation = useMutation({
-    mutationFn: () => taxonomyRepo.createAuthor({ name, bio }),
+    mutationFn: () => createAuthor({ name, bio }),
     onMutate: () => {
       const toastId = startDbChangeToast(`Creating author \"${name.trim() || 'new'}\"...`);
       return { toastId };
@@ -37,7 +35,7 @@ export const AuthorManagementTab: React.FC = () => {
 
   const updateMutation = useMutation({
     mutationFn: (payload: { id: string; name: string; bio?: string }) =>
-      taxonomyRepo.updateAuthor(payload.id, { name: payload.name, bio: payload.bio }),
+      updateAuthor(payload.id, { name: payload.name, bio: payload.bio }),
     onMutate: (payload) => {
       const toastId = startDbChangeToast(`Updating author \"${payload.name.trim() || 'author'}\"...`);
       return { toastId };
@@ -53,7 +51,7 @@ export const AuthorManagementTab: React.FC = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => taxonomyRepo.deleteAuthor(id),
+    mutationFn: (id: string) => deleteAuthor(id),
     onMutate: () => {
       const toastId = startDbChangeToast('Deleting author...');
       return { toastId };

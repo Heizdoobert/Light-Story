@@ -1,0 +1,7 @@
+# Copy file này thành .dev.vars và điền giá trị thật
+# Lấy từ Supabase Dashboard → Project Settings → API
+
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_JWKS_URL=https://your-project.supabase.co/auth/v1/.well-known/jwks.json
+USE_NEW_UNIFIED_GATEWAY=true

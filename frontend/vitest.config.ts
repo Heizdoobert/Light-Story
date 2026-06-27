@@ -9,7 +9,7 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: ['src/setupTests.ts'],
     include: ['**/*.test.ts', '**/*.test.tsx'],
-    exclude: ['node_modules', '.next', 'dist'],
+    exclude: ['node_modules', '.next', 'dist', '**/__integration__/**'],
   },
   resolve: {
     alias: {

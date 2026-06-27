@@ -326,7 +326,7 @@ export const StoryManagementTab: React.FC = () => {
 
       {editingStory && (
         <div className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+          <div className="w-full max-w-2xl rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black text-slate-900 dark:text-slate-100">Edit Story</h2>
               <button type="button" onClick={() => setEditingStory(null)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">

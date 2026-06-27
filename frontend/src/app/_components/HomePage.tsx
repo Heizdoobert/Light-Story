@@ -12,9 +12,9 @@ import {
   X,
 } from "lucide-react";
 
-import { fetchCategories } from "@/services/category.service";
-import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
-import { SupabaseChapterRepository } from '@/infrastructure/repositories/SupabaseChapterRepository';
+import { fetchCategories } from "@/services/taxonomy.service";
+import { fetchStoriesPage } from '@/services/story.service';
+import { fetchChaptersByStoryId } from '@/services/chapter.service';
 
 import { Story, Chapter, Category } from "@/types/entities";
 import { useAuth } from "@/modules/auth/AuthContext";
@@ -58,8 +58,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
       try {
         const data = await fetchCategories();
         setCategories(data);
-        const storyRepo = new SupabaseStoryRepository();
-        const trendingData = await storyRepo.getStoriesPage({
+        const trendingData = await fetchStoriesPage({
           page: 1,
           pageSize: 6,
           sort: "most_viewed",
@@ -75,10 +74,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
   const fetchStoriesData = useCallback(async () => {
     setLoading(true);
     try {
-      const storyRepo = new SupabaseStoryRepository();
-      const chapterRepo = new SupabaseChapterRepository();
-
-      const result = await storyRepo.getStoriesPage({
+      const result = await fetchStoriesPage({
         page: 1,
         pageSize: 15,
         keyword: filterParams.keyword || undefined,
@@ -90,7 +86,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
       setStories(storiesData);
 
       const chapterPromises = storiesData.map(async (story) => {
-        const chapters = await chapterRepo.getChaptersByStoryId(story.id);
+        const chapters = await fetchChaptersByStoryId(story.id);
         if (chapters && chapters.length > 0) {
           const sortedChapters = chapters.sort(
             (a, b) =>

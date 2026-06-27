@@ -1,20 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
-import { SupabaseChapterRepository } from '@/infrastructure/repositories/SupabaseChapterRepository';
+import { fetchStoryById } from '@/services/story.service';
+import { fetchChaptersByStoryId } from '@/services/chapter.service';
 
 export const useStoryDetail = (storyId: string) => {
   return useQuery({
     queryKey: ['story', storyId],
     queryFn: async () => {
       if (!storyId) return null;
-      
-      const storyRepo = new SupabaseStoryRepository();
-      const chapterRepo = new SupabaseChapterRepository();
-
 
       const [story, chapters] = await Promise.all([
-        storyRepo.getStoryById(storyId),
-        chapterRepo.getChaptersByStoryId(storyId)
+        fetchStoryById(storyId),
+        fetchChaptersByStoryId(storyId)
       ]);
 
       if (!story) throw new Error("Không tìm thấy truyện");

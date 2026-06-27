@@ -7,10 +7,7 @@ export const useStories = () => {
 
   const storiesQuery = useQuery({
     queryKey: ['stories'],
-    queryFn: async () => {
-      const res = await storyService.fetchStories();
-      return Array.isArray(res) ? res : res.items;
-    },
+    queryFn: () => storyService.fetchStories(),
     staleTime: 1000 * 60 * 5,
   });
 

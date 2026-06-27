@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "node scripts/import_root_env.mjs",
     "dev": "next dev -p 3001 -H 0.0.0.0",
     "dev:clean": "node -e \"require('fs').rmSync('.next-dev',{recursive:true,force:true})\" && next dev -p 3001 -H 0.0.0.0",
     "dev:rescue": "node scripts/dev-rescue.mjs && next dev -p 3001 -H 0.0.0.0",
@@ -14,6 +13,7 @@
     "lint": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "test:e2e:auth": "playwright test auth-boundary",
     "test:e2e:ui": "playwright test --ui",
@@ -24,6 +24,7 @@
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
+    "@light-story/api-types": "file:../packages/api-types",
     "@aws-sdk/client-s3": "^3.1044.0",
     "@fontsource-variable/geist": "^5.2.8",
     "@google/genai": "^1.52.0",
@@ -62,8 +63,8 @@
     "eslint-config-next": "16.2.6",
     "happy-dom": "^20.9.0",
     "supabase": "^2.98.2",
-    "tailwindcss": "^4.3.0",
-    "tsx": "^4.21.0",
+    "tailwindcss": "^4.2.3",
+    "tsx": "^4.22.3",
     "typescript": "~6.0.3",
     "vitest": "^4.1.6"
   }

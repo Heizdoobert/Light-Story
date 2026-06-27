@@ -1,0 +1,29 @@
+{
+  "name": "unified-gateway",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-05-16",
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "lightstory-assets"
+    }
+  ],
+  "env": {
+    "production": {
+      "routes": [
+        {
+          "pattern": "api.lightstory.app/*",
+          "zone_name": "lightstory.app"
+        }
+      ]
+    },
+    "staging": {
+      "routes": [
+        {
+          "pattern": "api-staging.lightstory.app/*",
+          "zone_name": "lightstory.app"
+        }
+      ]
+    }
+  }
+}

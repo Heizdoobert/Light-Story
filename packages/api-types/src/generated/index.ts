@@ -4,23 +4,6 @@
  */
 
 export interface paths {
-    "/comics/{comicId}/chapters": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Upload a new chapter (skeleton) */
-        post: operations["createChapter"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/stories": {
         parameters: {
             query?: never;
@@ -38,6 +21,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get story detail */
+        get: operations["getStoryDetail"];
+        put?: never;
+        /** Create or update a story */
+        post: operations["manageStory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/chapters": {
         parameters: {
             query?: never;
@@ -45,8 +46,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get chapters or by story */
+        /** List chapters, optionally filtered by story */
         get: operations["listChapters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chapters/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get chapter detail */
+        get: operations["getChapterDetail"];
         put?: never;
         post?: never;
         delete?: never;
@@ -62,7 +80,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get categories */
+        /** Get all categories */
         get: operations["getCategories"];
         put?: never;
         post?: never;
@@ -81,7 +99,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Like a story (RPC) */
+        /** Like a story */
         post: operations["likeStory"];
         delete?: never;
         options?: never;
@@ -98,7 +116,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Unlike a story (RPC) */
+        /** Unlike a story */
         post: operations["unlikeStory"];
         delete?: never;
         options?: never;
@@ -115,7 +133,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Increment story views (RPC) */
+        /** Increment story view count */
         post: operations["incrementStoryViews"];
         delete?: never;
         options?: never;
@@ -130,7 +148,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Site metrics */
+        /** Get site metrics (story count etc.) */
         get: operations["getSiteMetrics"];
         put?: never;
         post?: never;
@@ -147,7 +165,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Site settings */
+        /** Get site settings */
         get: operations["getSiteSettings"];
         put?: never;
         post?: never;
@@ -164,7 +182,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Role distribution */
+        /** Get user role distribution */
         get: operations["getRoleDistribution"];
         put?: never;
         post?: never;
@@ -174,11 +192,480 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List admin profiles */
+        get: operations["listAdminProfiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/profiles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update admin profile (role, name) */
+        patch: operations["updateAdminProfile"];
+        trace?: never;
+    };
+    "/admin/audit-logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List admin audit logs */
+        get: operations["listAdminAuditLogs"];
+        put?: never;
+        /** Create audit log entry */
+        post: operations["createAdminAuditLog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get analytics dashboard data */
+        get: operations["getAnalyticsDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/verify-recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify password recovery token */
+        post: operations["verifyRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
-    responses: never;
+    schemas: {
+        ApiResponse: {
+            /** @description Indicates if the request succeeded */
+            success: boolean;
+            /** @description Response payload (present on success) */
+            data?: unknown;
+            /** @description Error details (present on failure) */
+            error?: {
+                code?: string;
+                message?: string;
+                details?: {
+                    [key: string]: unknown;
+                };
+            };
+            /** Format: date-time */
+            timestamp: string;
+            /** @description Request correlation ID for tracing */
+            correlationId?: string;
+        };
+        ApiResponse_Empty: components["schemas"]["ApiResponse"] & {
+            data?: Record<string, never> | null;
+        };
+        ApiResponse_ErrorOnly: {
+            /** @enum {boolean} */
+            success: false;
+            error: components["schemas"]["ApiError"];
+            /** Format: date-time */
+            timestamp: string;
+            correlationId?: string;
+        };
+        ApiResponse_Story: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["Story"];
+        };
+        ApiResponse_StoryListData: components["schemas"]["ApiResponse"] & {
+            data?: {
+                items?: components["schemas"]["Story"][];
+                total?: number;
+            };
+        };
+        ApiResponse_Chapter: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["Chapter"];
+        };
+        ApiResponse_ChapterListData: components["schemas"]["ApiResponse"] & {
+            data?: {
+                items?: components["schemas"]["Chapter"][];
+                total?: number;
+            };
+        };
+        ApiResponse_CategoryList: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["Category"][];
+        };
+        ApiResponse_SiteMetrics: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["SiteMetricsResponse"];
+        };
+        ApiResponse_SiteSettings: components["schemas"]["ApiResponse"] & {
+            data?: {
+                key?: string;
+                value?: string;
+            };
+        };
+        ApiResponse_RoleDistribution: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["RoleDistributionResponse"];
+        };
+        ApiResponse_AdminProfileList: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["AdminProfileListResponse"];
+        };
+        ApiResponse_AuditLogList: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["AdminAuditLogListResponse"];
+        };
+        ApiResponse_AnalyticsDashboard: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["AnalyticsDashboardResponse"];
+        };
+        ApiResponse_VerifyRecovery: components["schemas"]["ApiResponse"] & {
+            data?: components["schemas"]["VerifyRecoveryResponse"];
+        };
+        ApiError: {
+            /** @description Machine-readable error code */
+            code: string;
+            /** @description Human-readable error message */
+            message: string;
+            /** @description Additional error context */
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        Story: {
+            id: string;
+            title: string;
+            author: string;
+            author_id?: string | null;
+            description: string;
+            /** Format: uri */
+            cover_url: string;
+            category: string;
+            category_id?: string | null;
+            /** @enum {string} */
+            status: "draft" | "published" | "ongoing" | "completed" | "archived";
+            views: number;
+            /** Format: date-time */
+            created_at: string;
+        };
+        Chapter: {
+            id: string;
+            story_id: string;
+            chapter_number: number;
+            title: string;
+            content: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        Category: {
+            id: string;
+            name: string;
+            description?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        Author: {
+            id: string;
+            name: string;
+            bio?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        SiteSetting: {
+            id: number;
+            key: string;
+            value: string;
+        };
+        StoryListRequest: {
+            page?: number;
+            pageSize?: number;
+            keyword?: string;
+            /** @enum {string} */
+            status?: "all" | "draft" | "published" | "ongoing" | "completed" | "archived";
+            /** @enum {string} */
+            sort?: "newest" | "oldest" | "most_viewed";
+        };
+        StoryCreateUpdateRequest: {
+            title?: string;
+            description?: string;
+            author_id?: string;
+            author?: string;
+            category?: string;
+            cover_url?: string;
+            /** @enum {string} */
+            status?: "draft" | "published" | "ongoing" | "completed" | "archived";
+        };
+        StoryManageRequest: {
+            /** @enum {string} */
+            action?: "create" | "update" | "delete" | "bulkUpdateStatus" | "bulkDelete";
+            story?: components["schemas"]["StoryCreateUpdateRequest"];
+            id?: string;
+            ids?: string[];
+            payload?: components["schemas"]["StoryCreateUpdateRequest"];
+            /** @enum {string} */
+            status?: "draft" | "published" | "ongoing" | "completed" | "archived";
+        };
+        ChapterListRequest: {
+            storyId?: string;
+        };
+        ChapterCreateUpdateRequest: {
+            story_id?: string;
+            chapter_number?: number;
+            title?: string;
+            content?: string;
+        };
+        ChapterManageRequest: {
+            /** @enum {string} */
+            action?: "create" | "update" | "delete";
+            chapter?: components["schemas"]["ChapterCreateUpdateRequest"];
+            id?: string;
+        };
+        TaxonomyCreateRequest: {
+            name: string;
+            description?: string | null;
+        };
+        TaxonomyUpdateRequest: {
+            name?: string;
+            description?: string | null;
+        };
+        TaxonomyManageRequest: {
+            /** @enum {string} */
+            entity: "category" | "author";
+            /** @enum {string} */
+            action: "create" | "update" | "delete";
+            id?: string;
+            payload?: components["schemas"]["TaxonomyCreateRequest"] | components["schemas"]["TaxonomyUpdateRequest"];
+        };
+        AdminProfileDto: {
+            id: string;
+            /** Format: email */
+            email: string;
+            role: string;
+            full_name?: string | null;
+        };
+        AdminProfileListResponse: {
+            data?: components["schemas"]["AdminProfileDto"][];
+        };
+        AdminProfileUpdateRequest: {
+            /** @enum {string} */
+            action: "updateRole" | "updateName";
+            id: string;
+            role?: string;
+            full_name?: string | null;
+        };
+        AdminAuditLogDto: {
+            id: string;
+            user_id: string;
+            action: string;
+            entity_type?: string;
+            entity_id?: string;
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** Format: date-time */
+            created_at: string;
+        };
+        AdminAuditLogListResponse: {
+            data?: components["schemas"]["AdminAuditLogDto"][];
+        };
+        AdminAuditLogCreateRequest: {
+            user_id: string;
+            action: string;
+            entity_type?: string;
+            entity_id?: string;
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        RpcLikeStoryRequest: {
+            storyId: string;
+        };
+        RpcUnlikeStoryRequest: {
+            storyId: string;
+        };
+        RpcIncrementViewsRequest: {
+            storyId: string;
+        };
+        SiteMetricsResponse: {
+            count?: number;
+        };
+        RoleDistributionItem: {
+            role?: string;
+            total?: number;
+        };
+        RoleDistributionResponse: {
+            data?: components["schemas"]["RoleDistributionItem"][];
+        };
+        VerifyRecoveryRequest: {
+            token: string;
+        };
+        VerifyRecoveryResponse: {
+            valid?: boolean;
+            email?: string;
+        };
+        AnalyticsDashboardResponse: {
+            meta?: components["schemas"]["AnalyticsMeta"];
+            user_engagement?: components["schemas"]["UserEngagementMetrics"];
+            content_performance?: components["schemas"]["ContentPerformanceMetrics"];
+            infrastructure?: components["schemas"]["InfrastructureMetrics"];
+            trends?: {
+                user_growth?: components["schemas"]["AnalyticsTrendPoint"][];
+                traffic?: components["schemas"]["AnalyticsTrendPoint"][];
+                storage?: components["schemas"]["AnalyticsTrendPoint"][];
+            };
+        };
+        AnalyticsMeta: {
+            /** Format: date-time */
+            timestamp?: string;
+            /** @enum {string} */
+            range?: "24h" | "7d" | "30d";
+            /** @enum {string} */
+            role?: "superadmin" | "admin" | "employee";
+            cached?: boolean;
+            restricted?: boolean;
+            source_health?: {
+                supabase?: components["schemas"]["AnalyticsSourceHealth"];
+                cloudflare?: components["schemas"]["AnalyticsSourceHealth"];
+            };
+        };
+        /** @enum {string} */
+        AnalyticsSourceHealth: "ready" | "degraded" | "unavailable";
+        UserEngagementMetrics: {
+            total_users?: number;
+            new_users?: number;
+            active_users?: number;
+            total_views?: number;
+            total_favorites?: number;
+            /** Format: float */
+            growth_rate_pct?: number;
+            /** Format: float */
+            churn_rate_pct?: number;
+            /** Format: float */
+            avg_session_duration_minutes?: number;
+        };
+        TopChapterMetric: {
+            chapter_id?: string;
+            story_id?: string;
+            title?: string;
+            chapter_number?: number;
+            views?: number;
+            favorites?: number;
+            /** Format: float */
+            engagement_score?: number;
+            /** Format: float */
+            growth_rate_pct?: number;
+        };
+        ContentPerformanceMetrics: {
+            total_views?: number;
+            total_favorites?: number;
+            /** Format: float */
+            avg_views_per_chapter?: number;
+            /** Format: float */
+            engagement_score?: number;
+            top_chapters?: components["schemas"]["TopChapterMetric"][];
+        };
+        InfrastructureMetrics: {
+            /** Format: float */
+            r2_usage_gb?: number;
+            /** Format: float */
+            r2_allocated_gb?: number;
+            r2_object_count?: number;
+            /** Format: float */
+            r2_egress_gb?: number;
+            d1_queries_count?: number;
+            /** Format: float */
+            d1_avg_latency_ms?: number;
+            page_views?: number;
+            /** Format: float */
+            bandwidth_gb?: number;
+            /** Format: float */
+            cache_hit_ratio_pct?: number;
+            /** Format: float */
+            storage_efficiency_pct?: number;
+            device_mobile?: number;
+            device_desktop?: number;
+            device_tablet?: number;
+            top_zones?: {
+                zone?: string;
+                requests?: number;
+                /** Format: float */
+                cache_hit_ratio_pct?: number;
+            }[];
+        };
+        AnalyticsTrendPoint: {
+            /** Format: date-time */
+            timestamp?: string;
+            value?: number;
+            label?: string;
+        };
+    };
+    responses: {
+        /** @description Missing or invalid authentication */
+        Unauthorized: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiResponse_ErrorOnly"];
+            };
+        };
+        /** @description Insufficient permissions */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiResponse_ErrorOnly"];
+            };
+        };
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ApiResponse_ErrorOnly"];
+            };
+        };
+    };
     parameters: never;
     requestBodies: never;
     headers: never;
@@ -186,54 +673,15 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    createChapter: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                comicId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    title?: string;
-                    pages?: string;
-                    /** Format: binary */
-                    cover?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Created */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        status?: "success";
-                        data?: Record<string, never>;
-                    };
-                };
-            };
-            /** @description Unauthorized */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     listStories: {
         parameters: {
             query?: {
                 id?: string;
                 page?: number;
                 pageSize?: number;
+                keyword?: string;
+                status?: "draft" | "published" | "ongoing" | "completed" | "archived";
+                sort?: "newest" | "oldest" | "most_viewed";
             };
             header?: never;
             path?: never;
@@ -241,15 +689,69 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Story list */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ApiResponse_StoryListData"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getStoryDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Story detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Story"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    manageStory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryManageRequest"];
+            };
+        };
+        responses: {
+            /** @description Story saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Story"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     listChapters: {
@@ -264,15 +766,39 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Chapter list */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ApiResponse_ChapterListData"];
                 };
             };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getChapterDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Chapter detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Chapter"];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
     };
     getCategories: {
@@ -284,13 +810,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Category list */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": components["schemas"]["ApiResponse_CategoryList"];
                 };
             };
         };
@@ -304,9 +830,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    storyId?: string;
-                };
+                "application/json": components["schemas"]["RpcLikeStoryRequest"];
             };
         };
         responses: {
@@ -315,7 +839,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Empty"];
+                };
             };
         };
     };
@@ -328,9 +854,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    storyId?: string;
-                };
+                "application/json": components["schemas"]["RpcUnlikeStoryRequest"];
             };
         };
         responses: {
@@ -339,7 +863,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Empty"];
+                };
             };
         };
     };
@@ -352,9 +878,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    storyId?: string;
-                };
+                "application/json": components["schemas"]["RpcIncrementViewsRequest"];
             };
         };
         responses: {
@@ -363,7 +887,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Empty"];
+                };
             };
         };
     };
@@ -376,12 +902,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Site metrics */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_SiteMetrics"];
+                };
             };
         };
     };
@@ -394,12 +922,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Site settings */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_SiteSettings"];
+                };
             };
         };
     };
@@ -412,12 +942,153 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description OK */
+            /** @description Role distribution */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_RoleDistribution"];
+                };
+            };
+        };
+    };
+    listAdminProfiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Admin profile list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_AdminProfileList"];
+                };
+            };
+        };
+    };
+    updateAdminProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminProfileUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Profile updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Empty"];
+                };
+            };
+        };
+    };
+    listAdminAuditLogs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Audit log list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_AuditLogList"];
+                };
+            };
+        };
+    };
+    createAdminAuditLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAuditLogCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Audit log created */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_Empty"];
+                };
+            };
+        };
+    };
+    getAnalyticsDashboard: {
+        parameters: {
+            query?: {
+                range?: "24h" | "7d" | "30d";
+                role?: "superadmin" | "admin" | "employee";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Analytics dashboard */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_AnalyticsDashboard"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    verifyRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyRecoveryRequest"];
+            };
+        };
+        responses: {
+            /** @description Recovery token verification result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiResponse_VerifyRecovery"];
+                };
             };
         };
     };

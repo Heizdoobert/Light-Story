@@ -1,7 +1,13 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SupabaseStoryRepository } from '@/infrastructure/repositories/SupabaseStoryRepository';
+import {
+  fetchStoriesPage,
+  updateStory,
+  deleteStory,
+  bulkUpdateStatus,
+  bulkDeleteStories
+} from '@/services/story.service';
 import { Story } from '@/types/entities';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/dbChangeToast';
 
@@ -19,12 +25,11 @@ export function useStoryManagementPresenter(params: {
 }) {
   const { page, statusFilter, sortMode, keyword } = params;
   const queryClient = useQueryClient();
-  const storyRepo = new SupabaseStoryRepository();
 
   const storiesQuery = useQuery({
     queryKey: ['admin_stories', { page, statusFilter, sortMode, keyword }],
     queryFn: () =>
-      storyRepo.getStoriesPage({
+      fetchStoriesPage({
         page,
         pageSize: PAGE_SIZE,
         keyword,
@@ -43,7 +48,7 @@ export function useStoryManagementPresenter(params: {
 
   const updateStoryMutation = useMutation({
     mutationFn: (payload: { id: string; title: string; description: string; status: StoryStatus }) =>
-      storyRepo.updateStory(payload.id, {
+      updateStory(payload.id, {
         title: payload.title,
         description: payload.description,
         status: payload.status,
@@ -62,7 +67,7 @@ export function useStoryManagementPresenter(params: {
   });
 
   const deleteStoryMutation = useMutation({
-    mutationFn: (id: string) => storyRepo.deleteStory(id),
+    mutationFn: (id: string) => deleteStory(id),
     onMutate: () => {
       const toastId = startDbChangeToast('Deleting story...');
       return { toastId };
@@ -78,7 +83,7 @@ export function useStoryManagementPresenter(params: {
 
   const bulkStatusMutation = useMutation({
     mutationFn: ({ ids, status }: { ids: string[]; status: StoryStatus }) =>
-      storyRepo.bulkUpdateStatus(ids, status),
+      bulkUpdateStatus(ids, status),
     onMutate: ({ ids, status }) => {
       const toastId = startDbChangeToast(`Updating ${ids.length} stories to ${status}...`);
       return { toastId };
@@ -93,7 +98,7 @@ export function useStoryManagementPresenter(params: {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => storyRepo.bulkDeleteStories(ids),
+    mutationFn: (ids: string[]) => bulkDeleteStories(ids),
     onMutate: (ids) => {
       const toastId = startDbChangeToast(`Deleting ${ids.length} selected stories...`);
       return { toastId };
