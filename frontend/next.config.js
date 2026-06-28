@@ -1,7 +1,6 @@
 import path from 'node:path';
-import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   turbopack: {
     root: path.resolve(process.cwd(), '..'),

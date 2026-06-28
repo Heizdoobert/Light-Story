@@ -91,7 +91,23 @@ npx vitest run --config vitest.integration.config.ts
 
 29 tests (8 Supabase + 21 Cloudflare) — tất cả phải pass.
 
-## 8. Cấu Trúc Quan Trọng
+## 8. Commit & Push
+
+```bash
+# Stage changes
+git add -A
+
+# Commit
+git commit -m "type: short description"
+
+# Push to both remotes
+git push origin <branch-name>
+git push truyen3new <branch-name>
+```
+
+> Nhánh chính: `main` hoặc tên nhánh feature. Kiểm tra nhánh hiện tại bằng `git branch`.
+
+## 9. Cấu Trúc Quan Trọng
 
 ```
 workers/
@@ -106,7 +122,7 @@ frontend/src/
 
 > **Lưu ý:** Các worker `stories-worker`, `comics-worker`, `admin-worker`, `analytics-worker` cũ đã được gộp vào `unified-gateway`.
 
-## 9. Liên Hệ
+## 10. Liên Hệ
 
 Hỏi leader để được cấp:
 - `SUPABASE_SERVICE_ROLE_KEY`

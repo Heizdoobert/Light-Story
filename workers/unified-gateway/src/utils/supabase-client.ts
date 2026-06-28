@@ -32,15 +32,20 @@ async function sb(
   env: Env,
   token?: string | null,
 ): Promise<Response> {
-  const h = new Headers(opts.headers || {});
+  const h = new Headers();
   h.set('apikey', env.SUPABASE_ANON_KEY);
-  h.set('Content-Type', 'application/json');
+  h.set('Accept', 'application/json');
   h.set(
     'Authorization',
     token
       ? `Bearer ${token}`
       : `Bearer ${env.SUPABASE_ANON_KEY}`,
   );
+  if (opts.body) h.set('Content-Type', 'application/json');
+  if (opts.headers) {
+    const pref = (opts.headers as Record<string, string>).Prefer;
+    if (pref) h.set('Prefer', pref);
+  }
   return fetch(`${env.SUPABASE_URL}${path}`, { ...opts, headers: h });
 }
 
