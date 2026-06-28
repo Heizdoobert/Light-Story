@@ -56,7 +56,8 @@ function readCatalog(): ComicCmsRecord[] {
   try {
     const raw = localStorage.getItem(COMIC_CMS_CATALOG_KEY);
     return raw ? (JSON.parse(raw) as ComicCmsRecord[]) : [];
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] Failed to parse catalog', err);
     return [];
   }
 }
@@ -65,7 +66,9 @@ function writeCatalog(catalog: ComicCmsRecord[]): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(COMIC_CMS_CATALOG_KEY, JSON.stringify(catalog));
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] Failed to write catalog', err);
+  }
 }
 
 function generateId(): string {
@@ -107,7 +110,8 @@ export function loadComicDraft(key: string): ComicCmsFormValues | null {
   try {
     const raw = localStorage.getItem(`${COMIC_CMS_DRAFT_PREFIX}${key}`);
     return raw ? (JSON.parse(raw) as ComicCmsFormValues) : null;
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] Failed to parse draft', err);
     return null;
   }
 }
@@ -116,14 +120,18 @@ export function saveComicDraft(key: string, data: ComicCmsFormValues): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`${COMIC_CMS_DRAFT_PREFIX}${key}`, JSON.stringify(data));
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] Failed to save draft', err);
+  }
 }
 
 export function clearComicDraft(id: string): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.removeItem(`${COMIC_CMS_DRAFT_PREFIX}${id}`);
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] Failed to clear draft', err);
+  }
 }
 
 export function listComicModerationState(): ComicModerationState {
@@ -133,7 +141,8 @@ export function listComicModerationState(): ComicModerationState {
   try {
     const raw = localStorage.getItem(COMIC_CMS_MODERATION_KEY);
     return raw ? (JSON.parse(raw) as ComicModerationState) : { keywords: ['spoiler', 'pirated', 'leak'], reportedComments: [] };
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] Failed to parse moderation state', err);
     return { keywords: ['spoiler', 'pirated', 'leak'], reportedComments: [] };
   }
 }
@@ -142,7 +151,9 @@ export function saveComicModerationState(state: ComicModerationState): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(COMIC_CMS_MODERATION_KEY, JSON.stringify(state));
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] Failed to save moderation state', err);
+  }
 }
 
 export function proxiedR2ImageUrl(url: string): string {
@@ -153,7 +164,9 @@ export function proxiedR2ImageUrl(url: string): string {
       const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
       return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
     }
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] Failed to proxy R2 URL', err);
+  }
   return url;
 }
 
@@ -222,7 +235,8 @@ export async function createComicFromMetadata(
     catalog.unshift(created);
     writeCatalog(catalog);
     return created;
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] createComicFromMetadata failed, falling back to localStorage', err);
     const catalog = readCatalog();
     catalog.unshift(record);
     writeCatalog(catalog);
@@ -265,7 +279,8 @@ export async function createComicChapterFromFiles(
   let imageUrls: string[];
   try {
     imageUrls = await uploadChapterImages(files);
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] uploadChapterImages failed', err);
     imageUrls = files.map((_, i) =>
       `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
     );
@@ -313,7 +328,8 @@ export async function createComicChapterFromFiles(
             previewUrl: url,
             fileName: url.split('/').pop() || 'page',
           })) : chapter.pages;
-        } catch {
+        } catch (err) {
+          console.error('[comicCms] Failed to parse chapter content', err);
           return chapter.pages;
         }
       })(),
@@ -326,7 +342,8 @@ export async function createComicChapterFromFiles(
       writeCatalog(catalog);
     }
     return created;
-  } catch {
+  } catch (err) {
+    console.error('[comicCms] createComicChapterFromFiles API failed, falling back', err);
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
@@ -352,7 +369,9 @@ export async function recordComicAudit(
       entity_id: entityId,
       timestamp: new Date().toISOString(),
     });
-  } catch {}
+  } catch (err) {
+    console.error('[comicCms] recordComicAudit failed', err);
+  }
 }
 
 export async function requestComicCachePurge(_params: {
