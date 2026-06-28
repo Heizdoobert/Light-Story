@@ -11,6 +11,13 @@ import {
   handleRes,
   json,
 } from '../utils/supabase-client';
+import {
+  validateBody,
+  sanitizeBody,
+  getAuthRole,
+  requireRole,
+  VALID_STATUSES,
+} from '../utils/validation';
 
 export async function handleAdminRequest(
   request: Request,
@@ -651,20 +658,38 @@ export async function handleAdminRequest(
     }
 
     if (method === 'POST' && path === '/admin/comics') {
-      const body = (await request.json()) as any;
-      const payload: Record<string, unknown> = {
-        title: body.title,
-        author: body.author || 'Unknown',
-        description: body.description || null,
-        status: body.status || 'draft',
-      };
-      const metadata: Record<string, unknown> = {};
-      if (body.slug) metadata.slug = body.slug;
-      if (body.genres) metadata.genres = body.genres;
-      if (body.tags) metadata.tags = body.tags;
-      if (Object.keys(metadata).length > 0) {
-        payload.metadata = JSON.stringify(metadata);
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
       }
+
+      const body = (await request.json()) as Record<string, unknown>;
+      const errors = validateBody(body, [
+        { field: 'title', type: 'required-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+      ]);
+      if (errors.length > 0) {
+        return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
+      }
+
+      const s = sanitizeBody(body, [
+        { field: 'title', type: 'required-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+      ]);
+
+      const payload: Record<string, unknown> = {
+        title: s.title,
+        author: (s.author as string) || 'Unknown',
+        description: (s.description as string) || null,
+        status: s.status || 'draft',
+      };
+      if (s.coverUrl) payload.cover_url = s.coverUrl;
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }
@@ -686,20 +711,32 @@ export async function handleAdminRequest(
 
     if (method === 'PATCH' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = path.split('/')[3];
-      const body = (await request.json()) as any;
-      const payload: Record<string, unknown> = {};
-      if (body.title !== undefined) payload.title = body.title;
-      if (body.author !== undefined) payload.author = body.author;
-      if (body.description !== undefined) payload.description = body.description;
-      if (body.status !== undefined) payload.status = body.status;
-      if (body.coverUrl !== undefined) payload.cover_url = body.coverUrl;
-      const metadata: Record<string, unknown> = {};
-      if (body.genres) metadata.genres = body.genres;
-      if (body.tags) metadata.tags = body.tags;
-      if (body.slug) metadata.slug = body.slug;
-      if (Object.keys(metadata).length > 0) {
-        payload.metadata = JSON.stringify(metadata);
+      const body = (await request.json()) as Record<string, unknown>;
+      const errors = validateBody(body, [
+        { field: 'title', type: 'optional-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+      ]);
+      if (errors.length > 0) {
+        return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
       }
+
+      const s = sanitizeBody(body, [
+        { field: 'title', type: 'optional-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+      ]);
+
+      const payload: Record<string, unknown> = {};
+      if (s.title !== undefined) payload.title = s.title as string;
+      if (s.author !== undefined) payload.author = (s.author as string) || 'Unknown';
+      if (s.description !== undefined) payload.description = (s.description as string) || null;
+      if (s.status !== undefined) payload.status = s.status as string;
+      if (s.coverUrl !== undefined) payload.cover_url = s.coverUrl as string;
       const res = await sbPatch('stories', `id=eq.${id}`, payload, env, token);
       return handleRes(res);
     }
@@ -711,13 +748,36 @@ export async function handleAdminRequest(
     }
 
     if (method === 'POST' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
+      }
+
       const comicId = path.split('/')[3];
-      const body = (await request.json()) as any;
+      const body = (await request.json()) as Record<string, unknown>;
+      const errors = validateBody(body, [
+        { field: 'comicId', type: 'optional-string', maxLength: 100 },
+        { field: 'chapterNumber', type: 'optional-string' },
+        { field: 'title', type: 'optional-string', maxLength: 500 },
+        { field: 'pageUrls', type: 'optional-array' },
+      ]);
+      if (errors.length > 0) {
+        return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
+      }
+
+      const s = sanitizeBody(body, [
+        { field: 'comicId', type: 'optional-string', maxLength: 100 },
+        { field: 'chapterNumber', type: 'optional-string' },
+        { field: 'title', type: 'optional-string', maxLength: 500 },
+        { field: 'pageUrls', type: 'optional-array' },
+      ]);
+
+      const cn = parseInt((s.chapterNumber as string) || '1', 10);
       const payload = {
-        story_id: body.comicId || comicId,
-        chapter_number: body.chapterNumber || 1,
-        title: body.title || `Chapter ${body.chapterNumber}`,
-        content: JSON.stringify(body.pageUrls || []),
+        story_id: (s.comicId as string) || comicId,
+        chapter_number: Number.isFinite(cn) && cn > 0 ? cn : 1,
+        title: (s.title as string) || `Chapter ${cn}`,
+        content: JSON.stringify(s.pageUrls || []),
       };
       const res = await sbPost('chapters', payload, env, token);
       return handleRes(res);

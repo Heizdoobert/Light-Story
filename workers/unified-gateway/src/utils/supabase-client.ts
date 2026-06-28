@@ -155,10 +155,23 @@ async function sbGetCount(
   return 0;
 }
 
+const SENSITIVE_PATTERNS = [
+  /\b(?:password|secret|token|key)\s*[:=]\s*\S+/gi,
+];
+
+function sanitizeMessage(msg: string): string {
+  let clean = msg;
+  for (const p of SENSITIVE_PATTERNS) {
+    clean = clean.replace(p, '$1: [REDACTED]');
+  }
+  if (clean.length > 500) clean = clean.slice(0, 500) + '...';
+  return clean;
+}
+
 async function handleRes(res: Response): Promise<Response> {
   if (!res.ok) {
     const text = await res.text();
-    return err('SUPABASE_ERROR', text, res.status);
+    return err('SUPABASE_ERROR', sanitizeMessage(text), res.status);
   }
   const text = await res.text();
   if (!text) return json({ success: true });
