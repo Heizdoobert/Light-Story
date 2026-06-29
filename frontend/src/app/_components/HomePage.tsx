@@ -1,33 +1,21 @@
+// app/page.tsx (hoặc file HomePage hiện tại)
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react"; 
-import {
-  LogIn,
-  LogOut,
-  LayoutDashboard,
-  Image as ImageIcon,
-  Menu,
-  X,
-} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Image as ImageIcon, X } from "lucide-react"; // Đã xóa bớt các icon chuyển sang Header
 
 import { fetchCategories } from "@/services/taxonomy.service";
-import { fetchStoriesPage } from '@/services/story.service';
-import { fetchChaptersByStoryId } from '@/services/chapter.service';
+import { fetchStoriesPage } from "@/services/story.service";
+import { fetchChaptersByStoryId } from "@/services/chapter.service";
 
 import { Story, Chapter, Category } from "@/types/entities";
-import { useAuth } from "@/modules/auth/AuthContext";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
-
-const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
-
-function isStaffRole(role: string | null | undefined): boolean {
-  return STAFF_ROLES.has(role ?? "");
-}
+import { Header } from "@/components/shared/Header"; // Import component Header mới
 
 type HomePageProps = {
   initialStories?: Story[];
@@ -39,13 +27,10 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
-
   const [showFilter, setShowFilter] = useState(false);
-
   const [trendingStories, setTrendingStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(initialStories.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { user, profile, signOut, role } = useAuth();
 
   const [filterParams, setFilterParams] = useState({
     keyword: "",
@@ -116,11 +101,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
   useEffect(() => {
     fetchStoriesData();
   }, [fetchStoriesData]);
-
-  const bounceClick = {
-    whileTap: { scale: 0.92 },
-    whileHover: { scale: 1.05 },
-  };
 
   useEffect(() => {
     if (showFilter) {
@@ -193,82 +173,11 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
         )}
       </AnimatePresence>
 
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 sm:px-6 lg:px-12 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <motion.button
-            {...bounceClick}
-            onClick={() => setShowFilter(true)}
-            className="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-primary hover:text-white transition-colors"
-          >
-            <Menu size={22} />
-          </motion.button>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:flex w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-2xl items-center justify-center text-white font-black shadow-lg shadow-primary/20">
-              L
-            </div>
-            <span className="font-black text-xl sm:text-2xl tracking-tighter text-slate-800 dark:text-white">
-              Light<span className="text-primary">Story</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-4">
-              {isStaffRole(role) && (
-                <Link href="/admin">
-                  <motion.button
-                    {...bounceClick}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all"
-                  >
-                    <LayoutDashboard size={16} />
-                    <span className="hidden lg:block">Quản trị</span>
-                  </motion.button>
-                </Link>
-              )}
-              <div className="flex items-center gap-3 sm:gap-4 pl-3 sm:pl-4 border-l border-slate-200 dark:border-slate-800">
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[120px]">
-                    {profile?.full_name || user.email?.split("@")[0]}
-                  </div>
-                  <div className="text-[11px] font-black text-primary uppercase tracking-wider">
-                    {role}
-                  </div>
-                </div>
-                <img
-                  src={
-                    profile?.avatar_url ||
-                    `https://ui-avatars.com/api/?name=${profile?.full_name || "User"}&background=random`
-                  }
-                  alt="Avatar"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-md object-cover"
-                />
-                <motion.button
-                  {...bounceClick}
-                  onClick={() => {
-                    signOut();
-                    toast.success("Đã đăng xuất thành công");
-                  }}
-                  className="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                  title="Đăng xuất"
-                >
-                  <LogOut size={18} />
-                </motion.button>
-              </div>
-            </div>
-          ) : (
-            <motion.button
-              {...bounceClick}
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2 px-5 sm:px-7 py-2 sm:py-2.5 bg-primary text-white rounded-full text-sm font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow"
-            >
-              <LogIn size={18} />
-              <span className="hidden sm:inline">Đăng nhập</span>
-            </motion.button>
-          )}
-        </div>
-      </nav>
+      {/* GỌI COMPONENT HEADER TẠI ĐÂY */}
+      <Header
+        onMenuClick={() => setShowFilter(true)}
+        onLoginClick={() => setIsLoginModalOpen(true)}
+      />
 
       <LoginModal
         isOpen={isLoginModalOpen}
@@ -301,7 +210,9 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                       alt={story.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
-                      onError={(event) => applyStoryCoverFallback(event, story.id)}
+                      onError={(event) =>
+                        applyStoryCoverFallback(event, story.id)
+                      }
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent opacity-90"></div>
 
@@ -402,7 +313,9 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                       alt={story.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
-                      onError={(event) => applyStoryCoverFallback(event, story.id)}
+                      onError={(event) =>
+                        applyStoryCoverFallback(event, story.id)
+                      }
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-5">
                       <span className="text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
