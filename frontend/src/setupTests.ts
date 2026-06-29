@@ -1,3 +1,5 @@
+import '@testing-library/jest-dom';
+
 // Test setup: rewrite requests targeting http://api to http://localhost:3001
 // This helps tests that use the 'api' host to resolve to the local Next dev server.
 const globalAny = globalThis as any;

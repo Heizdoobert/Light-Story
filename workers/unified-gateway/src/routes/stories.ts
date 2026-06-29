@@ -31,7 +31,8 @@ export async function handleStoriesRequest(
       );
       const keyword = url.searchParams.get('keyword') || '';
       const offset = (page - 1) * pageSize;
-      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      const allowedStatuses = ['published', 'ongoing', 'completed'];
+      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       if (keyword) {
         q += `&or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`;
       }

@@ -192,6 +192,25 @@ export default {
     }
 
     const strippedPath = stripApiPrefix(pathname);
+    const method = request.method;
+
+    // Reject unauthenticated mutations
+    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
+      return new Response(
+        JSON.stringify({
+          status: 'error',
+          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+        }),
+        {
+          status: 401,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders(origin),
+          },
+        },
+      );
+    }
+
     const responseHeaders = new Headers();
     const c = corsHeaders(origin);
     for (const [k, v] of Object.entries(c))

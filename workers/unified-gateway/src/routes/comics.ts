@@ -8,6 +8,13 @@ import {
   handleRes,
   json,
 } from '../utils/supabase-client';
+import {
+  validateBody,
+  sanitizeBody,
+  getAuthRole,
+  requireRole,
+  VALID_STATUSES,
+} from '../utils/validation';
 
 export async function handleComicsRequest(
   request: Request,
@@ -56,18 +63,43 @@ export async function handleComicsRequest(
     }
 
     if (method === 'POST' && pathname === '/comics') {
-      const body = (await request.json()) as any;
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
+      }
+
+      const body = (await request.json()) as Record<string, unknown>;
+      const errors = validateBody(body, [
+        { field: 'title', type: 'required-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'cover_url', type: 'optional-string', maxLength: 1000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+        { field: 'category', type: 'optional-array' },
+      ]);
+      if (errors.length > 0) {
+        return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
+      }
+
+      const s = sanitizeBody(body, [
+        { field: 'title', type: 'required-string', maxLength: 200 },
+        { field: 'author', type: 'optional-string', maxLength: 100 },
+        { field: 'description', type: 'optional-string', maxLength: 2000 },
+        { field: 'cover_url', type: 'optional-string', maxLength: 1000 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+      ]);
+
       const payload: Record<string, unknown> = {
-        title: body.title,
-        author: body.author,
-        description: body.description || null,
-        cover_url: body.cover_url || null,
-        status: body.status || 'draft',
+        title: s.title,
+        author: (s.author as string) || '',
+        description: (s.description as string) || null,
+        cover_url: (s.cover_url as string) || null,
+        status: s.status || 'draft',
       };
       if (body.category)
         payload.category = Array.isArray(body.category)
-          ? body.category.join(', ')
-          : body.category;
+          ? (body.category as string[]).join(', ')
+          : String(body.category);
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }
