@@ -51,7 +51,7 @@ npm run dev:gateway
 Terminal 2 — Frontend (port 3001):
 
 ```bash
-npm run dev
+npm --prefix frontend run dev
 ```
 
 Mở `http://localhost:3001`.
@@ -125,6 +125,7 @@ frontend/src/
 ## 10. Liên Hệ
 
 Hỏi leader để được cấp:
+
 - `SUPABASE_SERVICE_ROLE_KEY`
 - R2 credentials
 - `CLOUDFLARE_API_TOKEN`
