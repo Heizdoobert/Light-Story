@@ -37,7 +37,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "light-story-workspace": "file:..",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.23.0",
     "motion": "^12.23.24",
     "next": "^15.3.0",
     "radix-ui": "^1.4.3",
