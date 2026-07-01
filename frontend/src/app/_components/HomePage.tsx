@@ -2,50 +2,45 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react"; 
-import {
-  LogIn,
-  LogOut,
-  LayoutDashboard,
-  Image as ImageIcon,
-  Menu,
-  X,
-} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Image as ImageIcon, X } from "lucide-react";
 
-import { fetchCategories } from "@/services/taxonomy.service";
-import { fetchStoriesPage } from '@/services/story.service';
-import { fetchChaptersByStoryId } from '@/services/chapter.service';
+// IMPORT CÔNG CỤ GỌI API VÀ KIỂU DỮ LIỆU TỪ FILE CỦA BẠN
+import { apiClient } from "@/lib/apiClient";
+import { ComicContext as Comic } from "@/services/comic.service";
 
-import { Story, Chapter, Category } from "@/types/entities";
-import { useAuth } from "@/modules/auth/AuthContext";
+// IMPORT CÁC THỰC THỂ KHÁC
+import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
+import { Header } from "@/components/shared/Header";
 
-const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
-
-function isStaffRole(role: string | null | undefined): boolean {
-  return STAFF_ROLES.has(role ?? "");
-}
-
-type HomePageProps = {
-  initialStories?: Story[];
+// Hàm dịch trạng thái chuẩn
+const getVietnameseStatus = (status: string) => {
+  if (status === "completed") return "Hoàn thành";
+  if (status === "ongoing") return "Đang cập nhật";
+  if (status === "published") return "Đã xuất bản";
+  if (status === "draft") return "Bản nháp";
+  return "Đang cập nhật";
 };
 
-export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
+type HomePageProps = {
+  initialComics?: Comic[];
+};
+
+export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [stories, setStories] = useState<Story[]>(initialStories);
+  const [comics, setComics] = useState<Comic[]>(initialComics);
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
 
   const [showFilter, setShowFilter] = useState(false);
-
-  const [trendingStories, setTrendingStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(initialStories.length === 0);
+  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
+  const [loading, setLoading] = useState(initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { user, profile, signOut, role } = useAuth();
 
   const [filterParams, setFilterParams] = useState({
     keyword: "",
@@ -53,92 +48,101 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
     sort: "newest" as "newest" | "most_viewed" | "oldest",
   });
 
+  // TẢI THỂ LOẠI & TRUYỆN THỊNH HÀNH
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadInitData = async () => {
       try {
-        const data = await fetchCategories();
-        setCategories(data);
-        const trendingData = await fetchStoriesPage({
-          page: 1,
-          pageSize: 6,
-          sort: "most_viewed",
-        });
-        setTrendingStories(trendingData.items);
+        const cats = await apiClient
+          .get<any>("/api/categories")
+          .catch(() => []);
+        if (Array.isArray(cats)) setCategories(cats);
+
+        const trendingRes = await apiClient
+          .get<any>("/api/comics?sort=most_viewed&limit=6")
+          .catch(() => null);
+        const trendingData = Array.isArray(trendingRes)
+          ? trendingRes
+          : trendingRes?.items || trendingRes?.comics || [];
+        setTrendingComics(trendingData);
       } catch (error) {
-        console.error("Lỗi tải thể loại:", error);
+        console.error("Lỗi tải dữ liệu khởi tạo:", error);
       }
     };
-    loadCategories();
+    loadInitData();
   }, []);
 
-  const fetchStoriesData = useCallback(async () => {
+  // TẢI DANH SÁCH TRUYỆN CHÍNH
+  const fetchComicsData = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await fetchStoriesPage({
-        page: 1,
-        pageSize: 15,
-        keyword: filterParams.keyword || undefined,
-        category: filterParams.category,
-        sort: filterParams.sort,
-      });
+      const queryParams = new URLSearchParams();
+      if (filterParams.keyword)
+        queryParams.append("keyword", filterParams.keyword);
+      if (filterParams.category !== "all")
+        queryParams.append("category", filterParams.category);
+      if (filterParams.sort) queryParams.append("sort", filterParams.sort);
 
-      const storiesData = result.items;
-      setStories(storiesData);
+      const response = await apiClient.get<any>(
+        `/api/comics?${queryParams.toString()}`,
+      );
 
-      const chapterPromises = storiesData.map(async (story) => {
-        const chapters = await fetchChaptersByStoryId(story.id);
-        if (chapters && chapters.length > 0) {
-          const sortedChapters = chapters.sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() -
-              new Date(a.created_at).getTime(),
-          );
-          return { storyId: story.id, chapter: sortedChapters[0] };
-        }
-        return { storyId: story.id, chapter: null };
-      });
+      const comicsData: Comic[] = Array.isArray(response)
+        ? response
+        : response?.items || response?.comics || [];
+      setComics(comicsData);
 
-      const results = await Promise.all(chapterPromises);
       const chapterMap: Record<string, Chapter> = {};
-      results.forEach((item) => {
-        if (item.chapter) chapterMap[item.storyId] = item.chapter;
+      const chapterPromises = comicsData.map(async (comic) => {
+        try {
+          const chaptersRes = await apiClient
+            .get<any>(`/api/comics/${comic.id}/chapters`)
+            .catch(() => []);
+          const chapters: Chapter[] = Array.isArray(chaptersRes)
+            ? chaptersRes
+            : chaptersRes?.items || chaptersRes?.chapters || [];
+
+          if (chapters && chapters.length > 0) {
+            // Sửa lỗi dùng sai trường createdAt, chỉ sử dụng created_at
+            const sorted = chapters.sort(
+              (a, b) =>
+                new Date(b.created_at || 0).getTime() -
+                new Date(a.created_at || 0).getTime(),
+            );
+            chapterMap[comic.id] = sorted[0];
+          }
+        } catch (err) {
+          console.warn(`Không lấy được chapter cho comic ${comic.id}`);
+        }
       });
 
+      await Promise.all(chapterPromises);
       setLatestChapters(chapterMap);
     } catch (error) {
-      console.error("Lỗi tải danh sách truyện:", error);
-      toast.error(getErrorMessage(error, "fetch_homepage"));
+      console.error("Lỗi tải danh sách truyện tranh:", error);
+      toast.error(getErrorMessage(error, "Lỗi tải truyện"));
     } finally {
       setLoading(false);
     }
   }, [filterParams]);
 
   useEffect(() => {
-    fetchStoriesData();
-  }, [fetchStoriesData]);
+    fetchComicsData();
+  }, [fetchComicsData]);
 
-  const bounceClick = {
-    whileTap: { scale: 0.92 },
-    whileHover: { scale: 1.05 },
-  };
-
+  // Khóa cuộn trang khi mở bộ lọc
   useEffect(() => {
-    if (showFilter) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
+    document.body.style.overflow = showFilter ? "hidden" : "unset";
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [showFilter]);
 
-  const applyStoryCoverFallback = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>, storyId: string) => {
-      const fallback = `https://picsum.photos/seed/${storyId}/400/600`;
-      if (event.currentTarget.src !== fallback) {
+  // Fallback ảnh lỗi
+  const applyComicCoverFallback = useCallback(
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
+      if (event.currentTarget.src !== fallback)
         event.currentTarget.src = fallback;
-      }
     },
     [],
   );
@@ -155,7 +159,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
               onClick={() => setShowFilter(false)}
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-\[60\]"
             />
-
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -193,82 +196,10 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
         )}
       </AnimatePresence>
 
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-4 sm:px-6 lg:px-12 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <motion.button
-            {...bounceClick}
-            onClick={() => setShowFilter(true)}
-            className="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-primary hover:text-white transition-colors"
-          >
-            <Menu size={22} />
-          </motion.button>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden sm:flex w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-2xl items-center justify-center text-white font-black shadow-lg shadow-primary/20">
-              L
-            </div>
-            <span className="font-black text-xl sm:text-2xl tracking-tighter text-slate-800 dark:text-white">
-              Light<span className="text-primary">Story</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-4">
-              {isStaffRole(role) && (
-                <Link href="/admin">
-                  <motion.button
-                    {...bounceClick}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all"
-                  >
-                    <LayoutDashboard size={16} />
-                    <span className="hidden lg:block">Quản trị</span>
-                  </motion.button>
-                </Link>
-              )}
-              <div className="flex items-center gap-3 sm:gap-4 pl-3 sm:pl-4 border-l border-slate-200 dark:border-slate-800">
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[120px]">
-                    {profile?.full_name || user.email?.split("@")[0]}
-                  </div>
-                  <div className="text-[11px] font-black text-primary uppercase tracking-wider">
-                    {role}
-                  </div>
-                </div>
-                <img
-                  src={
-                    profile?.avatar_url ||
-                    `https://ui-avatars.com/api/?name=${profile?.full_name || "User"}&background=random`
-                  }
-                  alt="Avatar"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-md object-cover"
-                />
-                <motion.button
-                  {...bounceClick}
-                  onClick={() => {
-                    signOut();
-                    toast.success("Đã đăng xuất thành công");
-                  }}
-                  className="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
-                  title="Đăng xuất"
-                >
-                  <LogOut size={18} />
-                </motion.button>
-              </div>
-            </div>
-          ) : (
-            <motion.button
-              {...bounceClick}
-              onClick={() => setIsLoginModalOpen(true)}
-              className="flex items-center gap-2 px-5 sm:px-7 py-2 sm:py-2.5 bg-primary text-white rounded-full text-sm font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-shadow"
-            >
-              <LogIn size={18} />
-              <span className="hidden sm:inline">Đăng nhập</span>
-            </motion.button>
-          )}
-        </div>
-      </nav>
+      <Header
+        onMenuClick={() => setShowFilter(true)}
+        onLoginClick={() => setIsLoginModalOpen(true)}
+      />
 
       <LoginModal
         isOpen={isLoginModalOpen}
@@ -276,7 +207,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
       />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
-        {trendingStories.length > 0 && (
+        {trendingComics.length > 0 && (
           <div className="mb-10 pt-2 sm:pt-4">
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
               <span className="text-2xl">🔥</span>
@@ -284,48 +215,34 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                 Đang Thịnh Hành
               </h2>
             </div>
-
             <div className="flex overflow-x-auto gap-3 sm:gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {trendingStories.map((story, index) => (
+              {trendingComics.map((comic, index) => (
                 <Link
-                  key={`trending-${story.id}`}
-                  href={`/story/${story.id}`}
+                  key={`trending-${comic.id}`}
+                  href={`/comics/${comic.id}`}
                   className="group block relative w-[130px] sm:w-44 lg:w-48 flex-shrink-0 snap-start outline-none cursor-pointer"
                 >
                   <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-slate-100 dark:bg-slate-800 shadow-md group-hover:shadow-2xl transition-all duration-500 border border-slate-100 dark:border-slate-800">
                     <img
-                      src={
-                        story.cover_url ||
-                        `https://picsum.photos/seed/${story.id}/400/600`
-                      }
-                      alt={story.title}
+                      src={comic.coverUrl}
+                      alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
-                      onError={(event) => applyStoryCoverFallback(event, story.id)}
+                      onError={applyComicCoverFallback}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent opacity-90"></div>
-
                     <div
-                      className={`absolute top-0 left-0 text-white font-black text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded-br-xl shadow-lg z-10 ${
-                        index === 0
-                          ? "bg-gradient-to-br from-yellow-400 to-amber-600"
-                          : index === 1
-                            ? "bg-gradient-to-br from-slate-300 to-slate-500"
-                            : index === 2
-                              ? "bg-gradient-to-br from-amber-700 to-orange-900"
-                              : "bg-slate-800/80 backdrop-blur-md"
-                      }`}
+                      className={`absolute top-0 left-0 text-white font-black text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded-br-xl shadow-lg z-10 ${index === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-600" : index === 1 ? "bg-gradient-to-br from-slate-300 to-slate-500" : index === 2 ? "bg-gradient-to-br from-amber-700 to-orange-900" : "bg-slate-800/80 backdrop-blur-md"}`}
                     >
                       #{index + 1}
                     </div>
-
                     <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
                       <h3 className="text-white font-bold text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-1.5 group-hover:text-primary transition-colors">
-                        {story.title}
+                        {comic.title}
                       </h3>
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-300">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary/80"></span>
-                        {story.views.toLocaleString()} lượt xem
+                        {(comic.viewCount || 0).toLocaleString()} lượt xem
                       </div>
                     </div>
                   </div>
@@ -352,7 +269,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
           <div className="py-20 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
           </div>
-        ) : stories.length === 0 ? (
+        ) : comics.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -360,7 +277,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
           >
             <div className="text-5xl sm:text-6xl mb-6">📭</div>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 text-sm sm:text-lg">
-              Không tìm thấy bộ truyện nào phù hợp.
+              Không tìm thấy bộ truyện tranh nào phù hợp.
             </p>
             <button
               onClick={() =>
@@ -377,10 +294,10 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
           </motion.div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6">
-            {stories.map((story, i) => (
+            {comics.map((comic, i) => (
               <Link
-                key={story.id}
-                href={`/story/${story.id}`}
+                key={comic.id}
+                href={`/comics/${comic.id}`}
                 className="block outline-none cursor-pointer"
               >
                 <motion.div
@@ -395,14 +312,11 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                 >
                   <div className="relative overflow-hidden rounded-2xl mb-2 sm:mb-3 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                     <img
-                      src={
-                        story.cover_url ||
-                        `https://picsum.photos/seed/${story.id}/400/600`
-                      }
-                      alt={story.title}
+                      src={comic.coverUrl}
+                      alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
-                      onError={(event) => applyStoryCoverFallback(event, story.id)}
+                      onError={applyComicCoverFallback}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-5">
                       <span className="text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
@@ -412,27 +326,29 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                     </div>
                     <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                       <span
-                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase shadow-sm backdrop-blur-md ${story.status === "completed" ? "bg-emerald-500/90 text-white" : "bg-primary/90 text-white"}`}
+                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase shadow-sm backdrop-blur-md ${comic.status === "completed" ? "bg-emerald-500/90 text-white" : "bg-primary/90 text-white"}`}
                       >
-                        {story.status === "completed"
-                          ? "Hoàn thành"
-                          : "Đang cập nhật"}
+                        {getVietnameseStatus(comic.status)}
                       </span>
                     </div>
                   </div>
 
                   <div className="px-1 pb-1 flex flex-col flex-1">
-                    <h2 className="text-[13px] sm:text-base font-bold mb-1.5 sm:mb-2 text-slate-800 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
-                      {story.title}
+                    <h2 className="text-[13px] sm:text-base font-bold mb-1 text-slate-800 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
+                      {comic.title}
                     </h2>
+                    <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-1">
+                      {comic.author || "Đang cập nhật"}
+                    </div>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 mb-3 sm:mb-4 mt-auto">
                       <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded sm:rounded-md line-clamp-1 w-fit max-w-full sm:max-w-[60%]">
-                        {latestChapters[story.id]?.title || "Chưa có chương"}
+                        {latestChapters[comic.id]?.title || "Chưa có chương"}
                       </span>
                       <span className="text-[9px] sm:text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {latestChapters[story.id]?.created_at
+                        {/* Đã xóa hoàn toàn createdAt và ts-ignore, chỉ giữ lại created_at chuẩn */}
+                        {latestChapters[comic.id]?.created_at
                           ? new Date(
-                              latestChapters[story.id].created_at,
+                              latestChapters[comic.id].created_at,
                             ).toLocaleDateString("vi-VN", {
                               day: "2-digit",
                               month: "2-digit",
@@ -444,7 +360,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialStories = [] }) => {
                     <div className="flex items-center pt-2 sm:pt-2.5 border-t border-slate-100 dark:border-slate-800/60">
                       <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-slate-400">
                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-primary/60"></span>
-                        {story.views.toLocaleString()} lượt xem
+                        {(comic.viewCount || 0).toLocaleString()} lượt xem
                       </div>
                     </div>
                   </div>
