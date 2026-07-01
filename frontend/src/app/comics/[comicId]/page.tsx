@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   BookOpen,
   Clock,
@@ -14,14 +14,16 @@ import {
   ChevronRight,
   ArrowLeft,
   Play,
+  X, // Thêm icon X để đóng menu
 } from "lucide-react";
 
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-import { Chapter } from "@/types/entities";
+import { Chapter, Category } from "@/types/entities"; // Bổ sung Category
 import { Header } from "@/components/shared/Header";
 import { toast } from "sonner";
 import { LoginModal } from "@/components/shared/LoginModal";
+import { FilterMenu } from "@/app/_components/FilterMenu"; // Import FilterMenu
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -32,37 +34,52 @@ const getVietnameseStatus = (status: string) => {
 };
 
 export default function ComicDetailPage() {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const params = useParams();
   const comicId = params.comicId as string;
 
+  // States dữ liệu
   const [comic, setComic] = useState<Comic | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]); // State lưu thể loại cho FilterMenu
   const [loading, setLoading] = useState(true);
+
+  // States UI
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [showFilter, setShowFilter] = useState(false); // State quản lý ẩn/hiện Menu
 
   useEffect(() => {
     const fetchComicDetail = async () => {
       try {
-        const comicRes = await apiClient.get<any>(`/api/comics/${comicId}`);
-        const comicData = Array.isArray(comicRes)
-          ? comicRes[0]
-          : comicRes?.comic || comicRes;
-        setComic(comicData);
+        // Tải thông tin truyện, chương và thể loại cùng lúc
+        const [comicRes, chaptersRes, catsRes] = await Promise.all([
+          apiClient.get<any>(`/api/comics/${comicId}`).catch(() => null),
+          apiClient.get<any>(`/api/comics/${comicId}/chapters`).catch(() => []),
+          apiClient.get<any>("/api/categories").catch(() => [])
+        ]);
 
-        const chaptersRes = await apiClient
-          .get<any>(`/api/comics/${comicId}/chapters`)
-          .catch(() => []);
+        // Xử lý dữ liệu truyện
+        if (comicRes) {
+          const comicData = Array.isArray(comicRes) ? comicRes[0] : comicRes?.comic || comicRes;
+          setComic(comicData);
+        }
+
+        // Xử lý dữ liệu chương
         const chaptersData: Chapter[] = Array.isArray(chaptersRes)
           ? chaptersRes
           : chaptersRes?.items || chaptersRes?.chapters || [];
 
-        // Sắp xếp lấy chương mới nhất lên đầu (chỉ sử dụng created_at chuẩn Supabase)
         const sortedChapters = chaptersData.sort(
           (a, b) =>
             new Date(b.created_at || 0).getTime() -
             new Date(a.created_at || 0).getTime(),
         );
         setChapters(sortedChapters);
+
+        // Xử lý dữ liệu thể loại (Cho menu)
+        if (Array.isArray(catsRes)) {
+          setCategories(catsRes);
+        }
+
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
         toast.error("Không thể tải thông tin truyện.");
@@ -73,6 +90,14 @@ export default function ComicDetailPage() {
 
     if (comicId) fetchComicDetail();
   }, [comicId]);
+
+  // Khóa cuộn trang khi mở menu filter
+  useEffect(() => {
+    document.body.style.overflow = showFilter ? "hidden" : "unset";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showFilter]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
@@ -125,10 +150,62 @@ export default function ComicDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
+      
+      {/* KHU VỰC MENU TRƯỢT TỪ TRÁI SANG */}
+      <AnimatePresence>
+        {showFilter && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilter(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[70] shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                    L
+                  </div>
+                  <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
+                    Bộ lọc
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowFilter(false)}
+                  className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <FilterMenu
+                  categories={categories}
+                  onFilterChange={(newParams) => {
+                    // Logic lọc ở trang chi tiết có thể được thêm ở đây
+                    console.log("Filter params applied:", newParams);
+                    setShowFilter(false);
+                  }}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* HEADER VỚI HÀM GỌI MỞ MENU */}
       <Header
-        onMenuClick={() => {}}
+        onMenuClick={() => setShowFilter(true)} // Gọi mở menu ở đây
         onLoginClick={() => setIsLoginModalOpen(true)}
       />
+      
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

@@ -3,15 +3,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Home, List, ArrowUp } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  List,
+  ArrowUp,
+  X,
+} from "lucide-react";
 
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-import { Chapter } from "@/types/entities";
+import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { Footer } from "@/components/shared/Footer";
+import { FilterMenu } from "@/app/_components/FilterMenu";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = true;
@@ -86,16 +95,24 @@ export default function ReadChapterPage() {
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [images, setImages] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
   const [loading, setLoading] = useState(true);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(false); // Thêm state cho Sidebar Menu
 
   useEffect(() => {
     const fetchReadingData = async () => {
       try {
+        // Tải thể loại cho FilterMenu
+        const catsRes = await apiClient
+          .get<any>("/api/categories")
+          .catch(() => []);
+        if (Array.isArray(catsRes)) setCategories(catsRes);
+
         if (USE_MOCK_DATA) {
           await new Promise((resolve) => setTimeout(resolve, 500));
           setComic(MOCK_COMIC);
@@ -181,6 +198,18 @@ export default function ReadChapterPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Khóa cuộn trang khi mở Sidebar
+  useEffect(() => {
+    if (showSidebar) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showSidebar]);
+
   const handleSelectChapter = (selectedId: string) => {
     setShowChapterMenu(false);
     if (selectedId) router.push(`/comics/${comicId}/chapter/${selectedId}`);
@@ -214,10 +243,61 @@ export default function ReadChapterPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
+      {/* SIDEBAR MENU (Mở khi bấm nút 3 gạch) */}
+      <AnimatePresence>
+        {showSidebar && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSidebar(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100]"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[101] shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                    L
+                  </div>
+                  <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
+                    Bộ lọc
+                  </span>
+                </div>
+                <button
+                  onClick={() => setShowSidebar(false)}
+                  className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 rounded-full transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-4 flex-1 overflow-y-auto">
+                <FilterMenu
+                  categories={categories}
+                  onFilterChange={(newParams) => {
+                    // Khi người dùng bấm lọc, đưa về trang chủ kèm param
+                    setShowSidebar(false);
+                    router.push(
+                      `/?keyword=${newParams.keyword}&category=${newParams.category}&sort=${newParams.sort}`,
+                    );
+                  }}
+                />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* PHẦN 5: HEADER ĐẦU TRANG */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <Header
-          onMenuClick={() => {}}
+          onMenuClick={() => setShowSidebar(true)} // ĐÃ KẾT NỐI NÚT 3 GẠCH Ở ĐÂY
           onLoginClick={() => setIsLoginModalOpen(true)}
         />
         <LoginModal
