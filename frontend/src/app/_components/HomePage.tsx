@@ -5,11 +5,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, X } from "lucide-react";
 
-// IMPORT CÔNG CỤ GỌI API VÀ KIỂU DỮ LIỆU TỪ FILE CỦA BẠN
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-
-// IMPORT CÁC THỰC THỂ KHÁC
 import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -17,7 +14,6 @@ import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { Header } from "@/components/shared/Header";
 
-// Hàm dịch trạng thái chuẩn
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
   if (status === "ongoing") return "Đang cập nhật";
@@ -36,17 +32,11 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
+  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
 
   const [showFilter, setShowFilter] = useState(false);
-  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
   const [loading, setLoading] = useState(initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  const [filterParams, setFilterParams] = useState({
-    keyword: "",
-    category: "all",
-    sort: "newest" as "newest" | "most_viewed" | "oldest",
-  });
 
   // TẢI THỂ LOẠI & TRUYỆN THỊNH HÀNH
   useEffect(() => {
@@ -71,20 +61,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     loadInitData();
   }, []);
 
-  // TẢI DANH SÁCH TRUYỆN CHÍNH
+  // TẢI DANH SÁCH TRUYỆN MỚI NHẤT (Không còn filterParams ở đây nữa)
   const fetchComicsData = useCallback(async () => {
     setLoading(true);
     try {
-      const queryParams = new URLSearchParams();
-      if (filterParams.keyword)
-        queryParams.append("keyword", filterParams.keyword);
-      if (filterParams.category !== "all")
-        queryParams.append("category", filterParams.category);
-      if (filterParams.sort) queryParams.append("sort", filterParams.sort);
-
-      const response = await apiClient.get<any>(
-        `/api/comics?${queryParams.toString()}`,
-      );
+      // Mặc định lấy truyện mới cập nhật cho trang chủ
+      const response = await apiClient.get<any>("/api/comics?sort=newest");
 
       const comicsData: Comic[] = Array.isArray(response)
         ? response
@@ -102,7 +84,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             : chaptersRes?.items || chaptersRes?.chapters || [];
 
           if (chapters && chapters.length > 0) {
-            // Sửa lỗi dùng sai trường createdAt, chỉ sử dụng created_at
             const sorted = chapters.sort(
               (a, b) =>
                 new Date(b.created_at || 0).getTime() -
@@ -123,7 +104,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     } finally {
       setLoading(false);
     }
-  }, [filterParams]);
+  }, []);
 
   useEffect(() => {
     fetchComicsData();
@@ -137,7 +118,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     };
   }, [showFilter]);
 
-  // Fallback ảnh lỗi
   const applyComicCoverFallback = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
       const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
@@ -157,7 +137,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFilter(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-\[60\]"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
             />
             <motion.div
               initial={{ x: "-100%" }}
@@ -172,7 +152,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Bộ lọc
+                    Tìm kiếm
                   </span>
                 </div>
                 <button
@@ -183,12 +163,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 </button>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
+                {/* ĐIỂM QUAN TRỌNG: Không truyền onFilterChange nữa. 
+                  Điều này ép FilterMenu dùng useRouter chuyển sang trang /search 
+                */}
                 <FilterMenu
                   categories={categories}
-                  onFilterChange={(newParams) => {
-                    setFilterParams(newParams);
-                    setShowFilter(false);
-                  }}
+                  onClose={() => setShowFilter(false)}
                 />
               </div>
             </motion.div>
@@ -256,13 +236,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
             Truyện Mới Cập Nhật
           </h2>
-          {(filterParams.keyword ||
-            filterParams.category !== "all" ||
-            filterParams.sort !== "newest") && (
-            <span className="px-3 py-1 text-[11px] font-bold text-primary bg-primary/10 rounded-full">
-              Đang có bộ lọc
-            </span>
-          )}
         </div>
 
         {loading ? (
@@ -277,20 +250,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           >
             <div className="text-5xl sm:text-6xl mb-6">📭</div>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 text-sm sm:text-lg">
-              Không tìm thấy bộ truyện tranh nào phù hợp.
+              Chưa có bộ truyện nào trên hệ thống.
             </p>
-            <button
-              onClick={() =>
-                setFilterParams({
-                  keyword: "",
-                  category: "all",
-                  sort: "newest",
-                })
-              }
-              className="px-6 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-sm font-bold hover:bg-slate-300 transition-colors"
-            >
-              Xóa bộ lọc
-            </button>
           </motion.div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6">
@@ -345,7 +306,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                         {latestChapters[comic.id]?.title || "Chưa có chương"}
                       </span>
                       <span className="text-[9px] sm:text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {/* Đã xóa hoàn toàn createdAt và ts-ignore, chỉ giữ lại created_at chuẩn */}
                         {latestChapters[comic.id]?.created_at
                           ? new Date(
                               latestChapters[comic.id].created_at,

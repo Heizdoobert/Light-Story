@@ -19,7 +19,6 @@ import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
-import { Footer } from "@/components/shared/Footer";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
@@ -90,7 +89,7 @@ export default function ReadChapterPage() {
 
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
-
+  const [showFilter, setShowFilter] = useState(false);
   const [comic, setComic] = useState<Comic | null>(null);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
@@ -278,16 +277,7 @@ export default function ReadChapterPage() {
                 </button>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
-                <FilterMenu
-                  categories={categories}
-                  onFilterChange={(newParams) => {
-                    // Khi người dùng bấm lọc, đưa về trang chủ kèm param
-                    setShowSidebar(false);
-                    router.push(
-                      `/?keyword=${newParams.keyword}&category=${newParams.category}&sort=${newParams.sort}`,
-                    );
-                  }}
-                />
+                <FilterMenu onClose={() => setShowFilter(false)} />
               </div>
             </motion.div>
           </>
@@ -376,7 +366,6 @@ export default function ReadChapterPage() {
       </div>
 
       {/* PHẦN 4: TÁI SỬ DỤNG FOOTER */}
-      <Footer />
 
       {/* PHẦN 3: THANH CÔNG CỤ (Thích ứng Light/Dark) */}
       <div

@@ -1,8 +1,12 @@
-import { apiClient } from '@/lib/apiClient';
-import type { ComicCmsFormValues, ComicChapterFormValues, ComicStatus } from '@/lib/validation/comicCmsSchemas';
-import { uploadChapterImages, uploadComicCover } from './comic.service';
+import { apiClient } from "@/lib/apiClient";
+import type {
+  ComicCmsFormValues,
+  ComicChapterFormValues,
+  ComicStatus,
+} from "@/lib/validation/comicCmsSchemas";
+import { uploadChapterImages, uploadComicCover } from "./comic.service";
 
-const COMIC_CMS_CATALOG_KEY = 'comic-cms:catalog';
+const COMIC_CMS_CATALOG_KEY = "comic-cms:catalog";
 
 export type PageAsset = {
   id: string;
@@ -29,31 +33,34 @@ export type ComicCmsRecord = {
   viewCount: number;
   lastUpdatedAt: string;
   chapters: ComicCmsChapterRecord[];
+  category?: string[] | string;
 };
 
 export type ComicCatalogFilters = {
   search: string;
   status: string;
   author: string;
+  category?: string;
+  sort?: string;
 };
 
 function readCatalog(): ComicCmsRecord[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(COMIC_CMS_CATALOG_KEY);
     return raw ? (JSON.parse(raw) as ComicCmsRecord[]) : [];
   } catch (err) {
-    console.error('[comicCms] Failed to parse catalog', err);
+    console.error("[comicCms] Failed to parse catalog", err);
     return [];
   }
 }
 
 function writeCatalog(catalog: ComicCmsRecord[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(COMIC_CMS_CATALOG_KEY, JSON.stringify(catalog));
   } catch (err) {
-    console.error('[comicCms] Failed to write catalog', err);
+    console.error("[comicCms] Failed to write catalog", err);
   }
 }
 
@@ -62,39 +69,98 @@ export function loadComicCatalog(): ComicCmsRecord[] {
 }
 
 export function loadComicCatalogFiltered(
-  catalog: ComicCmsRecord[],
+  catalog: any[], // Dùng any hoặc ComicCmsRecord tùy file cũ của bạn
   filters: ComicCatalogFilters,
-): ComicCmsRecord[] {
-  return catalog.filter((record) => {
+) {
+  // 1. THỰC HIỆN LỌC DỮ LIỆU
+  const filteredCatalog = catalog.filter((record) => {
+    // Lọc từ khóa
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (
-        !record.title.toLowerCase().includes(q) &&
-        !record.author.toLowerCase().includes(q)
+        !record.title?.toLowerCase().includes(q) &&
+        !record.author?.toLowerCase().includes(q)
       ) {
         return false;
       }
     }
-    if (filters.status !== 'all' && record.status !== filters.status) return false;
+    // Lọc trạng thái
+    if (
+      filters.status &&
+      filters.status !== "all" &&
+      record.status !== filters.status
+    )
+      return false;
+
+    // Lọc tác giả
     if (filters.author && record.author !== filters.author) return false;
+
+    // Lọc thể loại
+    if (filters.category && filters.category !== "all") {
+      let recordCategories: string[] = [];
+      if (record.category) {
+        if (Array.isArray(record.category)) {
+          recordCategories = record.category;
+        } else if (typeof record.category === "string") {
+          try {
+            recordCategories = JSON.parse(record.category);
+          } catch {
+            recordCategories = record.category
+              .split(",")
+              .map((c: string) => c.trim());
+          }
+        }
+      }
+      const hasCategory = recordCategories.some(
+        (c) => c.toLowerCase() === filters.category!.toLowerCase(),
+      );
+      if (!hasCategory) return false;
+    }
+
     return true;
   });
-}
 
+  // 2. THỰC HIỆN SẮP XẾP DỮ LIỆU ĐÃ LỌC
+  const sortType = filters.sort || "newest";
+
+  filteredCatalog.sort((a, b) => {
+    // Lấy thời gian (hỗ trợ nhiều chuẩn tên biến khác nhau để chống lỗi undefined)
+    const dateA = new Date(
+      a.lastUpdatedAt || a.updatedAt || a.created_at || 0,
+    ).getTime();
+    const dateB = new Date(
+      b.lastUpdatedAt || b.updatedAt || b.created_at || 0,
+    ).getTime();
+
+    // Lấy lượt xem (hỗ trợ viewCount hoặc view_count)
+    const viewsA = a.viewCount || a.view_count || a.views || 0;
+    const viewsB = b.viewCount || b.view_count || b.views || 0;
+
+    if (sortType === "oldest") {
+      return dateA - dateB; // Cũ nhất: Xếp tăng dần
+    } else if (sortType === "most_viewed") {
+      return viewsB - viewsA; // Lượt xem cao: Xếp giảm dần
+    } else {
+      return dateB - dateA; // Mới nhất: Xếp giảm dần (Mặc định)
+    }
+  });
+
+  return filteredCatalog;
+}
 export function loadComicRecord(id: string): ComicCmsRecord | null {
   return readCatalog().find((r) => r.id === id) ?? null;
 }
 
 export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   try {
-    const result = await apiClient.get<any[]>('/api/admin/comics');
+    const result = await apiClient.get<any[]>("/api/admin/comics");
     const catalog: ComicCmsRecord[] = Array.isArray(result)
       ? result.map(mapDbRowToRecord)
       : [];
     writeCatalog(catalog);
     return catalog;
   } catch (err) {
-    console.error('[comicCms] fetchComicCatalog failed', err);
+    console.error("[comicCms] fetchComicCatalog failed", err);
     return [];
   }
 }
@@ -102,73 +168,80 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
 function mapDbRowToRecord(row: any): ComicCmsRecord {
   return {
     id: row.id,
-    title: row.title || '',
-    author: row.author || '',
-    description: row.description || '',
-    status: (row.status || 'draft') as ComicStatus,
-    coverUrl: row.cover_url || '',
+    title: row.title || "",
+    author: row.author || "",
+    description: row.description || "",
+    status: (row.status || "draft") as ComicStatus,
+    coverUrl: row.cover_url || "",
     viewCount: row.views ?? 0,
     lastUpdatedAt: row.updated_at || new Date().toISOString(),
     chapters: [],
+    category: row.category || [],
   };
 }
 
 export function saveComicDraft(key: string, data: ComicCmsFormValues): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(`comic-cms:draft:${key}`, JSON.stringify(data));
   } catch (err) {
-    console.error('[comicCms] Failed to save draft', err);
+    console.error("[comicCms] Failed to save draft", err);
   }
 }
 
 export function loadComicDraft(key: string): ComicCmsFormValues | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(`comic-cms:draft:${key}`);
     return raw ? (JSON.parse(raw) as ComicCmsFormValues) : null;
   } catch (err) {
-    console.error('[comicCms] Failed to parse draft', err);
+    console.error("[comicCms] Failed to parse draft", err);
     return null;
   }
 }
 
 export function clearComicDraft(id: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(`comic-cms:draft:${id}`);
   } catch (err) {
-    console.error('[comicCms] Failed to clear draft', err);
+    console.error("[comicCms] Failed to clear draft", err);
   }
 }
 
 export function listComicModerationState() {
-  if (typeof window === 'undefined') {
-    return { keywords: ['spoiler', 'pirated', 'leak'], reportedComments: [] };
+  if (typeof window === "undefined") {
+    return { keywords: ["spoiler", "pirated", "leak"], reportedComments: [] };
   }
   try {
-    const raw = localStorage.getItem('comic-cms:moderation');
-    return raw ? JSON.parse(raw) : { keywords: ['spoiler', 'pirated', 'leak'], reportedComments: [] };
+    const raw = localStorage.getItem("comic-cms:moderation");
+    return raw
+      ? JSON.parse(raw)
+      : { keywords: ["spoiler", "pirated", "leak"], reportedComments: [] };
   } catch {
-    return { keywords: ['spoiler', 'pirated', 'leak'], reportedComments: [] };
+    return { keywords: ["spoiler", "pirated", "leak"], reportedComments: [] };
   }
 }
 
 export function saveComicModerationState(state: any): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem('comic-cms:moderation', JSON.stringify(state));
+    localStorage.setItem("comic-cms:moderation", JSON.stringify(state));
   } catch (err) {
-    console.error('[comicCms] Failed to save moderation state', err);
+    console.error("[comicCms] Failed to save moderation state", err);
   }
 }
 
 export function proxiedR2ImageUrl(url: string): string {
-  if (!url) return '';
+  if (!url) return "";
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes('r2') || parsed.hostname.includes('cloudflare')) {
-      const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+    if (
+      parsed.hostname.includes("r2") ||
+      parsed.hostname.includes("cloudflare")
+    ) {
+      const gateway =
+        process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
       return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
     }
   } catch {
@@ -178,21 +251,23 @@ export function proxiedR2ImageUrl(url: string): string {
 }
 
 export function sortFilesByFilename(files: File[]): File[] {
-  return [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+  return [...files].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true }),
+  );
 }
 
 export async function createComicFromMetadata(
   input: ComicCmsFormValues & { coverFile?: File | null },
 ): Promise<ComicCmsRecord> {
-  let coverUrl = input.coverUrl || '';
+  let coverUrl = input.coverUrl || "";
   if (input.coverFile) {
     coverUrl = await uploadComicCover(input.coverFile);
   }
-  const result = await apiClient.post<any>('/api/admin/comics', {
+  const result = await apiClient.post<any>("/api/admin/comics", {
     title: input.title,
-    author: input.author || 'Unknown',
-    description: input.description || '',
-    status: input.status || 'draft',
+    author: input.author || "Unknown",
+    description: input.description || "",
+    status: input.status || "draft",
     coverUrl: coverUrl || undefined,
   });
   const created = Array.isArray(result) ? result[0] : result;
@@ -203,7 +278,9 @@ export async function createComicFromMetadata(
   return record;
 }
 
-export async function updateComicRecord(record: ComicCmsRecord): Promise<ComicCmsRecord> {
+export async function updateComicRecord(
+  record: ComicCmsRecord,
+): Promise<ComicCmsRecord> {
   const result = await apiClient.patch<any>(`/api/admin/comics/${record.id}`, {
     title: record.title,
     author: record.author,
@@ -237,9 +314,10 @@ export async function createComicChapterFromFiles(
   try {
     imageUrls = await uploadChapterImages(files);
   } catch (err) {
-    console.error('[comicCms] uploadChapterImages failed', err);
-    imageUrls = files.map((_, i) =>
-      `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
+    console.error("[comicCms] uploadChapterImages failed", err);
+    imageUrls = files.map(
+      (_, i) =>
+        `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
     );
   }
 
@@ -274,13 +352,13 @@ export async function createComicChapterFromFiles(
       updatedAt: row.updated_at || new Date().toISOString(),
       pages: (() => {
         try {
-          const urls = JSON.parse(row.content || '[]');
+          const urls = JSON.parse(row.content || "[]");
           if (!Array.isArray(urls) || urls.length === 0) return chapter.pages;
           return urls.map((url: string) => ({
             id: crypto.randomUUID(),
             assetUrl: url,
             previewUrl: url,
-            fileName: url.split('/').pop() || 'page',
+            fileName: url.split("/").pop() || "page",
           }));
         } catch {
           return chapter.pages;
@@ -296,7 +374,10 @@ export async function createComicChapterFromFiles(
     }
     return created;
   } catch (err) {
-    console.error('[comicCms] createComicChapterFromFiles API failed, falling back', err);
+    console.error(
+      "[comicCms] createComicChapterFromFiles API failed, falling back",
+      err,
+    );
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
@@ -311,11 +392,11 @@ export async function createComicChapterFromFiles(
 export async function recordComicAudit(
   action: string,
   metadata: Record<string, unknown>,
-  entityType = 'comic',
+  entityType = "comic",
   entityId?: string,
 ): Promise<void> {
   try {
-    await apiClient.post('/api/admin/audit', {
+    await apiClient.post("/api/admin/audit", {
       action,
       metadata,
       entity_type: entityType,
@@ -323,7 +404,7 @@ export async function recordComicAudit(
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    console.error('[comicCms] recordComicAudit failed', err);
+    console.error("[comicCms] recordComicAudit failed", err);
   }
 }
 
