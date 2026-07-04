@@ -14,16 +14,16 @@ import {
   ChevronRight,
   ArrowLeft,
   Play,
-  X, // Thêm icon X để đóng menu
+  X,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-import { Chapter, Category } from "@/types/entities"; // Bổ sung Category
+import { Chapter, Category } from "@/types/entities";
 import { Header } from "@/components/shared/Header";
 import { toast } from "sonner";
 import { LoginModal } from "@/components/shared/LoginModal";
-import { FilterMenu } from "@/app/_components/FilterMenu"; // Import FilterMenu
+import { FilterMenu } from "@/app/_components/FilterMenu";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -40,30 +40,29 @@ export default function ComicDetailPage() {
   // States dữ liệu
   const [comic, setComic] = useState<Comic | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]); // State lưu thể loại cho FilterMenu
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   // States UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [showFilter, setShowFilter] = useState(false); // State quản lý ẩn/hiện Menu
+  const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
     const fetchComicDetail = async () => {
       try {
-        // Tải thông tin truyện, chương và thể loại cùng lúc
         const [comicRes, chaptersRes, catsRes] = await Promise.all([
           apiClient.get<any>(`/api/comics/${comicId}`).catch(() => null),
           apiClient.get<any>(`/api/comics/${comicId}/chapters`).catch(() => []),
-          apiClient.get<any>("/api/categories").catch(() => [])
+          apiClient.get<any>("/api/categories").catch(() => []),
         ]);
 
-        // Xử lý dữ liệu truyện
         if (comicRes) {
-          const comicData = Array.isArray(comicRes) ? comicRes[0] : comicRes?.comic || comicRes;
+          const comicData = Array.isArray(comicRes)
+            ? comicRes[0]
+            : comicRes?.comic || comicRes;
           setComic(comicData);
         }
 
-        // Xử lý dữ liệu chương
         const chaptersData: Chapter[] = Array.isArray(chaptersRes)
           ? chaptersRes
           : chaptersRes?.items || chaptersRes?.chapters || [];
@@ -75,11 +74,9 @@ export default function ComicDetailPage() {
         );
         setChapters(sortedChapters);
 
-        // Xử lý dữ liệu thể loại (Cho menu)
         if (Array.isArray(catsRes)) {
           setCategories(catsRes);
         }
-
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
         toast.error("Không thể tải thông tin truyện.");
@@ -91,7 +88,6 @@ export default function ComicDetailPage() {
     if (comicId) fetchComicDetail();
   }, [comicId]);
 
-  // Khóa cuộn trang khi mở menu filter
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";
     return () => {
@@ -131,7 +127,7 @@ export default function ComicDetailPage() {
   const firstChapter =
     chapters.length > 0 ? chapters[chapters.length - 1] : null;
 
-  // 👇 XỬ LÝ CHUẨN HÓA LỖI TRẢ VỀ CỦA CATEGORY 👇
+  // XỬ LÝ CHUẨN HÓA LỖI TRẢ VỀ CỦA CATEGORY
   let categoryArray: string[] = [];
   if (comic.category) {
     if (Array.isArray(comic.category)) {
@@ -150,8 +146,7 @@ export default function ComicDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      
-      {/* KHU VỰC MENU TRƯỢT TỪ TRÁI SANG */}
+      {/* SIDEBAR FILTER MENU */}
       <AnimatePresence>
         {showFilter && (
           <>
@@ -186,26 +181,18 @@ export default function ComicDetailPage() {
                 </button>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
-                <FilterMenu
-                  categories={categories}
-                  onFilterChange={(newParams) => {
-                    // Logic lọc ở trang chi tiết có thể được thêm ở đây
-                    console.log("Filter params applied:", newParams);
-                    setShowFilter(false);
-                  }}
-                />
+                <FilterMenu onClose={() => setShowFilter(false)} />
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* HEADER VỚI HÀM GỌI MỞ MENU */}
       <Header
-        onMenuClick={() => setShowFilter(true)} // Gọi mở menu ở đây
+        onMenuClick={() => setShowFilter(true)}
         onLoginClick={() => setIsLoginModalOpen(true)}
       />
-      
+
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
@@ -294,18 +281,27 @@ export default function ComicDetailPage() {
                 </span>
               </div>
 
-              {/* Sử dụng mảng categoryArray đã được xử lý */}
+              {/* TÍCH HỢP TÌM KIẾM BẰNG THỂ LOẠI */}
               {categoryArray.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-6">
                   <Tag size={16} className="text-slate-400" />
-                  {categoryArray.map((cat, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-primary transition cursor-pointer"
-                    >
-                      {cat}
-                    </span>
-                  ))}
+                  {categoryArray.map((cat, idx) => {
+                    // Ánh xạ tên thể loại sang ID (nếu có) để truyền URL cho chuẩn
+                    const catObj = categories.find(
+                      (c) => c.name === cat || c.id === cat,
+                    );
+                    const catId = catObj ? catObj.id : cat;
+
+                    return (
+                      <Link
+                        key={idx}
+                        href={`/search?category=${encodeURIComponent(catId)}&sort=newest`}
+                        className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
+                      >
+                        {cat}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
 

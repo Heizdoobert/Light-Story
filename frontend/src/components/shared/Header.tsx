@@ -41,14 +41,17 @@ export const Header: React.FC<HeaderProps> = ({
           <Menu size={22} />
         </motion.button>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <Link
+          href="/"
+          className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity cursor-pointer outline-none"
+        >
           <div className="hidden sm:flex w-10 h-10 bg-linear-to-br from-primary to-primary/80 rounded-2xl items-center justify-center text-white font-black shadow-lg shadow-primary/20">
             L
           </div>
           <span className="font-black text-xl sm:text-2xl tracking-tighter text-slate-800 dark:text-white">
             Light<span className="text-primary">Story</span>
           </span>
-        </div>
+        </Link>
       </div>
 
       <div className="flex items-center gap-4">
