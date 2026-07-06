@@ -42,6 +42,8 @@ export type ComicCatalogFilters = {
   author: string;
   category?: string;
   sort?: string;
+  page?: number;
+  limit?: number;
 };
 
 function readCatalog(): ComicCmsRecord[] {
@@ -69,33 +71,27 @@ export function loadComicCatalog(): ComicCmsRecord[] {
 }
 
 export function loadComicCatalogFiltered(
-  catalog: any[], // Dùng any hoặc ComicCmsRecord tùy file cũ của bạn
+  catalog: any[],
   filters: ComicCatalogFilters,
 ) {
-  // 1. THỰC HIỆN LỌC DỮ LIỆU
+  // 1. THỰC HIỆN LỌC DỮ LIỆU (Giữ nguyên như cũ)
   const filteredCatalog = catalog.filter((record) => {
-    // Lọc từ khóa
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (
         !record.title?.toLowerCase().includes(q) &&
         !record.author?.toLowerCase().includes(q)
-      ) {
+      )
         return false;
-      }
     }
-    // Lọc trạng thái
     if (
       filters.status &&
       filters.status !== "all" &&
       record.status !== filters.status
     )
       return false;
-
-    // Lọc tác giả
     if (filters.author && record.author !== filters.author) return false;
 
-    // Lọc thể loại
     if (filters.category && filters.category !== "all") {
       let recordCategories: string[] = [];
       if (record.category) {
@@ -116,37 +112,50 @@ export function loadComicCatalogFiltered(
       );
       if (!hasCategory) return false;
     }
-
     return true;
   });
 
-  // 2. THỰC HIỆN SẮP XẾP DỮ LIỆU ĐÃ LỌC
   const sortType = filters.sort || "newest";
-
   filteredCatalog.sort((a, b) => {
-    // Lấy thời gian (hỗ trợ nhiều chuẩn tên biến khác nhau để chống lỗi undefined)
     const dateA = new Date(
-      a.lastUpdatedAt || a.updatedAt || a.created_at || 0,
+      a.lastUpdatedAt || a.updatedAt || a.createdAt || a.created_at || 0,
     ).getTime();
     const dateB = new Date(
-      b.lastUpdatedAt || b.updatedAt || b.created_at || 0,
+      b.lastUpdatedAt || b.updatedAt || b.createdAt || b.created_at || 0,
     ).getTime();
-
-    // Lấy lượt xem (hỗ trợ viewCount hoặc view_count)
     const viewsA = a.viewCount || a.view_count || a.views || 0;
     const viewsB = b.viewCount || b.view_count || b.views || 0;
 
-    if (sortType === "oldest") {
-      return dateA - dateB; // Cũ nhất: Xếp tăng dần
-    } else if (sortType === "most_viewed") {
-      return viewsB - viewsA; // Lượt xem cao: Xếp giảm dần
-    } else {
-      return dateB - dateA; // Mới nhất: Xếp giảm dần (Mặc định)
-    }
+    if (sortType === "oldest") return dateA - dateB;
+    if (sortType === "most_viewed") return viewsB - viewsA;
+    return dateB - dateA;
   });
 
-  return filteredCatalog;
+  // 3. THỰC HIỆN PHÂN TRANG (PAGINATION) - 👉 PHẦN MỚI THÊM VÀO
+  const page = filters.page || 1;
+  const limit = filters.limit || 10; // Mặc định là 10 truyện 1 trang
+
+  // Tính toán tổng số
+  const totalItems = filteredCatalog.length;
+  const totalPages = Math.ceil(totalItems / limit);
+
+  // Cắt mảng lấy đúng số lượng cho trang hiện tại
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedData = filteredCatalog.slice(startIndex, endIndex);
+
+  // Trả về Object chứa cả dữ liệu và thông tin trang
+  return {
+    data: paginatedData,
+    meta: {
+      currentPage: page,
+      limit: limit,
+      totalItems: totalItems,
+      totalPages: totalPages,
+    },
+  };
 }
+
 export function loadComicRecord(id: string): ComicCmsRecord | null {
   return readCatalog().find((r) => r.id === id) ?? null;
 }

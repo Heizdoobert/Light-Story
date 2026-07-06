@@ -15,6 +15,7 @@ import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { toast } from "sonner";
 import { SortDropdown } from "@/components/shared/SortDropdown";
+import { Pagination } from "@/components/shared/Pagination";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -33,12 +34,34 @@ function SearchContent() {
   const category =
     categoryParam !== "all" ? decodeURIComponent(categoryParam) : "all";
 
-  // Bắt thêm biến sort từ URL
+  // Bắt biến sort và page từ URL
   const sort = searchParams.get("sort") || "newest";
+  const pageParam = searchParams.get("page") || "1";
+  const currentPage = parseInt(pageParam, 10) || 1; // 👉 Lấy trang hiện tại
 
   const [comics, setComics] = useState<Comic[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 👉 States quản lý phân trang
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  // Bổ sung hàm chọn màu hiển thị dựa trên trạng thái
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-emerald-500 text-white dark:bg-emerald-600";
+      case "published":
+        return "bg-blue-500 text-white dark:bg-blue-600";
+      case "ongoing":
+        return "bg-amber-500 text-white dark:bg-amber-600";
+      case "draft":
+        return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
+      default:
+        return "bg-indigo-500 text-white dark:bg-indigo-600"; // Màu dự phòng
+    }
+  };
 
   // States quản lý UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -69,15 +92,21 @@ function SearchContent() {
           ? response
           : response?.items || response?.comics || [];
 
-        const finalComicsData = loadComicCatalogFiltered(rawComicsData, {
+        // 👉 Nhận về Object chứa cả data và meta (thông số trang)
+        const result = loadComicCatalogFiltered(rawComicsData, {
           search: keyword,
           category: category,
           sort: sort,
           status: "all",
           author: "",
+          page: currentPage, // Truyền trang hiện tại vào Service
+          limit: 10, // Giới hạn 10 truyện / 1 trang
         });
 
-        setComics(finalComicsData);
+        // 👉 Cập nhật dữ liệu truyện và thông số trang
+        setComics(result.data || []);
+        setTotalPages(result.meta?.totalPages || 1);
+        setTotalItems(result.meta?.totalItems || 0);
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
@@ -87,7 +116,7 @@ function SearchContent() {
     };
 
     fetchAndFilterResults();
-  }, [keyword, category, sort]);
+  }, [keyword, category, sort, currentPage]); // 👉 Đưa currentPage vào mảng phụ thuộc
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";
@@ -125,7 +154,7 @@ function SearchContent() {
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-linear-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
@@ -157,11 +186,10 @@ function SearchContent() {
       />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
-        {/* ĐÃ CHỈNH SỬA KHU VỰC NÀY ĐỂ THÊM NÚT SORT */}
         <div className="mb-8 pt-4 border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">
-              Kết quả tìm kiếm
+              Danh sách truyện
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-slate-500 dark:text-slate-400">
               {keyword && (
@@ -176,12 +204,12 @@ function SearchContent() {
                 </span>
               )}
               <span className="ml-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
-                {comics.length} kết quả
+                {/* 👉 HIỂN THỊ TỔNG SỐ TRUYỆN CHÍNH XÁC */}
+                {totalItems} kết quả
               </span>
             </div>
           </div>
 
-          {/* CHÈN COMPONENT SORTDROPDOWN Ở ĐÂY */}
           <div className="flex-shrink-0 mt-2 sm:mt-0">
             <SortDropdown />
           </div>
@@ -212,51 +240,58 @@ function SearchContent() {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
-            {comics.map((comic, i) => (
-              <Link
-                key={comic.id}
-                href={`/comics/${comic.id}`}
-                className="block outline-none cursor-pointer"
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 transition-all duration-500 border border-slate-100 dark:border-slate-800"
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
+              {comics.map((comic, i) => (
+                <Link
+                  key={comic.id}
+                  href={`/comics/${comic.id}`}
+                  className="block outline-none cursor-pointer"
                 >
-                  <div className="relative overflow-hidden rounded-2xl mb-2 aspect-3/4 bg-slate-100 dark:bg-slate-800">
-                    <img
-                      src={comic.coverUrl}
-                      alt={comic.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      onError={applyComicCoverFallback}
-                    />
-                    <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-4">
-                      <span className="text-white text-xs font-bold flex items-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform">
-                        <ImageIcon size={14} /> Đọc ngay
-                      </span>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 transition-all duration-500 border border-slate-100 dark:border-slate-800"
+                  >
+                    <div className="relative overflow-hidden rounded-2xl mb-2 aspect-3/4 bg-slate-100 dark:bg-slate-800">
+                      <img
+                        src={comic.coverUrl}
+                        alt={comic.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={applyComicCoverFallback}
+                      />
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-4">
+                        <span className="text-white text-xs font-bold flex items-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform">
+                          <ImageIcon size={14} /> Đọc ngay
+                        </span>
+                      </div>
+                      <div className="absolute top-2 right-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-[9px] font-black uppercase shadow-sm ${getStatusStyles(comic.status)}`}
+                        >
+                          {getVietnameseStatus(comic.status)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="absolute top-2 right-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-[9px] font-black uppercase shadow-sm ${comic.status === "completed" ? "bg-emerald-500/90 text-white" : "bg-primary/90 text-white"}`}
-                      >
-                        {getVietnameseStatus(comic.status)}
-                      </span>
+                    <div className="px-1 pb-1 flex flex-col flex-1">
+                      <h2 className="text-[13px] sm:text-sm font-bold mb-1 text-slate-800 dark:text-white line-clamp-2 group-hover:text-primary transition-colors">
+                        {comic.title}
+                      </h2>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1">
+                        {comic.author || "Đang cập nhật"}
+                      </div>
                     </div>
-                  </div>
-                  <div className="px-1 pb-1 flex flex-col flex-1">
-                    <h2 className="text-[13px] sm:text-sm font-bold mb-1 text-slate-800 dark:text-white line-clamp-2 group-hover:text-primary transition-colors">
-                      {comic.title}
-                    </h2>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1">
-                      {comic.author || "Đang cập nhật"}
-                    </div>
-                  </div>
-                </motion.div>
-              </Link>
-            ))}
-          </div>
+                  </motion.div>
+                </Link>
+              ))}
+            </div>
+
+            {/* 👉 COMPONENT THANH PHÂN TRANG */}
+            {totalPages > 1 && (
+              <Pagination currentPage={currentPage} totalPages={totalPages} />
+            )}
+          </>
         )}
       </div>
     </div>
