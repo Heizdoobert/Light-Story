@@ -24,7 +24,7 @@
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1044.0",
+    "@aws-sdk/client-s3": "^3.1080.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@google/genai": "^1.52.0",
     "@light-story/api-types": "file:../packages/api-types",
