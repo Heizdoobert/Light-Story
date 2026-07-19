@@ -4,8 +4,8 @@ on:
   pull_request:
     paths:
       - 'frontend/**'
-      - 'src/**'
       - 'backend-supabase/**'
+      - 'workers/**'
 
 jobs:
   smoke-tests:
@@ -14,10 +14,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Use Node.js 18
+      - name: Use Node.js 20
         uses: actions/setup-node@v6
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install frontend deps
         run: npm --prefix frontend ci

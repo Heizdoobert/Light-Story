@@ -93,6 +93,7 @@ docs/ARCHIVE/
 # Manual test files (no CI integration, standalone scripts)
 workers/r2-signed-url/worker.test.js
 frontend/tests/
+frontend/test-results/
 
 # Operational scripts (no active references, no CI integration)
 /scripts/

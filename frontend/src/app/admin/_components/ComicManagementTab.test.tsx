@@ -30,11 +30,6 @@ vi.mock('@/hooks/useAutoSave', () => ({
   }),
 }));
 
-function getCmsTab() {
-  const tabs = screen.getAllByRole('tab');
-  return tabs;
-}
-
 describe('ComicManagementTab - Create Comic Flow', () => {
   beforeEach(() => {
     localStorage.clear();
