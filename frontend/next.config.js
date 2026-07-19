@@ -2,6 +2,7 @@ import path from 'node:path';
 
 const nextConfig = {
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
+  output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
   turbopack: {
     root: path.resolve(process.cwd(), '..'),
   },
