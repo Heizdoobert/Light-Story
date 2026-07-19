@@ -1,0 +1,54 @@
+# Git
+.git
+.gitignore
+
+# Dependencies and lockfiles
+node_modules
+**/node_modules
+
+# Next.js and frontend builds
+frontend/.next
+frontend/out
+frontend/.next-dev
+frontend/.turbo
+frontend/.tsbuildinfo
+frontend/tsconfig.tsbuildinfo
+
+# Python environment
+.venv
+
+# Secrets and environment files
+.env
+.env.local
+.env.*
+.dev.vars
+
+# IDEs and configuration files
+.vscode
+.idea
+.claude
+.grapuco
+.opencode
+.windsurf
+.cursor
+.clinerules
+.agents
+agents
+
+# Log files and temp files
+*.log
+*.err
+*.tmp
+*.temp
+.fe.log
+.fe.err
+
+# Build / CI artifacts
+graphify-out
+docker-compose.yml
+Dockerfile*
+.github
+docs
+packages/api-types/node_modules
+workers/*/node_modules
+workers/*/.wrangler
