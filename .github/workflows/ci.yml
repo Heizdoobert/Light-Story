@@ -21,10 +21,10 @@ jobs:
         working-directory: frontend
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@1d0ff465b7ec7b309d57a26815777a83e0984851 # v4.2.0
         with:
           node-version: 20
           cache: npm
@@ -47,10 +47,10 @@ jobs:
         working-directory: workers/unified-gateway
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@1d0ff465b7ec7b309d57a26815777a83e0984851 # v4.2.0
         with:
           node-version: 20
           cache: npm
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Validate migration and SQL test artifacts
         run: |
@@ -85,10 +85,10 @@ jobs:
     needs: [frontend]
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@1d0ff465b7ec7b309d57a26815777a83e0984851 # v4.2.0
         with:
           node-version: 20
 
@@ -107,10 +107,10 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@1d0ff465b7ec7b309d57a26815777a83e0984851 # v4.2.0
         with:
           node-version: 20
 
@@ -131,10 +131,10 @@ jobs:
     if: always()
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Setup Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@1d0ff465b7ec7b309d57a26815777a83e0984851 # v4.2.0
         with:
           node-version: 20
 
@@ -161,10 +161,10 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Create Pull Request
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const branch = context.ref.replace('refs/heads/', '');
