@@ -102,7 +102,7 @@ const parseStringList = (value: unknown, fallback: string[]): string[] => {
         return rows.length > 0 ? rows : [...fallback];
       }
     } catch {
-      // Ignore invalid JSON and fallback to comma parsing.
+      throw new Error(`Failed to parse JSON array from string: ${raw}`);
     }
   }
 
