@@ -59,6 +59,12 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
     const file = event.target.files?.[0];
     if (!file || !user || !supabase) return;
 
+    const safeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!safeTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.");
+      return;
+    }
+
     setIsUploadingAvatar(true);
     setAvatarUrlError(null);
     try {
@@ -152,7 +158,11 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Profile Picture</label>
                   <div className="flex items-center gap-4">
-                    {avatarUrl ? (
+                    {avatarUrl &&
+                    (avatarUrl.toLowerCase().startsWith("http://") ||
+                      avatarUrl.toLowerCase().startsWith("https://") ||
+                      avatarUrl.toLowerCase().startsWith("/") ||
+                      avatarUrl.toLowerCase().startsWith("data:image/")) ? (
                       <img
                         src={avatarUrl}
                         alt="Avatar"

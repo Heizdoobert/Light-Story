@@ -41,6 +41,13 @@ export const StoryForm: React.FC = () => {
       return;
     }
 
+    const safeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!safeTypes.includes(coverFile.type)) {
+      toast.error("Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.");
+      setCoverFile(null);
+      return;
+    }
+
     const objectUrl = URL.createObjectURL(coverFile);
     setCoverPreview(objectUrl);
 
@@ -78,7 +85,7 @@ export const StoryForm: React.FC = () => {
       return;
     }
     createStoryMutation.mutate(
-      { story: { ...formData, category_id: selectedCategoryId || null }, coverFile },
+      { story: { ...formData, category_id: selectedCategoryId }, coverFile },
       { onSuccess: () => resetForm() },
     );
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createComic, uploadComicCover } from "@/services/comic.service";
 
@@ -9,7 +9,29 @@ export default function CreateComic() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [cover, setCover] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!cover) {
+      setPreviewUrl(null);
+      return;
+    }
+
+    const safeTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!safeTypes.includes(cover.type)) {
+      alert("Invalid file type. Only JPEG, PNG, GIF, and WEBP are allowed.");
+      setCover(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(cover);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [cover]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +84,9 @@ export default function CreateComic() {
               onChange={(e) => setCover(e.target.files?.[0] ?? null)}
               className="block text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-600 file:text-white hover:file:bg-primary-700"
             />
-            {cover && (
+            {previewUrl && (
               <div className="w-20 h-20 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
-                <img src={URL.createObjectURL(cover)} alt="cover preview" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt="cover preview" className="w-full h-full object-cover" />
               </div>
             )}
           </div>
