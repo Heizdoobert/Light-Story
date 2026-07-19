@@ -1,4 +1,4 @@
-name: Test Internal Routes
+name: Worker E2E Smoke Tests
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  smoke-test:
+  worker-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -16,76 +16,41 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '20'
           cache: npm
       
       - name: Install deps
-        run: npm --prefix frontend ci
+        run: npm ci
       
-      - name: Build
-        run: npm --prefix frontend run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy_key
-          SUPABASE_SERVICE_ROLE_KEY: dummy_service_key
-          INTERNAL_ADMIN_SECRET: test_secret_12345
-      
-      - name: Start dev server
-        run: npm --prefix frontend run dev &
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: dummy_key
-          SUPABASE_SERVICE_ROLE_KEY: dummy_service_key
-          INTERNAL_ADMIN_SECRET: test_secret_12345
-      
-      - name: Wait for server
+      - name: Start wrangler dev
         run: |
+          npx wrangler dev --config workers/unified-gateway/wrangler.jsonc --port 8787 &
+          echo "Waiting for worker to start..."
           for _ in $(seq 1 30); do
-            curl -f http://localhost:3001 2>/dev/null && exit 0
+            curl -sf http://localhost:8787/api/stories?page=1\&pageSize=3 2>/dev/null && break
             sleep 2
           done
-          exit 1
-      
-      - name: Test /api/internal/admin/profiles
-        run: |
-          curl -X GET http://localhost:3001/api/internal/admin/profiles \
-            -H "x-internal-secret: test_secret_12345" \
-            -H "Content-Type: application/json" \
-            -f -v
-      
-      - name: Test /api/internal/admin/audit
-        run: |
-          curl -X GET http://localhost:3001/api/internal/admin/audit \
-            -H "x-internal-secret: test_secret_12345" \
-            -H "Content-Type: application/json" \
-            -f -v
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_ANON_KEY: dummy_key
+          SUPABASE_JWKS_URL: https://example.supabase.co/auth/v1/.well-known/jwks.json
       
       - name: Test /api/stories
         run: |
-          curl -X GET "http://localhost:3001/api/stories?page=1&pageSize=10" \
-            -H "Content-Type: application/json" \
-            -f -v
+          echo "=== GET /api/stories ==="
+          RESULT=$(curl -sf "http://localhost:8787/api/stories?page=1&pageSize=3" 2>&1)
+          echo "$RESULT" | head -c 500
+          echo ""
+          echo "$RESULT" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('success')==True; assert 'data' in d; print('stories: OK')"
       
-      - name: Test /api/chapters
+      - name: Test /api/taxonomy/categories (via supabase proxy)
         run: |
-          curl -X GET "http://localhost:3001/api/chapters" \
-            -H "Content-Type: application/json" \
-            -f -v
+          echo "=== GET /api/supabase/categories ==="
+          RESULT=$(curl -sf "http://localhost:8787/api/supabase/categories?select=*" 2>&1)
+          echo "$RESULT" | head -c 500
+          echo ""
       
-      - name: Test /api/taxonomy/categories
+      - name: Health check (404 route)
         run: |
-          curl -X GET http://localhost:3001/api/taxonomy/categories \
-            -H "Content-Type: application/json" \
-            -f -v
-      
-      - name: Test /api/site-metrics
-        run: |
-          curl -X GET "http://localhost:3001/api/site-metrics?type=profiles" \
-            -H "Content-Type: application/json" \
-            -f -v
-      
-      - name: Test /api/role-distribution
-        run: |
-          curl -X GET http://localhost:3001/api/role-distribution \
-            -H "Content-Type: application/json" \
-            -f -v
+          echo "=== GET /unknown-route ==="
+          curl -s "http://localhost:8787/api/unknown-route" | python3 -c "import sys,json; d=json.load(sys.stdin); assert d.get('success')==False; assert d.get('error') is not None; print('404 handling: OK')"

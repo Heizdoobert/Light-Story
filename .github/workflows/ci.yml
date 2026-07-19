@@ -33,14 +33,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run gateway unit tests
-        run: npm --prefix workers/api-gateway test --silent
-
       - name: Clean Next cache
         run: rm -rf .next
 
       - name: Verify frontend
         run: npm run ci:verify
+
+  worker:
+    name: Worker Type-Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/unified-gateway
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: workers/unified-gateway/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check worker
+        run: npx tsc --noEmit
 
   backend-supabase:
     name: Backend Structure Validation
@@ -97,16 +117,10 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - name: Deploy API Gateway (preview)
-        working-directory: workers/api-gateway
+      - name: Deploy Unified Gateway (preview)
+        working-directory: workers/unified-gateway
         run: |
           wrangler deploy --env preview || echo "Preview deploy skipped (no preview env configured)"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Deploy Domain Workers (preview)
-        working-directory: workers/comics-worker
-        run: wrangler deploy --env preview || true
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 

@@ -163,7 +163,7 @@ describe('updateComicRecord', () => {
   it('prepends to catalog when comic not found', async () => {
     vi.mocked(apiClient.patch).mockResolvedValue(MOCK_DB_ROW);
 
-    const result = await service.updateComicRecord(MOCK_RECORD);
+    await service.updateComicRecord(MOCK_RECORD);
 
     const catalog = JSON.parse(localStorage.getItem('comic-cms:catalog')!);
     expect(catalog[0].id).toBe('comic-1');
