@@ -26,7 +26,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",
     "@light-story/api-types": "file:../packages/api-types",
-    "@supabase/ssr": "^0.10.3",
+    "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.105.4",
     "@tanstack/react-query": "^5.100.10",
     "class-variance-authority": "^0.7.1",
