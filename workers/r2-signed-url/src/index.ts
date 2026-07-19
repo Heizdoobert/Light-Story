@@ -4,13 +4,7 @@ interface Env {
   SUPABASE_JWKS_URL?: string;
 }
 
-function parseJwt(token: string): Record<string, unknown> {
-  const parts = token.split('.');
-  if (parts.length !== 3) throw new Error('Invalid JWT');
-  const payload = parts[1];
-  const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-  return JSON.parse(decoded);
-}
+
 
 function base64UrlToUint8Array(input: string): Uint8Array {
   const padded = input.padEnd(input.length + ((4 - (input.length % 4)) % 4), '=');

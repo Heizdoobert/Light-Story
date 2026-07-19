@@ -1,0 +1,53 @@
+name: Supabase Database Tests
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  database-tests:
+    name: Database Migrations and pgTAP Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Start Docker Daemon
+        run: |
+          sudo systemctl start docker
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v3
+        with:
+          version: latest
+
+      - name: Start Supabase Local Stack
+        working-directory: backend-supabase
+        run: |
+          supabase start
+
+      - name: Run pgTAP SQL Tests
+        working-directory: backend-supabase
+        run: |
+          supabase db test
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Run Node.js RLS Integration Tests
+        run: |
+          node backend-supabase/supabase/tests/rls-integration.test.js
+        env:
+          SUPABASE_URL: http://localhost:54321

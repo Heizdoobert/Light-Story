@@ -65,7 +65,7 @@ async function testRLSForRole(roleName, token) {
   // Test 2: Insert comment (should pass for authenticated users)
   if (roleName !== 'anonymous') {
     try {
-      const { error } = await client
+      await client
         .from('comments')
         .insert({ story_id: '00000000-0000-0000-0000-000000000000', text: 'test' });
       
@@ -79,7 +79,7 @@ async function testRLSForRole(roleName, token) {
   // Test 3: Update/delete comment (owner or admin/superadmin only)
   if (['admin', 'superadmin'].includes(roleName)) {
     try {
-      const { error } = await client
+      await client
         .from('comments')
         .update({ text: 'updated' })
         .eq('id', '00000000-0000-0000-0000-000000000000');

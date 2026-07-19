@@ -2,7 +2,6 @@
 
 import {
   Env,
-  json,
   err,
   authToken,
 } from './utils/supabase-client';

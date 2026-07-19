@@ -58,8 +58,6 @@ metadata.json
 frontend/src/lib/middleware.ts
 frontend/src/examples/
 
-
-
 # Duplicate nested packages
 backend-supabase/backend-supabase/
 
@@ -119,3 +117,7 @@ test.txt
 .opencode/
 .windsurf/
 graphify-out/
+.fe.log
+.fe.err
+*.err
+thoughts/

@@ -12,6 +12,10 @@ updates:
       - "Heizdoobert"
     labels:
       - "dependencies"
+    groups:
+      frontend-dependencies:
+        patterns:
+          - "*"
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -26,3 +30,7 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    groups:
+      github-actions-dependencies:
+        patterns:
+          - "*"
