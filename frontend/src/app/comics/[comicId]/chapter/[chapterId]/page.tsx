@@ -22,7 +22,7 @@ import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 // --- BỘ DỮ LIỆU GIẢ LẬP (MOCK DATA) ---
 const MOCK_COMIC: Comic = {
