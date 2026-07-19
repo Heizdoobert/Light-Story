@@ -5,11 +5,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, X } from "lucide-react";
 
-// IMPORT CÔNG CỤ GỌI API VÀ KIỂU DỮ LIỆU TỪ FILE CỦA BẠN
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-
-// IMPORT CÁC THỰC THỂ KHÁC
 import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/errorUtils";
@@ -17,7 +14,6 @@ import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { Header } from "@/components/shared/Header";
 
-// Hàm dịch trạng thái chuẩn
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
   if (status === "ongoing") return "Đang cập nhật";
@@ -36,17 +32,25 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-emerald-500 text-white dark:bg-emerald-600";
+      case "published":
+        return "bg-blue-500 text-white dark:bg-blue-600";
+      case "ongoing":
+        return "bg-amber-500 text-white dark:bg-amber-600";
+      case "draft":
+        return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
+      default:
+        return "bg-indigo-500 text-white dark:bg-indigo-600"; // Màu dự phòng
+    }
+  };
+  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
 
   const [showFilter, setShowFilter] = useState(false);
-  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
   const [loading, setLoading] = useState(initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  const [filterParams, setFilterParams] = useState({
-    keyword: "",
-    category: "all",
-    sort: "newest" as "newest" | "most_viewed" | "oldest",
-  });
 
   // TẢI THỂ LOẠI & TRUYỆN THỊNH HÀNH
   useEffect(() => {
@@ -71,26 +75,29 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     loadInitData();
   }, []);
 
-  // TẢI DANH SÁCH TRUYỆN CHÍNH
+  // TẢI DANH SÁCH TRUYỆN MỚI NHẤT (Không còn filterParams ở đây nữa)
+  // CHỈ TẢI CHAPTER MỚI NHẤT (Sử dụng luôn danh sách truyện từ Server)
   const fetchComicsData = useCallback(async () => {
-    setLoading(true);
+    // Nếu Server không có truyện nào thì mới bật loading
+    if (initialComics.length === 0) setLoading(true);
+
     try {
-      const queryParams = new URLSearchParams();
-      if (filterParams.keyword)
-        queryParams.append("keyword", filterParams.keyword);
-      if (filterParams.category !== "all")
-        queryParams.append("category", filterParams.category);
-      if (filterParams.sort) queryParams.append("sort", filterParams.sort);
+      // 1. Dùng luôn 15 truyện từ Server truyền xuống
+      let comicsData = initialComics;
 
-      const response = await apiClient.get<any>(
-        `/api/comics?${queryParams.toString()}`,
-      );
+      // 2. (Dự phòng) Nếu Server lỗi không có dữ liệu, Client tự gọi lại và ép lấy 15 truyện
+      if (comicsData.length === 0) {
+        const response = await apiClient.get<any>(
+          "/api/comics?sort=newest&limit=15",
+        );
+        comicsData = Array.isArray(response)
+          ? response
+          : response?.items || response?.comics || [];
+        comicsData = comicsData.slice(0, 15); // Ép cắt 15
+        setComics(comicsData); // Cập nhật lại state
+      }
 
-      const comicsData: Comic[] = Array.isArray(response)
-        ? response
-        : response?.items || response?.comics || [];
-      setComics(comicsData);
-
+      // 3. Chỉ đi lấy Chapter cho đúng 15 truyện này (Cực kỳ nhẹ server)
       const chapterMap: Record<string, Chapter> = {};
       const chapterPromises = comicsData.map(async (comic) => {
         try {
@@ -102,7 +109,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             : chaptersRes?.items || chaptersRes?.chapters || [];
 
           if (chapters && chapters.length > 0) {
-            // Sửa lỗi dùng sai trường createdAt, chỉ sử dụng created_at
             const sorted = chapters.sort(
               (a, b) =>
                 new Date(b.created_at || 0).getTime() -
@@ -123,7 +129,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     } finally {
       setLoading(false);
     }
-  }, [filterParams]);
+  }, [initialComics]); // 👉 Nhớ thêm initialComics vào mảng phụ thuộc này
 
   useEffect(() => {
     fetchComicsData();
@@ -137,7 +143,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     };
   }, [showFilter]);
 
-  // Fallback ảnh lỗi
   const applyComicCoverFallback = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
       const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
@@ -157,7 +162,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFilter(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-\[60\]"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
             />
             <motion.div
               initial={{ x: "-100%" }}
@@ -168,11 +173,11 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Bộ lọc
+                    Tìm kiếm
                   </span>
                 </div>
                 <button
@@ -183,13 +188,10 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 </button>
               </div>
               <div className="p-4 flex-1 overflow-y-auto">
-                <FilterMenu
-                  categories={categories}
-                  onFilterChange={(newParams) => {
-                    setFilterParams(newParams);
-                    setShowFilter(false);
-                  }}
-                />
+                {/* ĐIỂM QUAN TRỌNG: Không truyền onFilterChange nữa. 
+                  Điều này ép FilterMenu dùng useRouter chuyển sang trang /search 
+                */}
+                <FilterMenu onClose={() => setShowFilter(false)} />
               </div>
             </motion.div>
           </>
@@ -256,13 +258,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
             Truyện Mới Cập Nhật
           </h2>
-          {(filterParams.keyword ||
-            filterParams.category !== "all" ||
-            filterParams.sort !== "newest") && (
-            <span className="px-3 py-1 text-[11px] font-bold text-primary bg-primary/10 rounded-full">
-              Đang có bộ lọc
-            </span>
-          )}
         </div>
 
         {loading ? (
@@ -277,20 +272,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           >
             <div className="text-5xl sm:text-6xl mb-6">📭</div>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 text-sm sm:text-lg">
-              Không tìm thấy bộ truyện tranh nào phù hợp.
+              Chưa có bộ truyện nào trên hệ thống.
             </p>
-            <button
-              onClick={() =>
-                setFilterParams({
-                  keyword: "",
-                  category: "all",
-                  sort: "newest",
-                })
-              }
-              className="px-6 py-2.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-full text-sm font-bold hover:bg-slate-300 transition-colors"
-            >
-              Xóa bộ lọc
-            </button>
           </motion.div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6">
@@ -326,7 +309,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                     </div>
                     <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
                       <span
-                        className={`px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[9px] sm:text-[10px] font-black uppercase shadow-sm backdrop-blur-md ${comic.status === "completed" ? "bg-emerald-500/90 text-white" : "bg-primary/90 text-white"}`}
+                        className={`px-2 py-1 rounded-full text-[9px] font-black uppercase shadow-sm ${getStatusStyles(comic.status)}`}
                       >
                         {getVietnameseStatus(comic.status)}
                       </span>
@@ -345,7 +328,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                         {latestChapters[comic.id]?.title || "Chưa có chương"}
                       </span>
                       <span className="text-[9px] sm:text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {/* Đã xóa hoàn toàn createdAt và ts-ignore, chỉ giữ lại created_at chuẩn */}
                         {latestChapters[comic.id]?.created_at
                           ? new Date(
                               latestChapters[comic.id].created_at,
@@ -369,6 +351,14 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             ))}
           </div>
         )}
+        <div className="flex justify-center mt-8 mb-12">
+          <Link
+            href="/search"
+            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold rounded-md transition-colors shadow-sm"
+          >
+            Xem thêm nhiều truyện
+          </Link>
+        </div>
       </div>
     </div>
   );

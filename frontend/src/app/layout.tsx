@@ -1,13 +1,18 @@
-import type { Metadata } from 'next';
-import './globals.css';
-import { Providers } from './providers';
+import type { Metadata } from "next";
+import "./globals.css";
+import { Providers } from "./providers";
+import { Footer } from "@/components/shared/Footer";
 
 export const metadata: Metadata = {
-  title: 'Light Story',
-  description: 'Light Story application',
+  title: "Light Story",
+  description: "Light Story application",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -31,8 +36,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>
-        <Providers>{children}</Providers>
+      {/* Thêm class để body chiếm tối thiểu 100% chiều cao màn hình và dàn dọc */}
+      <body className="min-h-screen flex flex-col antialiased">
+        <Providers>
+          {/* Main sẽ đẩy Footer xuống dưới cùng nhờ flex-grow */}
+          <main className="flex-grow">{children}</main>
+
+          {/* Footer luôn nằm ở cuối */}
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
