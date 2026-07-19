@@ -15,6 +15,7 @@
     "check": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
     "preview": "npm --prefix frontend run preview",
+    "test:run": "npm --prefix frontend run test:run",
     "generate:types": "npm --prefix packages/api-types run generate"
   },
   "devDependencies": {
