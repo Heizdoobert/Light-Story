@@ -121,7 +121,6 @@ graphify-out/
 .fe.err
 *.err
 thoughts/
-
 # Production safety & nested dependencies
 **/node_modules/
 **/*.tsbuildinfo
@@ -139,4 +138,10 @@ blob-report/
 .playwright-artifacts/
 playwright/.cache/
 **/dist/
+
+# Internal documentation and setup files (ignored on main)
+docs/
+AGENTS.md
+HUONG_DAN_SETUP.md
+
 
