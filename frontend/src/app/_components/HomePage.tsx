@@ -213,7 +213,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 >
                   <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-slate-100 dark:bg-slate-800 shadow-md group-hover:shadow-2xl transition-all duration-500 border border-slate-100 dark:border-slate-800">
                     <img
-                      src={comic.coverUrl}
+                      src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
                       alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
@@ -282,7 +282,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 >
                   <div className="relative overflow-hidden rounded-2xl mb-2 sm:mb-3 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                     <img
-                      src={comic.coverUrl}
+                      src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
                       alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"

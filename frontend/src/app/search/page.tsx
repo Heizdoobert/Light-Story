@@ -241,7 +241,7 @@ function SearchContent() {
                   >
                     <div className="relative overflow-hidden rounded-2xl mb-2 aspect-3/4 bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={comic.coverUrl}
+                        src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={applyComicCoverFallback}
