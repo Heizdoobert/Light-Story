@@ -139,7 +139,7 @@ async function sbGetCount(
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${q}`, {
     method: 'HEAD',
     headers: {
-      ...Object.fromEntries(h.entries()),
+      ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',
     },
   });
