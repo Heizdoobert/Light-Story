@@ -1,27 +1,17 @@
 /**
  * Translates technical error messages into user-friendly notifications.
  */
-export const getErrorMessage = (error: any, context?: string): string => {
+export const getErrorMessage = (error: unknown, context?: string): string => {
   const extractMessage = (): string => {
     if (!error) return "";
 
     if (typeof error === "string") return error;
 
-    if (error?.message && typeof error.message === "string") {
-      return error.message;
-    }
-
-    if (error?.error_description && typeof error.error_description === "string") {
-      return error.error_description;
-    }
-
-    if (error?.details && typeof error.details === "string") {
-      return error.details;
-    }
-
-    if (error?.hint && typeof error.hint === "string") {
-      return error.hint;
-    }
+    const errObj = error as Record<string, unknown>;
+    if (typeof errObj.message === "string") return errObj.message;
+    if (typeof errObj.error_description === "string") return errObj.error_description;
+    if (typeof errObj.details === "string") return errObj.details;
+    if (typeof errObj.hint === "string") return errObj.hint;
 
     try {
       return JSON.stringify(error);

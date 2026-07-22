@@ -39,6 +39,7 @@ const MOCK_RECORD: service.ComicCmsRecord = {
   viewCount: 42,
   lastUpdatedAt: '2026-06-01T00:00:00Z',
   chapters: [],
+  category: [],
 };
 
 beforeEach(() => {

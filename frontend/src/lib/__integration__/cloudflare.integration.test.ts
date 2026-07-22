@@ -19,7 +19,6 @@ const WORKERS = [
 
 const LOCAL_WORKERS = [
   { name: 'unified-gateway', file: 'workers/unified-gateway/wrangler.jsonc' },
-  { name: 'recruitment-agent', file: 'workers/recruitment-agent/wrangler.jsonc' },
   { name: 'lightstory-r2-proxy', file: 'workers/r2-signed-url/wrangler.jsonc' },
 ];
 

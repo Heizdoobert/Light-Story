@@ -16,6 +16,7 @@ import { FilterMenu } from "@/app/_components/FilterMenu";
 import { toast } from "sonner";
 import { SortDropdown } from "@/components/shared/SortDropdown";
 import { Pagination } from "@/components/shared/Pagination";
+import { getStatusStyles } from "@/lib/statusStyles";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -46,22 +47,6 @@ function SearchContent() {
   // 👉 States quản lý phân trang
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-
-  // Bổ sung hàm chọn màu hiển thị dựa trên trạng thái
-  const getStatusStyles = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-500 text-white dark:bg-emerald-600";
-      case "published":
-        return "bg-blue-500 text-white dark:bg-blue-600";
-      case "ongoing":
-        return "bg-amber-500 text-white dark:bg-amber-600";
-      case "draft":
-        return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
-      default:
-        return "bg-indigo-500 text-white dark:bg-indigo-600"; // Màu dự phòng
-    }
-  };
 
   // States quản lý UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);

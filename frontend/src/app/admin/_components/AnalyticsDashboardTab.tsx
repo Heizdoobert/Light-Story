@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, ArrowUpRight, CalendarRange, Cloud, Loader2, RefreshCw, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
-import { useAnalyticsDashboard } from '@/_presenters/useAnalyticsDashboard';
+import { useAnalyticsDashboard } from '@/hooks/useAnalyticsDashboard';
 import { TrendsSection } from './TrendsSection';
 import type { AnalyticsRole, AnalyticsTimeRange, ContentPerformanceMetrics, InfrastructureMetrics, UserEngagementMetrics } from '@/types/analytics';
 import { computeStorageEfficiencyPct, formatCompactNumber, formatFixedNumber } from '@/services/analytics.service';

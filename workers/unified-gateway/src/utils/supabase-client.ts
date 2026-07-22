@@ -10,14 +10,11 @@ export interface Env {
 }
 
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return Response.json(data, { status });
 }
 
 function err(code: string, message: string, status: number): Response {
-  return json({ status: 'error', error: { code, message } }, status);
+  return Response.json({ status: 'error', error: { code, message } }, { status });
 }
 
 function authToken(h: Headers): string | null {

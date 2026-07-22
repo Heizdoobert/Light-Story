@@ -13,6 +13,7 @@ import { getErrorMessage } from "@/lib/errorUtils";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { Header } from "@/components/shared/Header";
+import { getStatusStyles } from "@/lib/statusStyles";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -32,20 +33,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
   );
-  const getStatusStyles = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-emerald-500 text-white dark:bg-emerald-600";
-      case "published":
-        return "bg-blue-500 text-white dark:bg-blue-600";
-      case "ongoing":
-        return "bg-amber-500 text-white dark:bg-amber-600";
-      case "draft":
-        return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
-      default:
-        return "bg-indigo-500 text-white dark:bg-indigo-600"; // Màu dự phòng
-    }
-  };
   const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
 
   const [showFilter, setShowFilter] = useState(false);

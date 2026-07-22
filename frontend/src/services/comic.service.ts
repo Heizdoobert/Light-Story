@@ -46,20 +46,17 @@ type ChapterCreateResponse = {
   };
 };
 
+const makeDevUrls = (files: File[]) =>
+  files.map((f, i) => `https://placehold.co/600x800?text=dev+${encodeURIComponent(f.name.replace(/\s+/g, '-'))}+${Date.now() + i}`);
+
 async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === 'true';
-
-  const toDevUrls = (): string[] =>
-    files.map((file, i) => {
-      const safeName = encodeURIComponent(file.name.replace(/\s+/g, '-'));
-      return `https://placehold.co/600x800?text=dev+${safeName}+${Date.now() + i}`;
-    });
 
   if (!bucket) {
     if (process.env.NODE_ENV === 'production' || !allowDevFallback) {
       throw new Error('R2 bucket is not configured');
     }
-    return toDevUrls();
+    return makeDevUrls(files);
   }
 
   const form = new FormData();
@@ -79,12 +76,12 @@ async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]>
 
     const body = (await response.json()) as { success?: boolean; data?: { urls?: string[] }; urls?: string[]; error?: { message?: string } };
     if (!response.ok || (body.success === false)) {
-      if (allowDevFallback && process.env.NODE_ENV !== 'production') return toDevUrls();
+      if (allowDevFallback && process.env.NODE_ENV !== 'production') return makeDevUrls(files);
       throw new Error(body.error?.message || `HTTP ${response.status}`);
     }
     return body.data?.urls ?? body.urls ?? [];
   } catch (error) {
-    if (allowDevFallback && process.env.NODE_ENV !== 'production') return toDevUrls();
+    if (allowDevFallback && process.env.NODE_ENV !== 'production') return makeDevUrls(files);
     throw error;
   }
 }
