@@ -1,5 +1,9 @@
 # Light Story
 
+[![light-story-ci](https://github.com/Heizdoobert/Light-Story/actions/workflows/ci.yml/badge.svg)](https://github.com/Heizdoobert/Light-Story/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/Heizdoobert/Light-Story/releases)
+
 Light Story is an online reading platform with a Next.js frontend, Supabase backend, and Cloudflare Workers backend (D1 + R2). Includes a comic platform with semantic search, VIP content gating, real-time updates, and a fully decoupled API Gateway architecture.
 
 ## Quick Links
