@@ -80,12 +80,15 @@ function constantTimeEqual(a: string, b: string): boolean {
   return res === 0;
 }
 
+import { sanitizeR2Key } from './security';
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const key = url.pathname.replace(/^\//, '');
+    const rawKey = url.pathname.replace(/^\//, '');
+    const key = sanitizeR2Key(rawKey);
 
-    if (!key) return new Response('Missing object key', { status: 400 });
+    if (!key) return new Response('Missing or invalid object key', { status: 400 });
 
     const sigParam = url.searchParams.get('sig');
     const secret = env.ASSETS_SIGN_SECRET;
