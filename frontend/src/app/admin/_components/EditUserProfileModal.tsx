@@ -5,6 +5,7 @@ import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/errorUtils';
+import { sanitizeImageUrl } from '@/lib/securityUtils';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;
@@ -158,13 +159,9 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Profile Picture</label>
                   <div className="flex items-center gap-4">
-                    {avatarUrl &&
-                    (avatarUrl.toLowerCase().startsWith("http://") ||
-                      avatarUrl.toLowerCase().startsWith("https://") ||
-                      avatarUrl.toLowerCase().startsWith("/") ||
-                      avatarUrl.toLowerCase().startsWith("data:image/")) ? (
+                    {sanitizeImageUrl(avatarUrl) ? (
                       <img
-                        src={avatarUrl}
+                        src={sanitizeImageUrl(avatarUrl)!}
                         alt="Avatar"
                         className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                       />

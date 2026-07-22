@@ -143,5 +143,7 @@ playwright/.cache/
 docs/
 AGENTS.md
 HUONG_DAN_SETUP.md
+deploy_key*
+
 
 

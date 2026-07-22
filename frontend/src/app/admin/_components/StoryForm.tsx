@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { useStoryFormPresenter } from '@/hooks/useStoryFormPresenter';
+import { sanitizeImageUrl } from '@/lib/securityUtils';
 
 export const StoryForm: React.FC = () => {
   const { role } = useAuth();
@@ -185,11 +186,11 @@ export const StoryForm: React.FC = () => {
                 <ImageIcon size={12} /> Upload main background
               </label>
               <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-4 space-y-4">
-                {coverPreview ? (
+                {sanitizeImageUrl(coverPreview) ? (
                   <div className="space-y-3">
                     <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                       <img
-                        src={coverPreview}
+                        src={sanitizeImageUrl(coverPreview)!}
                         alt="Cover preview"
                         className="h-56 w-full object-cover"
                       />
