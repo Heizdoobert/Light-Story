@@ -22,6 +22,7 @@ import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/RecommendedComics";
 import { recordReadingHistory } from "@/services/readerHub.service";
+import { ChapterImage } from "@/components/reader/ChapterImage";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -325,16 +326,11 @@ export default function ReadChapterPage() {
           </div>
         ) : (
           images.map((imgUrl, idx) => (
-            <img
-              key={idx}
+            <ChapterImage
+              key={`${imgUrl}-${idx}`}
               src={imgUrl}
-              alt={`Page ${idx + 1}`}
-              loading="lazy"
-              className="w-full object-contain select-none block m-0 p-0"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://placehold.co/800x1200/eee/999?text=Lỗi+tải+ảnh";
-              }}
+              alt={`Trang ${idx + 1}`}
+              index={idx}
             />
           ))
         )}
