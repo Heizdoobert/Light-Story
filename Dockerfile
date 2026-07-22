@@ -18,7 +18,7 @@ FROM node:${NODE_VERSION}-alpine AS final
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --chown=node:node --from=build /app/frontend/.next/standalone ./
-COPY --chown=node:node --from=build /app/frontend/.next/static ./.next/static
+COPY --chown=node:node --from=build /app/frontend/.next/static ./frontend/.next/static
 EXPOSE 3000
 USER node
-CMD ["node", "server.js"]
+CMD ["node", "frontend/server.js"]

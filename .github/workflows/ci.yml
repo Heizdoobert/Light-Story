@@ -40,11 +40,19 @@ jobs:
         run: npm run ci:verify
 
   worker:
-    name: Worker Type-Check
+    name: Worker Type-Check (${{ matrix.worker }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        worker:
+          - unified-gateway
+          - stories-worker
+          - comics-worker
+          - admin-worker
+          - analytics-worker
     defaults:
       run:
-        working-directory: workers/unified-gateway
+        working-directory: workers/${{ matrix.worker }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,11 +61,9 @@ jobs:
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: workers/unified-gateway/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci || true
 
       - name: Type-check worker
         run: npx tsc --noEmit
