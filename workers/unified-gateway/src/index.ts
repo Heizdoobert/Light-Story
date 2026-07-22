@@ -20,6 +20,8 @@ import { handleStoriesRequest } from './routes/stories';
 import { handleComicsRequest } from './routes/comics';
 import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
+import { checkRateLimit } from './middleware/rateLimit';
+import { applySecurityHeaders } from './middleware/securityHeaders';
 
 async function handleSupabaseProxy(
   pathname: string,
@@ -150,6 +152,26 @@ export default {
     }
 
     const pathname = url.pathname;
+    const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
+    const rateLimit = checkRateLimit(request, isAuthOrAdmin);
+
+    if (!rateLimit.allowed) {
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'Retry-After': String(rateLimit.resetSec),
+        'X-RateLimit-Limit': String(rateLimit.limit),
+        'X-RateLimit-Remaining': '0',
+        ...corsHeaders(origin),
+      });
+      applySecurityHeaders(headers);
+      return new Response(
+        JSON.stringify({
+          status: 'error',
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+        }),
+        { status: 429, headers },
+      );
+    }
     if (
       pathname.startsWith('/api/supabase/') ||
       pathname.startsWith('/api/rpc/')
@@ -291,6 +313,7 @@ export default {
     const resHeaders = new Headers(res.headers);
     for (const [k, v] of Object.entries(c))
       resHeaders.set(k, v as string);
+    applySecurityHeaders(resHeaders);
 
     const contentType = res.headers.get('Content-Type') || '';
     if (contentType.includes('application/json')) {
