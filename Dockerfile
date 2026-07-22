@@ -1,41 +1,26 @@
 # syntax=docker/dockerfile:1
+ARG NODE_VERSION=22
 
-ARG NODE_VERSION=20
-
-################################################################################
-# Base stage
-FROM node:${NODE_VERSION}-alpine AS base
+FROM node:${NODE_VERSION}-alpine AS build
 WORKDIR /app
 
-################################################################################
-# Install production dependencies
-FROM base AS deps
-COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
-
-################################################################################
-# Build stage (standalone output for minimal runtime image)
-FROM base AS build
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
+COPY packages/api-types packages/api-types/
+COPY frontend/ frontend/
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
-COPY frontend/ ./
+WORKDIR /app/frontend
 ENV DOCKER_BUILD=1
-RUN npm run build
+# Webpack flag avoids Turbopack monorepo root-detection bug (#92540)
+RUN npm run build -- --webpack 2>&1
 
-################################################################################
-# Final runtime image
-FROM base AS final
+FROM node:${NODE_VERSION}-alpine AS final
 ENV NODE_ENV=production
-
-# Run as non-root user
-USER node
-
-COPY --chown=node:node --from=build /app/public ./public
-COPY --chown=node:node --from=build /app/.next/standalone ./
-COPY --chown=node:node --from=build /app/.next/static ./.next/static
-
+WORKDIR /app
+COPY --chown=node:node --from=build /app/frontend/.next/standalone ./
+COPY --chown=node:node --from=build /app/frontend/.next/static ./.next/static
+COPY --chown=node:node --from=build /app/frontend/public ./public
 EXPOSE 3000
+USER node
 CMD ["node", "server.js"]

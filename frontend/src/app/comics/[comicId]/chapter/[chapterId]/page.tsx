@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
+import { RecommendedComics } from "@/components/shared/RecommendedComics";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -459,6 +460,8 @@ export default function ReadChapterPage() {
               <ArrowUp size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
           </div>
+
+          <RecommendedComics comicId={comicId} />
         </div>
       </div>
 

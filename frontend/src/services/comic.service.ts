@@ -163,3 +163,13 @@ export async function createComicChapter(input: ChapterCreateInput): Promise<Cha
   if (!chapter) throw new Error('Chapter creation succeeded but no chapter was returned');
   return chapter;
 }
+
+export async function getRecommendations(comicId: string, limit = 6): Promise<ComicContext[]> {
+  try {
+    const res = await apiClient.get<ComicContext[]>(`/api/comics/recommendations?comicId=${encodeURIComponent(comicId)}&limit=${limit}`);
+    return Array.isArray(res) ? res : [];
+  } catch {
+    const fallback = await apiClient.get<any>(`/api/comics?sort=most_viewed&limit=${limit}`).catch(() => []);
+    return Array.isArray(fallback) ? fallback : fallback?.items || fallback?.comics || [];
+  }
+}

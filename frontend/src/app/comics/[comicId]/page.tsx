@@ -24,6 +24,7 @@ import { Header } from "@/components/shared/Header";
 import { toast } from "sonner";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
+import { RecommendedComics } from "@/components/shared/RecommendedComics";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -371,6 +372,8 @@ export default function ComicDetailPage() {
             </div>
           )}
         </motion.div>
+
+        <RecommendedComics comicId={comicId} />
       </div>
     </div>
   );

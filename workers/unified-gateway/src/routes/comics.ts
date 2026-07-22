@@ -26,6 +26,10 @@ export async function handleComicsRequest(
   const method = request.method;
 
   try {
+    if (method === 'GET' && pathname === '/comics/recommendations') {
+      return handleComicRecommendations(url, env, token);
+    }
+
     if (method === 'GET' && pathname === '/comics') {
       const page = Math.max(
         1,
@@ -143,4 +147,61 @@ export async function handleComicsRequest(
       500,
     );
   }
+}
+
+export async function handleComicRecommendations(
+  url: URL,
+  env: Env,
+  token: string | null,
+): Promise<Response> {
+  const comicId = url.searchParams.get('comicId');
+  const limitStr = url.searchParams.get('limit') || '6';
+  const limit = parseInt(limitStr, 10) || 6;
+
+  if (!comicId) {
+    return err('INVALID_INPUT', 'comicId parameter is required', 400);
+  }
+
+  const targetRes = await sbGet('stories', `id=eq.${comicId}&select=*`, env, token);
+  if (!targetRes.ok) {
+    return json({ success: true, data: [] });
+  }
+  const targetData = (await targetRes.json()) as any[];
+  const targetComic = Array.isArray(targetData) && targetData.length > 0 ? targetData[0] : null;
+
+  if (!targetComic) {
+    return json({ success: true, data: [] });
+  }
+
+  const candidatesRes = await sbGet('stories', `id=neq.${comicId}&status=neq.archived&select=*&limit=50`, env, token);
+  const candidatesData = candidatesRes.ok ? ((await candidatesRes.json()) as any[]) : [];
+  const candidates = Array.isArray(candidatesData) ? candidatesData : [];
+
+  const targetCategories: string[] = Array.isArray(targetComic.category)
+    ? targetComic.category
+    : typeof targetComic.category === 'string'
+    ? (() => { try { return JSON.parse(targetComic.category); } catch { return []; } })()
+    : [];
+
+  const scored = candidates.map((c) => {
+    const cCategories: string[] = Array.isArray(c.category)
+      ? c.category
+      : typeof c.category === 'string'
+      ? (() => { try { return JSON.parse(c.category); } catch { return []; } })()
+      : [];
+
+    const overlap = cCategories.filter((cat) => targetCategories.includes(cat)).length;
+    const authorBonus = c.author && targetComic.author && c.author === targetComic.author ? 0.5 : 0;
+    return { ...c, _score: overlap + authorBonus };
+  });
+
+  scored.sort((a, b) => {
+    if (b._score !== a._score) return b._score - a._score;
+    const viewsA = a.views || a.view_count || 0;
+    const viewsB = b.views || b.view_count || 0;
+    return viewsB - viewsA;
+  });
+
+  const recommendations = scored.slice(0, limit).map(({ _score, ...rest }) => rest);
+  return json({ success: true, data: recommendations });
 }

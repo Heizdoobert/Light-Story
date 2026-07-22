@@ -131,3 +131,13 @@ describe('createComic', () => {
     });
   });
 });
+
+describe('getRecommendations', () => {
+  it('calls /api/comics/recommendations with parameters', async () => {
+    mockApiClient.get.mockResolvedValue([{ id: 'rec-1', title: 'Rec Comic' }]);
+    const { getRecommendations } = await import('./comic.service');
+    const result = await getRecommendations('comic-1', 6);
+    expect(result).toHaveLength(1);
+    expect(mockApiClient.get).toHaveBeenCalledWith('/api/comics/recommendations?comicId=comic-1&limit=6');
+  });
+});
