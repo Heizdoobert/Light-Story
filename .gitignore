@@ -121,3 +121,22 @@ graphify-out/
 .fe.err
 *.err
 thoughts/
+
+# Production safety & nested dependencies
+**/node_modules/
+**/*.tsbuildinfo
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+.env*.local
+!.env.example
+
+# Test & report artifacts
+playwright-report/
+blob-report/
+.playwright-artifacts/
+playwright/.cache/
+**/dist/
+
