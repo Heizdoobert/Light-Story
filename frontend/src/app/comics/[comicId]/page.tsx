@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/RecommendedComics";
+import { BookmarkButton } from "@/components/shared/BookmarkButton";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -250,6 +251,8 @@ export default function ComicDetailPage() {
               >
                 <Play size={18} /> Đọc mới nhất
               </Link>
+
+              <BookmarkButton comicId={comicId} className="w-full justify-center" />
             </div>
           </div>
 

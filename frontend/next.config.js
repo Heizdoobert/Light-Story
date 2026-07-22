@@ -1,12 +1,6 @@
-import path from 'node:path';
-
 const nextConfig = {
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
   output: process.env.DOCKER_BUILD === '1' ? 'standalone' : undefined,
-  webpack: (config) => {
-    config.resolve.alias['@'] = path.resolve(process.cwd(), 'src');
-    return config;
-  },
   allowedDevOrigins: ['http://127.0.0.1:3001', 'http://localhost:3001'],
   reactStrictMode: true,
   poweredByHeader: false,

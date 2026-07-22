@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 WORKDIR /app/frontend
 ENV DOCKER_BUILD=1
-# Webpack flag avoids Turbopack monorepo root-detection bug (#92540)
+RUN node -e "console.log('CWD:',process.cwd());console.log('tsconfig:',require('fs').existsSync('./tsconfig.json'));console.log('charts:',require('fs').existsSync('./src/components/charts/index.ts'));console.log('analytics.ts:',require('fs').existsSync('./src/types/analytics.ts'))"
 RUN npm run build -- --webpack 2>&1
 
 FROM node:${NODE_VERSION}-alpine AS final
@@ -20,7 +20,6 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --chown=node:node --from=build /app/frontend/.next/standalone ./
 COPY --chown=node:node --from=build /app/frontend/.next/static ./.next/static
-COPY --chown=node:node --from=build /app/frontend/public ./public
-EXPOSE 3000
+EXPOSE 80
 USER node
 CMD ["node", "server.js"]

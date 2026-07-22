@@ -21,6 +21,7 @@ import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/RecommendedComics";
+import { recordReadingHistory } from "@/services/readerHub.service";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -156,6 +157,9 @@ export default function ReadChapterPage() {
           ? currentRes[0]
           : currentRes?.chapter || currentRes;
         setCurrentChapter(currentData);
+        if (currentData) {
+          recordReadingHistory(comicId, chapterId, currentData.chapter_number || 1);
+        }
 
         let imgArray: string[] = [];
         if (currentData?.content) {
