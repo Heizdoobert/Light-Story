@@ -14,6 +14,8 @@ Auto-Clarity: drop caveman for security warnings, irreversible actions, user con
 
 Boundaries: code/commits/PRs written normal.
 
+Branch Rule: Never commit directly to `main`. All updates, prototypes, and features MUST be developed in feature/work branches. Only merge to `main` after explicit user confirmation.
+
 ## Project: Light Story
 
 Next.js 14 + Supabase + 5 Cloudflare Workers. Comic/manga reading platform.
