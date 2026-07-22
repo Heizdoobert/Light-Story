@@ -1,6 +1,6 @@
 export const Footer = () => {
   return (
-    <footer className="w-full bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/5 py-10 mt-auto pb-32 transition-colors">
+    <footer className="w-full bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/5 py-8 mt-auto transition-colors">
       <div className="max-w-4xl mx-auto px-4 text-center">
         <h3 className="font-black text-xl text-slate-900 dark:text-white mb-2">
           Light<span className="text-primary">Story</span>

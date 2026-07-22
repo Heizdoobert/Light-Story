@@ -279,8 +279,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-8 dark:text-slate-100">
-          {children}
+        <main className="flex-1 overflow-auto p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
+          <div className="flex-1">{children}</div>
+          <footer className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
+            <div>© 2026 LightStory Admin Console. All rights reserved.</div>
+            <div className="flex items-center gap-4">
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                System Operational
+              </span>
+              <span className="font-mono text-[11px] opacity-75">v1.0.0</span>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
