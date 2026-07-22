@@ -2,6 +2,7 @@
   "name": "lightstory-r2-proxy",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-17",
+  "minify": true,
   "r2_buckets": [
     {
       "binding": "ASSETS_BUCKET",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { createComicChapter, uploadChapterImages } from "@/services/comic.service";
+import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
 
 type ImageEntry = {
   id: string;
@@ -21,6 +22,7 @@ export default function AddChapter() {
   const [title, setTitle] = useState("");
   const [chapterNumber, setChapterNumber] = useState(1);
   const [images, setImages] = useState<ImageEntry[]>([]);
+  const [cbzFile, setCbzFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [comicError, setComicError] = useState<string | null>(null);
 
@@ -30,9 +32,29 @@ export default function AddChapter() {
     }
   }, [storyId, tenantKey]);
 
-  const handleFiles = (fileList: FileList | null) => {
+  const handleFiles = async (fileList: FileList | null) => {
     if (!fileList) return;
-    const next = Array.from(fileList).map((f, idx) => ({
+    const fileArray = Array.from(fileList);
+    const foundCbz = fileArray.find((f) => isCbzFile(f));
+
+    if (foundCbz) {
+      setCbzFile(foundCbz);
+      try {
+        const extracted = await extractCbzFileToImages(foundCbz);
+        const next = extracted.map((f, idx) => ({
+          id: crypto.randomUUID(),
+          file: f,
+          order: idx + 1,
+          preview: URL.createObjectURL(f),
+        }));
+        setImages(next);
+      } catch (err) {
+        alert("Failed to unpack .cbz file preview");
+      }
+      return;
+    }
+
+    const next = fileArray.map((f, idx) => ({
       id: crypto.randomUUID(),
       file: f,
       order: images.length + idx + 1,
@@ -71,13 +93,18 @@ export default function AddChapter() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!storyId || !tenantKey) return alert("Comic context was not found");
-    if (images.length === 0) return alert("Select at least one image");
+    if (images.length === 0 && !cbzFile) return alert("Select at least one image or a .cbz file");
     setLoading(true);
 
-    const ordered = [...images].sort((a, b) => a.order - b.order);
-    const urls = await uploadChapterImages(ordered.map((entry) => entry.file));
-
     try {
+      let urls: string[];
+      if (cbzFile) {
+        urls = await uploadChapterImages([cbzFile]);
+      } else {
+        const ordered = [...images].sort((a, b) => a.order - b.order);
+        urls = await uploadChapterImages(ordered.map((entry) => entry.file));
+      }
+
       await createComicChapter({
         comicId,
         tenantKey,
@@ -112,8 +139,8 @@ export default function AddChapter() {
         </div>
 
         <div>
-          <label className="text-sm text-slate-700 dark:text-slate-300">Images</label>
-          <input type="file" accept="image/*" multiple onChange={(e) => handleFiles(e.target.files)} className="mt-2 block" />
+          <label className="text-sm text-slate-700 dark:text-slate-300">Images or .cbz file</label>
+          <input type="file" accept="image/*,.cbz,.zip,.cbr" multiple onChange={(e) => handleFiles(e.target.files)} className="mt-2 block" />
         </div>
 
         {images.length > 0 && (

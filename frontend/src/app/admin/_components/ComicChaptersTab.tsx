@@ -99,7 +99,7 @@ export function ComicChaptersTab({
         <input
           ref={chapterInputRef}
           type="file"
-          accept="image/*"
+          accept="image/*,.cbz,.zip,.cbr"
           multiple
           className="hidden"
           onChange={(event) => onAddFiles(Array.from(event.target.files ?? []))}
@@ -123,7 +123,7 @@ export function ComicChaptersTab({
                 <BookOpen size={14} /> Chapter builder
               </div>
               <p className="text-sm text-slate-600 dark:text-slate-300">
-                Add a chapter title, pick page images, then reorder them before upload. Files over 2 MB are blocked.
+                Add a chapter title, pick page images or a .cbz archive, then preview and reorder before upload.
               </p>
             </div>
           </div>
