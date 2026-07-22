@@ -1,21 +1,34 @@
 /**
  * Sanitizes image URLs to prevent DOM text reinterpretation as HTML (DOM XSS).
- * Only allows safe schemes: http://, https://, blob:, data:image/, and relative paths (/).
+ * Allows: blob:, http:, https:, data:image/*, and root-relative paths (/...).
  */
 export function sanitizeImageUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   const trimmed = url.trim();
-  const lower = trimmed.toLowerCase();
-  
-  if (
-    lower.startsWith("https://") ||
-    lower.startsWith("http://") ||
-    lower.startsWith("blob:") ||
-    lower.startsWith("data:image/") ||
-    (lower.startsWith("/") && !lower.startsWith("//"))
-  ) {
-    return trimmed;
+  if (!trimmed) return null;
+
+  try {
+    // Keep explicit root-relative paths (but reject protocol-relative //...).
+    if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+      return trimmed;
+    }
+
+    const parsed = new URL(trimmed, "https://sanitizer.local");
+
+    if (parsed.protocol === "blob:") {
+      return trimmed;
+    }
+
+    if (parsed.protocol === "data:") {
+      return trimmed.toLowerCase().startsWith("data:image/") ? trimmed : null;
+    }
+
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return trimmed;
+    }
+
+    return null;
+  } catch {
+    return null;
   }
-  
-  return null;
 }
