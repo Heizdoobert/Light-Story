@@ -23,5 +23,14 @@
     "concurrently": "^9.2.1",
     "husky": "^9.1.7",
     "wrangler": "^4.92.0"
+  },
+  "overrides": {
+    "shell-quote": "1.10.0",
+    "brace-expansion": "5.0.7",
+    "fast-uri": "4.1.1",
+    "sharp": "0.35.3",
+    "postcss": "8.5.22",
+    "@hono/node-server": "2.0.11",
+    "body-parser": "2.3.0"
   }
 }
