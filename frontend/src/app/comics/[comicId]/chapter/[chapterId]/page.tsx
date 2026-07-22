@@ -89,12 +89,12 @@ export default function ReadChapterPage() {
 
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
-  const [showFilter, setShowFilter] = useState(false);
+  const [_showFilter, setShowFilter] = useState(false);
   const [comic, setComic] = useState<Comic | null>(null);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [images, setImages] = useState<string[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
+  const [_categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
   const [loading, setLoading] = useState(true);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);

@@ -40,7 +40,7 @@ function SearchContent() {
   const currentPage = parseInt(pageParam, 10) || 1; // 👉 Lấy trang hiện tại
 
   const [comics, setComics] = useState<Comic[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [_categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 👉 States quản lý phân trang

@@ -230,24 +230,24 @@ describe('loadComicCatalogFiltered', () => {
 
   it('filters by search term', () => {
     const result = service.loadComicCatalogFiltered(catalog, { search: 'alpha', status: 'all', author: '' });
-    expect(result).toHaveLength(1);
-    expect(result[0].title).toBe('Alpha');
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].title).toBe('Alpha');
   });
 
   it('filters by status', () => {
     const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'draft', author: '' });
-    expect(result).toHaveLength(1);
-    expect(result[0].status).toBe('draft');
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].status).toBe('draft');
   });
 
   it('filters by author', () => {
     const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'all', author: 'Alice' });
-    expect(result).toHaveLength(2);
+    expect(result.data).toHaveLength(2);
   });
 
   it('returns all when no filters active', () => {
     const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'all', author: '' });
-    expect(result).toHaveLength(3);
+    expect(result.data).toHaveLength(3);
   });
 });
 

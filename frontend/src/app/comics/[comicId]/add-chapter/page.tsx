@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { createComicChapter, uploadChapterImages } from "@/services/comic.service";
-import { useSearchParams } from 'next/navigation';
 
 type ImageEntry = {
   id: string;
@@ -12,10 +11,11 @@ type ImageEntry = {
   preview: string;
 };
 
-export default function AddChapter({ params }: { params: { comicId: string } }) {
+export default function AddChapter() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { comicId } = params;
+  const params = useParams();
+  const comicId = params.comicId as string;
   const storyId = searchParams.get('storyId') ?? '';
   const tenantKey = searchParams.get('tenantKey') ?? '';
   const [title, setTitle] = useState("");

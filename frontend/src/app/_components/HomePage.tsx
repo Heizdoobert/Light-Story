@@ -27,7 +27,7 @@ type HomePageProps = {
 };
 
 export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [_categories, setCategories] = useState<Category[]>([]);
   const [comics, setComics] = useState<Comic[]>(initialComics);
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
     {},
