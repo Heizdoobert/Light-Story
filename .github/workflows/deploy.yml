@@ -53,8 +53,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy Unified Gateway Worker
-        run: npx wrangler deploy --config workers/unified-gateway/wrangler.jsonc
+      - name: Deploy Cloudflare Workers
+        run: |
+          npx wrangler deploy --config workers/unified-gateway/wrangler.jsonc
+          npx wrangler deploy --config workers/r2-signed-url/wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
