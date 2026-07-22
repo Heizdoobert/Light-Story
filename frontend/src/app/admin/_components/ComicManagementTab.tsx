@@ -33,6 +33,7 @@ import {
   type ComicCmsRecord,
 } from "@/services/comicCms.service";
 import { uploadComicCover } from "@/services/comic.service";
+import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
 import {
   DEFAULT_FORM,
   DEFAULT_CHAPTER_FORM,
@@ -76,6 +77,7 @@ export const ComicManagementTab: React.FC = () => {
 
   const [chapterValues, setChapterValues] = useState<ComicChapterFormValues>(DEFAULT_CHAPTER_FORM);
   const [chapterPages, setChapterPages] = useState<PageDraft[]>([]);
+  const [cbzArchiveFile, setCbzArchiveFile] = useState<File | null>(null);
   const [chapterBusy, setChapterBusy] = useState(false);
   const [chapterError, setChapterError] = useState<string | null>(null);
 
@@ -216,14 +218,39 @@ export const ComicManagementTab: React.FC = () => {
   }, []);
 
   const resetChapterPages = useCallback(() => {
+    setCbzArchiveFile(null);
     setChapterPages((current) => {
       current.forEach((page) => URL.revokeObjectURL(page.previewUrl));
       return [];
     });
   }, []);
 
-  const addChapterFiles = useCallback((incomingFiles: File[]) => {
+  const addChapterFiles = useCallback(async (incomingFiles: File[]) => {
     if (incomingFiles.length === 0) return;
+    const foundCbz = incomingFiles.find((f) => isCbzFile(f));
+    if (foundCbz) {
+      setCbzArchiveFile(foundCbz);
+      try {
+        toast.info("Extracting CBZ archive preview pages...");
+        const extracted = await extractCbzFileToImages(foundCbz);
+        setChapterPages((current) => {
+          const next = extracted.map((file, index) => ({
+            id: crypto.randomUUID(),
+            file,
+            order: current.length + index + 1,
+            previewUrl: URL.createObjectURL(file),
+            sizeBytes: file.size,
+            fileName: file.name,
+          }));
+          return [...current, ...next];
+        });
+      } catch (err) {
+        toast.error("Failed to unpack .cbz archive for preview");
+      }
+      setChapterError(null);
+      return;
+    }
+
     const sorted = sortFilesByFilename(incomingFiles);
     setChapterPages((current) => {
       const next = sorted.map((file, index) => ({
@@ -465,11 +492,13 @@ export const ComicManagementTab: React.FC = () => {
     }
     setChapterBusy(true);
     try {
-      const ordered = [...chapterPages].sort((left, right) => left.order - right.order);
+      const filesToUpload = cbzArchiveFile
+        ? [cbzArchiveFile]
+        : [...chapterPages].sort((left, right) => left.order - right.order).map((page) => page.file);
       const chapter = await createComicChapterFromFiles(
         selectedComic,
         parsed.data,
-        ordered.map((page) => page.file),
+        filesToUpload,
       );
       await recordComicAudit("comic.chapter.create", {
         comicId: selectedComic.id,

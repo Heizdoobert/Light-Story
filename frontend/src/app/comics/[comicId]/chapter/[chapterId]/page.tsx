@@ -23,6 +23,7 @@ import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/RecommendedComics";
 import { recordReadingHistory } from "@/services/readerHub.service";
 import { ChapterImage } from "@/components/reader/ChapterImage";
+import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -176,7 +177,26 @@ export default function ReadChapterPage() {
             imgArray = currentData.content;
           }
         }
-        setImages(imgArray);
+
+        const cbzTargetUrl =
+          imgArray.find((item) => typeof item === "string" && isCbzUrl(item)) ||
+          (typeof currentData?.content === "string" && isCbzUrl(currentData.content)
+            ? currentData.content
+            : null);
+
+        if (cbzTargetUrl) {
+          try {
+            toast.info("Đang giải nén tập tin .cbz...");
+            const unpackedBlobUrls = await loadCbzPagesFromUrl(cbzTargetUrl);
+            setImages(unpackedBlobUrls);
+          } catch (err) {
+            console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
+            toast.error("Không thể giải nén file .cbz của chương truyện.");
+            setImages(imgArray);
+          }
+        } else {
+          setImages(imgArray);
+        }
       } catch (error) {
         toast.error("Không thể tải nội dung chương truyện.");
       } finally {

@@ -2,6 +2,7 @@
   "name": "unified-gateway",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-16",
+  "minify": true,
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",

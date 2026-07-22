@@ -5,8 +5,20 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
+  },
   experimental: {
-    optimizePackageImports: ['lucide-react', '@tanstack/react-query'],
+    optimizePackageImports: [
+      'lucide-react',
+      '@tanstack/react-query',
+      'recharts',
+      'motion',
+      'radix-ui',
+      '@supabase/supabase-js',
+      'zod',
+      'sonner',
+    ],
   },
   async headers() {
     return [
