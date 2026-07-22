@@ -91,7 +91,7 @@ async function verifyJwtSignature(token: string, jwk: any): Promise<boolean> {
   const encoder = new TextEncoder();
   const data = encoder.encode(signingInput);
 
-  return await crypto.subtle.verify(verifyAlg, cryptoKey, signature, data);
+  return await crypto.subtle.verify(verifyAlg, cryptoKey, signature as unknown as ArrayBuffer, data);
 }
 
 export async function validateJWT(token: string): Promise<AuthContext> {
