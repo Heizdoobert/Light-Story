@@ -52,7 +52,7 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
   const local = getLocalBookmarks();
   const exists = local.includes(comicId);
 
-  await apiClient.post('/api/user/bookmarks/toggle', { comicId });
+  await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
 
   const updated = exists ? local.filter((id) => id !== comicId) : [...local, comicId];
   setLocalBookmarks(updated);

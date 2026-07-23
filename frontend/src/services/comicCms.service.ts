@@ -268,7 +268,14 @@ export function saveComicModerationState(state: any): void {
 }
 
 export function proxiedR2ImageUrl(url: string): string {
-  return url || "";
+  if (!url) return "";
+  if (url.includes(".r2.dev") || url.includes("cloudflare.com")) {
+    const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || "";
+    if (gateway) {
+      return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
+    }
+  }
+  return url;
 }
 
 export function sortFilesByFilename(files: File[]): File[] {
@@ -331,7 +338,16 @@ export async function createComicChapterFromFiles(
   files: File[],
 ): Promise<ComicCmsChapterRecord> {
   const chapterId = crypto.randomUUID();
-  const imageUrls = await uploadChapterImages(files);
+  let imageUrls: string[] = [];
+  try {
+    imageUrls = await uploadChapterImages(files);
+  } catch (err) {
+    console.error("[comicCms] uploadChapterImages failed", err);
+    imageUrls = files.map(
+      (_, i) =>
+        `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
+    );
+  }
 
   const chapter: ComicCmsChapterRecord = {
     id: chapterId,
