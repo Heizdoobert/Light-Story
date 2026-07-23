@@ -6,6 +6,7 @@ import {
   sbGet,
   sbPost,
   sb,
+  sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';
@@ -20,6 +21,16 @@ export async function handleStoriesRequest(
   const method = request.method;
 
   try {
+    if (method === 'GET' && pathname === '/categories') {
+      const res = await sbGet(
+        'categories',
+        'select=id,name&order=name.asc',
+        env,
+        token,
+      );
+      return handleRes(res);
+    }
+
     if (method === 'GET' && pathname === '/stories') {
       const page = Math.max(
         1,
@@ -30,14 +41,39 @@ export async function handleStoriesRequest(
         Math.max(1, parseInt(url.searchParams.get('pageSize') || '10')),
       );
       const keyword = url.searchParams.get('keyword') || '';
+      const category = url.searchParams.get('category') || '';
+      const sort = url.searchParams.get('sort') || 'newest';
       const offset = (page - 1) * pageSize;
       const allowedStatuses = ['published', 'ongoing', 'completed'];
-      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+
+      const sortMap: Record<string, string> = {
+        newest: 'created_at.desc',
+        popular: 'views.desc',
+        alphabet: 'title.asc',
+        newest_update: 'updated_at.desc',
+      };
+      const order = sortMap[sort] || 'created_at.desc';
+
+      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
       if (keyword) {
         q += `&or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`;
       }
+      if (category) {
+        q += `&category=ilike.*${category}*`;
+      }
       const res = await sbGet('stories', q, env, token);
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const items = await res.json();
+
+      let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
+      if (keyword) {
+        countQ += `&or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`;
+      }
+      if (category) {
+        countQ += `&category=ilike.*${category}*`;
+      }
+      const total = await sbGetCount(countQ, env, token);
+      return json({ items, total });
     }
 
     if (method === 'GET' && pathname.match(/^\/stories\/[^\/]+$/)) {
@@ -141,7 +177,7 @@ export async function handleStoriesRequest(
         '/rest/v1/rpc/increment_story_views',
         {
           method: 'POST',
-          body: JSON.stringify({ story_id: body.storyId }),
+          body: JSON.stringify({ story_id_param: body.storyId }),
         },
         env,
         token,

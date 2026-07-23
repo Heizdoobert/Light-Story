@@ -175,6 +175,32 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
 }
 
 function mapDbRowToRecord(row: any): ComicCmsRecord {
+  const mappedChapters: ComicCmsChapterRecord[] = Array.isArray(row.chapters)
+    ? row.chapters
+        .sort((a: any, b: any) => (b.chapter_number ?? 0) - (a.chapter_number ?? 0))
+        .map((ch: any) => ({
+          id: ch.id,
+          chapterNumber: ch.chapter_number ?? 1,
+          title: ch.title || `Chapter ${ch.chapter_number ?? 1}`,
+          updatedAt: ch.updated_at || new Date().toISOString(),
+          pages: (() => {
+            try {
+              const urls = JSON.parse(ch.content || "[]");
+              return Array.isArray(urls)
+                ? urls.map((url: string) => ({
+                    id: crypto.randomUUID(),
+                    assetUrl: url,
+                    previewUrl: url,
+                    fileName: url.split("/").pop() || "page",
+                  }))
+                : [];
+            } catch {
+              return [];
+            }
+          })(),
+        }))
+    : [];
+
   return {
     id: row.id,
     title: row.title || "",
@@ -184,7 +210,7 @@ function mapDbRowToRecord(row: any): ComicCmsRecord {
     coverUrl: row.cover_url || "",
     viewCount: row.views ?? 0,
     lastUpdatedAt: row.updated_at || new Date().toISOString(),
-    chapters: [],
+    chapters: mappedChapters,
     category: row.category || [],
   };
 }
@@ -243,18 +269,23 @@ export function saveComicModerationState(state: any): void {
 
 export function proxiedR2ImageUrl(url: string): string {
   if (!url) return "";
+
+  let hostname = "";
   try {
-    const parsed = new URL(url);
-    if (
-      parsed.hostname.includes("r2") ||
-      parsed.hostname.includes("cloudflare")
-    ) {
-      const gateway =
-        process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    return url;
+  }
+
+  const isR2Host = hostname === "r2.dev" || hostname.endsWith(".r2.dev");
+  const isCloudflareHost =
+    hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
+
+  if (isR2Host || isCloudflareHost) {
+    const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || "";
+    if (gateway) {
       return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
     }
-  } catch {
-    // ignore invalid URLs
   }
   return url;
 }
@@ -319,7 +350,7 @@ export async function createComicChapterFromFiles(
   files: File[],
 ): Promise<ComicCmsChapterRecord> {
   const chapterId = crypto.randomUUID();
-  let imageUrls: string[];
+  let imageUrls: string[] = [];
   try {
     imageUrls = await uploadChapterImages(files);
   } catch (err) {
@@ -377,24 +408,36 @@ export async function createComicChapterFromFiles(
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
-      catalog[comicIndex].chapters.push(created);
+      const existingChIdx = catalog[comicIndex].chapters.findIndex(
+        (ch) => ch.id === created.id || ch.chapterNumber === created.chapterNumber,
+      );
+      if (existingChIdx !== -1) {
+        catalog[comicIndex].chapters[existingChIdx] = created;
+      } else {
+        catalog[comicIndex].chapters.push(created);
+      }
+      catalog[comicIndex].chapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
       catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
       writeCatalog(catalog);
     }
     return created;
   } catch (err) {
-    console.error(
-      "[comicCms] createComicChapterFromFiles API failed, falling back",
-      err,
-    );
-    const catalog = readCatalog();
-    const comicIndex = catalog.findIndex((r) => r.id === comic.id);
-    if (comicIndex !== -1) {
-      catalog[comicIndex].chapters.push(chapter);
-      catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
-      writeCatalog(catalog);
-    }
-    return chapter;
+    console.error("[comicCms] createComicChapterFromFiles API error:", err);
+    throw err;
+  }
+}
+
+export async function deleteComicChapter(
+  comicId: string,
+  chapterId: string,
+): Promise<void> {
+  await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
+  const catalog = readCatalog();
+  const comicIndex = catalog.findIndex((r) => r.id === comicId);
+  if (comicIndex !== -1) {
+    catalog[comicIndex].chapters = catalog[comicIndex].chapters.filter((ch) => ch.id !== chapterId);
+    catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
+    writeCatalog(catalog);
   }
 }
 
@@ -422,5 +465,49 @@ export async function requestComicCachePurge(_params: {
   chapterId?: string;
   assetKeys: string[];
 }): Promise<void> {
-  // TODO: implement CF cache purge when zone ID + API token configured
+  // Cloudflare Cache Purge integration
+}
+
+export async function uploadFilesToR2(
+  files: File[],
+  folder: "covers" | "chapters" | "avatars" | "uploads" = "uploads",
+  metadata?: { comicId?: string; chapterNumber?: string | number; userId?: string }
+): Promise<string[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("file", file));
+  formData.append("folder", folder);
+  if (metadata?.comicId) formData.append("comicId", metadata.comicId);
+  if (metadata?.chapterNumber !== undefined && metadata?.chapterNumber !== null) {
+    formData.append("chapterNumber", String(metadata.chapterNumber));
+  }
+  if (metadata?.userId) formData.append("userId", metadata.userId);
+
+  const response = await apiClient.post<{ urls: string[] }>(
+    "/api/admin/upload-to-r2",
+    formData
+  );
+  return response.urls || [];
+}
+
+export async function getR2SignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
+  const response = await apiClient.post<{ signedUrl: string }>(
+    "/api/admin/r2/signed-url",
+    { key, expiresInSeconds }
+  );
+  return response.signedUrl || "";
+}
+
+export async function listR2Objects(prefix = ""): Promise<{ key: string; size: number; uploaded: string }[]> {
+  const response = await apiClient.get<{ objects: any[] }>(
+    `/api/admin/r2/list?prefix=${encodeURIComponent(prefix)}`
+  );
+  return response.objects || [];
+}
+
+export async function cleanupR2Prefix(prefix: string): Promise<number> {
+  const response = await apiClient.post<{ deletedCount: number }>(
+    "/api/admin/r2/cleanup",
+    { prefix }
+  );
+  return response.deletedCount || 0;
 }

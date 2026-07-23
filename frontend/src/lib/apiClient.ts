@@ -82,7 +82,9 @@ async function request<T>(
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);
   }
-  headers.set('Content-Type', 'application/json');
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
@@ -105,20 +107,33 @@ async function request<T>(
 
   // Check HTTP status first
   if (!res.ok) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      (body as any)?.error_description ??
+      (res.statusText || `HTTP Error ${res.status}`);
+
     throw new ApiError(
       res.status,
-      body?.error?.code ?? 'HTTP_ERROR',
-      body?.error?.message ?? res.statusText,
+      body?.error?.code ?? (body as any)?.code ?? 'HTTP_ERROR',
+      errorMsg,
       body?.correlationId,
     );
   }
 
   // Check API response status
-  if (!body.success) {
+  if (body && (body as any).success === false) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      'API request failed';
+
     throw new ApiError(
       res.status,
       body.error?.code ?? 'API_ERROR',
-      body.error?.message ?? 'API request failed',
+      errorMsg,
       body.correlationId,
     );
   }
@@ -133,19 +148,19 @@ export const apiClient = {
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'POST',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     }),
 
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'PUT',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     }),
 
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: 'PATCH',
-      body: body ? JSON.stringify(body) : undefined,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     }),
 
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),

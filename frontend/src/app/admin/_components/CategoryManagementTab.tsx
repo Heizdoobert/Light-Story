@@ -116,7 +116,7 @@ export const CategoryManagementTab: React.FC = () => {
           <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Category Directory</h3>
           </div>
-          <div className="max-h-[520px] overflow-auto">
+          <div>
             {categoriesQuery.isLoading && <p className="p-6 text-sm text-slate-500">Loading categories...</p>}
             {!categoriesQuery.isLoading && (categoriesQuery.data?.length ?? 0) === 0 && (
               <p className="p-6 text-sm text-slate-500">No categories found.</p>

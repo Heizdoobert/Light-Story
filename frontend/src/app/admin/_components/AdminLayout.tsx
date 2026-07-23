@@ -7,10 +7,11 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from '@/modules/auth/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
+import { NotificationBell } from "@/components/shared/NotificationBell";
 import { toast } from "sonner";
 import { supabase } from '@/infrastructure/supabase/client';
 import { ADMIN_MENU_ITEMS } from '@/lib/adminNavigation';
@@ -114,7 +115,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9] dark:bg-slate-950 overflow-hidden transition-colors duration-300 relative">
+    <div className="flex min-h-screen bg-[#F1F5F9] dark:bg-slate-950 transition-colors duration-300 relative">
       {/* Backdrop for mobile */}
       <AnimatePresence>
         {isMobile && isSidebarOpen && (
@@ -137,8 +138,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             : { x: 0, width: isSidebarOpen ? 280 : 80 }
         }
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl overflow-hidden ${
-          isMobile ? "fixed inset-y-0 left-0 z-30" : "relative z-20"
+        className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shadow-xl shrink-0 ${
+          isMobile ? "fixed inset-y-0 left-0 z-30" : "sticky top-0 h-screen z-20"
         }`}
       >
         <div className="p-6 flex items-center justify-between">
@@ -252,10 +253,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <div className="flex items-center gap-6">
             <ThemeToggleButton />
-            <button className="relative p-2 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-            </button>
+            <NotificationBell role={role} />
             <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-800"></div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
@@ -279,7 +277,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
+        <main className="flex-1 min-w-0 p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
           <div className="flex-1">{children}</div>
           <footer className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
             <div>© 2026 LightStory Admin Console. All rights reserved.</div>

@@ -6,7 +6,30 @@ export interface Env {
   SUPABASE_SERVICE_KEY?: string;
   SUPABASE_JWKS_URL?: string;
   R2_BUCKET?: R2Bucket;
+  BINDING_NAME?: KVNamespace;
+  ANALYTICS_DATA?: AnalyticsEngineDataset;
   USE_NEW_UNIFIED_GATEWAY?: string;
+}
+
+export function recordAnalyticsEngineEvent(
+  env: Env,
+  event: {
+    indexes?: string[];
+    blobs?: string[];
+    doubles?: number[];
+  },
+): void {
+  try {
+    if (env.ANALYTICS_DATA && typeof (env.ANALYTICS_DATA as any).writeDataPoint === 'function') {
+      (env.ANALYTICS_DATA as any).writeDataPoint({
+        indexes: event.indexes || [],
+        blobs: event.blobs || [],
+        doubles: event.doubles || [],
+      });
+    }
+  } catch (e) {
+    console.error('[AnalyticsEngine] Failed to write data point', e);
+  }
 }
 
 function json(data: unknown, status = 200): Response {

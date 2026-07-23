@@ -19,7 +19,7 @@ jobs:
         uses: docker/setup-buildx-action@c1000673415cf2eb9036c05c0eb70df64db424c1 # v3.11.0
 
       - name: Log in to Docker Hub
-        if: secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != ''
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

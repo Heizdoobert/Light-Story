@@ -7,7 +7,9 @@ export const getErrorMessage = (error: unknown, context?: string): string => {
 
     if (typeof error === "string") return error;
 
-    const errObj = error as Record<string, unknown>;
+    const errObj = error as Record<string, any>;
+    if (errObj.error && typeof errObj.error.message === "string") return errObj.error.message;
+    if (errObj.error && typeof errObj.error === "string") return errObj.error;
     if (typeof errObj.message === "string") return errObj.message;
     if (typeof errObj.error_description === "string") return errObj.error_description;
     if (typeof errObj.details === "string") return errObj.details;

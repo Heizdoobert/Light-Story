@@ -1,9 +1,11 @@
-// System settings tab for UI controls and role-based dashboard tab visibility.
 import React from 'react';
-import { Clock3 } from 'lucide-react';
+import { Clock3, Globe } from 'lucide-react';
 import { useSystemSettingsPresenter } from '@/hooks/useSystemSettingsPresenter';
+import { useLanguage } from '@/modules/language/LanguageContext';
 
 export const SystemSettingsTab: React.FC = () => {
+  const { language, setLanguage, t } = useLanguage();
+
   const {
     role,
     settingsQuery,
@@ -41,7 +43,7 @@ export const SystemSettingsTab: React.FC = () => {
   return (
     <div className="space-y-8 max-w-6xl">
       <header>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">System Settings</h1>
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t("system_settings")}</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Configure interface behavior and role-based dashboard tab visibility.</p>
       </header>
 
@@ -56,11 +58,43 @@ export const SystemSettingsTab: React.FC = () => {
       {!settingsQuery.isLoading && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <section className="xl:col-span-1 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Interface Controls</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">{t("interface_controls")}</h3>
+
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Globe size={16} className="text-primary" />
+                <p className="text-sm font-black text-slate-900 dark:text-white">{t("language")}</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Select application interface language.</p>
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setLanguage("VI")}
+                  className={`py-2 px-3 rounded-xl text-xs font-black border transition-all ${
+                    language === "VI"
+                      ? "bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 border-slate-900 dark:border-cyan-400"
+                      : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800"
+                  }`}
+                >
+                  🇻🇳 VI (Tiếng Việt)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLanguage("EN")}
+                  className={`py-2 px-3 rounded-xl text-xs font-black border transition-all ${
+                    language === "EN"
+                      ? "bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 border-slate-900 dark:border-cyan-400"
+                      : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800"
+                  }`}
+                >
+                  🇺🇸 EN (English)
+                </button>
+              </div>
+            </div>
 
             <label className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3">
               <div>
-                <p className="text-sm font-black text-slate-900 dark:text-white">Compact Dashboard Layout</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white">{t("compact_layout")}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Reduces spacing in dashboard cards.</p>
               </div>
               <input type="checkbox" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} className="h-4 w-4" />
@@ -68,7 +102,7 @@ export const SystemSettingsTab: React.FC = () => {
 
             <label className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3">
               <div>
-                <p className="text-sm font-black text-slate-900 dark:text-white">Show Live Sync Badge</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white">{t("show_sync_badge")}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Displays live polling status text in dashboard header.</p>
               </div>
               <input type="checkbox" checked={showSyncBadge} onChange={(e) => setShowSyncBadge(e.target.checked)} className="h-4 w-4" />
@@ -80,7 +114,7 @@ export const SystemSettingsTab: React.FC = () => {
               disabled={saveMutation.isPending}
               className="w-full rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 py-3 font-bold disabled:opacity-50"
             >
-              {saveMutation.isPending ? 'Saving...' : 'Save Settings'}
+              {saveMutation.isPending ? 'Saving...' : t("save_settings")}
             </button>
           </section>
 
@@ -146,7 +180,7 @@ export const SystemSettingsTab: React.FC = () => {
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">System Logs</h4>
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700">
+                <div>
                   {systemLogs.length === 0 && (
                     <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No system logs yet. Logs will appear after save/backup actions.</div>
                   )}

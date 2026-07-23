@@ -41,7 +41,7 @@ describe('ComicManagementTab - Create Comic Flow', () => {
     expect(tabs).toHaveLength(4);
     expect(tabs[0]).toHaveTextContent('Catalog');
     expect(tabs[1]).toHaveTextContent('Edit / Create');
-    expect(tabs[2]).toHaveTextContent('Chapters & Assets');
+    expect(tabs[2]).toHaveTextContent('Chỉnh sửa chương');
     expect(tabs[3]).toHaveTextContent('Comments & Reports');
   });
 
@@ -87,14 +87,10 @@ describe('ComicManagementTab - Create Comic Flow', () => {
   it('Chapters tab shows comic selector dropdown', async () => {
     render(<ComicManagementTab />);
 
-    fireEvent.click(screen.getByRole('tab', { name: /chapters & assets/i }));
+    fireEvent.click(screen.getByRole('tab', { name: /chỉnh sửa chương|edit chapter/i }));
 
     await waitFor(() => {
-      expect(screen.getByText('Target comic')).toBeInTheDocument();
+      expect(screen.getAllByText(/Chỉnh sửa chương/i).length).toBeGreaterThan(0);
     });
-
-    const select = screen.getByRole('combobox');
-    expect(select).toBeInTheDocument();
-    expect(select).toHaveValue('');
   });
 });

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
 import { AuthProvider } from '../modules/auth/AuthContext';
 import { ThemeProvider } from '../modules/theme/ThemeContext';
+import { LanguageProvider } from '../modules/language/LanguageContext';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useGlobalErrorHandler, getErrorMessage } from '../hooks/useGlobalErrorHandler';
 
@@ -42,8 +43,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ThemeProvider>
-            <Toaster position="top-right" richColors closeButton />
-            <GlobalErrorHandler>{children}</GlobalErrorHandler>
+            <LanguageProvider>
+              <Toaster position="top-right" richColors closeButton />
+              <GlobalErrorHandler>{children}</GlobalErrorHandler>
+            </LanguageProvider>
           </ThemeProvider>
         </AuthProvider>
       </QueryClientProvider>

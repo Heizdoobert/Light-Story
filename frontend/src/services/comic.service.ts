@@ -49,7 +49,14 @@ type ChapterCreateResponse = {
 const makeDevUrls = (files: File[]) =>
   files.map((f, i) => `https://placehold.co/600x800?text=dev+${encodeURIComponent(f.name.replace(/\s+/g, '-'))}+${Date.now() + i}`);
 
-async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]> {
+type UploadOptions = {
+  folder?: 'covers' | 'chapters' | 'avatars' | 'uploads';
+  comicId?: string;
+  chapterNumber?: number;
+  userId?: string;
+};
+
+async function uploadFilesToR2(bucket: string, files: File[], options: UploadOptions = {}): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === 'true';
 
   if (!bucket) {
@@ -61,6 +68,10 @@ async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]>
 
   const form = new FormData();
   files.forEach((file) => form.append('file', file));
+  if (options.folder) form.append('folder', options.folder);
+  if (options.comicId) form.append('comicId', options.comicId);
+  if (options.chapterNumber) form.append('chapterNumber', String(options.chapterNumber));
+  if (options.userId) form.append('userId', options.userId);
 
   try {
     const token = await getAccessToken();
@@ -68,7 +79,7 @@ async function uploadFilesToR2(bucket: string, files: File[]): Promise<string[]>
     if (token) headers['Authorization'] = `Bearer ${token}`;
     headers['x-r2-bucket'] = bucket;
 
-    const response = await fetch(`${getGatewayUrl()}/api/admin/upload-to-r2`, {
+    const response = await fetch(`${getGatewayUrl()}/api/admin/r2/upload`, {
       method: 'POST',
       headers,
       body: form,
@@ -103,38 +114,44 @@ function isTokenExpired(token: string): boolean {
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  try {
-    const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith('sb-') && k.endsWith('-auth-token'),
-    );
-    if (sbKeys.length > 0) {
-      const raw = localStorage.getItem(sbKeys[0]);
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.access_token && !isTokenExpired(session.access_token)) return session.access_token;
+  if (typeof window !== 'undefined') {
+    try {
+      const sbKeys = Object.keys(localStorage).filter((k) =>
+        k.startsWith('sb-') && k.endsWith('-auth-token'),
+      );
+      if (sbKeys.length > 0) {
+        const raw = localStorage.getItem(sbKeys[0]);
+        if (raw) {
+          const session = JSON.parse(raw);
+          if (session?.access_token && !isTokenExpired(session.access_token)) return session.access_token;
+        }
       }
+    } catch {}
+  }
+  try {
+    if (!supabase) return null;
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token ?? null;
+    if (token && isTokenExpired(token)) {
+      const { data: refreshed } = await supabase.auth.refreshSession();
+      return refreshed?.session?.access_token ?? null;
     }
-    if (supabase) {
-      const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
-    }
-    return null;
+    return token;
   } catch {
     return null;
   }
 }
 
-export async function uploadComicCover(cover: File): Promise<string> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS;
-  const urls = await uploadFilesToR2(bucket ?? '', [cover]);
+export async function uploadComicCover(cover: File, comicId?: string): Promise<string> {
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS || 'covers';
+  const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId });
   if (urls.length === 0) throw new Error('Unable to upload comic cover');
   return urls[0];
 }
 
-export async function uploadChapterImages(images: File[]): Promise<string[]> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
-  return uploadFilesToR2(bucket ?? '', images);
+export async function uploadChapterImages(images: File[], comicId?: string, chapterNumber?: number): Promise<string[]> {
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS || 'chapters';
+  return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber });
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {

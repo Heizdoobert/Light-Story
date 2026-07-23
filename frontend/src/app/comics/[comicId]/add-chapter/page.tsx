@@ -99,7 +99,8 @@ export default function AddChapter() {
     try {
       let urls: string[];
       if (cbzFile) {
-        urls = await uploadChapterImages([cbzFile]);
+        const extractedImages = await extractCbzFileToImages(cbzFile);
+        urls = await uploadChapterImages(extractedImages);
       } else {
         const ordered = [...images].sort((a, b) => a.order - b.order);
         urls = await uploadChapterImages(ordered.map((entry) => entry.file));

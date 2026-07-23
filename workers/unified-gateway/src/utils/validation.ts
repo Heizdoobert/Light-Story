@@ -41,7 +41,7 @@ export function validateBody(body: Record<string, unknown>, rules: ValidationRul
         break;
       }
       case 'optional-string': {
-        if (value !== undefined && value !== null && typeof value !== 'string') {
+        if (value !== undefined && value !== null && typeof value !== 'string' && typeof value !== 'number') {
           errors.push({ field: rule.field, message: `${rule.field} must be a string` });
         }
         break;
@@ -79,8 +79,9 @@ export function sanitizeBody(body: Record<string, unknown>, rules: ValidationRul
         break;
       }
       case 'optional-string': {
-        if (value !== undefined && value !== null && typeof value === 'string') {
-          sanitized[rule.field] = value.trim().slice(0, rule.maxLength ?? 500);
+        if (value !== undefined && value !== null) {
+          const strVal = String(value).trim();
+          sanitized[rule.field] = strVal.slice(0, rule.maxLength ?? 500);
         }
         break;
       }
