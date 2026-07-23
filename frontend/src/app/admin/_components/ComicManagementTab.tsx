@@ -18,6 +18,7 @@ import {
   createComicChapterFromFiles,
   createComicFromMetadata,
   deleteComic,
+  deleteComicChapter,
   fetchComicCatalog,
   listComicModerationState,
   loadComicCatalog,
@@ -510,11 +511,20 @@ export const ComicManagementTab: React.FC = () => {
       clearComicDraft(selectedComic.id);
       autoSave.clear();
       setCatalog((prev) =>
-        prev.map((item) =>
-          item.id === selectedComic.id
-            ? { ...item, chapters: [...item.chapters, chapter], lastUpdatedAt: new Date().toISOString() }
-            : item,
-        ),
+        prev.map((item) => {
+          if (item.id !== selectedComic.id) return item;
+          const existingIdx = item.chapters.findIndex(
+            (ch) => ch.id === chapter.id || ch.chapterNumber === chapter.chapterNumber,
+          );
+          let nextChapters = [...item.chapters];
+          if (existingIdx !== -1) {
+            nextChapters[existingIdx] = chapter;
+          } else {
+            nextChapters.push(chapter);
+          }
+          nextChapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
+          return { ...item, chapters: nextChapters, lastUpdatedAt: new Date().toISOString() };
+        }),
       );
       setChapterValues(DEFAULT_CHAPTER_FORM);
       resetChapterPages();
@@ -525,6 +535,35 @@ export const ComicManagementTab: React.FC = () => {
       setChapterBusy(false);
     }
   }, [autoSave, chapterPages, chapterValues, resetChapterPages, selectedComic]);
+
+  const handleDeleteChapter = useCallback(
+    async (chapterId: string) => {
+      if (!selectedComic) return;
+      try {
+        await deleteComicChapter(selectedComic.id, chapterId);
+        await recordComicAudit("comic.chapter.delete", {
+          comicId: selectedComic.id,
+          chapterId,
+          target_user_id: selectedComic.id,
+        });
+        setCatalog((prev) =>
+          prev.map((item) =>
+            item.id === selectedComic.id
+              ? {
+                  ...item,
+                  chapters: item.chapters.filter((ch) => ch.id !== chapterId),
+                  lastUpdatedAt: new Date().toISOString(),
+                }
+              : item,
+          ),
+        );
+        toast.success("Chapter deleted successfully");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to delete chapter.");
+      }
+    },
+    [selectedComic],
+  );
 
   const handleModerationAction = useCallback(
     async (commentId: string, nextStatus: ComicModerationState["reportedComments"][number]["status"]) => {
@@ -740,6 +779,7 @@ export const ComicManagementTab: React.FC = () => {
           onSave={handleChapterSave}
           onResetPages={resetChapterPages}
           onSelectComic={(comicId) => { setSelectedComicId(comicId); setChapterError(null); }}
+          onDeleteChapter={handleDeleteChapter}
         />
       )}
 

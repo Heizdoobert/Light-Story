@@ -772,15 +772,51 @@ export async function handleAdminRequest(
         { field: 'pageUrls', type: 'optional-array' },
       ]);
 
-      const cn = parseInt((s.chapterNumber as string) || '1', 10);
+      const cn = parseInt(String(s.chapterNumber || '1'), 10);
+      const targetComicId = (s.comicId as string) || comicId;
+      const validCn = Number.isFinite(cn) && cn > 0 ? cn : 1;
       const payload = {
-        story_id: (s.comicId as string) || comicId,
-        chapter_number: Number.isFinite(cn) && cn > 0 ? cn : 1,
-        title: (s.title as string) || `Chapter ${cn}`,
+        story_id: targetComicId,
+        chapter_number: validCn,
+        title: (s.title as string) || `Chapter ${validCn}`,
         content: JSON.stringify(s.pageUrls || []),
       };
+
+      // Check if chapter already exists for this comic & chapter number
+      const existingRes = await sbGet(
+        'chapters',
+        `story_id=eq.${targetComicId}&chapter_number=eq.${validCn}&select=id`,
+        env,
+        token,
+      );
+
+      if (existingRes.ok) {
+        const existingData = (await existingRes.json()) as Array<{ id: string }>;
+        if (Array.isArray(existingData) && existingData.length > 0) {
+          const existingId = existingData[0].id;
+          const patchRes = await sbPatch(
+            'chapters',
+            `id=eq.${existingId}`,
+            { title: payload.title, content: payload.content },
+            env,
+            token,
+          );
+          return handleRes(patchRes);
+        }
+      }
+
       const res = await sbPost('chapters', payload, env, token);
       return handleRes(res);
+    }
+
+    if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+\/chapters\/[^\/]+$/)) {
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
+      }
+      const chapterId = path.split('/')[5];
+      const res = await sbDelete('chapters', `id=eq.${chapterId}`, env, token);
+      return res.ok ? json({ success: true }) : handleRes(res);
     }
 
     return null;

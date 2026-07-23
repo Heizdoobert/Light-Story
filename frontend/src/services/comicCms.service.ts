@@ -377,7 +377,15 @@ export async function createComicChapterFromFiles(
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
-      catalog[comicIndex].chapters.push(created);
+      const existingChIdx = catalog[comicIndex].chapters.findIndex(
+        (ch) => ch.id === created.id || ch.chapterNumber === created.chapterNumber,
+      );
+      if (existingChIdx !== -1) {
+        catalog[comicIndex].chapters[existingChIdx] = created;
+      } else {
+        catalog[comicIndex].chapters.push(created);
+      }
+      catalog[comicIndex].chapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
       catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
       writeCatalog(catalog);
     }
@@ -390,11 +398,37 @@ export async function createComicChapterFromFiles(
     const catalog = readCatalog();
     const comicIndex = catalog.findIndex((r) => r.id === comic.id);
     if (comicIndex !== -1) {
-      catalog[comicIndex].chapters.push(chapter);
+      const existingChIdx = catalog[comicIndex].chapters.findIndex(
+        (ch) => ch.id === chapter.id || ch.chapterNumber === chapter.chapterNumber,
+      );
+      if (existingChIdx !== -1) {
+        catalog[comicIndex].chapters[existingChIdx] = chapter;
+      } else {
+        catalog[comicIndex].chapters.push(chapter);
+      }
+      catalog[comicIndex].chapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
       catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
       writeCatalog(catalog);
     }
     return chapter;
+  }
+}
+
+export async function deleteComicChapter(
+  comicId: string,
+  chapterId: string,
+): Promise<void> {
+  try {
+    await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
+  } catch (err) {
+    console.error("[comicCms] deleteComicChapter API failed, updating local state", err);
+  }
+  const catalog = readCatalog();
+  const comicIndex = catalog.findIndex((r) => r.id === comicId);
+  if (comicIndex !== -1) {
+    catalog[comicIndex].chapters = catalog[comicIndex].chapters.filter((ch) => ch.id !== chapterId);
+    catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
+    writeCatalog(catalog);
   }
 }
 
