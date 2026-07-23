@@ -83,6 +83,7 @@ describe('fetchComicCatalog', () => {
 describe('createComicFromMetadata', () => {
   const formValues: ComicCmsFormValues = {
     title: 'New Comic',
+    slug: 'new-comic',
     author: 'New Author',
     description: 'Brand new',
     status: 'draft',
@@ -268,6 +269,7 @@ describe('loadComicRecord', () => {
 describe('draft persistence', () => {
   const draft: ComicCmsFormValues = {
     title: 'Draft Title',
+    slug: 'draft-title',
     author: 'Draft Author',
     description: 'Draft desc',
     status: 'draft',
