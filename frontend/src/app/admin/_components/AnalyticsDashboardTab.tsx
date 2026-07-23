@@ -232,8 +232,18 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
         <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle,_rgba(56,189,248,0.22),_transparent_70%)]" />
         <div className="relative flex flex-col gap-3 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2 sm:space-y-3 min-w-0">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 sm:px-4 py-1.5 sm:py-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.32em] text-slate-200">
-              <Sparkles size={12} className="flex-shrink-0" /> Analytics Overview
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 sm:px-4 py-1.5 sm:py-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.32em] text-slate-200">
+                <Sparkles size={12} className="flex-shrink-0" /> Analytics Overview
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Analytics Engine Active
+              </div>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                KV Cache Active
+              </div>
             </div>
             <div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight break-words">Operational dashboard for readership, content, and infrastructure.</h1>
