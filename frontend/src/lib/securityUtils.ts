@@ -8,8 +8,10 @@ export function sanitizeImageUrl(url: string | null | undefined): string | null 
   if (!trimmed) return null;
 
   try {
-    // Keep explicit root-relative paths (but reject protocol-relative //...).
-    if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    if (trimmed.startsWith("//")) {
+      return null;
+    }
+    if (trimmed.startsWith("/")) {
       return trimmed;
     }
 

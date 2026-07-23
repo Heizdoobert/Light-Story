@@ -20,7 +20,7 @@ jobs:
           node-version: 20
 
       - name: Install frontend deps
-        run: npm --prefix frontend ci
+        run: npm --prefix frontend install
 
       - name: Build frontend
         run: npm --prefix frontend run build
