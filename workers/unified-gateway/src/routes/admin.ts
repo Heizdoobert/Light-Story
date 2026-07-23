@@ -675,6 +675,25 @@ export async function handleAdminRequest(
       return json({ success: true, data: { urls: uploadedUrls } });
     }
 
+    if (method === 'GET' && path === '/admin/r2/list') {
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
+      }
+      const bucket = env.R2_BUCKET;
+      if (!bucket) {
+        return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
+      }
+      const prefix = url.searchParams.get('prefix') || '';
+      const list = await bucket.list({ prefix, limit: 1000 });
+      const objects = list.objects.map((o) => ({
+        key: o.key,
+        size: o.size,
+        uploaded: o.uploaded,
+      }));
+      return json({ success: true, data: { objects, count: objects.length, truncated: list.truncated } });
+    }
+
     if (method === 'POST' && path === '/admin/r2/cleanup') {
       const role = getAuthRole(request);
       if (!requireRole(role, ['superadmin', 'admin'])) {
@@ -684,16 +703,28 @@ export async function handleAdminRequest(
       if (!bucket) {
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
       }
-      const body = (await request.json().catch(() => ({}))) as { prefix?: string };
-      const targetPrefix = body.prefix || 'uploads/';
+      const body = (await request.json().catch(() => ({}))) as { prefix?: string; removeAllOld?: boolean };
+      const targetPrefix = body.prefix ?? '';
 
-      const list = await bucket.list({ prefix: targetPrefix, limit: 500 });
+      let truncated = true;
+      let cursor: string | undefined = undefined;
       let deletedCount = 0;
-      for (const obj of list.objects) {
-        await bucket.delete(obj.key);
-        deletedCount++;
+
+      while (truncated) {
+        const listOpts: Record<string, unknown> = { limit: 500 };
+        if (targetPrefix) listOpts.prefix = targetPrefix;
+        if (cursor) listOpts.cursor = cursor;
+
+        const list = await bucket.list(listOpts as any);
+        for (const obj of list.objects) {
+          await bucket.delete(obj.key);
+          deletedCount++;
+        }
+        truncated = list.truncated;
+        cursor = list.truncated ? list.cursor : undefined;
       }
-      return json({ success: true, data: { deletedCount, prefix: targetPrefix } });
+
+      return json({ success: true, data: { deletedCount, prefix: targetPrefix || 'ALL_BUCKET_KEYS' } });
     }
 
     if (method === 'POST' && path === '/admin/comics') {
