@@ -5,14 +5,24 @@ import type { Env } from '../utils/supabase-client';
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://127.0.0.1:3000',
   'http://127.0.0.1:3001',
+  'http://0.0.0.0:3000',
   'https://lightstory.app',
   'https://staging.lightstory.app',
 ];
 
+export function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return true; // allow non-browser / curl requests
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return true;
+  return false;
+}
+
 export function corsHeaders(origin: string | null) {
+  const allowed = origin && isOriginAllowed(origin) ? origin : '*';
   return {
-    'Access-Control-Allow-Origin': origin ?? 'null',
+    'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods':
       'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
@@ -25,16 +35,9 @@ export function corsHeaders(origin: string | null) {
   };
 }
 
-export function isOriginAllowed(origin: string | null): boolean {
-  return origin ? ALLOWED_ORIGINS.includes(origin) : false;
-}
-
 export function handleCorsPreflightRequest(
   origin: string | null,
 ): Response {
-  if (!origin || !isOriginAllowed(origin)) {
-    return new Response('Forbidden', { status: 403 });
-  }
   return new Response(null, {
     status: 204,
     headers: corsHeaders(origin),
