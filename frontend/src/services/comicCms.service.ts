@@ -417,26 +417,8 @@ export async function createComicChapterFromFiles(
     }
     return created;
   } catch (err) {
-    console.error(
-      "[comicCms] createComicChapterFromFiles API failed, falling back",
-      err,
-    );
-    const catalog = readCatalog();
-    const comicIndex = catalog.findIndex((r) => r.id === comic.id);
-    if (comicIndex !== -1) {
-      const existingChIdx = catalog[comicIndex].chapters.findIndex(
-        (ch) => ch.id === chapter.id || ch.chapterNumber === chapter.chapterNumber,
-      );
-      if (existingChIdx !== -1) {
-        catalog[comicIndex].chapters[existingChIdx] = chapter;
-      } else {
-        catalog[comicIndex].chapters.push(chapter);
-      }
-      catalog[comicIndex].chapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
-      catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
-      writeCatalog(catalog);
-    }
-    return chapter;
+    console.error("[comicCms] createComicChapterFromFiles API error:", err);
+    throw err;
   }
 }
 
@@ -444,11 +426,7 @@ export async function deleteComicChapter(
   comicId: string,
   chapterId: string,
 ): Promise<void> {
-  try {
-    await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
-  } catch (err) {
-    console.error("[comicCms] deleteComicChapter API failed, updating local state", err);
-  }
+  await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
   const catalog = readCatalog();
   const comicIndex = catalog.findIndex((r) => r.id === comicId);
   if (comicIndex !== -1) {

@@ -344,7 +344,9 @@ export const ComicManagementTab: React.FC = () => {
         toast.success("Comic created");
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to save comic.");
+      const msg = error instanceof Error ? error.message : "Failed to save comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -354,7 +356,9 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse(formValues);
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving a draft.");
+      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving a draft.";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
     saveComicDraft(draftKey, parsed.data);
@@ -379,7 +383,9 @@ export const ComicManagementTab: React.FC = () => {
         autoSave.clear();
         toast.success("Draft saved to catalog and local recovery storage");
       } catch (error) {
-        setFormError(error instanceof Error ? error.message : "Failed to save draft.");
+        const msg = error instanceof Error ? error.message : "Failed to save draft.";
+        setFormError(msg);
+        toast.error(msg);
       }
       return;
     }
@@ -397,7 +403,9 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse({ ...formValues, status: "published" });
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Fix the comic metadata before publishing.");
+      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before publishing.";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
     setFormBusy(true);
@@ -406,7 +414,7 @@ export const ComicManagementTab: React.FC = () => {
       if (selectedComic) {
         let nextCoverUrl = selectedComic.coverUrl;
         if (coverFile) nextCoverUrl = await uploadComicCover(coverFile);
-      const updated: ComicCmsRecord = {
+        const updated: ComicCmsRecord = {
           ...selectedComic,
           ...parsed.data,
           coverUrl: nextCoverUrl,
@@ -435,7 +443,9 @@ export const ComicManagementTab: React.FC = () => {
       }
       toast.success("Comic published");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to publish comic.");
+      const msg = error instanceof Error ? error.message : "Failed to publish comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -459,7 +469,9 @@ export const ComicManagementTab: React.FC = () => {
       setCatalog((prev) => prev.filter((item) => item.id !== selectedComic.id));
       toast.success("Comic deleted");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to delete comic.");
+      const msg = error instanceof Error ? error.message : "Failed to delete comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -528,9 +540,10 @@ export const ComicManagementTab: React.FC = () => {
       );
       setChapterValues(DEFAULT_CHAPTER_FORM);
       resetChapterPages();
-      toast.success("Chapter uploaded and optimized");
     } catch (error) {
-      setChapterError(error instanceof Error ? error.message : "Failed to save chapter.");
+      const msg = error instanceof Error ? error.message : "Failed to save chapter.";
+      setChapterError(msg);
+      toast.error(msg);
     } finally {
       setChapterBusy(false);
     }

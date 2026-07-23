@@ -342,20 +342,18 @@ describe('createComicChapterFromFiles', () => {
     expect(result.pages[0].assetUrl).toContain('placehold.co');
   });
 
-  it('falls back to local chapter when API POST fails', async () => {
+  it('rejects when API POST fails so UI shows error popup', async () => {
     localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
     vi.mocked(comicService.uploadChapterImages).mockResolvedValue(['https://r2.example.com/page1.jpg']);
     vi.mocked(apiClient.post).mockRejectedValue(new Error('API error'));
 
-    const result = await service.createComicChapterFromFiles(
-      MOCK_RECORD,
-      { chapterNumber: 1, title: 'Chapter 1' },
-      [new File([], 'page1.png')],
-    );
-
-    expect(result.title).toBe('Chapter 1');
-    const catalog = JSON.parse(localStorage.getItem('comic-cms:catalog')!);
-    expect(catalog[0].chapters).toHaveLength(1);
+    await expect(
+      service.createComicChapterFromFiles(
+        MOCK_RECORD,
+        { chapterNumber: 1, title: 'Chapter 1' },
+        [new File([], 'page1.png')],
+      ),
+    ).rejects.toThrow('API error');
   });
 });
 
