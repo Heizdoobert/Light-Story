@@ -179,7 +179,7 @@ export const SystemSettingsTab: React.FC = () => {
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
               <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">System Logs</h4>
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 dark:[&::-webkit-scrollbar-thumb]:bg-slate-700">
+                <div>
                   {systemLogs.length === 0 && (
                     <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No system logs yet. Logs will appear after save/backup actions.</div>
                   )}

@@ -1,11 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 @import "tailwindcss";
 @import "../index.css";
 /* tw-animate-css utilities */
 @import "tw-animate-css";
 /* shadcn UI components */
 @import "shadcn/tailwind.css";
-/* Google Font Plus Jakarta Sans */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -48,6 +47,17 @@
   }
   * {
     @apply border-border outline-ring/50;
+  }
+
+  /* Only main body scrollbar visible, hide secondary inner container scrollbars */
+  *:not(html):not(body):::-webkit-scrollbar {
+    display: none;
+    width: 0px;
+    height: 0px;
+  }
+  *:not(html):not(body) {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
