@@ -1,0 +1,59 @@
+{
+  "name": "unified-gateway",
+  "main": "workers/unified-gateway/src/index.ts",
+  "compatibility_date": "2026-05-16",
+  "minify": true,
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "lightstory-assets"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "APP_KV",
+      "id": "bde008a5d4b54e53af699933f366dabe"
+    }
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "LIGHTSTORY_QUEUE",
+        "queue": "lightstory-queue"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "lightstory-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30,
+        "max_retries": 3,
+        "dead_letter_queue": "lightstory-queue-dlq"
+      }
+    ]
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_DATA",
+      "dataset": "analytic"
+    }
+  ],
+  "env": {
+    "production": {
+      "routes": [
+        {
+          "pattern": "api.lightstory.app/*",
+          "zone_name": "lightstory.app"
+        }
+      ]
+    },
+    "staging": {
+      "routes": [
+        {
+          "pattern": "api-staging.lightstory.app/*",
+          "zone_name": "lightstory.app"
+        }
+      ]
+    }
+  }
+}
