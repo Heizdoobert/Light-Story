@@ -83,13 +83,11 @@ export async function fetchProfiles() {
 }
 
 export async function updateProfileRole(id: string, role: string) {
-  const result = await apiClient.post<{ ok: boolean }>('/api/admin/profiles', { action: 'updateRole', id, role });
-  return result;
+  await apiClient.post('/api/admin/profiles', { action: 'updateRole', id, role });
 }
 
 export async function updateProfileName(id: string, full_name: string | null) {
-  const result = await apiClient.post<{ ok: boolean }>('/api/admin/profiles', { action: 'updateName', id, full_name });
-  return result;
+  await apiClient.post('/api/admin/profiles', { action: 'updateName', id, full_name });
 }
 
 function getAccessToken(): string | null {
@@ -152,4 +150,16 @@ export async function getAuditLogs(limit = 200) {
 export async function getProfilesByIds(ids: string[]) {
   if (ids.length === 0) return [] as Array<any>;
   return apiClient.get<Array<any>>(`/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids.join(','))}`);
+}
+
+export async function getSystemNotifications(limit = 20) {
+  try {
+    const res = await apiClient.get<{ notifications: any[] }>(
+      `/api/admin/notifications?limit=${limit}`
+    );
+    return res.notifications || [];
+  } catch (err) {
+    console.error("[adminService] getSystemNotifications error:", err);
+    return [];
+  }
 }

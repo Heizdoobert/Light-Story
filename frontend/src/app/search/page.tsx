@@ -8,7 +8,6 @@ import { Image as ImageIcon, SearchX, X } from "lucide-react";
 
 import { apiClient } from "@/lib/apiClient";
 import { ComicContext as Comic } from "@/services/comic.service";
-import { loadComicCatalogFiltered } from "@/services/comicCms.service";
 import { Category } from "@/types/entities";
 import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
@@ -54,7 +53,7 @@ function SearchContent() {
 
   useEffect(() => {
     apiClient
-      .get<any>("/api/admin/taxonomy?entity=category")
+      .get<any>("/api/categories")
       .then((res) => {
         if (Array.isArray(res)) setCategories(res);
       })
@@ -69,29 +68,16 @@ function SearchContent() {
         if (keyword) queryParams.append("keyword", keyword);
         if (category !== "all") queryParams.append("category", category);
         queryParams.append("sort", sort);
+        queryParams.append("page", String(currentPage));
+        queryParams.append("pageSize", "12");
 
         const response = await apiClient.get<any>(
-          `/api/comics?${queryParams.toString()}`,
+          `/api/stories?${queryParams.toString()}`,
         );
-        let rawComicsData = Array.isArray(response)
-          ? response
-          : response?.items || response?.comics || [];
 
-        // 👉 Nhận về Object chứa cả data và meta (thông số trang)
-        const result = loadComicCatalogFiltered(rawComicsData, {
-          search: keyword,
-          category: category,
-          sort: sort,
-          status: "all",
-          author: "",
-          page: currentPage, // Truyền trang hiện tại vào Service
-          limit: 10, // Giới hạn 10 truyện / 1 trang
-        });
-
-        // 👉 Cập nhật dữ liệu truyện và thông số trang
-        setComics(result.data || []);
-        setTotalPages(result.meta?.totalPages || 1);
-        setTotalItems(result.meta?.totalItems || 0);
+        setComics(response?.items || []);
+        setTotalPages(Math.ceil((response?.total || 0) / 12) || 1);
+        setTotalItems(response?.total || 0);
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
@@ -101,7 +87,7 @@ function SearchContent() {
     };
 
     fetchAndFilterResults();
-  }, [keyword, category, sort, currentPage]); // 👉 Đưa currentPage vào mảng phụ thuộc
+  }, [keyword, category, sort, currentPage]);
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";

@@ -7,10 +7,11 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, Bell, House, LayoutDashboard } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, House, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from '@/modules/auth/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
+import { NotificationBell } from "@/components/shared/NotificationBell";
 import { toast } from "sonner";
 import { supabase } from '@/infrastructure/supabase/client';
 import { ADMIN_MENU_ITEMS } from '@/lib/adminNavigation';
@@ -252,10 +253,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <div className="flex items-center gap-6">
             <ThemeToggleButton />
-            <button className="relative p-2 text-slate-400 dark:text-slate-300 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-            </button>
+            <NotificationBell role={role} />
             <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-800"></div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">

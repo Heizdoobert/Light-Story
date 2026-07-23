@@ -51,13 +51,11 @@ export async function getBookmarks(): Promise<string[]> {
 export async function toggleBookmark(comicId: string): Promise<boolean> {
   const local = getLocalBookmarks();
   const exists = local.includes(comicId);
+
+  await apiClient.post('/api/user/bookmarks/toggle', { comicId });
+
   const updated = exists ? local.filter((id) => id !== comicId) : [...local, comicId];
   setLocalBookmarks(updated);
-
-  try {
-    await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
-  } catch {}
-
   return !exists;
 }
 
@@ -77,6 +75,8 @@ export async function getReadingHistory(): Promise<HistoryItem[]> {
 }
 
 export async function recordReadingHistory(comicId: string, chapterId: string, chapterNumber: number): Promise<void> {
+  await apiClient.post('/api/user/history', { comicId, chapterId, chapterNumber }).catch(() => {});
+
   const history = getLocalHistory().filter((h) => h.comicId !== comicId);
   const newItem: HistoryItem = {
     comicId,
@@ -85,8 +85,4 @@ export async function recordReadingHistory(comicId: string, chapterId: string, c
     updatedAt: new Date().toISOString(),
   };
   setLocalHistory([newItem, ...history].slice(0, 50));
-
-  try {
-    await apiClient.post('/api/user/history', { comicId, chapterId, chapterNumber }).catch(() => null);
-  } catch {}
 }

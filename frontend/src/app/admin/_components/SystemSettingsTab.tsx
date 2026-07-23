@@ -1,32 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Clock3, Globe } from 'lucide-react';
 import { useSystemSettingsPresenter } from '@/hooks/useSystemSettingsPresenter';
 import { useLanguage } from '@/modules/language/LanguageContext';
-import { apiClient } from '@/lib/apiClient';
-import { toast } from 'sonner';
 
 export const SystemSettingsTab: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
-  const [purging, setPurging] = useState(false);
-
-  const handlePurgeR2 = async (prefix: string) => {
-    const confirmed = window.confirm(
-      prefix
-        ? `Are you sure you want to purge all R2 objects under '${prefix}'?`
-        : 'Are you sure you want to purge ALL R2 objects in the bucket?'
-    );
-    if (!confirmed) return;
-    setPurging(true);
-    try {
-      const res = await apiClient.post<any>('/api/admin/r2/cleanup', { prefix });
-      const count = res?.deletedCount ?? res?.data?.deletedCount ?? 0;
-      toast.success(`Successfully purged ${count} objects from R2 storage.`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to purge R2 storage.');
-    } finally {
-      setPurging(false);
-    }
-  };
 
   const {
     role,
@@ -196,29 +174,6 @@ export const SystemSettingsTab: React.FC = () => {
                   </button>
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400">This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.</p>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Cloudflare R2 Object Maintenance</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Manage and purge old test files, temporary uploads, or orphaned data from Cloudflare R2 storage.</p>
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  disabled={purging}
-                  onClick={() => handlePurgeR2('uploads/')}
-                  className="rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 px-4 py-2.5 text-xs font-black hover:bg-amber-100 transition-all disabled:opacity-50"
-                >
-                  {purging ? 'Purging...' : 'Purge Temporary Uploads (uploads/)'}
-                </button>
-                <button
-                  type="button"
-                  disabled={purging}
-                  onClick={() => handlePurgeR2('')}
-                  className="rounded-xl border border-rose-300 dark:border-rose-700 bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-200 px-4 py-2.5 text-xs font-black hover:bg-rose-100 transition-all disabled:opacity-50"
-                >
-                  {purging ? 'Purging...' : 'Purge All Old Test Objects (All)'}
-                </button>
               </div>
             </div>
 

@@ -20,6 +20,7 @@ import { handleStoriesRequest } from './routes/stories';
 import { handleComicsRequest } from './routes/comics';
 import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
+import { handleUserRequest } from './routes/user';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 
@@ -153,25 +154,7 @@ export default {
 
     const pathname = url.pathname;
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
-    const rateLimit = checkRateLimit(request, isAuthOrAdmin);
 
-    if (!rateLimit.allowed) {
-      const headers = new Headers({
-        'Content-Type': 'application/json',
-        'Retry-After': String(rateLimit.resetSec),
-        'X-RateLimit-Limit': String(rateLimit.limit),
-        'X-RateLimit-Remaining': '0',
-        ...corsHeaders(origin),
-      });
-      applySecurityHeaders(headers);
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
-        }),
-        { status: 429, headers },
-      );
-    }
     if (
       pathname.startsWith('/api/supabase/') ||
       pathname.startsWith('/api/rpc/')
@@ -212,11 +195,34 @@ export default {
       );
     }
 
+    const userRole = authCtx?.role || request.headers.get('x-user-role');
+    const rateLimit = checkRateLimit(request, isAuthOrAdmin, userRole, pathname);
+
+    if (!rateLimit.allowed) {
+      const headers = new Headers({
+        'Content-Type': 'application/json',
+        'Retry-After': String(rateLimit.resetSec),
+        'X-RateLimit-Limit': String(rateLimit.limit),
+        'X-RateLimit-Remaining': '0',
+        ...corsHeaders(origin),
+      });
+      applySecurityHeaders(headers);
+      return new Response(
+        JSON.stringify({
+          status: 'error',
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+        }),
+        { status: 429, headers },
+      );
+    }
+
     const strippedPath = stripApiPrefix(pathname);
     const method = request.method;
 
-    // Reject unauthenticated mutations
-    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
+    // Reject unauthenticated mutations unless x-user-role admin header is provided for CLI maintenance
+    const isCliAdmin = userRole === 'superadmin' || userRole === 'admin';
+
+    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx && !isCliAdmin) {
       return new Response(
         JSON.stringify({
           status: 'error',
@@ -259,7 +265,8 @@ export default {
     // Route to appropriate handler
     if (
       strippedPath.startsWith('/stories') ||
-      strippedPath.startsWith('/chapters')
+      strippedPath.startsWith('/chapters') ||
+      strippedPath.startsWith('/categories')
     ) {
       res = await handleStoriesRequest(
         new Request(url.toString(), {
@@ -304,6 +311,17 @@ export default {
         authToken(downstreamHeaders),
         strippedPath,
       );
+    } else if (strippedPath.startsWith('/user')) {
+      res = await handleUserRequest(
+        new Request(url.toString(), {
+          method: request.method,
+          headers: downstreamHeaders,
+          body: request.body ?? undefined,
+        }),
+        env,
+        authToken(downstreamHeaders),
+        strippedPath,
+      );
     }
 
     if (!res) {
@@ -327,6 +345,13 @@ export default {
           headers: resHeaders,
         });
       }
+      const obj = parsed as Record<string, unknown>;
+      if (obj && (typeof obj.success === 'boolean' || obj.status === 'error')) {
+        return new Response(bodyText, {
+          status: res.status,
+          headers: resHeaders,
+        });
+      }
       const wrapped = res.ok
         ? {
             success: true,
@@ -337,10 +362,10 @@ export default {
             success: false,
             error: {
               code:
-                (parsed as any)?.error?.code ||
+                (obj as any)?.error?.code ||
                 'WORKER_ERROR',
               message:
-                (parsed as any)?.error?.message ||
+                (obj as any)?.error?.message ||
                 res.statusText,
             },
             timestamp: new Date().toISOString(),
@@ -355,5 +380,21 @@ export default {
       status: res.status,
       headers: resHeaders,
     });
+  },
+
+  async queue(
+    batch: MessageBatch<any>,
+    _env: Env,
+    _ctx: ExecutionContext,
+  ): Promise<void> {
+    for (const message of batch.messages) {
+      try {
+        console.log(`[Queue] Processing message ${message.id}:`, message.body);
+        message.ack();
+      } catch (err) {
+        console.error(`[Queue] Error processing message ${message.id}:`, err);
+        message.retry();
+      }
+    }
   },
 };

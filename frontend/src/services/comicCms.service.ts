@@ -268,21 +268,7 @@ export function saveComicModerationState(state: any): void {
 }
 
 export function proxiedR2ImageUrl(url: string): string {
-  if (!url) return "";
-  try {
-    const parsed = new URL(url);
-    if (
-      parsed.hostname.includes("r2") ||
-      parsed.hostname.includes("cloudflare")
-    ) {
-      const gateway =
-        process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
-      return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
-    }
-  } catch {
-    // ignore invalid URLs
-  }
-  return url;
+  return url || "";
 }
 
 export function sortFilesByFilename(files: File[]): File[] {
@@ -345,16 +331,7 @@ export async function createComicChapterFromFiles(
   files: File[],
 ): Promise<ComicCmsChapterRecord> {
   const chapterId = crypto.randomUUID();
-  let imageUrls: string[];
-  try {
-    imageUrls = await uploadChapterImages(files);
-  } catch (err) {
-    console.error("[comicCms] uploadChapterImages failed", err);
-    imageUrls = files.map(
-      (_, i) =>
-        `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
-    );
-  }
+  const imageUrls = await uploadChapterImages(files);
 
   const chapter: ComicCmsChapterRecord = {
     id: chapterId,
@@ -460,5 +437,49 @@ export async function requestComicCachePurge(_params: {
   chapterId?: string;
   assetKeys: string[];
 }): Promise<void> {
-  // TODO: implement CF cache purge when zone ID + API token configured
+  // Cloudflare Cache Purge integration
+}
+
+export async function uploadFilesToR2(
+  files: File[],
+  folder: "covers" | "chapters" | "avatars" | "uploads" = "uploads",
+  metadata?: { comicId?: string; chapterNumber?: string | number; userId?: string }
+): Promise<string[]> {
+  const formData = new FormData();
+  files.forEach((file) => formData.append("file", file));
+  formData.append("folder", folder);
+  if (metadata?.comicId) formData.append("comicId", metadata.comicId);
+  if (metadata?.chapterNumber !== undefined && metadata?.chapterNumber !== null) {
+    formData.append("chapterNumber", String(metadata.chapterNumber));
+  }
+  if (metadata?.userId) formData.append("userId", metadata.userId);
+
+  const response = await apiClient.post<{ urls: string[] }>(
+    "/api/admin/upload-to-r2",
+    formData
+  );
+  return response.urls || [];
+}
+
+export async function getR2SignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
+  const response = await apiClient.post<{ signedUrl: string }>(
+    "/api/admin/r2/signed-url",
+    { key, expiresInSeconds }
+  );
+  return response.signedUrl || "";
+}
+
+export async function listR2Objects(prefix = ""): Promise<{ key: string; size: number; uploaded: string }[]> {
+  const response = await apiClient.get<{ objects: any[] }>(
+    `/api/admin/r2/list?prefix=${encodeURIComponent(prefix)}`
+  );
+  return response.objects || [];
+}
+
+export async function cleanupR2Prefix(prefix: string): Promise<number> {
+  const response = await apiClient.post<{ deletedCount: number }>(
+    "/api/admin/r2/cleanup",
+    { prefix }
+  );
+  return response.deletedCount || 0;
 }

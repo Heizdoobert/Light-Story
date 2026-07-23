@@ -43,7 +43,6 @@ export async function handleAdminRequest(
           cover_url: s.cover_url || null,
           status: s.status || 'draft',
           category: s.category || null,
-          category_id: s.category_id || null,
           author_id: s.author_id || null,
         };
         const res = await sbPost('stories', payload, env, token);
@@ -182,6 +181,35 @@ export async function handleAdminRequest(
       const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
       const res = await sbGet('audit_logs', q, env, token);
       return handleRes(res);
+    }
+
+    if (method === 'GET' && path === '/admin/notifications') {
+      const limit = Math.min(
+        50,
+        Math.max(1, parseInt(url.searchParams.get('limit') || '20')),
+      );
+      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
+      const res = await sbGet('audit_logs', q, env, token);
+      if (!res.ok) {
+        return json({ success: true, data: { notifications: [] } });
+      }
+      const rawLogs = (await res.json().catch(() => [])) as any[];
+      const notifications = rawLogs.map((log: any) => {
+        const title = log.action ? log.action.replace(/_/g, ' ').toUpperCase() : 'SYSTEM NOTIFICATION';
+        const entity = log.entity_type ? `${log.entity_type}: ` : '';
+        const metaStr = log.metadata && typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : '';
+        const message = `${entity}${metaStr ? metaStr.slice(0, 80) : 'System activity logged.'}`;
+        const type = log.action?.includes('delete') || log.action?.includes('error') ? 'warning' : 'info';
+        return {
+          id: log.id || crypto.randomUUID(),
+          title,
+          message,
+          timestamp: new Date(log.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          read: false,
+          type,
+        };
+      });
+      return json({ success: true, data: { notifications } });
     }
 
     if (method === 'GET' && path === '/admin/site-settings') {
@@ -548,7 +576,7 @@ export async function handleAdminRequest(
             }),
           },
         );
-        const adminData = await adminRes.json();
+        const adminData = (await adminRes.json()) as any;
         if (!adminRes.ok)
           return err(
             'ADMIN_ERROR',
@@ -570,7 +598,7 @@ export async function handleAdminRequest(
           },
         );
         if (!adminRes.ok) {
-          const adminData = await adminRes.json().catch(() => ({}));
+          const adminData = (await adminRes.json().catch(() => ({}))) as any;
           return err(
             'ADMIN_ERROR',
             adminData.msg || adminData.error || 'Delete user failed',
@@ -631,7 +659,7 @@ export async function handleAdminRequest(
 
     // ── Comic CMS CRUD ─────────────────────────────────────
 
-    if (method === 'POST' && path === '/admin/upload-to-r2') {
+    if (method === 'POST' && (path === '/admin/upload-to-r2' || path === '/admin/r2/upload')) {
       const bucket = env.R2_BUCKET;
       if (!bucket) {
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
@@ -668,11 +696,79 @@ export async function handleAdminRequest(
         }
 
         await bucket.put(key, await file.arrayBuffer(), {
-          httpMetadata: { contentType: file.type || 'application/octet-stream' },
+          httpMetadata: {
+            contentType: file.type || (ext === 'cbz' ? 'application/x-cbz' : 'application/octet-stream'),
+            cacheControl: 'public, max-age=31536000, immutable',
+          },
+          customMetadata: {
+            uploadedBy: userId || 'admin',
+            folder,
+            originalName: file.name,
+          },
         });
-        uploadedUrls.push(`/api/admin/r2/${key}`);
+        uploadedUrls.push(`/api/admin/r2/file/${key}`);
       }
       return json({ success: true, data: { urls: uploadedUrls } });
+    }
+
+    // ── GET R2 Object directly via Gateway ──────────────────
+    if (method === 'GET' && path.startsWith('/admin/r2/file/')) {
+      const bucket = env.R2_BUCKET;
+      if (!bucket) return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
+
+      const rawKey = path.replace('/admin/r2/file/', '');
+      const rangeHeader = request.headers.get('range');
+      const ifNoneMatch = request.headers.get('if-none-match');
+
+      const options: R2GetOptions = {};
+      if (rangeHeader) options.range = request.headers;
+      if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
+
+      const object = await bucket.get(rawKey, options);
+      if (!object) {
+        if (ifNoneMatch) return new Response(null, { status: 304 });
+        return err('NOT_FOUND', 'R2 object not found', 404);
+      }
+
+      const headers = new Headers();
+      headers.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=86400');
+      if (object.httpMetadata?.contentType) headers.set('content-type', object.httpMetadata.contentType);
+      headers.set('etag', object.httpEtag);
+      headers.set('accept-ranges', 'bytes');
+
+      if (object.range) {
+        const r = object.range as { offset?: number; length?: number };
+        const offset = r.offset ?? 0;
+        const length = r.length ?? object.size;
+        headers.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
+        headers.set('content-length', length.toString());
+        return new Response(object.body, { status: 206, headers });
+      }
+
+      headers.set('content-length', object.size.toString());
+      return new Response(object.body, { status: 200, headers });
+    }
+
+    // ── Generate Presigned HMAC URL for R2 ─────────────────
+    if (method === 'POST' && path === '/admin/r2/signed-url') {
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Staff role required', 403);
+      }
+      const body = (await request.json().catch(() => ({}))) as { key?: string; expiresInSeconds?: number };
+      if (!body.key) return err('BAD_REQUEST', 'Missing key parameter', 400);
+
+      const secret = (env as any).SUPABASE_JWT_SECRET || env.SUPABASE_ANON_KEY || 'default-secret-key';
+      const expires = Math.floor(Date.now() / 1000) + (body.expiresInSeconds || 3600);
+      const payload = `GET:${body.key}:${expires}`;
+
+      const enc = new TextEncoder();
+      const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const sigBuffer = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(payload));
+      const sigHex = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+      const signedUrl = `/api/admin/r2/file/${body.key}?expires=${expires}&signature=${sigHex}`;
+      return json({ success: true, data: { key: body.key, expires, signature: sigHex, signedUrl } });
     }
 
     if (method === 'GET' && path === '/admin/r2/list') {
@@ -690,6 +786,7 @@ export async function handleAdminRequest(
         key: o.key,
         size: o.size,
         uploaded: o.uploaded,
+        etag: o.httpEtag,
       }));
       return json({ success: true, data: { objects, count: objects.length, truncated: list.truncated } });
     }
@@ -716,9 +813,10 @@ export async function handleAdminRequest(
         if (cursor) listOpts.cursor = cursor;
 
         const list = await bucket.list(listOpts as any);
-        for (const obj of list.objects) {
-          await bucket.delete(obj.key);
-          deletedCount++;
+        const keysToDelete = list.objects.map((o) => o.key);
+        if (keysToDelete.length > 0) {
+          await bucket.delete(keysToDelete);
+          deletedCount += keysToDelete.length;
         }
         truncated = list.truncated;
         cursor = list.truncated ? list.cursor : undefined;

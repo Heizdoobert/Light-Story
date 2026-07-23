@@ -16,7 +16,10 @@
     "lint": "npm --prefix frontend run lint",
     "preview": "npm --prefix frontend run preview",
     "test:run": "npm --prefix frontend run test:run",
-    "generate:types": "npm --prefix packages/api-types run generate"
+    "generate:types": "npm --prefix packages/api-types run generate",
+    "docker:build": "docker compose build --no-cache",
+    "docker:up": "docker compose up -d",
+    "docker:rebuild": "docker compose down && docker compose build --no-cache && docker compose up -d"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.106.1",
@@ -25,12 +28,15 @@
     "wrangler": "^4.92.0"
   },
   "overrides": {
-    "shell-quote": "1.10.0",
-    "brace-expansion": "5.0.7",
-    "fast-uri": "4.1.1",
-    "sharp": "0.35.3",
-    "postcss": "8.5.22",
-    "@hono/node-server": "2.0.11",
-    "body-parser": "2.3.0"
+    "shell-quote": "^1.10.0",
+    "brace-expansion": "^2.0.2",
+    "fast-uri": "^4.1.1",
+    "sharp": "^0.35.3",
+    "postcss": "^8.5.22",
+    "@hono/node-server": "^2.0.11",
+    "body-parser": "^2.3.0",
+    "eslint": {
+      "brace-expansion": "^1.1.16"
+    }
   }
 }

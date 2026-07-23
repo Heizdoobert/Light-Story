@@ -24,7 +24,7 @@ async function fetchJWKS(jwksUrl: string): Promise<{ keys: any[] }> {
   }
   const res = await fetch(jwksUrl, { method: 'GET' });
   if (!res.ok) throw new Error(`JWKS fetch failed: ${res.status}`);
-  const jwks = await res.json();
+  const jwks = (await res.json()) as { keys: any[] };
   (globalThis as any)[cacheKey] = { url: jwksUrl, jwks, fetchedAt: now };
   return jwks;
 }
@@ -59,7 +59,7 @@ async function verifyJwt(token: string, jwksUrl: string): Promise<Record<string,
   const cryptoKey = await crypto.subtle.importKey('jwk', key, importAlg, false, ['verify']);
   const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
   const sig = base64UrlToUint8Array(parts[2]);
-  const ok = await crypto.subtle.verify(verifyAlg, cryptoKey, sig, data);
+  const ok = await crypto.subtle.verify(verifyAlg, cryptoKey, sig.buffer as ArrayBuffer, data);
   if (!ok) throw new Error('Invalid signature');
   return payload;
 }
@@ -117,16 +117,51 @@ export default {
     }
 
     try {
-      const object = await env.ASSETS_BUCKET.get(key);
-      if (!object) return new Response('Not Found', { status: 404 });
+      const isHead = request.method === 'HEAD';
+      const rangeHeader = request.headers.get('range');
+      const ifNoneMatch = request.headers.get('if-none-match');
+
+      // Check R2 object metadata / range options
+      const options: R2GetOptions = {};
+      if (rangeHeader) {
+        options.range = request.headers;
+      }
+      if (ifNoneMatch) {
+        options.onlyIf = { etagMatches: ifNoneMatch };
+      }
+
+      const object = await env.ASSETS_BUCKET.get(key, options);
+      if (!object) {
+        if (ifNoneMatch) {
+          // Object unchanged according to onlyIf condition
+          return new Response(null, { status: 304 });
+        }
+        return new Response('Not Found', { status: 404 });
+      }
 
       const headers = new Headers();
-      headers.set('cache-control', 'public, max-age=86400');
+      headers.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=86400, immutable');
       if (object.httpMetadata?.contentType) headers.set('content-type', object.httpMetadata.contentType);
+      if (object.httpMetadata?.contentDisposition) headers.set('content-disposition', object.httpMetadata.contentDisposition);
+      headers.set('etag', object.httpEtag);
+      headers.set('accept-ranges', 'bytes');
+      headers.set('access-control-allow-origin', '*');
 
-      return new Response(object.body, { status: 200, headers });
+      if (object.range) {
+        const r = object.range as { offset?: number; length?: number };
+        const offset = r.offset ?? 0;
+        const length = r.length ?? object.size;
+        const end = offset + length - 1;
+        headers.set('content-range', `bytes ${offset}-${end}/${object.size}`);
+        headers.set('content-length', length.toString());
+
+        return new Response(isHead ? null : object.body, { status: 206, headers });
+      }
+
+      headers.set('content-length', object.size.toString());
+      return new Response(isHead ? null : object.body, { status: 200, headers });
     } catch (err) {
-      return new Response('Error fetching object', { status: 500 });
+      return new Response('Error fetching object from R2', { status: 500 });
     }
   }
 };

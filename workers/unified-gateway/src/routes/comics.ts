@@ -115,7 +115,7 @@ export async function handleComicsRequest(
       const comicId = pathname.split('/')[2];
       const res = await sbGet(
         'chapters',
-        `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,view_count,created_at,updated_at&order=chapter_number.asc`,
+        `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,created_at,updated_at&order=chapter_number.asc`,
         env,
         token,
       );

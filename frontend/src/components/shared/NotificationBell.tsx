@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell, CheckCheck, Trash2, Info, CheckCircle2, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/modules/language/LanguageContext";
+import { getSystemNotifications } from "@/services/admin.service";
 
 export type NotificationItem = {
   id: string;
@@ -12,56 +13,41 @@ export type NotificationItem = {
   timestamp: string;
   read: boolean;
   type?: "info" | "success" | "warning";
+  roles?: string[];
 };
 
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: "notif-1",
-    title: "Chương mới ra mắt",
-    message: "Ta là đại pháp sư - Chương 45 vừa được xuất bản!",
-    timestamp: "10 phút trước",
-    read: false,
-    type: "info",
-  },
-  {
-    id: "notif-2",
-    title: "Cập nhật hệ thống",
-    message: "Hệ thống Unified Gateway & Supabase đã sẵn sàng.",
-    timestamp: "1 giờ trước",
-    read: false,
-    type: "success",
-  },
-  {
-    id: "notif-3",
-    title: "Chào mừng bạn đến với LightStory",
-    message: "Khám phá hàng ngàn truyện tranh sắc nét mỗi ngày.",
-    timestamp: "Hôm qua",
-    read: true,
-    type: "info",
-  },
-];
+interface NotificationBellProps {
+  role?: string | null;
+}
 
-export const NotificationBell: React.FC = () => {
+export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
   const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("lightstory_notifications");
-      if (saved) {
-        setNotifications(JSON.parse(saved));
+    let active = true;
+    async function loadRealNotifications() {
+      try {
+        const liveItems = await getSystemNotifications(20);
+        if (active && Array.isArray(liveItems)) {
+          setNotifications(liveItems);
+        }
+      } catch (err) {
+        if (active) setNotifications([]);
       }
-    } catch {
-      // Use defaults
     }
-  }, []);
+    loadRealNotifications();
+    return () => {
+      active = false;
+    };
+  }, [role]);
 
   const saveNotifications = (items: NotificationItem[]) => {
     setNotifications(items);
     try {
-      localStorage.setItem("lightstory_notifications", JSON.stringify(items));
+      localStorage.setItem(`lightstory_notifications_${role || "guest"}`, JSON.stringify(items));
     } catch {
       // ignore
     }

@@ -17,11 +17,40 @@ export function getClientIP(request: Request): string {
   );
 }
 
-export function checkRateLimit(request: Request, isAuthOrAdmin = false): RateLimitResult {
+export function checkRateLimit(
+  request: Request,
+  isAuthOrAdmin = false,
+  role?: string | null,
+  pathname?: string,
+): RateLimitResult {
   const ip = getClientIP(request);
   const now = Date.now();
   const windowMs = 60_000;
-  const limit = isAuthOrAdmin ? 20 : 100;
+
+  // Bypass rate limits for local development and static R2 file requests
+  if (
+    ip === '127.0.0.1' ||
+    ip === '::1' ||
+    ip === 'localhost' ||
+    pathname?.includes('/admin/r2/file/')
+  ) {
+    return {
+      allowed: true,
+      limit: 999999,
+      remaining: 999999,
+      resetSec: 60,
+    };
+  }
+
+  // Determine rate limits based on user role and request path
+  let limit = 300;
+  if (role === 'superadmin' || role === 'admin' || role === 'employee') {
+    limit = 600; // High limit for staff CMS operations
+  } else if (role) {
+    limit = 300; // Authenticated user limit
+  } else if (isAuthOrAdmin) {
+    limit = 150; // Anonymous Auth/Admin route limit
+  }
 
   const timestamps = (ipStore.get(ip) || []).filter((t) => now - t < windowMs);
 

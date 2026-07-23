@@ -78,7 +78,7 @@ export const ComicManagementTab: React.FC = () => {
 
   const [chapterValues, setChapterValues] = useState<ComicChapterFormValues>(DEFAULT_CHAPTER_FORM);
   const [chapterPages, setChapterPages] = useState<PageDraft[]>([]);
-  const [cbzArchiveFile, setCbzArchiveFile] = useState<File | null>(null);
+  const [, setCbzArchiveFile] = useState<File | null>(null);
   const [chapterBusy, setChapterBusy] = useState(false);
   const [chapterError, setChapterError] = useState<string | null>(null);
 
@@ -422,6 +422,7 @@ export const ComicManagementTab: React.FC = () => {
           ...selectedComic,
           ...parsed.data,
           coverUrl: nextCoverUrl,
+          lastUpdatedAt: new Date().toISOString(),
         } as ComicCmsRecord;
         const saved = await updateComicRecord(updated);
         await recordComicAudit("comic.publish", {
@@ -509,9 +510,9 @@ export const ComicManagementTab: React.FC = () => {
     }
     setChapterBusy(true);
     try {
-      const filesToUpload = cbzArchiveFile
-        ? [cbzArchiveFile]
-        : [...chapterPages].sort((left, right) => left.order - right.order).map((page) => page.file);
+      const filesToUpload = [...chapterPages]
+        .sort((left, right) => left.order - right.order)
+        .map((page) => page.file);
       const chapter = await createComicChapterFromFiles(
         selectedComic,
         parsed.data,
