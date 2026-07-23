@@ -184,6 +184,10 @@ export const ComicManagementTab: React.FC = () => {
       .finally(() => setRefreshing(false));
   }, []);
 
+  useEffect(() => {
+    refreshCatalog(false);
+  }, [refreshCatalog]);
+
   const loadNewComicDraft = useCallback(() => {
     setSelectedComicId(null);
     setFormValues(DEFAULT_FORM);
@@ -540,6 +544,7 @@ export const ComicManagementTab: React.FC = () => {
       );
       setChapterValues(DEFAULT_CHAPTER_FORM);
       resetChapterPages();
+      refreshCatalog(false);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Failed to save chapter.";
       setChapterError(msg);
@@ -547,7 +552,7 @@ export const ComicManagementTab: React.FC = () => {
     } finally {
       setChapterBusy(false);
     }
-  }, [autoSave, chapterPages, chapterValues, resetChapterPages, selectedComic]);
+  }, [autoSave, chapterPages, chapterValues, refreshCatalog, resetChapterPages, selectedComic]);
 
   const handleDeleteChapter = useCallback(
     async (chapterId: string) => {
@@ -571,6 +576,7 @@ export const ComicManagementTab: React.FC = () => {
           ),
         );
         toast.success("Chapter deleted successfully");
+        refreshCatalog(false);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Failed to delete chapter.");
       }
