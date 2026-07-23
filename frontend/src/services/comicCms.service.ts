@@ -269,7 +269,19 @@ export function saveComicModerationState(state: any): void {
 
 export function proxiedR2ImageUrl(url: string): string {
   if (!url) return "";
-  if (url.includes(".r2.dev") || url.includes("cloudflare.com")) {
+
+  let hostname = "";
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    return url;
+  }
+
+  const isR2Host = hostname === "r2.dev" || hostname.endsWith(".r2.dev");
+  const isCloudflareHost =
+    hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
+
+  if (isR2Host || isCloudflareHost) {
     const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || "";
     if (gateway) {
       return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
