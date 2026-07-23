@@ -20,8 +20,8 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({ comicId, classNa
     try {
       const state = await toggleBookmark(comicId);
       toast.success(state ? 'Đã thêm vào danh sách theo dõi!' : 'Đã bỏ theo dõi!');
-    } catch {
-      toast.error('Có lỗi xảy ra, vui lòng thử lại.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
     }
   };
 

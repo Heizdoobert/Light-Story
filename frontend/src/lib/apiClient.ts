@@ -105,20 +105,33 @@ async function request<T>(
 
   // Check HTTP status first
   if (!res.ok) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      (body as any)?.error_description ??
+      (res.statusText || `HTTP Error ${res.status}`);
+
     throw new ApiError(
       res.status,
-      body?.error?.code ?? 'HTTP_ERROR',
-      body?.error?.message ?? res.statusText,
+      body?.error?.code ?? (body as any)?.code ?? 'HTTP_ERROR',
+      errorMsg,
       body?.correlationId,
     );
   }
 
   // Check API response status
-  if (!body.success) {
+  if (body && (body as any).success === false) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      'API request failed';
+
     throw new ApiError(
       res.status,
       body.error?.code ?? 'API_ERROR',
-      body.error?.message ?? 'API request failed',
+      errorMsg,
       body.correlationId,
     );
   }
