@@ -6,7 +6,6 @@ export async function handleUserRequest(
   token: string | null,
   pathname: string,
 ): Promise<Response | null> {
-  const url = new URL(request.url);
   const method = request.method;
   const userId = request.headers.get('x-user-id');
 
