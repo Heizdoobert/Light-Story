@@ -1,5 +1,5 @@
 {
-  "name": "unified-gateway",
+  "name": "lightstory",
   "main": "workers/unified-gateway/src/index.ts",
   "compatibility_date": "2026-05-16",
   "minify": true,
@@ -20,15 +20,6 @@
       {
         "binding": "LIGHTSTORY_QUEUE",
         "queue": "lightstory-queue"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "lightstory-queue",
-        "max_batch_size": 10,
-        "max_batch_timeout": 30,
-        "max_retries": 3,
-        "dead_letter_queue": "lightstory-queue-dlq"
       }
     ]
   },
