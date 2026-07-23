@@ -81,14 +81,12 @@ export const Header: React.FC<HeaderProps> = ({
         {user ? (
           <div className="flex items-center gap-3 sm:gap-4">
             {isStaffRole(role) && (
-              <Link href="/admin">
-                <motion.button
-                  {...bounceClick}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all"
-                >
-                  <LayoutDashboard size={16} />
-                  <span className="hidden lg:block">{t("admin_dashboard")}</span>
-                </motion.button>
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full text-sm font-bold shadow-md hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+              >
+                <LayoutDashboard size={16} />
+                <span className="hidden lg:block">{t("admin_dashboard")}</span>
               </Link>
             )}
             <div className="flex items-center gap-3 sm:gap-4 pl-3 sm:pl-4 border-l border-slate-200 dark:border-slate-800">
