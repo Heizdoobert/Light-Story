@@ -175,6 +175,32 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
 }
 
 function mapDbRowToRecord(row: any): ComicCmsRecord {
+  const mappedChapters: ComicCmsChapterRecord[] = Array.isArray(row.chapters)
+    ? row.chapters
+        .sort((a: any, b: any) => (b.chapter_number ?? 0) - (a.chapter_number ?? 0))
+        .map((ch: any) => ({
+          id: ch.id,
+          chapterNumber: ch.chapter_number ?? 1,
+          title: ch.title || `Chapter ${ch.chapter_number ?? 1}`,
+          updatedAt: ch.updated_at || new Date().toISOString(),
+          pages: (() => {
+            try {
+              const urls = JSON.parse(ch.content || "[]");
+              return Array.isArray(urls)
+                ? urls.map((url: string) => ({
+                    id: crypto.randomUUID(),
+                    assetUrl: url,
+                    previewUrl: url,
+                    fileName: url.split("/").pop() || "page",
+                  }))
+                : [];
+            } catch {
+              return [];
+            }
+          })(),
+        }))
+    : [];
+
   return {
     id: row.id,
     title: row.title || "",
@@ -184,7 +210,7 @@ function mapDbRowToRecord(row: any): ComicCmsRecord {
     coverUrl: row.cover_url || "",
     viewCount: row.views ?? 0,
     lastUpdatedAt: row.updated_at || new Date().toISOString(),
-    chapters: [],
+    chapters: mappedChapters,
     category: row.category || [],
   };
 }

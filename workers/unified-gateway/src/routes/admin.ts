@@ -698,14 +698,20 @@ export async function handleAdminRequest(
       const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
       const pageSize = Math.min(100, Math.max(1, parseInt(url.searchParams.get('pageSize') || '50')));
       const offset = (page - 1) * pageSize;
-      const q = `select=*&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      const q = `select=*,chapters(*)&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       const res = await sbGet('stories', q, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = path.split('/')[3];
-      const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
+      const res = await sbGet('stories', `id=eq.${id}&select=*,chapters(*)`, env, token);
+      return handleRes(res);
+    }
+
+    if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
+      const comicId = path.split('/')[3];
+      const res = await sbGet('chapters', `story_id=eq.${comicId}&order=chapter_number.asc`, env, token);
       return handleRes(res);
     }
 
