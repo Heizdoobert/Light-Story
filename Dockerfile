@@ -8,7 +8,7 @@ COPY package.json package-lock.json ./
 COPY packages/api-types packages/api-types/
 COPY frontend/ frontend/
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci
+    npm install
 
 WORKDIR /app/frontend
 ENV DOCKER_BUILD=1
