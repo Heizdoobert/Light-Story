@@ -645,16 +645,55 @@ export async function handleAdminRequest(
       if (fileEntries.length === 0) {
         return err('BAD_REQUEST', 'No files provided', 400);
       }
+
+      const folder = (formData.get('folder') as string) || 'uploads';
+      const comicId = formData.get('comicId') as string | null;
+      const chapterNumber = formData.get('chapterNumber') as string | null;
+      const userId = formData.get('userId') as string | null;
+
       const uploadedUrls: string[] = [];
-      for (const file of fileEntries) {
-        const ext = file.name.split('.').pop() || 'png';
-        const key = `uploads/${crypto.randomUUID()}.${ext}`;
+      for (let i = 0; i < fileEntries.length; i++) {
+        const file = fileEntries[i];
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+
+        let key = `uploads/${crypto.randomUUID()}.${ext}`;
+        if (folder === 'covers') {
+          key = comicId ? `covers/${comicId}.${ext}` : `covers/${crypto.randomUUID()}.${ext}`;
+        } else if (folder === 'chapters') {
+          const cId = comicId || 'general';
+          const cNum = chapterNumber || '1';
+          key = `chapters/${cId}/chapter-${cNum}/page-${i + 1}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+        } else if (folder === 'avatars') {
+          key = userId ? `avatars/${userId}.${ext}` : `avatars/${crypto.randomUUID()}.${ext}`;
+        }
+
         await bucket.put(key, await file.arrayBuffer(), {
           httpMetadata: { contentType: file.type || 'application/octet-stream' },
         });
         uploadedUrls.push(`/api/admin/r2/${key}`);
       }
       return json({ success: true, data: { urls: uploadedUrls } });
+    }
+
+    if (method === 'POST' && path === '/admin/r2/cleanup') {
+      const role = getAuthRole(request);
+      if (!requireRole(role, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Admin role required', 403);
+      }
+      const bucket = env.R2_BUCKET;
+      if (!bucket) {
+        return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
+      }
+      const body = (await request.json().catch(() => ({}))) as { prefix?: string };
+      const targetPrefix = body.prefix || 'uploads/';
+
+      const list = await bucket.list({ prefix: targetPrefix, limit: 500 });
+      let deletedCount = 0;
+      for (const obj of list.objects) {
+        await bucket.delete(obj.key);
+        deletedCount++;
+      }
+      return json({ success: true, data: { deletedCount, prefix: targetPrefix } });
     }
 
     if (method === 'POST' && path === '/admin/comics') {

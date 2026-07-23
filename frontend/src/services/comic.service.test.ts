@@ -89,7 +89,7 @@ describe('uploadComicCover', () => {
 
     expect(url).toBe('https://r2.test/cover.jpg');
     expect(fetch).toHaveBeenCalledWith(
-      'https://gateway.test/api/admin/upload-to-r2',
+      'https://gateway.test/api/admin/r2/upload',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
