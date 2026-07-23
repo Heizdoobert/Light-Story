@@ -119,7 +119,7 @@ export async function handleAnalyticsRequest(
         page_views: kvCachedStats.page_views ?? 1250,
         bandwidth_gb: Number((r2UsageGb * 1.5).toFixed(4)),
         cache_hit_ratio_pct: 98.5,
-        storage_efficiency_pct: r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0,
+        storage_efficiency_pct: Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)),
         device_mobile: 65,
         device_desktop: 30,
         device_tablet: 5,
