@@ -9,6 +9,18 @@
       "bucket_name": "lightstory-assets"
     }
   ],
+  "kv_namespaces": [
+    {
+      "binding": "BINDING_NAME",
+      "id": "bde008a5d4b54e53af699933f366dabe"
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_DATA",
+      "dataset": "analytic"
+    }
+  ],
   "env": {
     "production": {
       "routes": [
