@@ -663,7 +663,7 @@ export const ComicManagementTab: React.FC = () => {
         {([
           ["catalog", "Catalog"],
           ["editor", "Edit / Create"],
-          ["chapters", "Chapters & Assets"],
+          ["chapters", "Chỉnh sửa chương"],
           ["moderation", "Comments & Reports"],
         ] as const).map(([key, label]) => (
           <button
@@ -719,6 +719,7 @@ export const ComicManagementTab: React.FC = () => {
           onPublish={handlePublish}
           onDelete={handleDelete}
           onNewDraft={loadNewComicDraft}
+          onGoToChapters={() => setActiveTab("chapters")}
         />
       )}
 
