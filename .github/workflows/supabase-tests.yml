@@ -44,7 +44,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install root dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Node.js RLS Integration Tests
         run: |

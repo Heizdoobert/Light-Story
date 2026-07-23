@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Clean Next cache
         run: rm -rf .next
@@ -51,9 +51,6 @@ jobs:
           - admin-worker
           - analytics-worker
           - r2-signed-url
-    defaults:
-      run:
-        working-directory: workers/${{ matrix.worker }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,10 +60,11 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm ci || true
+      - name: Install root dependencies
+        run: npm install
 
       - name: Type-check worker
+        working-directory: workers/${{ matrix.worker }}
         run: npx tsc --noEmit
 
   backend-supabase:
@@ -100,7 +98,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Prism mock and smoke-check
         run: |
@@ -146,7 +144,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Run Prism mock server
         run: |
