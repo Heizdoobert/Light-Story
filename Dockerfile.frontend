@@ -1,11 +1,11 @@
-FROM node:22-alpine AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY packages/api-types packages/api-types/
 COPY frontend/ frontend/
 
-RUN npm install
+RUN rm -f package-lock.json frontend/package-lock.json && npm install --legacy-peer-deps
 
 WORKDIR /app/frontend
 ENV DOCKER_BUILD=1

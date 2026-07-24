@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 COPY packages/api-types packages/api-types/
 COPY workers/ workers/
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 EXPOSE 8787
 

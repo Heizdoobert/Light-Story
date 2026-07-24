@@ -40,6 +40,7 @@
     "radix-ui": "^1.6.4",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-is": "^19.2.8",
     "recharts": "^3.9.2",
     "shadcn": "^4.13.1",
     "sonner": "^2.0.7",
@@ -67,16 +68,22 @@
     "typescript": "^5.8.0",
     "vitest": "^4.1.6"
   },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "^1.29.1",
+    "lightningcss-linux-x64-musl": "^1.29.1"
+  },
   "overrides": {
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.1",
-    "sharp": "0.35.3",
-    "postcss": "8.5.22",
-    "@hono/node-server": "2.0.11",
     "body-parser": "2.3.0",
-    "**": {
+    "postcss": "8.5.22",
+    "sharp": "0.35.3",
+    "@hono/node-server": "2.0.11",
+    "next": {
       "postcss": "8.5.22",
-      "sharp": "0.35.3",
+      "sharp": "0.35.3"
+    },
+    "@modelcontextprotocol/sdk": {
       "@hono/node-server": "2.0.11"
     }
   }

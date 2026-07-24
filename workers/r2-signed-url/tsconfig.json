@@ -3,11 +3,19 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "lib": ["ESNext", "WebWorker"],
-    "types": ["@cloudflare/workers-types"],
-    "strict": false,
+    "lib": [
+      "ESNext",
+      "WebWorker"
+    ],
+    "types": [
+      "@cloudflare/workers-types"
+    ],
+    "strict": true,
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "worker-configuration.d.ts"]
+  "include": [
+    "src/**/*",
+    "worker-configuration.d.ts"
+  ]
 }
