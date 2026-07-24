@@ -29,6 +29,23 @@ export async function handleAdminRequest(
   const method = request.method;
   const path = pathname;
 
+  const userRole = getAuthRole(request);
+
+  // Blanket check: only superadmin, admin, employee can access any /admin routes
+  if (!requireRole(userRole, ['superadmin', 'admin', 'employee'])) {
+    return err('FORBIDDEN', 'Insufficient permissions to access admin routes', 403);
+  }
+
+  // Granular check: audit routes are superadmin only
+  if (path.startsWith('/admin/audit') && !requireRole(userRole, ['superadmin'])) {
+    return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
+  }
+
+  // Granular check: site-settings are superadmin and admin only
+  if (path.startsWith('/admin/site-settings') && !requireRole(userRole, ['superadmin', 'admin'])) {
+    return err('FORBIDDEN', 'Site settings require admin privileges', 403);
+  }
+
   try {
     if (method === 'POST' && path === '/admin/manage-story') {
       const body = (await request.json()) as any;

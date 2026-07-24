@@ -220,7 +220,7 @@ export default {
     const method = request.method;
 
     // Reject unauthenticated mutations unless x-user-role admin header is provided for CLI maintenance
-    const isCliAdmin = userRole === 'superadmin' || userRole === 'admin';
+    const isCliAdmin = userRole === 'superadmin' || userRole === 'admin' || userRole === 'employee';
 
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx && !isCliAdmin) {
       return new Response(
