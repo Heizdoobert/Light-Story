@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createComic, uploadComicCover } from "@/services/comic.service";
-import { sanitizeImageUrl } from "@/lib/securityUtils";
 
 export default function CreateComic() {
   const router = useRouter();
@@ -85,9 +84,9 @@ export default function CreateComic() {
               onChange={(e) => setCover(e.target.files?.[0] ?? null)}
               className="block text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-600 file:text-white hover:file:bg-primary-700"
             />
-            {sanitizeImageUrl(previewUrl) && (
+            {previewUrl?.startsWith("blob:") && (
               <div className="w-20 h-20 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
-                <img src={sanitizeImageUrl(previewUrl)!} alt="cover preview" className="w-full h-full object-cover" />
+                <img src={previewUrl} alt="cover preview" className="w-full h-full object-cover" />
               </div>
             )}
           </div>

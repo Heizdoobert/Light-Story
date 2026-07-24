@@ -23,6 +23,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [fullNameError, setFullNameError] = useState<string | null>(null);
   const [avatarUrlError, setAvatarUrlError] = useState<string | null>(null);
+  const safeAvatarUrl = sanitizeImageUrl(avatarUrl);
 
   const validateFullName = (value: string): string | null => {
     const trimmed = value.trim();
@@ -159,9 +160,9 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                 <div className="space-y-3">
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Profile Picture</label>
                   <div className="flex items-center gap-4">
-                    {sanitizeImageUrl(avatarUrl) ? (
+                    {safeAvatarUrl ? (
                       <img
-                        src={sanitizeImageUrl(avatarUrl)!}
+                        src={safeAvatarUrl}
                         alt="Avatar"
                         className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                       />
