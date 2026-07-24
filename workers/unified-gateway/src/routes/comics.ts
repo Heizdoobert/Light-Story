@@ -159,7 +159,10 @@ export async function handleComicRecommendations(
   const limit = parseInt(limitStr, 10) || 6;
 
   if (!comicId) {
-    return err('INVALID_INPUT', 'comicId parameter is required', 400);
+    // Return generic recommendations (top viewed/liked) if no comicId is provided
+    const genericRes = await sbGet('stories', `status=neq.archived&order=views.desc,like_count.desc&limit=${limit}`, env, token);
+    const genericData = genericRes.ok ? await genericRes.json() : [];
+    return json({ success: true, data: genericData });
   }
 
   const targetRes = await sbGet('stories', `id=eq.${comicId}&select=*`, env, token);

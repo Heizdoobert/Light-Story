@@ -18,12 +18,12 @@ function validateString(value: unknown, maxLength = 500): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (trimmed.length === 0) return null;
-  return trimmed.slice(0, maxLength);
+  return trimmed;
 }
 
 function normalizeStatus(status: string): string {
   if (VALID_STATUSES.includes(status as any)) return status;
-  return 'draft';
+  return status;
 }
 
 export function validateBody(body: Record<string, unknown>, rules: ValidationRule[]): ValidationError[] {
@@ -37,12 +37,21 @@ export function validateBody(body: Record<string, unknown>, rules: ValidationRul
         const str = validateString(value, rule.maxLength ?? 500);
         if (str === null) {
           errors.push({ field: rule.field, message: `${rule.field} is required and must be a non-empty string` });
+        } else if (rule.maxLength && str.length > rule.maxLength) {
+          errors.push({ field: rule.field, message: `${rule.field} must be at most ${rule.maxLength} characters` });
         }
         break;
       }
       case 'optional-string': {
-        if (value !== undefined && value !== null && typeof value !== 'string' && typeof value !== 'number') {
-          errors.push({ field: rule.field, message: `${rule.field} must be a string` });
+        if (value !== undefined && value !== null) {
+          if (typeof value !== 'string' && typeof value !== 'number') {
+            errors.push({ field: rule.field, message: `${rule.field} must be a string` });
+          } else {
+            const str = String(value).trim();
+            if (rule.maxLength && str.length > rule.maxLength) {
+              errors.push({ field: rule.field, message: `${rule.field} must be at most ${rule.maxLength} characters` });
+            }
+          }
         }
         break;
       }
@@ -75,7 +84,8 @@ export function sanitizeBody(body: Record<string, unknown>, rules: ValidationRul
 
     switch (rule.type) {
       case 'required-string': {
-        sanitized[rule.field] = validateString(value, rule.maxLength ?? 500) ?? '';
+        const strVal = validateString(value, rule.maxLength ?? 500) ?? '';
+        sanitized[rule.field] = strVal.slice(0, rule.maxLength ?? 500);
         break;
       }
       case 'optional-string': {
@@ -87,7 +97,8 @@ export function sanitizeBody(body: Record<string, unknown>, rules: ValidationRul
       }
       case 'enum': {
         if (value !== undefined && value !== null) {
-          sanitized[rule.field] = normalizeStatus(String(value));
+          const status = String(value);
+          sanitized[rule.field] = VALID_STATUSES.includes(status as any) ? status : 'draft';
         }
         break;
       }
