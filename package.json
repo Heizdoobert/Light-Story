@@ -32,13 +32,15 @@
   "overrides": {
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.1",
-    "sharp": "0.35.3",
-    "postcss": "8.5.22",
-    "@hono/node-server": "2.0.11",
     "body-parser": "2.3.0",
-    "**": {
+    "postcss": "8.5.22",
+    "sharp": "0.35.3",
+    "@hono/node-server": "2.0.11",
+    "next": {
       "postcss": "8.5.22",
-      "sharp": "0.35.3",
+      "sharp": "0.35.3"
+    },
+    "@modelcontextprotocol/sdk": {
       "@hono/node-server": "2.0.11"
     }
   }
