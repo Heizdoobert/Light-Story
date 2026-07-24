@@ -1,5 +1,5 @@
 {
-  "name": "lightstory",
+  "name": "unified-gateway",
   "main": "workers/unified-gateway/src/index.ts",
   "compatibility_date": "2026-05-16",
   "minify": true,
