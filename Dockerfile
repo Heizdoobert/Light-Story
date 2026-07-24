@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22
 
-FROM node:${NODE_VERSION}-alpine AS build
+FROM node:${NODE_VERSION}-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY packages/api-types packages/api-types/
 COPY frontend/ frontend/
 RUN --mount=type=cache,target=/root/.npm \
-    npm install
+    rm -f package-lock.json frontend/package-lock.json && \
+    npm install --legacy-peer-deps
 
 WORKDIR /app/frontend
 ENV DOCKER_BUILD=1
