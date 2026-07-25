@@ -289,6 +289,65 @@ export default {
         authToken(downstreamHeaders),
         strippedPath,
       );
+    // ── Public media file serving (secure & sanitized) ────────
+    } else if (method === 'GET' && strippedPath.startsWith('/media/')) {
+      const bucket = env.R2_BUCKET;
+      if (!bucket) {
+        res = err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
+      } else {
+        // Security: decode and sanitize against path traversal attacks (..)
+        let rawKey = strippedPath.replace('/media/', '');
+        try {
+          rawKey = decodeURIComponent(rawKey);
+        } catch {
+          // ignore malformed URI components
+        }
+        rawKey = rawKey.replace(/\\/g, '/').replace(/\/\//g, '/');
+
+        if (rawKey.includes('..') || rawKey.startsWith('/')) {
+          res = err('BAD_REQUEST', 'Invalid key path', 400);
+        } else {
+          const rangeHeader = request.headers.get('range');
+          const ifNoneMatch = request.headers.get('if-none-match');
+
+          const options: R2GetOptions = {};
+          if (rangeHeader) options.range = request.headers;
+          if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
+
+          const object = await bucket.get(rawKey, options);
+          if (!object) {
+            if (ifNoneMatch) {
+              res = new Response(null, { status: 304 });
+            } else {
+              res = err('NOT_FOUND', 'File not found', 404);
+            }
+          } else {
+            const mediaHeaders = new Headers();
+            mediaHeaders.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=31536000, immutable');
+            if (object.httpMetadata?.contentType) {
+              mediaHeaders.set('content-type', object.httpMetadata.contentType);
+            } else {
+              mediaHeaders.set('content-type', 'application/octet-stream');
+            }
+            mediaHeaders.set('etag', object.httpEtag);
+            mediaHeaders.set('accept-ranges', 'bytes');
+            mediaHeaders.set('x-content-type-options', 'nosniff');
+            mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
+
+            if (object.range) {
+              const r = object.range as { offset?: number; length?: number };
+              const offset = r.offset ?? 0;
+              const length = r.length ?? object.size;
+              mediaHeaders.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
+              mediaHeaders.set('content-length', length.toString());
+              res = new Response(object.body, { status: 206, headers: mediaHeaders });
+            } else {
+              mediaHeaders.set('content-length', object.size.toString());
+              res = new Response(object.body, { status: 200, headers: mediaHeaders });
+            }
+          }
+        }
+      }
     } else if (strippedPath.startsWith('/admin')) {
       res = await handleAdminRequest(
         new Request(url.toString(), {

@@ -5,15 +5,15 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, X } from "lucide-react";
 
-import { apiClient } from "@/lib/apiClient";
-import { ComicContext as Comic } from "@/services/comic.service";
+import { apiClient } from "@/lib/api/apiClient";
+import { ComicContext as Comic } from "@/services/comics/comic.service";
+import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { Chapter, Category } from "@/types/entities";
-import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/errorUtils";
-import { LoginModal } from "@/components/shared/LoginModal";
+import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
-import { Header } from "@/components/shared/Header";
-import { getStatusStyles } from "@/lib/statusStyles";
+import { Header } from "@/components/shared/navigation/Header";
+import { getStatusStyles } from "@/lib/utils/statusStyles";
+import { AdZone } from "@/components/shared/ads/AdZone";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -27,7 +27,9 @@ type HomePageProps = {
   initialComics?: Comic[];
 };
 
-export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
+const DEFAULT_INITIAL_COMICS: Comic[] = [];
+
+export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INITIAL_COMICS }) => {
   const [_categories, setCategories] = useState<Category[]>([]);
   const [comics, setComics] = useState<Comic[]>(initialComics);
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
@@ -62,65 +64,64 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     loadInitData();
   }, []);
 
-  // TẢI DANH SÁCH TRUYỆN MỚI NHẤT (Không còn filterParams ở đây nữa)
-  // CHỈ TẢI CHAPTER MỚI NHẤT (Sử dụng luôn danh sách truyện từ Server)
-  const fetchComicsData = useCallback(async () => {
-    // Nếu Server không có truyện nào thì mới bật loading
-    if (initialComics.length === 0) setLoading(true);
-
-    try {
-      // 1. Dùng luôn 15 truyện từ Server truyền xuống
-      let comicsData = initialComics;
-
-      // 2. (Dự phòng) Nếu Server lỗi không có dữ liệu, Client tự gọi lại và ép lấy 15 truyện
-      if (comicsData.length === 0) {
-        const response = await apiClient.get<any>(
-          "/api/comics?sort=newest&limit=15",
-        );
-        comicsData = Array.isArray(response)
-          ? response
-          : response?.items || response?.comics || [];
-        comicsData = comicsData.slice(0, 15); // Ép cắt 15
-        setComics(comicsData); // Cập nhật lại state
-      }
-
-      // 3. Chỉ đi lấy Chapter cho đúng 15 truyện này (Cực kỳ nhẹ server)
-      const chapterMap: Record<string, Chapter> = {};
-      const chapterPromises = comicsData.map(async (comic) => {
-        try {
-          const chaptersRes = await apiClient
-            .get<any>(`/api/comics/${comic.id}/chapters`)
-            .catch(() => []);
-          const chapters: Chapter[] = Array.isArray(chaptersRes)
-            ? chaptersRes
-            : chaptersRes?.items || chaptersRes?.chapters || [];
-
-          if (chapters && chapters.length > 0) {
-            const sorted = chapters.sort(
-              (a, b) =>
-                new Date(b.created_at || 0).getTime() -
-                new Date(a.created_at || 0).getTime(),
-            );
-            chapterMap[comic.id] = sorted[0];
-          }
-        } catch (err) {
-          console.warn(`Không lấy được chapter cho comic ${comic.id}`);
-        }
-      });
-
-      await Promise.all(chapterPromises);
-      setLatestChapters(chapterMap);
-    } catch (error) {
-      console.error("Lỗi tải danh sách truyện tranh:", error);
-      toast.error(getErrorMessage(error, "Lỗi tải truyện"));
-    } finally {
-      setLoading(false);
-    }
-  }, [initialComics]); // 👉 Nhớ thêm initialComics vào mảng phụ thuộc này
-
+  // TẢI DANH SÁCH TRUYỆN MỚI NHẤT & CHAPTER (Chạy 1 lần duy nhất khi mount)
   useEffect(() => {
-    fetchComicsData();
-  }, [fetchComicsData]);
+    let isMounted = true;
+    async function loadComics() {
+      if (initialComics.length === 0) setLoading(true);
+      try {
+        const response = await apiClient
+          .get<any>("/api/comics?sort=newest&limit=15")
+          .catch(() => null);
+
+        let comicsData = Array.isArray(response)
+          ? response
+          : response?.items || response?.comics || initialComics;
+
+        comicsData = comicsData.slice(0, 15);
+        if (!isMounted) return;
+
+        setComics(comicsData);
+        setLoading(false);
+
+        if (comicsData.length > 0) {
+          const chapterMap: Record<string, Chapter> = {};
+          const chapterPromises = comicsData.map(async (comic: Comic) => {
+            try {
+              const chaptersRes = await apiClient
+                .get<any>(`/api/comics/${comic.id}/chapters`)
+                .catch(() => []);
+              const chapters: Chapter[] = Array.isArray(chaptersRes)
+                ? chaptersRes
+                : chaptersRes?.items || chaptersRes?.chapters || [];
+
+              if (chapters && chapters.length > 0) {
+                const sorted = chapters.sort(
+                  (a, b) =>
+                    new Date(b.created_at || 0).getTime() -
+                    new Date(a.created_at || 0).getTime(),
+                );
+                chapterMap[comic.id] = sorted[0];
+              }
+            } catch {
+              // silent fallback
+            }
+          });
+
+          await Promise.all(chapterPromises);
+          if (isMounted) setLatestChapters(chapterMap);
+        }
+      } catch (error) {
+        console.error("Lỗi tải danh sách truyện tranh:", error);
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadComics();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Khóa cuộn trang khi mở bộ lọc
   useEffect(() => {
@@ -129,6 +130,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
       document.body.style.overflow = "unset";
     };
   }, [showFilter]);
+
+  const getComicCover = useCallback((comic: any): string => {
+    const raw = comic.coverUrl || comic.cover_url || "";
+    if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
+    return proxiedR2ImageUrl(raw);
+  }, []);
 
   const applyComicCoverFallback = useCallback(
     (event: React.SyntheticEvent<HTMLImageElement>) => {
@@ -196,6 +203,9 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
       />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
+        {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
+        <AdZone zoneId="home-top" format="banner" className="mb-6" />
+
         {trendingComics.length > 0 && (
           <div className="mb-10 pt-2 sm:pt-4">
             <div className="flex items-center gap-2 mb-4 sm:mb-6">
@@ -213,7 +223,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 >
                   <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-slate-100 dark:bg-slate-800 shadow-md group-hover:shadow-2xl transition-all duration-500 border border-slate-100 dark:border-slate-800">
                     <img
-                      src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
+                      src={getComicCover(comic)}
                       alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"
@@ -240,6 +250,9 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             </div>
           </div>
         )}
+
+        {/* VÙNG QUẢNG CÁO GIỮA TRANG CHỦ */}
+        <AdZone zoneId="home-mid" format="banner" className="my-8" />
 
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
@@ -282,7 +295,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 >
                   <div className="relative overflow-hidden rounded-2xl mb-2 sm:mb-3 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                     <img
-                      src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
+                      src={getComicCover(comic)}
                       alt={comic.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       referrerPolicy="no-referrer"

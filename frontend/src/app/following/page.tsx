@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BookOpen, BookmarkCheck, Sparkles } from "lucide-react";
-import { Header } from "@/components/shared/Header";
-import { getFollowedComics } from "@/services/comicFollow.service";
+import { Header } from "@/components/shared/navigation/Header";
+import { getFollowedComics } from "@/services/comics/comicFollow.service";
 
 export default function FollowingPage() {
   const [followedComics, setFollowedComics] = useState(getFollowedComics());
@@ -57,7 +57,7 @@ export default function FollowingPage() {
                 className="group flex flex-col overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
               >
                 {/* Ảnh bìa */}
-                <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="relative aspect-3/4 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                   <img
                     src={
                       comic.coverUrl ||

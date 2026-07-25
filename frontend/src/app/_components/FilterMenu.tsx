@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
-import { apiClient } from "@/lib/apiClient";
+import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
 
 interface FilterMenuProps {
@@ -105,7 +105,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleApply()}
-            className="w-full h-[50px] pl-11 pr-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/50 outline-none transition-all text-slate-800 dark:text-white"
+            className="w-full h-12.5 pl-11 pr-10 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/50 outline-none transition-all text-slate-800 dark:text-white"
           />
           {searchInput && (
             <button
@@ -130,14 +130,14 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           </label>
           <div
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className="w-full h-[50px] flex items-center justify-between px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+            className="w-full h-12.5 flex items-center justify-between px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
           >
             <span className="truncate">
               {category === "all" ? "Tất cả thể loại" : category}
             </span>
             <ChevronDown
               size={18}
-              className={`flex-shrink-0 text-slate-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
+              className={`shrink-0 text-slate-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
             />
           </div>
 
@@ -214,7 +214,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           </label>
           <div
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="w-full h-[50px] flex items-center justify-between px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+            className="w-full h-12.5 flex items-center justify-between px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
           >
             <span className="truncate">
               {sort === "newest"
@@ -225,7 +225,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
             </span>
             <ChevronDown
               size={18}
-              className={`flex-shrink-0 text-slate-400 transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`}
+              className={`shrink-0 text-slate-400 transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`}
             />
           </div>
 
@@ -264,7 +264,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           whileTap={{ scale: 0.96 }}
           whileHover={{ scale: 1.02 }}
           onClick={handleApply}
-          className="w-full md:w-auto md:min-w-[180px] h-[50px] flex items-center justify-center gap-2 px-6 mt-2 md:mt-0 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 text-white rounded-2xl font-bold text-sm hover:shadow-xl transition-all duration-300 shadow-lg shadow-blue-500/25 dark:shadow-indigo-900/40"
+          className="w-full md:w-auto md:min-w-45 h-12.5 flex items-center justify-center gap-2 px-6 mt-2 md:mt-0 bg-linear-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 text-white rounded-2xl font-bold text-sm hover:shadow-xl transition-all duration-300 shadow-lg shadow-blue-500/25 dark:shadow-indigo-900/40"
         >
           <Filter size={18} />
           Áp dụng

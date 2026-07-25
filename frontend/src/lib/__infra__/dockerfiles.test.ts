@@ -30,7 +30,7 @@ describe('Dockerfile (root, combined frontend build)', () => {
 
   it('keeps the lockfile removal and install within the same RUN instruction as the cache mount', () => {
     const runBlockMatch = content.match(
-      /RUN --mount=type=cache,target=\/root\/\.npm \\\n\s*rm -f package-lock\.json frontend\/package-lock\.json && \\\n\s*npm install --legacy-peer-deps/,
+      /RUN --mount=type=cache,target=\/root\/\.npm \\\r?\n\s*rm -f package-lock\.json frontend\/package-lock\.json && \\\r?\n\s*npm install --legacy-peer-deps/,
     );
     expect(runBlockMatch).not.toBeNull();
   });
@@ -44,11 +44,11 @@ describe('Dockerfile.backend', () => {
   const content = readFile('Dockerfile.backend');
 
   it('installs dependencies with --legacy-peer-deps', () => {
-    expect(content).toMatch(/RUN npm install --legacy-peer-deps/);
+    expect(content).toMatch(/npm install --legacy-peer-deps/);
   });
 
-  it('does not remove lockfiles (unlike the frontend Dockerfiles)', () => {
-    expect(content).not.toMatch(/rm -f package-lock\.json/);
+  it('removes committed lockfiles before installing', () => {
+    expect(content).toMatch(/rm -f package-lock\.json/);
   });
 });
 

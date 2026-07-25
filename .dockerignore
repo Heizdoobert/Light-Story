@@ -32,3 +32,24 @@
 **/dist
 LICENSE
 README.md
+
+# Dev & CI artifacts
+**/.next-dev
+**/graphify-out
+**/.agents
+**/.github
+**/tests
+**/playwright-report
+**/test-results
+**/.playwright
+**/vitest.*.ts
+**/playwright.config.ts
+**/tsconfig.tsbuildinfo
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+**/ARCHITECTURE.md
+**/eslint.config.mjs
+**/scripts
+**/.gemini

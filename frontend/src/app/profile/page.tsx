@@ -12,7 +12,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "@/modules/auth/AuthContext";
-import { userService } from "@/services/userService.service"; // 👉 Import Service vừa tạo
+import { userService } from "@/services/comics/userService.service"; // 👉 Import Service vừa tạo
 import { toast } from "sonner";
 import Link from "next/link";
 
@@ -135,7 +135,7 @@ export default function ProfilePage() {
           className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl overflow-hidden relative"
         >
           {/* Ảnh bìa (Cover Photo) */}
-          <div className="h-44 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 relative">
+          <div className="h-44 bg-linear-to-r from-blue-500 via-indigo-500 to-purple-600 relative">
             <div className="absolute inset-0 bg-black/10"></div>
           </div>
 
@@ -236,7 +236,7 @@ export default function ProfilePage() {
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={isSaving}
-                className="flex items-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 dark:shadow-indigo-900/40 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                className="flex items-center gap-2 px-8 py-3.5 bg-linear-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/25 dark:shadow-indigo-900/40 transition-all disabled:opacity-50 disabled:hover:scale-100"
               >
                 {isSaving ? (
                   <Loader2 size={18} className="animate-spin" />

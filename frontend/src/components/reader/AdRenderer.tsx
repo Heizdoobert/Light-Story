@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/adPolicy';
-import { apiClient } from '@/lib/apiClient';
+import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/adPolicy';
+import { apiClient } from '@/lib/api/apiClient';
 
 type SiteSettingItem = { key: string; value: unknown };
 

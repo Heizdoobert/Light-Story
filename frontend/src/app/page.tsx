@@ -1,4 +1,4 @@
-import { fetchComicCatalog } from "@/services/comicCms.service";
+import { fetchComicCatalog } from "@/services/comics/comicCms.service";
 import { HomePage } from "./_components/HomePage";
 
 export default async function Page() {

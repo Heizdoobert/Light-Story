@@ -1,60 +1,20 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { TRANSLATIONS, Language } from "@/lib/i18n/translations";
 
-export type Language = "VI" | "EN";
+export type { Language };
 
 type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
-};
-
-const translations: Record<Language, Record<string, string>> = {
-  VI: {
-    notifications: "Thông báo",
-    no_notifications: "Không có thông báo mới nào",
-    mark_all_read: "Đánh dấu tất cả đã đọc",
-    clear_all: "Xóa tất cả",
-    unread: "Chưa đọc",
-    all: "Tất cả",
-    language: "Ngôn ngữ",
-    vietnamese: "Tiếng Việt (VI)",
-    english: "English (EN)",
-    system_settings: "Cài đặt hệ thống",
-    interface_controls: "Điều khiển giao diện",
-    compact_layout: "Bố cục thu gọn",
-    show_sync_badge: "Hiển thị huy hiệu đồng bộ",
-    save_settings: "Lưu cài đặt",
-    admin_dashboard: "Quản trị",
-    login: "Đăng nhập",
-    logout: "Đăng xuất",
-  },
-  EN: {
-    notifications: "Notifications",
-    no_notifications: "No new notifications",
-    mark_all_read: "Mark all as read",
-    clear_all: "Clear all",
-    unread: "Unread",
-    all: "All",
-    language: "Language",
-    vietnamese: "Tiếng Việt (VI)",
-    english: "English (EN)",
-    system_settings: "System Settings",
-    interface_controls: "Interface Controls",
-    compact_layout: "Compact Layout",
-    show_sync_badge: "Show Live Sync Badge",
-    save_settings: "Save Settings",
-    admin_dashboard: "Admin Dashboard",
-    login: "Sign In",
-    logout: "Sign Out",
-  },
+  t: (key: string, fallback?: string) => string;
 };
 
 const LanguageContext = createContext<LanguageContextType>({
   language: "VI",
   setLanguage: () => {},
-  t: (key) => key,
+  t: (key, fallback) => fallback ?? key,
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -74,8 +34,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("lightstory_language", lang);
   };
 
-  const t = (key: string): string => {
-    return translations[language]?.[key] ?? translations["EN"]?.[key] ?? key;
+  const t = (key: string, fallback?: string): string => {
+    return TRANSLATIONS[language]?.[key] ?? TRANSLATIONS["EN"]?.[key] ?? fallback ?? key;
   };
 
   return (
