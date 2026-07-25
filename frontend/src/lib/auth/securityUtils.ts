@@ -15,11 +15,12 @@ export function sanitizeImageUrl(url: string | null | undefined): string | null 
       return trimmed;
     }
 
-    const parsed = new URL(trimmed, "https://sanitizer.local");
-
-    if (parsed.protocol === "blob:") {
-      return trimmed;
+    if (trimmed.startsWith("blob:")) {
+      const isSafeBlob = /^blob:(https?:\/\/[^\/]+)\/.+$/i.test(trimmed);
+      return isSafeBlob ? trimmed : null;
     }
+
+    const parsed = new URL(trimmed, "https://sanitizer.local");
 
     if (parsed.protocol === "data:") {
       return trimmed.toLowerCase().startsWith("data:image/") ? trimmed : null;
