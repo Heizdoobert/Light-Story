@@ -1,9 +1,0 @@
-name: TestMin
-on:
-  push:
-  workflow_dispatch:
-jobs:
-  t:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ok
