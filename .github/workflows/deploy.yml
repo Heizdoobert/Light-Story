@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 env:
   NODE_VERSION: '22'
@@ -79,10 +76,9 @@ jobs:
           echo "Smoke test failed"
           exit 1
 
-      - name: Notify Slack on failure
-        if: failure()
-        uses: 8398a7/action-slack@28ba28c25673d05d7b567d26b52a16d56d11b3bc # v3.16.2
-        with:
-          status: ${{ job.status }}
-          text: 'Deployment to production failed!'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Notify Discord on failure
+        if: failure() && secrets.DISCORD_WEBHOOK != ''
+        run: |
+          curl -s -H "Content-Type: application/json" \
+            -d '{"content":"🚨 Deployment to production failed!"}' \
+            ${{ secrets.DISCORD_WEBHOOK }}
