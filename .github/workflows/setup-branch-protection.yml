@@ -6,9 +6,7 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-  administration: write
+permissions: write-all
 
 jobs:
   protect-main:

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
-import { apiClient } from "@/lib/apiClient";
+import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
 
 interface FilterMenuProps {
@@ -42,9 +42,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await apiClient.get<any>(
-          "/api/admin/taxonomy?entity=category",
-        );
+        const res = await apiClient.get<any>("/api/categories");
         if (Array.isArray(res)) {
           setCategories(res);
         } else if (res && res.items) {

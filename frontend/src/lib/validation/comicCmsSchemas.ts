@@ -3,10 +3,21 @@ import { z } from "zod";
 export const ComicStatus = z.enum(["draft", "published", "ongoing", "completed", "archived"]);
 export type ComicStatus = z.infer<typeof ComicStatus>;
 
+const INVALID_ANONYMOUS_NAMES = ["anonymous", "anonymust", "unknown", "n/a", "na", "none", "vô danh", "chưa cập nhật"];
+
+function isValidEntityName(name: string): boolean {
+  if (!name || !name.trim()) return false;
+  return !INVALID_ANONYMOUS_NAMES.includes(name.trim().toLowerCase());
+}
+
 export const ComicCmsFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().optional().default(""),
-  author: z.string().min(1, "Author is required"),
+  author: z.string().refine(
+    (val) => isValidEntityName(val),
+    "Must select or create a valid Author. Anonymous/Unknown is not allowed."
+  ),
+  translator: z.string().optional().default(""),
   description: z.string().optional().default(""),
   status: ComicStatus.default("draft"),
   coverUrl: z.string().optional().default(""),

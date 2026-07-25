@@ -40,8 +40,8 @@ export async function handleStoriesRequest(
         100,
         Math.max(1, parseInt(url.searchParams.get('pageSize') || '10')),
       );
-      const keyword = url.searchParams.get('keyword') || '';
-      const category = url.searchParams.get('category') || '';
+      const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
+      const category = (url.searchParams.get('category') || '').replace(/[\(\),&]/g, '').trim();
       const sort = url.searchParams.get('sort') || 'newest';
       const offset = (page - 1) * pageSize;
       const allowedStatuses = ['published', 'ongoing', 'completed'];
@@ -56,10 +56,10 @@ export async function handleStoriesRequest(
 
       let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
       if (keyword) {
-        q += `&or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`;
+        q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
       }
       if (category) {
-        q += `&category=ilike.*${category}*`;
+        q += `&category=ilike.*${encodeURIComponent(category)}*`;
       }
       const res = await sbGet('stories', q, env, token);
       if (!res.ok) return handleRes(res);
@@ -67,10 +67,10 @@ export async function handleStoriesRequest(
 
       let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
       if (keyword) {
-        countQ += `&or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`;
+        countQ += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
       }
       if (category) {
-        countQ += `&category=ilike.*${category}*`;
+        countQ += `&category=ilike.*${encodeURIComponent(category)}*`;
       }
       const total = await sbGetCount(countQ, env, token);
       return json({ items, total });
@@ -134,6 +134,22 @@ export async function handleStoriesRequest(
         'BAD_REQUEST',
         'Missing id or storyId parameter',
         400,
+      );
+    }
+
+    if (method === 'GET' && pathname.match(/^\/chapters\/[^\/]+$/)) {
+      const id = pathname.split('/')[2];
+      const res = await sbGet(
+        'chapters',
+        `id=eq.${id}&select=*`,
+        env,
+        token,
+      );
+      const data = await res.json();
+      if (!res.ok)
+        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+      return json(
+        Array.isArray(data) ? data[0] || null : data,
       );
     }
 

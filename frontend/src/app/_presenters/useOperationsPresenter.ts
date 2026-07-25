@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 
 async function fetchCount(type: 'profiles' | 'chapters') {
   const result = await apiClient.get<{ count: number }>(`/api/admin/site-metrics?type=${type}`);

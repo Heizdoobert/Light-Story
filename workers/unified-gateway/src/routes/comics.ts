@@ -5,9 +5,12 @@ import {
   err,
   sbGet,
   sbPost,
+  sb,
+  sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';
+import { encryptField, decryptField } from '../utils/encryption';
 import {
   validateBody,
   sanitizeBody,
@@ -39,14 +42,12 @@ export async function handleComicsRequest(
         100,
         Math.max(1, parseInt(url.searchParams.get('pageSize') || '10')),
       );
-      const keyword = url.searchParams.get('keyword') || '';
+      const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
       const offset = (page - 1) * pageSize;
-      const conditions: string[] = ['status=neq.archived'];
-      if (keyword)
-        conditions.push(
-          `or=(title.ilike.*${keyword}*,author.ilike.*${keyword}*)`,
-        );
-      const q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=neq.archived&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      if (keyword) {
+        q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+      }
       const res = await sbGet('stories', q, env, token);
       return handleRes(res);
     }
@@ -119,7 +120,36 @@ export async function handleComicsRequest(
         env,
         token,
       );
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const items = (await res.json()) as any[];
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          if (item.content) item.content = await decryptField(item.content);
+        }
+      }
+      return json(items);
+    }
+
+    if (
+      method === 'GET' &&
+      pathname.match(/^\/comics\/[^\/]+\/chapters\/[^\/]+$/)
+    ) {
+      const parts = pathname.split('/');
+      const chapterId = parts[4];
+      const res = await sbGet(
+        'chapters',
+        `id=eq.${chapterId}&select=*`,
+        env,
+        token,
+      );
+      const data = await res.json();
+      if (!res.ok)
+        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+      const item = Array.isArray(data) ? data[0] || null : data;
+      if (item && item.content) {
+        item.content = await decryptField(item.content);
+      }
+      return json(item);
     }
 
     if (
@@ -128,15 +158,23 @@ export async function handleComicsRequest(
     ) {
       const comicId = pathname.split('/')[2];
       const body = (await request.json()) as any;
+      const rawContent = typeof body.content === 'object' ? JSON.stringify(body.content) : (body.content || '');
+      const encryptedContent = await encryptField(rawContent);
       const payload = {
         story_id: body.storyId || comicId,
         chapter_number:
           body.chapterNumber || body.chapter_number || 1,
         title: body.title,
-        content: body.content || '',
+        content: encryptedContent,
       };
       const res = await sbPost('chapters', payload, env, token);
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const created = await res.json();
+      const item = Array.isArray(created) ? created[0] || created : created;
+      if (item && item.content) {
+        item.content = await decryptField(item.content);
+      }
+      return json(item);
     }
 
     return null;

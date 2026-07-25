@@ -32,7 +32,8 @@ export function checkRateLimit(
     ip === '127.0.0.1' ||
     ip === '::1' ||
     ip === 'localhost' ||
-    pathname?.includes('/admin/r2/file/')
+    pathname?.includes('/admin/r2/file/') ||
+    pathname?.includes('/media/')
   ) {
     return {
       allowed: true,
