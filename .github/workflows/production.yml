@@ -1,18 +1,7 @@
 name: Deploy
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-env:
-  NODE_VERSION: '22'
-
+on: push
 jobs:
-  validate:
-    name: Lint Build Test
+  t:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo OK
+      - run: echo ok
