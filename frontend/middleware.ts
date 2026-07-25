@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
 export function middleware() {
-  // CSP in report-only mode for staging
-  const csp = "default-src 'self'; img-src 'self' data: https://*.r2.cloudflarestorage.com; connect-src 'self' https://*.supabase.co;";
+  const csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.r2.cloudflarestorage.com; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
   const res = NextResponse.next();
-  // Use Report-Only to avoid breaking staging
-  res.headers.set('Content-Security-Policy-Report-Only', csp);
+  res.headers.set('Content-Security-Policy', csp);
+  res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   return res;
 }

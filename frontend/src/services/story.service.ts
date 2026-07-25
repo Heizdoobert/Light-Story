@@ -48,9 +48,10 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
   if (params.status && params.status !== 'all') searchParams.set('status', params.status);
   if (params.sort) searchParams.set('sort', params.sort);
 
-  const result = await apiClient.get<StoryListResponse>(`/api/stories?${searchParams.toString()}`);
-  const items = Array.isArray(result) ? result : result.items;
-  return { items, total: items.length };
+  const result = await apiClient.get<any>(`/api/stories?${searchParams.toString()}`);
+  const items = Array.isArray(result) ? result : (result.items ?? []);
+  const total = result.total ?? items.length;
+  return { items, total };
 }
 
 export async function updateStory(id: string, payload: Pick<Story, 'title' | 'description' | 'status'>): Promise<Story> {

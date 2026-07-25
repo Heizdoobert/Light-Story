@@ -15,6 +15,7 @@ export const MAX_PAGE_SIZE_BYTES = 2 * 1024 * 1024;
 
 export const DEFAULT_FORM: ComicCmsFormValues = {
   title: "",
+  slug: "",
   author: "",
   description: "",
   status: "draft",
@@ -69,12 +70,14 @@ export function formatDateTime(value: string | null | undefined): string {
 export function toFormState(record: {
   status: ComicStatus;
   title: string;
+  slug?: string;
   author: string;
   description?: string;
   coverUrl?: string;
 }): ComicCmsFormValues {
   return {
     title: record.title,
+    slug: record.slug ?? slugify(record.title),
     author: record.author,
     description: record.description ?? "",
     status: record.status,

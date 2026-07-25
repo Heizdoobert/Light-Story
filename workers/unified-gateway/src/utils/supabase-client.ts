@@ -6,18 +6,38 @@ export interface Env {
   SUPABASE_SERVICE_KEY?: string;
   SUPABASE_JWKS_URL?: string;
   R2_BUCKET?: R2Bucket;
+  BINDING_NAME?: KVNamespace;
+  ANALYTICS_DATA?: AnalyticsEngineDataset;
   USE_NEW_UNIFIED_GATEWAY?: string;
 }
 
+export function recordAnalyticsEngineEvent(
+  env: Env,
+  event: {
+    indexes?: string[];
+    blobs?: string[];
+    doubles?: number[];
+  },
+): void {
+  try {
+    if (env.ANALYTICS_DATA && typeof (env.ANALYTICS_DATA as any).writeDataPoint === 'function') {
+      (env.ANALYTICS_DATA as any).writeDataPoint({
+        indexes: event.indexes || [],
+        blobs: event.blobs || [],
+        doubles: event.doubles || [],
+      });
+    }
+  } catch (e) {
+    console.error('[AnalyticsEngine] Failed to write data point', e);
+  }
+}
+
 function json(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return Response.json(data, { status });
 }
 
 function err(code: string, message: string, status: number): Response {
-  return json({ status: 'error', error: { code, message } }, status);
+  return Response.json({ status: 'error', error: { code, message } }, { status });
 }
 
 function authToken(h: Headers): string | null {
@@ -142,7 +162,7 @@ async function sbGetCount(
   const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${q}`, {
     method: 'HEAD',
     headers: {
-      ...Object.fromEntries(h.entries()),
+      ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',
     },
   });

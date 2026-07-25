@@ -1,4 +1,4 @@
-import { BookOpen, Database, DollarSign, LayoutDashboard, Library, PenSquare, PlusCircle, Settings, User, Users, Workflow, type LucideIcon } from 'lucide-react';
+import { BookOpen, Database, DollarSign, LayoutDashboard, Library, PenSquare, Settings, User, Users, Workflow, type LucideIcon } from 'lucide-react';
 import { UserRole } from '../modules/auth/AuthContext';
 
 export type AdminMenuId =
@@ -57,20 +57,8 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     roles: ['superadmin', 'admin', 'employee'],
   },
   {
-    id: 'create_story',
-    label: 'Create Story',
-    icon: PlusCircle,
-    roles: ['superadmin', 'admin', 'employee'],
-  },
-  {
-    id: 'create_chapter',
-    label: 'Create Chapter',
-    icon: PlusCircle,
-    roles: ['superadmin', 'admin', 'employee'],
-  },
-  {
-    id: 'stories',
-    label: 'Stories',
+    id: 'create_comic',
+    label: 'Comic & Story CMS',
     icon: BookOpen,
     roles: ['superadmin', 'admin', 'employee'],
   },
@@ -84,12 +72,6 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     id: 'authors',
     label: 'Authors',
     icon: PenSquare,
-    roles: ['superadmin', 'admin', 'employee'],
-  },
-  {
-    id: 'create_comic',
-    label: 'Create Comic',
-    icon: PlusCircle,
     roles: ['superadmin', 'admin', 'employee'],
   },
   { id: 'users', label: 'Users', icon: Users, roles: ['superadmin', 'admin'] },

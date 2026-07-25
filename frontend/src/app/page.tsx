@@ -1,5 +1,5 @@
 import { fetchComicCatalog } from "@/services/comicCms.service";
-import { HomePage } from "./_components/HomePage"; // Hoặc đường dẫn trỏ tới component HomePage của bạn
+import { HomePage } from "./_components/HomePage";
 
 export default async function Page() {
   // 1. Gọi API lấy toàn bộ danh sách truyện từ Cms service

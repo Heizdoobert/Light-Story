@@ -1,41 +1,34 @@
 # syntax=docker/dockerfile:1
+ARG NODE_VERSION=22
 
-ARG NODE_VERSION=20
-
-################################################################################
-# Base stage
-FROM node:${NODE_VERSION}-alpine AS base
+FROM node:${NODE_VERSION}-slim AS build
 WORKDIR /app
 
-################################################################################
-# Install production dependencies
-FROM base AS deps
-COPY frontend/package.json frontend/package-lock.json ./
+COPY package.json package-lock.json ./
+COPY packages/api-types packages/api-types/
+COPY frontend/ frontend/
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev
+    rm -f package-lock.json frontend/package-lock.json && \
+    npm install --legacy-peer-deps
 
-################################################################################
-# Build stage (standalone output for minimal runtime image)
-FROM base AS build
-COPY frontend/package.json frontend/package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
-
-COPY frontend/ ./
+WORKDIR /app/frontend
 ENV DOCKER_BUILD=1
-RUN npm run build
 
-################################################################################
-# Final runtime image
-FROM base AS final
+ARG NEXT_PUBLIC_GATEWAY_URL
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+RUN npm run build 2>&1
+
+FROM node:${NODE_VERSION}-alpine AS final
 ENV NODE_ENV=production
-
-# Run as non-root user
-USER node
-
-COPY --chown=node:node --from=build /app/public ./public
-COPY --chown=node:node --from=build /app/.next/standalone ./
-COPY --chown=node:node --from=build /app/.next/static ./.next/static
-
+WORKDIR /app
+COPY --chown=node:node --from=build /app/frontend/.next/standalone ./
+COPY --chown=node:node --from=build /app/frontend/.next/static ./frontend/.next/static
 EXPOSE 3000
-CMD ["node", "server.js"]
+USER node
+CMD ["node", "frontend/server.js"]

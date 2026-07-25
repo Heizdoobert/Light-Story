@@ -89,7 +89,7 @@ describe('uploadComicCover', () => {
 
     expect(url).toBe('https://r2.test/cover.jpg');
     expect(fetch).toHaveBeenCalledWith(
-      'https://gateway.test/api/admin/upload-to-r2',
+      'https://gateway.test/api/admin/r2/upload',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
@@ -129,5 +129,15 @@ describe('createComic', () => {
       status: 'ongoing',
       category: [],
     });
+  });
+});
+
+describe('getRecommendations', () => {
+  it('calls /api/comics/recommendations with parameters', async () => {
+    mockApiClient.get.mockResolvedValue([{ id: 'rec-1', title: 'Rec Comic' }]);
+    const { getRecommendations } = await import('./comic.service');
+    const result = await getRecommendations('comic-1', 6);
+    expect(result).toHaveLength(1);
+    expect(mockApiClient.get).toHaveBeenCalledWith('/api/comics/recommendations?comicId=comic-1&limit=6');
   });
 });

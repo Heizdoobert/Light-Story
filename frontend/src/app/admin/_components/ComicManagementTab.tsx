@@ -18,6 +18,7 @@ import {
   createComicChapterFromFiles,
   createComicFromMetadata,
   deleteComic,
+  deleteComicChapter,
   fetchComicCatalog,
   listComicModerationState,
   loadComicCatalog,
@@ -33,6 +34,7 @@ import {
   type ComicCmsRecord,
 } from "@/services/comicCms.service";
 import { uploadComicCover } from "@/services/comic.service";
+import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
 import {
   DEFAULT_FORM,
   DEFAULT_CHAPTER_FORM,
@@ -76,6 +78,7 @@ export const ComicManagementTab: React.FC = () => {
 
   const [chapterValues, setChapterValues] = useState<ComicChapterFormValues>(DEFAULT_CHAPTER_FORM);
   const [chapterPages, setChapterPages] = useState<PageDraft[]>([]);
+  const [, setCbzArchiveFile] = useState<File | null>(null);
   const [chapterBusy, setChapterBusy] = useState(false);
   const [chapterError, setChapterError] = useState<string | null>(null);
 
@@ -181,6 +184,10 @@ export const ComicManagementTab: React.FC = () => {
       .finally(() => setRefreshing(false));
   }, []);
 
+  useEffect(() => {
+    refreshCatalog(false);
+  }, [refreshCatalog]);
+
   const loadNewComicDraft = useCallback(() => {
     setSelectedComicId(null);
     setFormValues(DEFAULT_FORM);
@@ -216,14 +223,39 @@ export const ComicManagementTab: React.FC = () => {
   }, []);
 
   const resetChapterPages = useCallback(() => {
+    setCbzArchiveFile(null);
     setChapterPages((current) => {
       current.forEach((page) => URL.revokeObjectURL(page.previewUrl));
       return [];
     });
   }, []);
 
-  const addChapterFiles = useCallback((incomingFiles: File[]) => {
+  const addChapterFiles = useCallback(async (incomingFiles: File[]) => {
     if (incomingFiles.length === 0) return;
+    const foundCbz = incomingFiles.find((f) => isCbzFile(f));
+    if (foundCbz) {
+      setCbzArchiveFile(foundCbz);
+      try {
+        toast.info("Extracting CBZ archive preview pages...");
+        const extracted = await extractCbzFileToImages(foundCbz);
+        setChapterPages((current) => {
+          const next = extracted.map((file, index) => ({
+            id: crypto.randomUUID(),
+            file,
+            order: current.length + index + 1,
+            previewUrl: URL.createObjectURL(file),
+            sizeBytes: file.size,
+            fileName: file.name,
+          }));
+          return [...current, ...next];
+        });
+      } catch (err) {
+        toast.error("Failed to unpack .cbz archive for preview");
+      }
+      setChapterError(null);
+      return;
+    }
+
     const sorted = sortFilesByFilename(incomingFiles);
     setChapterPages((current) => {
       const next = sorted.map((file, index) => ({
@@ -316,7 +348,9 @@ export const ComicManagementTab: React.FC = () => {
         toast.success("Comic created");
       }
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to save comic.");
+      const msg = error instanceof Error ? error.message : "Failed to save comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -326,7 +360,9 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse(formValues);
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving a draft.");
+      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving a draft.";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
     saveComicDraft(draftKey, parsed.data);
@@ -351,7 +387,9 @@ export const ComicManagementTab: React.FC = () => {
         autoSave.clear();
         toast.success("Draft saved to catalog and local recovery storage");
       } catch (error) {
-        setFormError(error instanceof Error ? error.message : "Failed to save draft.");
+        const msg = error instanceof Error ? error.message : "Failed to save draft.";
+        setFormError(msg);
+        toast.error(msg);
       }
       return;
     }
@@ -369,7 +407,9 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse({ ...formValues, status: "published" });
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Fix the comic metadata before publishing.");
+      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before publishing.";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
     setFormBusy(true);
@@ -378,10 +418,11 @@ export const ComicManagementTab: React.FC = () => {
       if (selectedComic) {
         let nextCoverUrl = selectedComic.coverUrl;
         if (coverFile) nextCoverUrl = await uploadComicCover(coverFile);
-      const updated: ComicCmsRecord = {
+        const updated: ComicCmsRecord = {
           ...selectedComic,
           ...parsed.data,
           coverUrl: nextCoverUrl,
+          lastUpdatedAt: new Date().toISOString(),
         } as ComicCmsRecord;
         const saved = await updateComicRecord(updated);
         await recordComicAudit("comic.publish", {
@@ -407,7 +448,9 @@ export const ComicManagementTab: React.FC = () => {
       }
       toast.success("Comic published");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to publish comic.");
+      const msg = error instanceof Error ? error.message : "Failed to publish comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -431,7 +474,9 @@ export const ComicManagementTab: React.FC = () => {
       setCatalog((prev) => prev.filter((item) => item.id !== selectedComic.id));
       toast.success("Comic deleted");
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Failed to delete comic.");
+      const msg = error instanceof Error ? error.message : "Failed to delete comic.";
+      setFormError(msg);
+      toast.error(msg);
     } finally {
       setFormBusy(false);
     }
@@ -465,11 +510,13 @@ export const ComicManagementTab: React.FC = () => {
     }
     setChapterBusy(true);
     try {
-      const ordered = [...chapterPages].sort((left, right) => left.order - right.order);
+      const filesToUpload = [...chapterPages]
+        .sort((left, right) => left.order - right.order)
+        .map((page) => page.file);
       const chapter = await createComicChapterFromFiles(
         selectedComic,
         parsed.data,
-        ordered.map((page) => page.file),
+        filesToUpload,
       );
       await recordComicAudit("comic.chapter.create", {
         comicId: selectedComic.id,
@@ -481,21 +528,62 @@ export const ComicManagementTab: React.FC = () => {
       clearComicDraft(selectedComic.id);
       autoSave.clear();
       setCatalog((prev) =>
-        prev.map((item) =>
-          item.id === selectedComic.id
-            ? { ...item, chapters: [...item.chapters, chapter], lastUpdatedAt: new Date().toISOString() }
-            : item,
-        ),
+        prev.map((item) => {
+          if (item.id !== selectedComic.id) return item;
+          const existingIdx = item.chapters.findIndex(
+            (ch) => ch.id === chapter.id || ch.chapterNumber === chapter.chapterNumber,
+          );
+          let nextChapters = [...item.chapters];
+          if (existingIdx !== -1) {
+            nextChapters[existingIdx] = chapter;
+          } else {
+            nextChapters.push(chapter);
+          }
+          nextChapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
+          return { ...item, chapters: nextChapters, lastUpdatedAt: new Date().toISOString() };
+        }),
       );
       setChapterValues(DEFAULT_CHAPTER_FORM);
       resetChapterPages();
-      toast.success("Chapter uploaded and optimized");
+      refreshCatalog(false);
     } catch (error) {
-      setChapterError(error instanceof Error ? error.message : "Failed to save chapter.");
+      const msg = error instanceof Error ? error.message : "Failed to save chapter.";
+      setChapterError(msg);
+      toast.error(msg);
     } finally {
       setChapterBusy(false);
     }
-  }, [autoSave, chapterPages, chapterValues, resetChapterPages, selectedComic]);
+  }, [autoSave, chapterPages, chapterValues, refreshCatalog, resetChapterPages, selectedComic]);
+
+  const handleDeleteChapter = useCallback(
+    async (chapterId: string) => {
+      if (!selectedComic) return;
+      try {
+        await deleteComicChapter(selectedComic.id, chapterId);
+        await recordComicAudit("comic.chapter.delete", {
+          comicId: selectedComic.id,
+          chapterId,
+          target_user_id: selectedComic.id,
+        });
+        setCatalog((prev) =>
+          prev.map((item) =>
+            item.id === selectedComic.id
+              ? {
+                  ...item,
+                  chapters: item.chapters.filter((ch) => ch.id !== chapterId),
+                  lastUpdatedAt: new Date().toISOString(),
+                }
+              : item,
+          ),
+        );
+        toast.success("Chapter deleted successfully");
+        refreshCatalog(false);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to delete chapter.");
+      }
+    },
+    [selectedComic],
+  );
 
   const handleModerationAction = useCallback(
     async (commentId: string, nextStatus: ComicModerationState["reportedComments"][number]["status"]) => {
@@ -634,7 +722,7 @@ export const ComicManagementTab: React.FC = () => {
         {([
           ["catalog", "Catalog"],
           ["editor", "Edit / Create"],
-          ["chapters", "Chapters & Assets"],
+          ["chapters", "Chỉnh sửa chương"],
           ["moderation", "Comments & Reports"],
         ] as const).map(([key, label]) => (
           <button
@@ -690,6 +778,7 @@ export const ComicManagementTab: React.FC = () => {
           onPublish={handlePublish}
           onDelete={handleDelete}
           onNewDraft={loadNewComicDraft}
+          onGoToChapters={() => setActiveTab("chapters")}
         />
       )}
 
@@ -710,6 +799,7 @@ export const ComicManagementTab: React.FC = () => {
           onSave={handleChapterSave}
           onResetPages={resetChapterPages}
           onSelectComic={(comicId) => { setSelectedComicId(comicId); setChapterError(null); }}
+          onDeleteChapter={handleDeleteChapter}
         />
       )}
 

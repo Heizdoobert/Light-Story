@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
@@ -20,6 +20,10 @@ import { toast } from "sonner";
 import { Header } from "@/components/shared/Header";
 import { LoginModal } from "@/components/shared/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
+import { RecommendedComics } from "@/components/shared/RecommendedComics";
+import { recordReadingHistory } from "@/services/readerHub.service";
+import { ChapterImage } from "@/components/reader/ChapterImage";
+import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -89,12 +93,12 @@ export default function ReadChapterPage() {
 
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
-  const [showFilter, setShowFilter] = useState(false);
+  const [_showFilter, setShowFilter] = useState(false);
   const [comic, setComic] = useState<Comic | null>(null);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [images, setImages] = useState<string[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
+  const [_categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
   const [loading, setLoading] = useState(true);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -155,6 +159,9 @@ export default function ReadChapterPage() {
           ? currentRes[0]
           : currentRes?.chapter || currentRes;
         setCurrentChapter(currentData);
+        if (currentData) {
+          recordReadingHistory(comicId, chapterId, currentData.chapter_number || 1);
+        }
 
         let imgArray: string[] = [];
         if (currentData?.content) {
@@ -170,7 +177,26 @@ export default function ReadChapterPage() {
             imgArray = currentData.content;
           }
         }
-        setImages(imgArray);
+
+        const cbzTargetUrl =
+          imgArray.find((item) => typeof item === "string" && isCbzUrl(item)) ||
+          (typeof currentData?.content === "string" && isCbzUrl(currentData.content)
+            ? currentData.content
+            : null);
+
+        if (cbzTargetUrl) {
+          try {
+            toast.info("Đang giải nén tập tin .cbz...");
+            const unpackedBlobUrls = await loadCbzPagesFromUrl(cbzTargetUrl);
+            setImages(unpackedBlobUrls);
+          } catch (err) {
+            console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
+            toast.error("Không thể giải nén file .cbz của chương truyện.");
+            setImages(imgArray);
+          }
+        } else {
+          setImages(imgArray);
+        }
       } catch (error) {
         toast.error("Không thể tải nội dung chương truyện.");
       } finally {
@@ -320,16 +346,11 @@ export default function ReadChapterPage() {
           </div>
         ) : (
           images.map((imgUrl, idx) => (
-            <img
-              key={idx}
+            <ChapterImage
+              key={`${imgUrl}-${idx}`}
               src={imgUrl}
-              alt={`Page ${idx + 1}`}
-              loading="lazy"
-              className="w-full object-contain select-none block m-0 p-0"
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://placehold.co/800x1200/eee/999?text=Lỗi+tải+ảnh";
-              }}
+              alt={`Trang ${idx + 1}`}
+              index={idx}
             />
           ))
         )}
@@ -459,6 +480,8 @@ export default function ReadChapterPage() {
               <ArrowUp size={20} className="sm:w-[22px] sm:h-[22px]" />
             </button>
           </div>
+
+          <RecommendedComics comicId={comicId} />
         </div>
       </div>
 

@@ -9,11 +9,6 @@ import React, {
 import { useAuth } from "@/modules/auth/AuthContext";
 import { AdminLayout } from './AdminLayout';
 
-const StoryForm = lazy(() => import("@/app/admin/_components/StoryForm").then((m) => ({ default: m.StoryForm })));
-const StoryManagementTab = lazy(() =>
-  import("@/app/admin/_components/StoryManagementTab").then((m) => ({ default: m.StoryManagementTab })),
-);
-const ChapterForm = lazy(() => import("@/app/admin/_components/ChapterForm").then((m) => ({ default: m.ChapterForm })));
 const AdManager = lazy(() => import("@/app/admin/_components/AdManager").then((m) => ({ default: m.AdManager })));
 const UserProfileTab = lazy(() =>
   import("@/app/admin/_components/UserProfileTab").then((m) => ({ default: m.UserProfileTab })),
@@ -137,9 +132,10 @@ const AdminDashboardContent: React.FC<{
       case "operations_data":
         return withSuspense(<OperationsDataTab />);
       case "create_story":
-        return withSuspense(<StoryForm />);
       case "create_chapter":
-        return withSuspense(<ChapterForm />);
+      case "stories":
+      case "create_comic":
+        return withSuspense(<ComicManagementTab />);
       case "ads":
         return withSuspense(<AdManager />);
       case "profile":
@@ -150,16 +146,12 @@ const AdminDashboardContent: React.FC<{
         return withSuspense(<AuthorManagementTab />);
       case "settings":
         return withSuspense(<SystemSettingsTab />);
-      case "create_comic":
-        return withSuspense(<ComicManagementTab />);
       case "users":
         return role === "superadmin" || role === "admin" ? withSuspense(<AdminUserManagement />) : null;
       case "audit_logs":
         return role === "superadmin" ? withSuspense(<AdminAuditLogsTab />) : null;
       case "dashboard_access_logs":
         return role === "superadmin" || role === "admin" ? withSuspense(<DashboardAccessLogsTab />) : null;
-      case "stories":
-        return withSuspense(<StoryManagementTab />);
       default:
         return null;
     }
