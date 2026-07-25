@@ -1,4 +1,4 @@
-name: Deploy: Production
+name: Deploy
 
 on:
   push:
@@ -11,13 +11,13 @@ env:
 
 jobs:
   validate:
-    name: Lint, Build, Test
+    name: Lint Build Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -25,24 +25,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint (TypeScript strict)
+      - name: Lint
         run: npm run lint
 
-      - name: Build frontend
+      - name: Build
         run: npm run build
 
-      - name: Run tests
+      - name: Test
         run: npm run test:run
 
   deploy:
-    name: Deploy to Cloudflare
+    name: Deploy
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -50,7 +50,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Deploy Cloudflare Workers
+      - name: Deploy Workers
         run: |
           npx wrangler deploy --config workers/unified-gateway/wrangler.jsonc
           npx wrangler deploy --config workers/r2-signed-url/wrangler.jsonc
@@ -63,7 +63,7 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      - name: Smoke test deployment
+      - name: Smoke test
         run: |
           for i in {1..5}; do
             if curl -sf "https://unified-gateway.truyen3new.workers.dev/api/stories?page=1&pageSize=5" > /dev/null 2>&1; then
@@ -77,8 +77,8 @@ jobs:
           exit 1
 
       - name: Notify Discord on failure
-        if: failure() && secrets.DISCORD_WEBHOOK != ''
+        if: failure()
         run: |
           curl -s -H "Content-Type: application/json" \
-            -d '{"content":"🚨 Deployment to production failed!"}' \
+            -d '{"content":"Deployment to production failed!"}' \
             ${{ secrets.DISCORD_WEBHOOK }}
