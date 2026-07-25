@@ -9,7 +9,7 @@ import { Image as ImageIcon, SearchX, X } from "lucide-react";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { loadComicCatalogFiltered } from "@/services/comics/comicCms.service";
-import { Category } from "@/types/entities";
+import { Category, Chapter } from "@/types/entities";
 import { Header } from "@/components/shared/navigation/Header";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
@@ -42,6 +42,9 @@ function SearchContent() {
 
   const [comics, setComics] = useState<Comic[]>([]);
   const [, setCategories] = useState<Category[]>([]);
+  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
 
   // States quản lý phân trang
@@ -118,10 +121,42 @@ function SearchContent() {
           });
         }
 
+        const currentComics = result.data || [];
+
         // Cập nhật dữ liệu truyện và thông số trang
-        setComics(result.data || []);
+        setComics(currentComics);
         setTotalPages(result.meta?.totalPages || 1);
         setTotalItems(result.meta?.totalItems || 0);
+
+        if (currentComics.length > 0) {
+          const chapterMap: Record<string, Chapter> = {};
+          const chapterPromises = currentComics.map(async (comic: Comic) => {
+            try {
+              const chaptersRes = await apiClient
+                .get<any>(`/api/comics/${comic.id}/chapters`)
+                .catch(() => []);
+              const chapters: Chapter[] = Array.isArray(chaptersRes)
+                ? chaptersRes
+                : chaptersRes?.items || chaptersRes?.chapters || [];
+
+              if (chapters.length > 0) {
+                const sorted = [...chapters].sort(
+                  (a, b) =>
+                    new Date(b.created_at || 0).getTime() -
+                    new Date(a.created_at || 0).getTime(),
+                );
+                chapterMap[comic.id] = sorted[0];
+              }
+            } catch {
+              // Bỏ qua nếu không lấy được chương
+            }
+          });
+
+          await Promise.all(chapterPromises);
+          setLatestChapters(chapterMap);
+        } else {
+          setLatestChapters({});
+        }
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
@@ -146,6 +181,20 @@ function SearchContent() {
     const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
     if (event.currentTarget.src !== fallback)
       event.currentTarget.src = fallback;
+  };
+
+  const getLatestChapterLabel = (comicId: string) => {
+    const chapter = latestChapters[comicId];
+    if (!chapter) {
+      return "Chương mới: Đang cập nhật";
+    }
+
+    const chapterNumber = chapter.chapter_number
+      ? `Ch. ${chapter.chapter_number}`
+      : "Chương mới";
+    const title = chapter.title?.trim() || "Đang cập nhật";
+
+    return `${chapterNumber}: ${title}`;
   };
 
   return (
@@ -230,11 +279,11 @@ function SearchContent() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4 justify-items-stretch">
             {Array.from({ length: 14 }).map((_, index) => (
               <div
                 key={index}
-                className="animate-pulse flex flex-col bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-100 dark:border-slate-800 w-full max-w-45"
+                className="animate-pulse flex flex-col bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-100 dark:border-slate-800 w-full"
               >
                 <div className="rounded-xl aspect-3/4 bg-slate-200 dark:bg-slate-800 mb-2" />
                 <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 mb-1.5" />
@@ -267,12 +316,12 @@ function SearchContent() {
           </motion.div>
         ) : (
           <>
-            <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4 justify-items-stretch">
               {comics.map((comic, i) => (
                 <Link
                   key={comic.id}
                   href={`/comics/${comic.id}`}
-                  className="block outline-none cursor-pointer w-full max-w-45"
+                  className="block outline-none cursor-pointer w-full"
                 >
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -301,12 +350,15 @@ function SearchContent() {
                         </span>
                       </div>
                     </div>
-                    <div className="px-0.5 pb-0.5 flex flex-col flex-1">
-                      <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white whitespace-normal leading-snug group-hover:text-primary transition-colors">
+                    <div className="px-0.5 pb-0.5 flex flex-col flex-1 min-w-0">
+                      <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white leading-snug group-hover:text-primary transition-colors wrap-break-word overflow-hidden line-clamp-2">
                         {comic.title}
                       </h2>
-                      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-normal">
+                      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 wrap-break-word overflow-hidden line-clamp-1">
                         {comic.author || "Đang cập nhật"}
+                      </div>
+                      <div className="mt-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 wrap-break-word overflow-hidden line-clamp-1">
+                        {getLatestChapterLabel(comic.id)}
                       </div>
                     </div>
                   </motion.div>
