@@ -32,23 +32,57 @@ export const Pagination: React.FC<PaginationProps> = ({
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
 
-    router.push(`${pathname}?${params.toString()}`);
+    // Đổi URL và tự động cuộn lên trên mượt mà
+    router.push(`${pathname}?${params.toString()}`, { scroll: true });
   };
 
-  // Thuật toán hiển thị tối đa 5 nút trang xung quanh trang hiện tại
-  let startPage = Math.max(1, currentPage - 2);
-  let endPage = Math.min(totalPages, currentPage + 2);
+  const getVisiblePages = () => {
+    const pages: (number | "ellipsis")[] = [];
+    const siblingCount = 3;
+    const boundaryCount = 2;
 
-  if (currentPage <= 3) {
-    endPage = Math.min(5, totalPages);
-  } else if (currentPage >= totalPages - 2) {
-    startPage = Math.max(1, totalPages - 4);
-  }
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
 
-  const pages = Array.from(
-    { length: endPage - startPage + 1 },
-    (_, i) => startPage + i,
-  );
+    const leftSiblingIndex = Math.max(
+      currentPage - siblingCount,
+      boundaryCount + 1,
+    );
+    const rightSiblingIndex = Math.min(
+      currentPage + siblingCount,
+      totalPages - boundaryCount,
+    );
+
+    const showLeftEllipsis = leftSiblingIndex > boundaryCount + 1;
+    const showRightEllipsis = rightSiblingIndex < totalPages - boundaryCount;
+
+    pages.push(1, 2);
+
+    if (showLeftEllipsis) {
+      pages.push("ellipsis");
+    }
+
+    for (let page = leftSiblingIndex; page <= rightSiblingIndex; page += 1) {
+      pages.push(page);
+    }
+
+    if (showRightEllipsis) {
+      pages.push("ellipsis");
+    }
+
+    pages.push(totalPages - 1, totalPages);
+
+    return pages.filter((page, index, arr) => {
+      if (page === "ellipsis") return true;
+      if (index > 0 && arr[index - 1] === "ellipsis") {
+        return true;
+      }
+      return true;
+    });
+  };
+
+  const pages = getVisiblePages();
 
   return (
     <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-12 mb-4">
@@ -70,16 +104,27 @@ export const Pagination: React.FC<PaginationProps> = ({
         <ChevronLeft size={18} />
       </button>
 
-      {/* Các nút số trang (1, 2, 3...) */}
-      {pages.map((page) => {
+      {/* Các nút số trang */}
+      {pages.map((page, index) => {
+        if (page === "ellipsis") {
+          return (
+            <span
+              key={`ellipsis-${index}`}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-bold text-slate-400"
+            >
+              ...
+            </span>
+          );
+        }
+
         const isActive = page === currentPage;
         return (
           <button
             key={page}
-            onClick={() => handlePageChange(page)}
+            onClick={() => handlePageChange(page as number)}
             className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
               isActive
-                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110" // Màu cam giống ảnh của bạn
+                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110"
                 : "text-slate-600 bg-transparent hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
           >

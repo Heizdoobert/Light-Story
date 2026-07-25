@@ -6,8 +6,8 @@ export default async function Page() {
   // Dùng catch để nếu lỗi thì trả về mảng rỗng, không làm sập cả trang web
   const allComics = await fetchComicCatalog().catch(() => []);
 
-  // 2. Cắt lấy đúng 15 truyện đầu tiên (Mới nhất) và đồng bộ kiểu dữ liệu cho TypeScript
-  const top15Comics = allComics.slice(0, 15).map((comic: any) => ({
+  // 2. Cắt lấy đúng 10 truyện đầu tiên (Mới nhất) và đồng bộ kiểu dữ liệu cho TypeScript
+  const top10Comics = allComics.slice(0, 10).map((comic: any) => ({
     ...comic,
     // Bổ sung các trường còn thiếu để khớp hoàn toàn với kiểu ComicContext
     tenantKey: comic.tenantKey || "",
@@ -15,6 +15,6 @@ export default async function Page() {
     slug: comic.slug || comic.id || "",
   }));
 
-  // 3. Truyền 15 truyện này xuống Client Component (HomePage) để hiển thị
-  return <HomePage initialComics={top15Comics} />;
+  // 3. Truyền 10 truyện này xuống Client Component (HomePage) để hiển thị
+  return <HomePage initialComics={top10Comics} />;
 }

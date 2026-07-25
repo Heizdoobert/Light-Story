@@ -351,10 +351,10 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
             ))}
           </div>
         )}
-        <div className="flex justify-center mt-8 mb-12">
+        <div className="flex justify-center mt-8 sm:mt-12 mb-10">
           <Link
             href="/search"
-            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold rounded-md transition-colors shadow-sm"
+            className="inline-flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm sm:text-base py-3 px-8 rounded-xl transition-all hover:-translate-y-1 shadow-lg shadow-orange-500/30"
           >
             Xem thêm nhiều truyện
           </Link>

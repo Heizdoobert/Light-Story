@@ -42,8 +42,9 @@ export const SortDropdown = () => {
   const handleSortChange = (newSort: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("sort", newSort);
+    params.set("page", "1");
     router.push(`${pathname}?${params.toString()}`);
-    setIsOpen(false); // Đóng menu sau khi chọn
+    setIsOpen(false);
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, SearchX, X } from "lucide-react";
@@ -26,6 +26,7 @@ const getVietnameseStatus = (status: string) => {
 };
 
 function SearchContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
 
@@ -37,13 +38,13 @@ function SearchContent() {
   // Bắt biến sort và page từ URL
   const sort = searchParams.get("sort") || "newest";
   const pageParam = searchParams.get("page") || "1";
-  const currentPage = parseInt(pageParam, 10) || 1; // 👉 Lấy trang hiện tại
+  const currentPage = parseInt(pageParam, 10) || 1;
 
   const [comics, setComics] = useState<Comic[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 👉 States quản lý phân trang
+  // States quản lý phân trang
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -59,7 +60,7 @@ function SearchContent() {
       case "draft":
         return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
       default:
-        return "bg-indigo-500 text-white dark:bg-indigo-600"; // Màu dự phòng
+        return "bg-indigo-500 text-white dark:bg-indigo-600";
     }
   };
 
@@ -85,6 +86,10 @@ function SearchContent() {
         if (category !== "all") queryParams.append("category", category);
         queryParams.append("sort", sort);
 
+        // Gateway chỉ đọc pageSize và giới hạn tối đa 100 item cho mỗi request.
+        // Vì vậy frontend cần fetch đủ một lượng item hợp lệ để cắt trang phía client.
+        queryParams.append("pageSize", "100");
+
         const response = await apiClient.get<any>(
           `/api/comics?${queryParams.toString()}`,
         );
@@ -92,18 +97,28 @@ function SearchContent() {
           ? response
           : response?.items || response?.comics || [];
 
-        // 👉 Nhận về Object chứa cả data và meta (thông số trang)
+        // 👉 Đưa mảng 1000 truyện vào hàm cắt trang
         const result = loadComicCatalogFiltered(rawComicsData, {
           search: keyword,
           category: category,
           sort: sort,
           status: "all",
           author: "",
-          page: currentPage, // Truyền trang hiện tại vào Service
-          limit: 10, // Giới hạn 10 truyện / 1 trang
+          page: currentPage,
+          limit: 10, // Lấy đúng 10 truyện thuộc trang currentPage
         });
 
-        // 👉 Cập nhật dữ liệu truyện và thông số trang
+        const nextPage = result.meta?.currentPage || 1;
+
+        if (nextPage !== currentPage) {
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("page", nextPage.toString());
+          router.replace(`${window.location.pathname}?${params.toString()}`, {
+            scroll: false,
+          });
+        }
+
+        // Cập nhật dữ liệu truyện và thông số trang
         setComics(result.data || []);
         setTotalPages(result.meta?.totalPages || 1);
         setTotalItems(result.meta?.totalItems || 0);
@@ -116,7 +131,7 @@ function SearchContent() {
     };
 
     fetchAndFilterResults();
-  }, [keyword, category, sort, currentPage]); // 👉 Đưa currentPage vào mảng phụ thuộc
+  }, [keyword, category, sort, currentPage, router, searchParams]);
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";
@@ -204,7 +219,6 @@ function SearchContent() {
                 </span>
               )}
               <span className="ml-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
-                {/* 👉 HIỂN THỊ TỔNG SỐ TRUYỆN CHÍNH XÁC */}
                 {totalItems} kết quả
               </span>
             </div>
@@ -261,7 +275,8 @@ function SearchContent() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         onError={applyComicCoverFallback}
                       />
-                      <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-4">
+                      {/* Đã sửa bg-linear-to-t thành bg-gradient-to-t */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-4">
                         <span className="text-white text-xs font-bold flex items-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform">
                           <ImageIcon size={14} /> Đọc ngay
                         </span>
