@@ -6,8 +6,8 @@ import { Toaster, toast } from 'sonner';
 import { AuthProvider } from '../modules/auth/AuthContext';
 import { ThemeProvider } from '../modules/theme/ThemeContext';
 import { LanguageProvider } from '../modules/language/LanguageContext';
-import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
-import { useGlobalErrorHandler, getErrorMessage } from '../hooks/useGlobalErrorHandler';
+import { ErrorBoundary } from '@/components/shared/errors/ErrorBoundary';
+import { useGlobalErrorHandler, getErrorMessage } from '@/hooks/common/useGlobalErrorHandler';
 
 /**
  * Error handler component that displays errors via toast.

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/apiClient';
+import { apiClient } from '@/lib/api/apiClient';
 
 export type AdSettingItem = { key: string; value: unknown };
 

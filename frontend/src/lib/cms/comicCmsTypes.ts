@@ -1,6 +1,6 @@
 import type { ComicCmsFormValues, ComicChapterFormValues, ComicStatus } from "@/lib/validation/comicCmsSchemas";
 
-export type TabKey = "catalog" | "editor" | "chapters" | "moderation";
+export type TabKey = "catalog" | "editor" | "chapters" | "feedback" | "trash" | "moderation";
 
 export type PageDraft = {
   id: string;
@@ -17,6 +17,7 @@ export const DEFAULT_FORM: ComicCmsFormValues = {
   title: "",
   slug: "",
   author: "",
+  translator: "",
   description: "",
   status: "draft",
   coverUrl: "",
@@ -58,7 +59,7 @@ export function formatDateTime(value: string | null | undefined): string {
     return new Intl.DateTimeFormat(undefined, {
       year: "numeric",
       month: "short",
-      day: "2-digit",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(value));
@@ -72,6 +73,7 @@ export function toFormState(record: {
   title: string;
   slug?: string;
   author: string;
+  translator?: string;
   description?: string;
   coverUrl?: string;
 }): ComicCmsFormValues {
@@ -79,6 +81,7 @@ export function toFormState(record: {
     title: record.title,
     slug: record.slug ?? slugify(record.title),
     author: record.author,
+    translator: record.translator ?? "",
     description: record.description ?? "",
     status: record.status,
     coverUrl: record.coverUrl ?? "",

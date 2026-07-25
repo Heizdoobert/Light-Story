@@ -723,7 +723,7 @@ export async function handleAdminRequest(
             originalName: file.name,
           },
         });
-        uploadedUrls.push(`/api/admin/r2/file/${key}`);
+        uploadedUrls.push(`/api/media/${key}`);
       }
       return json({ success: true, data: { urls: uploadedUrls } });
     }

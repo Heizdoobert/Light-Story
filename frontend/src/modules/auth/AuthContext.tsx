@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/infrastructure/supabase/client";
 import { toast } from "sonner";
-import { getErrorMessage } from "../../lib/errorUtils";
+import { getErrorMessage } from "@/lib/utils/errorUtils";
 import { type AdminProfileDto } from '@/types/dto';
 
 export type UserRole = "superadmin" | "admin" | "employee" | "user";
@@ -155,22 +155,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const ensureProfileExists = async (authUser: User) => {
     if (!supabase) return;
-
-    await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: authUser.id,
-          email: authUser.email ?? "",
-          full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
-          avatar_url: authUser.user_metadata?.avatar_url ?? null,
-          role: "user",
-        },
-        {
-          onConflict: "id",
-          ignoreDuplicates: true,
-        },
-      );
+    try {
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+            avatar_url: authUser.user_metadata?.avatar_url ?? null,
+            role: "user",
+          },
+          {
+            onConflict: "id",
+            ignoreDuplicates: true,
+          },
+        );
+    } catch (err) {
+      console.warn("Could not auto-create profile:", getErrorMessage(err));
+    }
   };
 
   const fetchProfile = async (authUser: User) => {
@@ -190,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (error) throw error;
       setProfile(buildProfile(authUser, data as ProfileRow | undefined));
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
       setProfile(buildProfile(authUser));
     } finally {
       setLoading(false);
