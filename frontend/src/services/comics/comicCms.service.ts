@@ -131,27 +131,25 @@ export function loadComicCatalogFiltered(
     return dateB - dateA;
   });
 
-  // 3. THỰC HIỆN PHÂN TRANG (PAGINATION)
-  const normalizedPage = Number.isFinite(filters.page) ? filters.page! : 1;
-  const parsedPage = Number.isInteger(normalizedPage) ? normalizedPage : 1;
-  const safePage = parsedPage > 0 ? parsedPage : 1;
-  const normalizedLimit = Number.isFinite(filters.limit) ? filters.limit! : 10;
-  const parsedLimit = Number.isInteger(normalizedLimit) ? normalizedLimit : 10;
-  const safeLimit = parsedLimit > 0 ? parsedLimit : 10;
+  // 3. THỰC HIỆN PHÂN TRANG (PAGINATION) - 👉 PHẦN MỚI THÊM VÀO
+  const page = filters.page || 1;
+  const limit = filters.limit || 10; // Mặc định là 10 truyện 1 trang
 
+  // Tính toán tổng số
   const totalItems = filteredCatalog.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / safeLimit));
-  const clampedPage = Math.min(safePage, totalPages);
+  const totalPages = Math.ceil(totalItems / limit);
 
-  const startIndex = (clampedPage - 1) * safeLimit;
-  const endIndex = startIndex + safeLimit;
+  // Cắt mảng lấy đúng số lượng cho trang hiện tại
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
   const paginatedData = filteredCatalog.slice(startIndex, endIndex);
 
+  // Trả về Object chứa cả dữ liệu và thông tin trang
   return {
     data: paginatedData,
     meta: {
-      currentPage: clampedPage,
-      limit: safeLimit,
+      currentPage: page,
+      limit: limit,
       totalItems: totalItems,
       totalPages: totalPages,
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   MessageSquare,
   AlertOctagon,
@@ -11,19 +11,6 @@ import {
   Clock,
 } from "lucide-react";
 import type { ComicCmsRecord } from "@/services/comics/comicCms.service";
-
-export function getSearchableText(value: unknown): string {
-  if (value == null) return "";
-  if (typeof value === "string") return value.trim().toLowerCase();
-  return String(value).trim().toLowerCase();
-}
-
-export function formatDisplayDate(value: string | null | undefined): string {
-  if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "—";
-  return date.toLocaleString();
-}
 
 export type CommentItem = {
   id: string;
@@ -58,18 +45,14 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
   catalog: _catalog,
   canManageAll,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<"comments" | "reports">(
-    "reports",
-  );
+  const [activeSubTab, setActiveSubTab] = useState<"comments" | "reports">("reports");
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [reports, setReports] = useState<ReportTicket[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleToggleHideComment = (commentId: string) => {
     setComments((prev) =>
-      prev.map((c) =>
-        c.id === commentId ? { ...c, isHidden: !c.isHidden } : c,
-      ),
+      prev.map((c) => (c.id === commentId ? { ...c, isHidden: !c.isHidden } : c))
     );
   };
 
@@ -77,37 +60,24 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
     setComments((prev) => prev.filter((c) => c.id !== commentId));
   };
 
-  const handleUpdateReportStatus = (
-    ticketId: string,
-    nextStatus: "open" | "in_progress" | "resolved",
-  ) => {
+  const handleUpdateReportStatus = (ticketId: string, nextStatus: "open" | "in_progress" | "resolved") => {
     setReports((prev) =>
-      prev.map((r) => (r.id === ticketId ? { ...r, status: nextStatus } : r)),
+      prev.map((r) => (r.id === ticketId ? { ...r, status: nextStatus } : r))
     );
   };
 
-  const normalizedQuery = getSearchableText(searchQuery);
-
-  const filteredComments = useMemo(
-    () =>
-      comments.filter((c) => {
-        const haystack = [c.comicTitle, c.commentText, c.userName]
-          .map(getSearchableText)
-          .join(" ");
-        return haystack.includes(normalizedQuery);
-      }),
-    [comments, normalizedQuery],
+  const filteredComments = comments.filter(
+    (c) =>
+      c.comicTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.commentText.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.userName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredReports = useMemo(
-    () =>
-      reports.filter((r) => {
-        const haystack = [r.comicTitle, r.description, r.reporterName]
-          .map(getSearchableText)
-          .join(" ");
-        return haystack.includes(normalizedQuery);
-      }),
-    [reports, normalizedQuery],
+  const filteredReports = reports.filter(
+    (r) =>
+      r.comicTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.reporterName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -124,8 +94,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                 : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900"
             }`}
           >
-            <AlertOctagon size={16} /> Báo lỗi từ độc giả (
-            {reports.filter((r) => r.status !== "resolved").length})
+            <AlertOctagon size={16} /> Báo lỗi từ độc giả ({reports.filter((r) => r.status !== "resolved").length})
           </button>
           <button
             type="button"
@@ -176,15 +145,15 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                           ticket.issueType === "broken_image"
                             ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20"
                             : ticket.issueType === "missing_page"
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
-                              : "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
+                            ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                            : "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20"
                         }`}
                       >
                         {ticket.issueType === "broken_image"
                           ? "Ảnh hỏng"
                           : ticket.issueType === "missing_page"
-                            ? "Thiếu trang"
-                            : "Lỗi khác"}
+                          ? "Thiếu trang"
+                          : "Lỗi khác"}
                       </span>
                       <h4 className="text-sm font-black text-slate-900 dark:text-white">
                         {ticket.comicTitle} - Chapter {ticket.chapterNumber}
@@ -194,9 +163,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() =>
-                          handleUpdateReportStatus(ticket.id, "open")
-                        }
+                        onClick={() => handleUpdateReportStatus(ticket.id, "open")}
                         className={`px-3 py-1 rounded-xl text-[11px] font-bold ${
                           ticket.status === "open"
                             ? "bg-rose-500 text-white"
@@ -207,9 +174,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          handleUpdateReportStatus(ticket.id, "in_progress")
-                        }
+                        onClick={() => handleUpdateReportStatus(ticket.id, "in_progress")}
                         className={`px-3 py-1 rounded-xl text-[11px] font-bold ${
                           ticket.status === "in_progress"
                             ? "bg-amber-500 text-white"
@@ -220,9 +185,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          handleUpdateReportStatus(ticket.id, "resolved")
-                        }
+                        onClick={() => handleUpdateReportStatus(ticket.id, "resolved")}
                         className={`px-3 py-1 rounded-xl text-[11px] font-bold ${
                           ticket.status === "resolved"
                             ? "bg-emerald-500 text-white"
@@ -243,7 +206,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                       <User size={12} /> {ticket.reporterName}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={12} /> {formatDisplayDate(ticket.createdAt)}
+                      <Clock size={12} /> {new Date(ticket.createdAt).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -281,10 +244,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                       {cmt.userName}
                       <span className="text-slate-400 font-normal">trong</span>
                       <span className="text-cyan-600 dark:text-cyan-400">
-                        {cmt.comicTitle}{" "}
-                        {cmt.chapterNumber
-                          ? `(Chương ${cmt.chapterNumber})`
-                          : ""}
+                        {cmt.comicTitle} {cmt.chapterNumber ? `(Chương ${cmt.chapterNumber})` : ""}
                       </span>
                     </div>
 
@@ -295,10 +255,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300/80 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-bold transition"
                         title="Chuyển sang trạng thái Chờ duyệt (Pending) cho Admin xem xét"
                       >
-                        <EyeOff
-                          size={14}
-                          className={cmt.isHidden ? "text-amber-500" : ""}
-                        />
+                        <EyeOff size={14} className={cmt.isHidden ? "text-amber-500" : ""} />
                         {cmt.isHidden ? "Đã ẩn (Chờ duyệt)" : "Ẩn bình luận"}
                       </button>
                       {canManageAll && (
@@ -319,7 +276,7 @@ export const ComicFeedbackTab: React.FC<ComicFeedbackTabProps> = ({
                   </p>
 
                   <div className="text-[10px] text-slate-400 font-medium">
-                    {formatDisplayDate(cmt.createdAt)}
+                    {new Date(cmt.createdAt).toLocaleString()}
                   </div>
                 </div>
               ))}

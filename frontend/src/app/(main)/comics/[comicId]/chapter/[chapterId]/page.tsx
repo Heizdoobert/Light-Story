@@ -109,28 +109,6 @@ export default function ReadChapterPage() {
   const [showChapterMenu, setShowChapterMenu] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false); // Thêm state cho Sidebar Menu
 
-  const normalizeApiResponse = <T,>(response: unknown): T | null => {
-    if (Array.isArray(response)) {
-      return (response[0] as T) ?? null;
-    }
-
-    if (response && typeof response === "object") {
-      const maybe = response as Record<string, unknown>;
-      if ("data" in maybe && maybe.data !== undefined) {
-        return maybe.data as T;
-      }
-      if ("chapter" in maybe && maybe.chapter !== undefined) {
-        return maybe.chapter as T;
-      }
-      if ("item" in maybe && maybe.item !== undefined) {
-        return maybe.item as T;
-      }
-      return response as T;
-    }
-
-    return null;
-  };
-
   useEffect(() => {
     const fetchReadingData = async () => {
       try {
@@ -154,30 +132,21 @@ export default function ReadChapterPage() {
         const comicRes = await apiClient
           .get<any>(`/api/comics/${comicId}`)
           .catch(() => null);
-        const normalizedComic = normalizeApiResponse<any>(comicRes);
-        if (normalizedComic) {
-          setComic(normalizedComic);
-        }
+        if (comicRes)
+          setComic(
+            Array.isArray(comicRes) ? comicRes[0] : comicRes?.comic || comicRes,
+          );
 
         const chaptersRes = await apiClient
           .get<any>(`/api/comics/${comicId}/chapters`)
           .catch(() => []);
         const chaptersData: Chapter[] = Array.isArray(chaptersRes)
           ? chaptersRes
-          : Array.isArray(chaptersRes?.items)
-            ? chaptersRes.items
-            : Array.isArray(chaptersRes?.chapters)
-              ? chaptersRes.chapters
-              : [];
+          : chaptersRes?.items || chaptersRes?.chapters || [];
 
-        const sortedChapters = [...chaptersData].sort((a, b) => {
-          const numA = Number(a.chapter_number);
-          const numB = Number(b.chapter_number);
-
-          if (!Number.isNaN(numA) && !Number.isNaN(numB)) {
-            return numA - numB;
-          }
-
+        const sortedChapters = chaptersData.sort((a, b) => {
+          if (a.chapter_number && b.chapter_number)
+            return a.chapter_number - b.chapter_number;
           return (
             new Date(a.created_at || 0).getTime() -
             new Date(b.created_at || 0).getTime()
@@ -188,35 +157,27 @@ export default function ReadChapterPage() {
         const currentRes = await apiClient.get<any>(
           `/api/comics/${comicId}/chapters/${chapterId}`,
         );
-        const currentData = normalizeApiResponse<Chapter>(currentRes);
-        const fallbackChapter =
-          sortedChapters.find((entry) => entry.id === chapterId) ||
-          sortedChapters.find(
-            (entry) => entry.chapter_number === currentData?.chapter_number,
-          ) ||
-          null;
-        const resolvedChapter = currentData || fallbackChapter;
-        setCurrentChapter(resolvedChapter);
-        if (resolvedChapter) {
-          recordReadingHistory(
-            comicId,
-            chapterId,
-            resolvedChapter.chapter_number || 1,
-          );
+        const currentData = Array.isArray(currentRes)
+          ? currentRes[0]
+          : currentRes?.chapter || currentRes;
+        setCurrentChapter(currentData);
+        if (currentData) {
+          recordReadingHistory(comicId, chapterId, currentData.chapter_number || 1);
         }
 
         let imgArray: string[] = [];
         if (currentData?.content) {
-          const rawText =
-            typeof currentData.content === "string"
-              ? await decryptFieldClient(currentData.content)
-              : currentData.content;
+          const rawText = typeof currentData.content === "string"
+            ? await decryptFieldClient(currentData.content)
+            : currentData.content;
 
           if (typeof rawText === "string") {
             try {
               imgArray = JSON.parse(rawText);
             } catch {
-              imgArray = rawText.split(",").map((s: string) => s.trim());
+              imgArray = rawText
+                .split(",")
+                .map((s: string) => s.trim());
             }
           } else if (Array.isArray(rawText)) {
             imgArray = rawText;
@@ -225,8 +186,7 @@ export default function ReadChapterPage() {
 
         const cbzTargetUrl =
           imgArray.find((item) => typeof item === "string" && isCbzUrl(item)) ||
-          (typeof currentData?.content === "string" &&
-          isCbzUrl(currentData.content)
+          (typeof currentData?.content === "string" && isCbzUrl(currentData.content)
             ? currentData.content
             : null);
 
@@ -301,18 +261,10 @@ export default function ReadChapterPage() {
 
   const currentIndex =
     allChapters.findIndex(
-      (chapter) =>
-        chapter.id === chapterId ||
-        chapter.id === currentChapter?.id ||
-        (currentChapter?.chapter_number !== undefined &&
-          chapter.chapter_number === currentChapter.chapter_number),
+      (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
     ) !== -1
       ? allChapters.findIndex(
-          (chapter) =>
-            chapter.id === chapterId ||
-            chapter.id === currentChapter?.id ||
-            (currentChapter?.chapter_number !== undefined &&
-              chapter.chapter_number === currentChapter.chapter_number),
+          (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
         )
       : 0;
   const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null;
@@ -391,7 +343,7 @@ export default function ReadChapterPage() {
             : "Chương ?"}
           {currentChapter?.title && ` - ${currentChapter.title}`}
         </div>
-
+        
         {/* VÙNG QUẢNG CÁO ĐẦU TRANG ĐỌC (Leaderboard) */}
         <AdZone zoneId="reader-top" format="banner" className="mt-4" />
       </div>
@@ -405,7 +357,11 @@ export default function ReadChapterPage() {
         ) : (
           images.map((imgUrl, idx) => (
             <React.Fragment key={`${imgUrl}-${idx}`}>
-              <ChapterImage src={imgUrl} alt={`Trang ${idx + 1}`} index={idx} />
+              <ChapterImage
+                src={imgUrl}
+                alt={`Trang ${idx + 1}`}
+                index={idx}
+              />
               {/* VÙNG QUẢNG CÁO GIỮA CÁC TRANG (Chèn sau mỗi 4 trang) */}
               {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
                 <AdZone
@@ -499,7 +455,10 @@ export default function ReadChapterPage() {
                     ? `Chương ${currentChapter.chapter_number}`
                     : currentChapter?.title || "Chọn chương"}
                 </span>
-                <List size={16} className="text-white/90 flex-shrink-0" />
+                <List
+                  size={16}
+                  className="text-white/90 flex-shrink-0"
+                />
               </button>
 
               {/* Danh sách chương (Tương thích Light/Dark màu hệ thống) */}
