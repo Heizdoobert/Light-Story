@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, SearchX, X } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import { Category } from "@/types/entities";
+import { loadComicCatalogFiltered } from "@/services/comics/comicCms.service";
+import { Category, Chapter } from "@/types/entities";
 import { Header } from "@/components/shared/navigation/Header";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { toast } from "sonner";
 import { SortDropdown } from "@/components/shared/comics/SortDropdown";
 import { Pagination } from "@/components/shared/navigation/Pagination";
-import { getStatusStyles } from "@/lib/utils/statusStyles";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -26,6 +26,7 @@ const getVietnameseStatus = (status: string) => {
 };
 
 function SearchContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
 
@@ -37,15 +38,34 @@ function SearchContent() {
   // Bắt biến sort và page từ URL
   const sort = searchParams.get("sort") || "newest";
   const pageParam = searchParams.get("page") || "1";
-  const currentPage = parseInt(pageParam, 10) || 1; // 👉 Lấy trang hiện tại
+  const currentPage = parseInt(pageParam, 10) || 1;
 
   const [comics, setComics] = useState<Comic[]>([]);
-  const [_categories, setCategories] = useState<Category[]>([]);
+  const [, setCategories] = useState<Category[]>([]);
+  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
+    {},
+  );
   const [loading, setLoading] = useState(true);
 
-  // 👉 States quản lý phân trang
+  // States quản lý phân trang
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+
+  // Bổ sung hàm chọn màu hiển thị dựa trên trạng thái
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-emerald-500 text-white dark:bg-emerald-600";
+      case "published":
+        return "bg-blue-500 text-white dark:bg-blue-600";
+      case "ongoing":
+        return "bg-amber-500 text-white dark:bg-amber-600";
+      case "draft":
+        return "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200";
+      default:
+        return "bg-indigo-500 text-white dark:bg-indigo-600";
+    }
+  };
 
   // States quản lý UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -53,11 +73,11 @@ function SearchContent() {
 
   useEffect(() => {
     apiClient
-      .get<any>("/api/categories")
-      .then((res) => {
+      .get<any>("/api/admin/taxonomy?entity=category")
+      .then((res: unknown) => {
         if (Array.isArray(res)) setCategories(res);
       })
-      .catch((err) => console.error("Lỗi tải thể loại:", err));
+      .catch((err: unknown) => console.error("Lỗi tải thể loại:", err));
   }, []);
 
   useEffect(() => {
@@ -68,16 +88,75 @@ function SearchContent() {
         if (keyword) queryParams.append("keyword", keyword);
         if (category !== "all") queryParams.append("category", category);
         queryParams.append("sort", sort);
-        queryParams.append("page", String(currentPage));
-        queryParams.append("pageSize", "12");
+
+        // Gateway chỉ đọc pageSize và giới hạn tối đa 100 item cho mỗi request.
+        // Vì vậy frontend cần fetch đủ một lượng item hợp lệ để cắt trang phía client.
+        queryParams.append("pageSize", "100");
 
         const response = await apiClient.get<any>(
-          `/api/stories?${queryParams.toString()}`,
+          `/api/comics?${queryParams.toString()}`,
         );
+        let rawComicsData = Array.isArray(response)
+          ? response
+          : response?.items || response?.comics || [];
 
-        setComics(response?.items || []);
-        setTotalPages(Math.ceil((response?.total || 0) / 12) || 1);
-        setTotalItems(response?.total || 0);
+        // 👉 Đưa mảng 1000 truyện vào hàm cắt trang
+        const result = loadComicCatalogFiltered(rawComicsData, {
+          search: keyword,
+          category: category,
+          sort: sort,
+          status: "all",
+          author: "",
+          page: currentPage,
+          limit: 10, // Lấy đúng 10 truyện thuộc trang currentPage
+        });
+
+        const nextPage = result.meta?.currentPage || 1;
+
+        if (nextPage !== currentPage) {
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("page", nextPage.toString());
+          router.replace(`${window.location.pathname}?${params.toString()}`, {
+            scroll: false,
+          });
+        }
+
+        const currentComics = result.data || [];
+
+        // Cập nhật dữ liệu truyện và thông số trang
+        setComics(currentComics);
+        setTotalPages(result.meta?.totalPages || 1);
+        setTotalItems(result.meta?.totalItems || 0);
+
+        if (currentComics.length > 0) {
+          const chapterMap: Record<string, Chapter> = {};
+          const chapterPromises = currentComics.map(async (comic: Comic) => {
+            try {
+              const chaptersRes = await apiClient
+                .get<any>(`/api/comics/${comic.id}/chapters`)
+                .catch(() => []);
+              const chapters: Chapter[] = Array.isArray(chaptersRes)
+                ? chaptersRes
+                : chaptersRes?.items || chaptersRes?.chapters || [];
+
+              if (chapters.length > 0) {
+                const sorted = [...chapters].sort(
+                  (a, b) =>
+                    new Date(b.created_at || 0).getTime() -
+                    new Date(a.created_at || 0).getTime(),
+                );
+                chapterMap[comic.id] = sorted[0];
+              }
+            } catch {
+              // Bỏ qua nếu không lấy được chương
+            }
+          });
+
+          await Promise.all(chapterPromises);
+          setLatestChapters(chapterMap);
+        } else {
+          setLatestChapters({});
+        }
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
@@ -87,7 +166,7 @@ function SearchContent() {
     };
 
     fetchAndFilterResults();
-  }, [keyword, category, sort, currentPage]);
+  }, [keyword, category, sort, currentPage, router, searchParams]);
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";
@@ -102,6 +181,20 @@ function SearchContent() {
     const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
     if (event.currentTarget.src !== fallback)
       event.currentTarget.src = fallback;
+  };
+
+  const getLatestChapterLabel = (comicId: string) => {
+    const chapter = latestChapters[comicId];
+    if (!chapter) {
+      return "Chương mới: Đang cập nhật";
+    }
+
+    const chapterNumber = chapter.chapter_number
+      ? `Ch. ${chapter.chapter_number}`
+      : "Chương mới";
+    const title = chapter.title?.trim() || "Đang cập nhật";
+
+    return `${chapterNumber}: ${title}`;
   };
 
   return (
@@ -125,7 +218,7 @@ function SearchContent() {
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
+                  <div className="w-8 h-8 bg-linear-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
@@ -175,25 +268,24 @@ function SearchContent() {
                 </span>
               )}
               <span className="ml-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
-                {/* 👉 HIỂN THỊ TỔNG SỐ TRUYỆN CHÍNH XÁC */}
                 {totalItems} kết quả
               </span>
             </div>
           </div>
 
-          <div className="flex-shrink-0 mt-2 sm:mt-0">
+          <div className="shrink-0 mt-2 sm:mt-0">
             <SortDropdown />
           </div>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4 justify-items-stretch">
             {Array.from({ length: 14 }).map((_, index) => (
               <div
                 key={index}
-                className="animate-pulse flex flex-col bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-100 dark:border-slate-800 w-full max-w-[180px]"
+                className="animate-pulse flex flex-col bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-100 dark:border-slate-800 w-full"
               >
-                <div className="rounded-xl aspect-[3/4] bg-slate-200 dark:bg-slate-800 mb-2" />
+                <div className="rounded-xl aspect-3/4 bg-slate-200 dark:bg-slate-800 mb-2" />
                 <div className="h-3.5 bg-slate-200 dark:bg-slate-800 rounded-md w-3/4 mb-1.5" />
                 <div className="h-2.5 bg-slate-200 dark:bg-slate-800 rounded-md w-1/2" />
               </div>
@@ -212,23 +304,24 @@ function SearchContent() {
               Không tìm thấy kết quả
             </h3>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 max-w-md text-sm sm:text-base">
-              Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.
+              Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay
+              đổi từ khóa hoặc thể loại.
             </p>
             <Link
               href="/search"
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 hover:opacity-90 transition-opacity"
+              className="px-6 py-3 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 hover:opacity-90 transition-opacity"
             >
               Đặt lại bộ lọc
             </Link>
           </motion.div>
         ) : (
           <>
-            <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-3 sm:gap-4 justify-items-stretch">
               {comics.map((comic, i) => (
                 <Link
                   key={comic.id}
                   href={`/comics/${comic.id}`}
-                  className="block outline-none cursor-pointer w-full max-w-[180px]"
+                  className="block outline-none cursor-pointer w-full"
                 >
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -236,16 +329,17 @@ function SearchContent() {
                     transition={{ delay: i * 0.03 }}
                     className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-xs hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-1.5 transition-all duration-300 border border-slate-200/80 dark:border-slate-800"
                   >
-                    <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
+                    <div className="relative overflow-hidden rounded-xl mb-2 aspect-3/4 bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
+                        src={comic.coverUrl}
                         alt={comic.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         onError={applyComicCoverFallback}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2.5">
-                        <span className="text-white text-[11px] font-bold flex items-center gap-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                          <ImageIcon size={13} /> Đọc ngay
+                      {/* Đã sửa bg-linear-to-t thành bg-gradient-to-t */}
+                      <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-4">
+                        <span className="text-white text-xs font-bold flex items-center gap-1.5 translate-y-4 group-hover:translate-y-0 transition-transform">
+                          <ImageIcon size={14} /> Đọc ngay
                         </span>
                       </div>
                       <div className="absolute top-1.5 right-1.5">
@@ -256,12 +350,15 @@ function SearchContent() {
                         </span>
                       </div>
                     </div>
-                    <div className="px-0.5 pb-0.5 flex flex-col flex-1">
-                      <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white whitespace-normal break-words [overflow-wrap:anywhere] leading-snug group-hover:text-primary transition-colors">
+                    <div className="px-0.5 pb-0.5 flex flex-col flex-1 min-w-0">
+                      <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white leading-snug group-hover:text-primary transition-colors wrap-break-word overflow-hidden line-clamp-2">
                         {comic.title}
                       </h2>
-                      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-normal break-words [overflow-wrap:anywhere]">
+                      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 wrap-break-word overflow-hidden line-clamp-1">
                         {comic.author || "Đang cập nhật"}
+                      </div>
+                      <div className="mt-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400 wrap-break-word overflow-hidden line-clamp-1">
+                        {getLatestChapterLabel(comic.id)}
                       </div>
                     </div>
                   </motion.div>

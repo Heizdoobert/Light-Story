@@ -15,10 +15,16 @@ import {
   ArrowLeft,
   Play,
   X,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
+import {
+  isComicFollowed,
+  toggleFollowComic,
+} from "@/services/comics/comicFollow.service";
 import { Chapter, Category } from "@/types/entities";
 import { Header } from "@/components/shared/navigation/Header";
 import { toast } from "sonner";
@@ -45,6 +51,7 @@ export default function ComicDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
 
   // States UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -70,11 +77,21 @@ export default function ComicDetailPage() {
           ? chaptersRes
           : chaptersRes?.items || chaptersRes?.chapters || [];
 
-        const sortedChapters = chaptersData.sort(
-          (a, b) =>
+        // TỐI ƯU: Ưu tiên sắp xếp theo Số Chương (chapter_number), giảm dần (Mới nhất xếp trên)
+        const sortedChapters = chaptersData.sort((a, b) => {
+          const numA = Number(a.chapter_number);
+          const numB = Number(b.chapter_number);
+
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numB - numA;
+          }
+          // Fallback: Nếu không có số chương, mới sắp xếp theo thời gian
+          return (
             new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime(),
-        );
+            new Date(a.created_at || 0).getTime()
+          );
+        });
+
         setChapters(sortedChapters);
 
         if (Array.isArray(catsRes)) {
@@ -97,6 +114,27 @@ export default function ComicDetailPage() {
       document.body.style.overflow = "unset";
     };
   }, [showFilter]);
+
+  useEffect(() => {
+    if (comic?.id) {
+      setIsFollowing(isComicFollowed(comic.id));
+    }
+  }, [comic?.id]);
+
+  const handleToggleFollow = () => {
+    if (!comic) return;
+
+    const nextState = toggleFollowComic({
+      id: comic.id,
+      title: comic.title,
+      coverUrl: comic.coverUrl,
+      author: comic.author,
+      status: comic.status,
+    });
+
+    setIsFollowing(nextState);
+    toast.success(nextState ? "Đã theo dõi truyện" : "Đã bỏ theo dõi truyện");
+  };
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
@@ -132,7 +170,6 @@ export default function ComicDetailPage() {
   const firstChapter =
     chapters.length > 0 ? chapters[chapters.length - 1] : null;
 
-  // XỬ LÝ CHUẨN HÓA LỖI TRẢ VỀ CỦA CATEGORY
   let categoryArray: string[] = [];
   if (comic.category) {
     if (Array.isArray(comic.category)) {
@@ -160,18 +197,19 @@ export default function ComicDetailPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowFilter(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-60"
             />
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[70] shadow-2xl flex flex-col"
+              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-70 shadow-2xl flex flex-col"
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
+                  {/* Sửa bg-linear-to-br thành bg-gradient-to-br */}
+                  <div className="w-8 h-8 bg-linear-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
@@ -208,7 +246,8 @@ export default function ComicDetailPage() {
           className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-50 dark:opacity-30"
           style={{ backgroundImage: `url(${coverUrl})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-50 via-zinc-50/80 dark:from-zinc-950 dark:via-zinc-950/80 to-transparent" />
+        {/* Sửa bg-linear-to-t thành bg-gradient-to-t */}
+        <div className="absolute inset-0 bg-linear-to-t from-zinc-50 via-zinc-50/80 dark:from-zinc-950 dark:via-zinc-950/80 to-transparent" />
 
         <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-10">
           <Link
@@ -220,26 +259,46 @@ export default function ComicDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-48 relative z-20">
-        <div className="flex flex-col sm:flex-row gap-6 sm:gap-10">
-          <div className="flex-shrink-0 flex flex-col items-center sm:items-start w-48 sm:w-64 mx-auto sm:mx-0">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 -mt-28 sm:-mt-48 relative z-20">
+        <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 lg:gap-10">
+          <div className="shrink-0 flex flex-col items-center sm:items-start w-full max-w-55 sm:w-64 mx-auto sm:mx-0">
             <motion.img
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               src={coverUrl}
               alt={comic.title}
               onError={handleImageError}
-              className="w-full aspect-[3/4] object-cover rounded-2xl shadow-2xl shadow-primary/20 border-4 border-white dark:border-slate-800"
+              className="w-full aspect-3/4 object-cover rounded-2xl shadow-2xl shadow-primary/20 border-4 border-white dark:border-slate-800"
             />
 
-            <div className="w-full mt-6 space-y-3">
+            <div className="w-full mt-5 sm:mt-6 space-y-2.5 sm:space-y-3">
+              <button
+                onClick={handleToggleFollow}
+                className={`flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-[15px] font-bold transition-all border-2 shadow-sm ${
+                  isFollowing
+                    ? "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+                    : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary"
+                }`}
+              >
+                {isFollowing ? (
+                  <BookmarkCheck size={18} />
+                ) : (
+                  <Bookmark size={18} />
+                )}
+                {isFollowing ? "Đang theo dõi" : "Theo dõi truyện"}
+              </button>
+
               <Link
                 href={
                   firstChapter
                     ? `/comics/${comicId}/chapter/${firstChapter.id}`
                     : "#"
                 }
-                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg ${firstChapter ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1" : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"}`}
+                className={`flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-[15px] font-bold transition-all shadow-lg ${
+                  firstChapter
+                    ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1"
+                    : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"
+                }`}
               >
                 <BookOpen size={18} /> Đọc từ đầu
               </Link>
@@ -250,12 +309,19 @@ export default function ComicDetailPage() {
                     ? `/comics/${comicId}/chapter/${latestChapter.id}`
                     : "#"
                 }
-                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2 ${latestChapter ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"}`}
+                className={`flex items-center justify-center gap-2 w-full py-2.5 sm:py-3 rounded-xl text-sm sm:text-[15px] font-bold transition-all border-2 ${
+                  latestChapter
+                    ? "border-primary text-primary hover:bg-primary hover:text-white"
+                    : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"
+                }`}
               >
                 <Play size={18} /> Đọc mới nhất
               </Link>
 
-              <BookmarkButton comicId={comicId} className="w-full justify-center" />
+              <BookmarkButton
+                comicId={comicId}
+                className="w-full justify-center"
+              />
             </div>
           </div>
 
@@ -264,9 +330,13 @@ export default function ComicDetailPage() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <div className="flex flex-wrap items-center gap-3 mb-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
                 <span
-                  className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${comic.status === "completed" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-primary/10 text-primary"}`}
+                  className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                    comic.status === "completed"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-primary/10 text-primary"
+                  }`}
                 >
                   {getVietnameseStatus(comic.status)}
                 </span>
@@ -276,11 +346,11 @@ export default function ComicDetailPage() {
                 </div>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-3 sm:mb-4">
                 {comic.title}
               </h1>
 
-              <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium mb-6">
+              <div className="flex flex-wrap items-center gap-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 font-medium mb-4 sm:mb-6">
                 <User size={18} className="text-primary" />
                 Tác giả:{" "}
                 <span className="text-slate-900 dark:text-white font-bold">
@@ -288,12 +358,10 @@ export default function ComicDetailPage() {
                 </span>
               </div>
 
-              {/* TÍCH HỢP TÌM KIẾM BẰNG THỂ LOẠI */}
               {categoryArray.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-6">
                   <Tag size={16} className="text-slate-400" />
-                  {categoryArray.map((cat, idx) => {
-                    // Ánh xạ tên thể loại sang ID (nếu có) để truyền URL cho chuẩn
+                  {categoryArray.map((cat) => {
                     const catObj = categories.find(
                       (c) => c.name === cat || c.id === cat,
                     );
@@ -301,7 +369,7 @@ export default function ComicDetailPage() {
 
                     return (
                       <Link
-                        key={idx}
+                        key={cat} // Sửa key từ idx sang cat để React render chuẩn hơn
                         href={`/search?category=${encodeURIComponent(catId)}&sort=newest`}
                         className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
                       >
