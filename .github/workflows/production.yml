@@ -3,8 +3,12 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+env:
+  NODE_VERSION: '22'
 jobs:
   t:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: echo ok
