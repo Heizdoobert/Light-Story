@@ -270,27 +270,30 @@ export function saveComicModerationState(state: any): void {
 export function proxiedR2ImageUrl(url: string): string {
   if (!url) return "";
 
-  // Security: reject dangerous URI schemes
   const lowerUrl = url.trim().toLowerCase();
   if (
     lowerUrl.startsWith("javascript:") ||
     lowerUrl.startsWith("vbscript:") ||
-    lowerUrl.startsWith("data:text/html")
+    lowerUrl.startsWith("data:")
   ) {
+    return "";
+  }
+
+  const safeUrl = url.split("?")[0].split("#")[0];
+  if (safeUrl.includes("../") || safeUrl.includes("..\\")) {
     return "";
   }
 
   const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
 
-  // Rewrite old admin R2 paths to public media paths
   if (url.startsWith("/api/admin/r2/file/")) {
     const key = url.replace("/api/admin/r2/file/", "");
-    return `${gateway}/api/media/${encodeURI(key)}`;
+    return `${gateway}/api/media/${encodeURIComponent(key)}`;
   }
 
-  // Handle public media paths
   if (url.startsWith("/api/media/")) {
-    return `${gateway}${encodeURI(url)}`;
+    const path = url.slice("/api/media/".length);
+    return `${gateway}/api/media/${encodeURIComponent(path)}`;
   }
 
   let hostname = "";
@@ -303,7 +306,7 @@ export function proxiedR2ImageUrl(url: string): string {
     return url;
   }
 
-  const isR2Host = hostname === "r2.dev" || hostname.endsWith(".r2.dev");
+  const isR2Host = hostname.endsWith(".r2.dev");
   const isCloudflareHost =
     hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
 
