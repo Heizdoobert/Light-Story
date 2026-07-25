@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Layers3, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/modules/auth/AuthContext";
+import { useLanguage } from "@/modules/language/LanguageContext";
 import { useAutoSave } from "@/hooks/common/useAutoSave";
 import {
   ComicChapterFormSchema,
@@ -51,6 +52,7 @@ import { ComicChaptersTab } from "./ComicChaptersTab";
 import { ComicModerationTab } from "./ComicModerationTab";
 import { ComicFeedbackTab } from "./ComicFeedbackTab";
 import { ComicTrashTab } from "./ComicTrashTab";
+import { TranslatorManagementTab } from "./TranslatorManagementTab";
 
 const DEFAULT_MODERATION: ComicModerationState = {
   keywords: ["spoiler", "pirated", "leak"],
@@ -59,6 +61,7 @@ const DEFAULT_MODERATION: ComicModerationState = {
 
 export const ComicManagementTab: React.FC = () => {
   const { role } = useAuth();
+  const { t } = useLanguage();
   const canManageAll = role === "superadmin" || role === "admin";
   const canModerate = canManageAll || role === "employee";
 
@@ -104,7 +107,7 @@ export const ComicManagementTab: React.FC = () => {
     const cached = loadComicCatalog();
     if (cached.length > 0) setCatalog(cached);
     fetchComicCatalog().then(setCatalog).catch(() => {
-      if (cached.length === 0) toast.error("Failed to load comics from server");
+      if (cached.length === 0) toast.error(t("failed_load_comics"));
     });
   }, []);
 
@@ -178,10 +181,10 @@ export const ComicManagementTab: React.FC = () => {
     fetchComicCatalog()
       .then((data) => {
         setCatalog(data);
-        if (showToast) toast.success("Catalog refreshed");
+        if (showToast) toast.success(t("catalog_refreshed"));
       })
       .catch((err) => {
-        toast.error(err instanceof Error ? err.message : "Failed to refresh catalog");
+        toast.error(err instanceof Error ? err.message : t("catalog_refreshed"));
       })
       .finally(() => setRefreshing(false));
   }, []);
@@ -201,7 +204,7 @@ export const ComicManagementTab: React.FC = () => {
     setChapterError(null);
     try { localStorage.removeItem(`autosave_comic-cms:new`); } catch {}
     setActiveTab("editor");
-    toast.info("Editing a new comic draft");
+    toast.info(t("editing_new_draft"));
   }, []);
 
   const openComic = useCallback((comicId: string, tab: TabKey = "editor") => {
@@ -243,7 +246,7 @@ export const ComicManagementTab: React.FC = () => {
     if (foundCbz) {
       setCbzArchiveFile(foundCbz);
       try {
-        toast.info("Extracting CBZ archive preview pages...");
+        toast.info(t("extracting_cbz"));
         const extracted = await extractCbzFileToImages(foundCbz);
         setChapterPages((current) => {
           const next = extracted.map((file, index) => ({
@@ -257,7 +260,7 @@ export const ComicManagementTab: React.FC = () => {
           return [...current, ...next];
         });
       } catch (err) {
-        toast.error("Failed to unpack .cbz archive for preview");
+        toast.error(t("failed_unpack_cbz"));
       }
       setChapterError(null);
       return;
@@ -316,7 +319,7 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse(formValues);
     if (!parsed.success) {
-      setFormError(parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving.");
+      setFormError(parsed.error.issues[0]?.message ?? t("fix_metadata_before_save"));
       return;
     }
     setFormBusy(true);
@@ -340,7 +343,7 @@ export const ComicManagementTab: React.FC = () => {
         applySavedRecord(saved);
         clearComicDraft(selectedComic.id);
         autoSave.clear();
-        toast.success("Comic updated");
+        toast.success(t("comic_updated"));
       } else if (canManageAll) {
         const created = await createComicFromMetadata({ ...parsed.data, coverFile });
         await recordComicAudit("comic.create", {
@@ -352,10 +355,10 @@ export const ComicManagementTab: React.FC = () => {
         applySavedRecord(created);
         clearComicDraft("new");
         autoSave.clear();
-        toast.success("Comic created");
+        toast.success(t("comic_created"));
       }
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Failed to save comic.";
+      const msg = error instanceof Error ? error.message : t("failed_save_comic");
       setFormError(msg);
       toast.error(msg);
     } finally {
@@ -367,7 +370,7 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse(formValues);
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before saving a draft.";
+      const msg = parsed.error.issues[0]?.message ?? t("fix_metadata_before_save");
       setFormError(msg);
       toast.error(msg);
       return;
@@ -392,9 +395,9 @@ export const ComicManagementTab: React.FC = () => {
         });
         applySavedRecord(saved);
         autoSave.clear();
-        toast.success("Draft saved to catalog and local recovery storage");
+        toast.success(t("draft_saved_catalog"));
       } catch (error) {
-        const msg = error instanceof Error ? error.message : "Failed to save draft.";
+        const msg = error instanceof Error ? error.message : t("failed_save_comic");
         setFormError(msg);
         toast.error(msg);
       }
@@ -406,7 +409,7 @@ export const ComicManagementTab: React.FC = () => {
       title: parsed.data.title,
       target_user_id: null,
     });
-    toast.success("Draft saved locally");
+    toast.success(t("draft_saved_locally"));
   }, [applySavedRecord, autoSave, coverFile, draftKey, formValues, selectedComic]);
 
   const handlePublish = useCallback(async () => {
@@ -414,7 +417,7 @@ export const ComicManagementTab: React.FC = () => {
     setFormError(null);
     const parsed = ComicCmsFormSchema.safeParse({ ...formValues, status: "published" });
     if (!parsed.success) {
-      const msg = parsed.error.issues[0]?.message ?? "Fix the comic metadata before publishing.";
+      const msg = parsed.error.issues[0]?.message ?? t("fix_metadata_before_publish");
       setFormError(msg);
       toast.error(msg);
       return;
@@ -453,7 +456,7 @@ export const ComicManagementTab: React.FC = () => {
         clearComicDraft("new");
         autoSave.clear();
       }
-      toast.success("Comic published");
+      toast.success(t("comic_published"));
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Failed to publish comic.";
       setFormError(msg);
@@ -479,7 +482,7 @@ export const ComicManagementTab: React.FC = () => {
       setSelectedComicId(null);
       setFormValues(DEFAULT_FORM);
       setCatalog((prev) => prev.filter((item) => item.id !== selectedComic.id));
-      toast.success("Comic deleted");
+      toast.success(t("comic_deleted"));
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Failed to delete comic.";
       setFormError(msg);
@@ -498,21 +501,21 @@ export const ComicManagementTab: React.FC = () => {
 
   const handleChapterSave = useCallback(async () => {
     if (!selectedComic) {
-      setChapterError("Choose a comic before uploading pages.");
+      setChapterError(t("choose_comic_first"));
       return;
     }
     const parsed = ComicChapterFormSchema.safeParse(chapterValues);
     if (!parsed.success) {
-      setChapterError(parsed.error.issues[0]?.message ?? "Fix the chapter metadata before uploading.");
+      setChapterError(parsed.error.issues[0]?.message ?? t("fix_chapter_metadata"));
       return;
     }
     if (chapterPages.length === 0) {
-      setChapterError("Add at least one page.");
+      setChapterError(t("add_at_least_one_page"));
       return;
     }
     const oversize = chapterPages.find((page) => page.sizeBytes > MAX_PAGE_SIZE_BYTES);
     if (oversize) {
-      setChapterError(`Page ${oversize.fileName} exceeds the 2 MB limit.`);
+      setChapterError(t("page_exceeds_limit").replace("{name}", oversize.fileName));
       return;
     }
     setChapterBusy(true);
@@ -558,7 +561,7 @@ export const ComicManagementTab: React.FC = () => {
       resetChapterPages();
       refreshCatalog(false);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : "Failed to save chapter.";
+      const msg = error instanceof Error ? error.message : t("failed_save_chapter");
       setChapterError(msg);
       toast.error(msg);
     } finally {
@@ -587,10 +590,10 @@ export const ComicManagementTab: React.FC = () => {
               : item,
           ),
         );
-        toast.success("Chapter deleted successfully");
+        toast.success(t("chapter_deleted"));
         refreshCatalog(false);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Failed to delete chapter.");
+        toast.error(error instanceof Error ? error.message : t("failed_delete_chapter"));
       }
     },
     [selectedComic],
@@ -673,7 +676,7 @@ export const ComicManagementTab: React.FC = () => {
         keywords: moderation.keywords,
         target_user_id: selectedComic?.id ?? null,
       });
-      toast.success("Profanity filter saved");
+      toast.success(t("profanity_filter_saved"));
     } finally {
       setModerationBusy(false);
     }
@@ -690,35 +693,35 @@ export const ComicManagementTab: React.FC = () => {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.35em] text-cyan-100">
-              <Layers3 size={12} /> Comic Management CMS
+              <Layers3 size={12} /> {t("cms_header_title")}
             </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight">Comic Management Tab</h1>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight">{t("cms_header_title")}</h1>
               <p className="mt-2 max-w-3xl text-sm md:text-base text-slate-300">
-                Manage comic metadata, chapters, assets, moderation, and audit trails from one RBAC-aware control surface.
+                {t("cms_header_desc")}
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-left backdrop-blur">
-              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">Comics</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">{t("total_comics")}</div>
               <div className="mt-1 text-2xl font-black text-white">{catalog.length}</div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-left backdrop-blur">
-              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">Drafts</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">{t("drafts")}</div>
               <div className="mt-1 text-2xl font-black text-white">
                 {catalog.filter((item) => item.status === "draft").length}
               </div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-left backdrop-blur">
-              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">Published</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">{t("published")}</div>
               <div className="mt-1 text-2xl font-black text-white">
                 {catalog.filter((item) => item.status === "published").length}
               </div>
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-left backdrop-blur">
-              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">Pages</div>
+              <div className="text-[10px] font-black uppercase tracking-[0.35em] text-slate-300">{t("total_pages")}</div>
               <div className="mt-1 text-2xl font-black text-white">{totalPages}</div>
             </div>
           </div>
@@ -731,12 +734,13 @@ export const ComicManagementTab: React.FC = () => {
         aria-label="Comic management sections"
       >
         {([
-          ["catalog", "Danh sách truyện"],
-          ["editor", "Biên tập truyện"],
-          ["chapters", "Quản lý chương"],
-          ["feedback", "Bình luận & Báo lỗi"],
-          ["trash", "Thùng rác"],
-          ["moderation", "Kiểm duyệt nâng cao"],
+          ["catalog", t("tab_catalog")],
+          ["editor", t("tab_editor")],
+          ["chapters", t("tab_chapters")],
+          ["translators", t("tab_translators")],
+          ["feedback", t("tab_feedback")],
+          ["trash", t("tab_trash")],
+          ["moderation", t("tab_moderation")],
         ] as const).map(([key, label]) => (
           <button
             key={key}
@@ -758,7 +762,7 @@ export const ComicManagementTab: React.FC = () => {
             onClick={() => { loadNewComicDraft(); setActiveTab("editor"); }}
             className="inline-flex items-center gap-2 rounded-full bg-cyan-500 px-5 py-3 text-sm font-black text-slate-950 shadow-lg hover:bg-cyan-400 transition-colors"
           >
-            <Plus size={16} /> Tạo truyện mới
+            <Plus size={16} /> {t("create_new_comic")}
           </button>
         </div>
       </div>
@@ -818,6 +822,10 @@ export const ComicManagementTab: React.FC = () => {
         />
       )}
 
+      {activeTab === "translators" && (
+        <TranslatorManagementTab catalog={catalog} />
+      )}
+
       {activeTab === "feedback" && (
         <ComicFeedbackTab catalog={catalog} canManageAll={canManageAll} />
       )}
@@ -827,12 +835,12 @@ export const ComicManagementTab: React.FC = () => {
           catalog={catalog}
           role={role}
           onRestoreComic={(id) => {
-            toast.success(`Đã khôi phục truyện: ${id}`);
+            toast.success(t("restore_success").replace("{id}", id));
             refreshCatalog(false);
           }}
           onHardDeleteComic={(id) => {
             handleDelete();
-            toast.success(`Đã xóa vĩnh viễn dữ liệu ID: ${id}`);
+            toast.success(t("permanently_deleted").replace("{id}", id));
           }}
         />
       )}

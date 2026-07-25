@@ -9,6 +9,7 @@ import {
 import { type ComicCmsRecord } from "@/services/comics/comicCms.service";
 import type { ComicCmsFormValues } from "@/lib/validation/comicCmsSchemas";
 import { slugify, statusTone as statusToneFn } from "@/lib/cms/comicCmsTypes";
+import { loadTranslators } from "./TranslatorManagementTab";
 
 type ComicEditorTabProps = {
   selectedComic: ComicCmsRecord | null;
@@ -60,7 +61,8 @@ export const ComicEditorTab: React.FC<ComicEditorTabProps> = ({
 
   const translatorOptions = React.useMemo(() => {
     const fromCatalog = (catalog as any[]).map((c) => c.translator).filter(Boolean);
-    const combined = Array.from(new Set(fromCatalog));
+    const fromSavedTranslators = loadTranslators().map((t) => t.name).filter(Boolean);
+    const combined = Array.from(new Set([...fromCatalog, ...fromSavedTranslators]));
     if (formValues.translator && !combined.includes(formValues.translator)) {
       combined.push(formValues.translator);
     }

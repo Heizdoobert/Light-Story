@@ -1,6 +1,6 @@
 import type { ComicCmsFormValues, ComicChapterFormValues, ComicStatus } from "@/lib/validation/comicCmsSchemas";
 
-export type TabKey = "catalog" | "editor" | "chapters" | "feedback" | "trash" | "moderation";
+export type TabKey = "catalog" | "editor" | "chapters" | "translators" | "feedback" | "trash" | "moderation";
 
 export type PageDraft = {
   id: string;

@@ -4,6 +4,7 @@ import React from 'react';
 import { TrendingUp } from 'lucide-react';
 import { ChartContainer, TrendChart, TrafficChart, DeviceDistributionChart } from '@/components/charts';
 import type { AnalyticsTrendPoint, InfrastructureMetrics } from '@/types/analytics';
+import { useLanguage } from '@/modules/language/LanguageContext';
 
 type TrendsSectionProps = {
   userGrowth: AnalyticsTrendPoint[];
@@ -20,11 +21,13 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
   infrastructure,
   isLoading = false,
 }) => {
+  const { t } = useLanguage();
+
   // Prepare device distribution data
   const deviceData = [
-    { name: 'Mobile', value: infrastructure.device_mobile || 0 },
-    { name: 'Desktop', value: infrastructure.device_desktop || 0 },
-    { name: 'Tablet', value: infrastructure.device_tablet || 0 },
+    { name: t("mobile_device"), value: infrastructure.device_mobile || 0 },
+    { name: t("desktop_device"), value: infrastructure.device_desktop || 0 },
+    { name: t("tablet_device"), value: infrastructure.device_tablet || 0 },
   ].filter(d => d.value > 0);
 
   return (
@@ -32,7 +35,7 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 sm:px-4 py-1.5 sm:py-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.32em] text-slate-200">
-          <TrendingUp size={12} className="flex-shrink-0" /> Trends & Insights
+          <TrendingUp size={12} className="flex-shrink-0" /> {t("trends_insights")}
         </div>
       </div>
 
@@ -40,13 +43,13 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
       <div className="grid grid-cols-1 gap-3 sm:gap-6 lg:grid-cols-2">
         {/* User Growth Trend */}
         <ChartContainer
-          title="User Growth"
-          description="New signups over the selected period"
+          title={t("user_growth_trend")}
+          description={t("user_growth_trend_desc")}
           isLoading={isLoading}
         >
           <TrendChart
             data={userGrowth}
-            title="New Users"
+            title={t("new_users_chart")}
             color="#10b981"
             height={240}
           />
@@ -54,8 +57,8 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
 
         {/* Traffic Trend */}
         <ChartContainer
-          title="Page Views & Traffic"
-          description="Request volume and bandwidth consumption"
+          title={t("page_views_traffic")}
+          description={t("page_views_traffic_desc")}
           isLoading={isLoading}
         >
           <TrafficChart
@@ -68,8 +71,8 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
 
         {/* Storage Usage */}
         <ChartContainer
-          title="Storage Trends"
-          description="R2 storage usage trend over time"
+          title={t("storage_trends")}
+          description={t("storage_trends_desc")}
           isLoading={isLoading}
         >
           <TrafficChart
@@ -82,8 +85,8 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
 
         {/* Device Distribution */}
         <ChartContainer
-          title="Device Distribution"
-          description="Requests breakdown by device type"
+          title={t("device_distribution")}
+          description={t("device_distribution_desc")}
           isLoading={isLoading}
         >
           {deviceData.length > 0 ? (
@@ -93,7 +96,7 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
             />
           ) : (
             <div className="flex items-center justify-center h-60 sm:h-80 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-dashed border-slate-300 dark:border-slate-700">
-              <p className="text-xs sm:text-sm text-slate-500">No device data available</p>
+              <p className="text-xs sm:text-sm text-slate-500">{t("no_device_data")}</p>
             </div>
           )}
         </ChartContainer>
@@ -102,13 +105,13 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
       {/* Top Zones */}
       {infrastructure.top_zones && infrastructure.top_zones.length > 0 && (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-6">
-          <h3 className="text-lg font-bold text-slate-950 dark:text-white mb-4">Top Geographic Zones</h3>
+          <h3 className="text-lg font-bold text-slate-950 dark:text-white mb-4">{t("top_geographic_zones")}</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800">
-                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400">Zone</th>
-                  <th className="text-right py-3 px-4 text-slate-600 dark:text-slate-400">Requests</th>
+                  <th className="text-left py-3 px-4 text-slate-600 dark:text-slate-400">{t("zone")}</th>
+                  <th className="text-right py-3 px-4 text-slate-600 dark:text-slate-400">{t("requests_label")}</th>
                 </tr>
               </thead>
               <tbody>

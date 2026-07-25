@@ -27,15 +27,14 @@ export const SystemSettingsTab: React.FC = () => {
     roleTargets,
     dashTabs,
     adminMenuIds,
-    adminMenuLabels,
   } = useSystemSettingsPresenter();
 
   if (role !== 'superadmin' && role !== 'admin') {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
         <div className="text-6xl">🔒</div>
-        <h2 className="text-2xl font-black text-slate-900 dark:text-white">Restricted Access</h2>
-        <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">Only admin and superadmin can edit system settings.</p>
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white">{t("restricted_access")}</h2>
+        <p className="text-slate-500 dark:text-slate-400 font-bold max-w-sm">{t("restricted_access_desc")}</p>
       </div>
     );
   }
@@ -44,7 +43,7 @@ export const SystemSettingsTab: React.FC = () => {
     <div className="space-y-8 max-w-6xl">
       <header>
         <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{t("system_settings")}</h1>
-        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">Configure interface behavior and role-based dashboard tab visibility.</p>
+        <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">{t("settings_desc")}</p>
       </header>
 
       {settingsQuery.isError && (
@@ -53,7 +52,7 @@ export const SystemSettingsTab: React.FC = () => {
         </div>
       )}
 
-      {settingsQuery.isLoading && <p className="text-sm font-bold text-slate-500">Loading settings...</p>}
+      {settingsQuery.isLoading && <p className="text-sm font-bold text-slate-500">{t("loading_settings")}</p>}
 
       {!settingsQuery.isLoading && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -65,7 +64,7 @@ export const SystemSettingsTab: React.FC = () => {
                 <Globe size={16} className="text-primary" />
                 <p className="text-sm font-black text-slate-900 dark:text-white">{t("language")}</p>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Select application interface language.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{t("select_language_desc")}</p>
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <button
                   type="button"
@@ -95,7 +94,7 @@ export const SystemSettingsTab: React.FC = () => {
             <label className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3">
               <div>
                 <p className="text-sm font-black text-slate-900 dark:text-white">{t("compact_layout")}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Reduces spacing in dashboard cards.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("compact_layout_desc")}</p>
               </div>
               <input type="checkbox" checked={compactMode} onChange={(e) => setCompactMode(e.target.checked)} className="h-4 w-4" />
             </label>
@@ -103,7 +102,7 @@ export const SystemSettingsTab: React.FC = () => {
             <label className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-3">
               <div>
                 <p className="text-sm font-black text-slate-900 dark:text-white">{t("show_sync_badge")}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Displays live polling status text in dashboard header.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("sync_badge_desc")}</p>
               </div>
               <input type="checkbox" checked={showSyncBadge} onChange={(e) => setShowSyncBadge(e.target.checked)} className="h-4 w-4" />
             </label>
@@ -114,12 +113,12 @@ export const SystemSettingsTab: React.FC = () => {
               disabled={saveMutation.isPending}
               className="w-full rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 py-3 font-bold disabled:opacity-50"
             >
-              {saveMutation.isPending ? 'Saving...' : t("save_settings")}
+              {saveMutation.isPending ? t("saving") : t("save_settings")}
             </button>
           </section>
 
           <section className="xl:col-span-2 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 space-y-5">
-            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Tab Visibility For Lower Roles</h3>
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">{t("tab_visibility_title")}</h3>
 
             {roleTargets.map((targetRole) => (
               <div key={targetRole} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
@@ -136,7 +135,7 @@ export const SystemSettingsTab: React.FC = () => {
             ))}
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Sidebar Menu Visibility</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">{t("sidebar_menu_title")}</h4>
               {(['admin', 'employee'] as Array<keyof typeof menuVisibility>).map((targetRole) => (
                 <div key={targetRole} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                   <p className="text-sm font-black uppercase text-slate-900 dark:text-white mb-3">{targetRole}</p>
@@ -144,7 +143,7 @@ export const SystemSettingsTab: React.FC = () => {
                     {adminMenuIds.map((menuId) => (
                       <label key={menuId} className="flex items-center gap-3 text-sm font-bold text-slate-700 dark:text-slate-300">
                         <input type="checkbox" checked={menuVisibility[targetRole].includes(menuId)} onChange={() => toggleMenuTab(targetRole, menuId)} />
-                        <span>{adminMenuLabels[menuId]}</span>
+                        <span>{t(`nav_${menuId}`)}</span>
                       </label>
                     ))}
                   </div>
@@ -153,7 +152,7 @@ export const SystemSettingsTab: React.FC = () => {
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">Backup & Restore</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">{t("backup_restore_title")}</h4>
               <div className="grid grid-cols-1 gap-3">
                 <textarea
                   value={backupJson}
@@ -164,25 +163,25 @@ export const SystemSettingsTab: React.FC = () => {
                 />
                 <div className="flex flex-wrap gap-3">
                   <button type="button" onClick={copyBackup} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-black">
-                    Copy Snapshot
+                    {t("copy_snapshot")}
                   </button>
                   <button type="button" onClick={downloadBackup} className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 text-sm font-black">
-                    Download Snapshot
+                    {t("download_snapshot")}
                   </button>
                   <button type="button" onClick={restoreBackup} className="rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 px-4 py-3 text-sm font-black">
-                    Restore From JSON
+                    {t("restore_from_json")}
                   </button>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400">This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("settings_backup_desc")}</p>
               </div>
             </div>
 
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">System Logs</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-slate-500">{t("system_logs_title")}</h4>
               <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
                 <div>
                   {systemLogs.length === 0 && (
-                    <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No system logs yet. Logs will appear after save/backup actions.</div>
+                    <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">{t("no_system_logs")}</div>
                   )}
                   {systemLogs.map((entry) => (
                     <div key={entry.id} className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 last:border-b-0">

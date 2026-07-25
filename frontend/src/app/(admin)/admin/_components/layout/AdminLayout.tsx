@@ -14,7 +14,8 @@ import { ThemeToggleButton } from './ThemeToggleButton';
 import { NotificationBell } from "@/components/shared/user/NotificationBell";
 import { toast } from "sonner";
 import { supabase } from '@/infrastructure/supabase/client';
-import { ADMIN_MENU_ITEMS } from '@/lib/admin/adminNavigation';
+import { getAdminMenuItems } from '@/lib/admin/adminNavigation';
+import { useLanguage } from '@/modules/language/LanguageContext';
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
@@ -92,25 +93,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     },
   });
 
+  const { t } = useLanguage();
+
   const filteredMenu = React.useMemo(() => {
     const dashboardVisibility = visibilityQuery.data?.dashboardVisibility ?? DEFAULT_DASHBOARD_TAB_VISIBILITY;
     const menuVisibility = visibilityQuery.data?.menuVisibility ?? DEFAULT_SIDEBAR_MENU_VISIBILITY;
+    const menuItems = getAdminMenuItems(t);
 
-    return ADMIN_MENU_ITEMS.filter((item) => {
+    return menuItems.filter((item) => {
       if (!role || !item.roles.includes(role)) return false;
       return (
         isDashboardTabVisibleForRole(item.id, role, dashboardVisibility) &&
         isAdminMenuVisibleForRole(item.id, role, menuVisibility)
       );
     });
-  }, [role, visibilityQuery.data]);
+  }, [role, visibilityQuery.data, t]);
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success("Logged out successfully");
+      toast.success(t("logout_success"));
     } catch (error) {
-      toast.error("Failed to logout");
+      toast.error(t("logout_failed"));
     }
   };
 
@@ -173,7 +177,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               size={20}
               className="group-hover:scale-110 transition-transform"
             />
-            {isSidebarOpen && <span className="font-bold text-sm">Home</span>}
+            {isSidebarOpen && <span className="font-bold text-sm">{t("home")}</span>}
           </Link>
         </div>
 
@@ -221,7 +225,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all font-bold text-sm"
           >
             <LogOut size={20} />
-            {isSidebarOpen && <span>Sign Out</span>}
+            {isSidebarOpen && <span>{t("sign_out")}</span>}
           </button>
         </div>
       </motion.aside>
@@ -243,10 +247,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
             <div>
               <h2 className="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider text-xs">
-                Admin Panel
+                {t("admin_panel")}
               </h2>
               <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400">
-                Welcome back, {profile?.full_name || "Admin"}
+                {t("welcome_back").replace("{name}", profile?.full_name || t("admin"))}
               </p>
             </div>
           </div>
@@ -284,7 +288,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5 font-medium">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                System Operational
+                {t("system_operational")}
               </span>
               <span className="font-mono text-[11px] opacity-75">v1.0.0</span>
             </div>

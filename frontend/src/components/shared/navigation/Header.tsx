@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   const toggleLanguage = () => {
     const nextLang = language === "VI" ? "EN" : "VI";
     setLanguage(nextLang);
-    toast.success(nextLang === "VI" ? "Đã chuyển sang Tiếng Việt" : "Switched to English");
+    toast.success(nextLang === "VI" ? t("switched_to_vi") : t("switched_to_en"));
   };
 
   return (
@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {...bounceClick}
                 onClick={() => {
                   signOut();
-                  toast.success("Đã đăng xuất thành công");
+                  toast.success(t("logout_success"));
                 }}
                 className="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all"
                 title={t("logout")}

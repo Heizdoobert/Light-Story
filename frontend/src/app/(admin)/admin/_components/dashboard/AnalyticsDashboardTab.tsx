@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { AlertTriangle, ArrowUpRight, CalendarRange, Cloud, Loader2, RefreshCw, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
 import { useAnalyticsDashboard } from '@/hooks/presenters/useAnalyticsDashboard';
+import { useLanguage } from '@/modules/language/LanguageContext';
 import { TrendsSection } from './TrendsSection';
 import type { AnalyticsRole, AnalyticsTimeRange, ContentPerformanceMetrics, InfrastructureMetrics, UserEngagementMetrics } from '@/types/analytics';
 import { computeStorageEfficiencyPct, formatCompactNumber, formatFixedNumber } from '@/services/admin/analytics.service';
@@ -11,12 +12,6 @@ type AnalyticsDashboardTabProps = {
   role: AnalyticsRole | null;
   userId: string | null;
 };
-
-const TIME_RANGES: Array<{ value: AnalyticsTimeRange; label: string }> = [
-  { value: '24h', label: 'Last 24h' },
-  { value: '7d', label: '7 days' },
-  { value: '30d', label: '30 days' },
-];
 
 function MetricCard({
   title,
@@ -77,33 +72,34 @@ function SectionShell({
 }
 
 function UserEngagementCard({ data }: { data: UserEngagementMetrics }) {
+  const { t } = useLanguage();
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <MetricCard title="Total Users" value={formatCompactNumber(data.total_users)} detail="All registered profiles" accent="bg-gradient-to-br from-blue-500 to-cyan-400" />
-        <MetricCard title="New Sign-ups" value={formatCompactNumber(data.new_users)} detail={`Growth rate ${formatFixedNumber(data.growth_rate_pct)}%`} accent="bg-gradient-to-br from-emerald-500 to-lime-400" />
-        <MetricCard title="Active Users" value={formatCompactNumber(data.active_users)} detail="Users with recent reading activity" accent="bg-gradient-to-br from-violet-500 to-fuchsia-400" />
-        <MetricCard title="Favorites" value={formatCompactNumber(data.total_favorites)} detail="Stories saved or liked by users" accent="bg-gradient-to-br from-amber-500 to-orange-400" />
+        <MetricCard title={t("total_users")} value={formatCompactNumber(data.total_users)} detail="Registered accounts" accent="bg-gradient-to-br from-blue-500 to-cyan-400" />
+        <MetricCard title={t("new_users")} value={formatCompactNumber(data.new_users)} detail={`Growth ${formatFixedNumber(data.growth_rate_pct)}%`} accent="bg-gradient-to-br from-emerald-500 to-lime-400" />
+        <MetricCard title={t("active_users")} value={formatCompactNumber(data.active_users)} detail="Recent reading activity" accent="bg-gradient-to-br from-violet-500 to-fuchsia-400" />
+        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="Saved & favorited comics" accent="bg-gradient-to-br from-amber-500 to-orange-400" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
         <div className="rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Churn Rate</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("churn_rate")}</p>
           <div className="mt-2 sm:mt-3 flex items-end gap-2">
             <span className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(data.churn_rate_pct)}%</span>
             <ArrowUpRight className="text-emerald-500 mb-0.5 sm:mb-1 flex-shrink-0" size={16} />
           </div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Lower values indicate stronger retention for the selected time range.</p>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Lower rate indicates stronger reader retention.</p>
         </div>
         <div className="rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Views</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Story Views</p>
           <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatCompactNumber(data.total_views)}</div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Reading activity across all tracked stories.</p>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Total reading activity volume.</p>
         </div>
         <div className="rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Avg. Session</p>
-          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(data.avg_session_duration_minutes)}m</div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Estimated from user view windows in the selected period.</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("avg_session")}</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(data.avg_session_duration_minutes)} m</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Average reading duration per session.</p>
         </div>
       </div>
     </div>
@@ -111,12 +107,13 @@ function UserEngagementCard({ data }: { data: UserEngagementMetrics }) {
 }
 
 function ContentPerformanceCard({ data }: { data: ContentPerformanceMetrics }) {
+  const { t } = useLanguage();
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-        <MetricCard title="Total Views" value={formatCompactNumber(data.total_views)} detail="Chapter-level engagement volume" accent="bg-gradient-to-br from-indigo-500 to-blue-400" />
-        <MetricCard title="Favorites" value={formatCompactNumber(data.total_favorites)} detail="User favorites tied to story content" accent="bg-gradient-to-br from-pink-500 to-rose-400" />
-        <MetricCard title="Engagement Score" value={formatFixedNumber(data.engagement_score)} detail="Normalized content interaction score" accent="bg-gradient-to-br from-cyan-500 to-sky-400" />
+        <MetricCard title="Chapter Views" value={formatCompactNumber(data.total_views)} detail="Views per chapter" accent="bg-gradient-to-br from-indigo-500 to-blue-400" />
+        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="User favorited stories" accent="bg-gradient-to-br from-pink-500 to-rose-400" />
+        <MetricCard title="Engagement Score" value={formatFixedNumber(data.engagement_score)} detail="Normalized interaction score" accent="bg-gradient-to-br from-cyan-500 to-sky-400" />
       </div>
 
       <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 overflow-hidden">
@@ -143,7 +140,7 @@ function ContentPerformanceCard({ data }: { data: ContentPerformanceMetrics }) {
             </div>
           ))}
           {data.top_chapters.length === 0 && (
-            <div className="px-3 sm:px-5 py-6 sm:py-8 text-xs sm:text-sm text-slate-500 dark:text-slate-400">No chapter data available for the selected range.</div>
+            <div className="px-3 sm:px-5 py-6 sm:py-8 text-xs sm:text-sm text-slate-500 dark:text-slate-400">No chapter data available.</div>
           )}
         </div>
       </div>
@@ -152,56 +149,56 @@ function ContentPerformanceCard({ data }: { data: ContentPerformanceMetrics }) {
 }
 
 function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
+  const { t } = useLanguage();
   const storageEfficiency = data.storage_efficiency_pct || computeStorageEfficiencyPct(data.r2_usage_gb, data.r2_allocated_gb);
 
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <MetricCard title="R2 Usage" value={`${formatFixedNumber(data.r2_usage_gb)} GB`} detail={`Allocated ${formatFixedNumber(data.r2_allocated_gb)} GB`} accent="bg-gradient-to-br from-slate-700 to-slate-500" />
-        <MetricCard title="R2 Objects" value={formatCompactNumber(data.r2_object_count)} detail="Media objects stored in R2" accent="bg-gradient-to-br from-teal-500 to-emerald-400" />
-        <MetricCard title="Page Views" value={formatCompactNumber(data.page_views)} detail="Cloudflare analytics traffic volume" accent="bg-gradient-to-br from-amber-500 to-yellow-400" />
-        <MetricCard title="Cache Hit Ratio" value={`${formatFixedNumber(data.cache_hit_ratio_pct)}%`} detail="Cloudflare cache effectiveness" accent="bg-gradient-to-br from-fuchsia-500 to-pink-400" />
+        <MetricCard title={t("r2_usage")} value={`${formatFixedNumber(data.r2_usage_gb)} GB`} detail={`Allocated ${formatFixedNumber(data.r2_allocated_gb)} GB`} accent="bg-gradient-to-br from-slate-700 to-slate-500" />
+        <MetricCard title={t("r2_objects")} value={formatCompactNumber(data.r2_object_count)} detail="Media objects stored in R2" accent="bg-gradient-to-br from-teal-500 to-emerald-400" />
+        <MetricCard title={t("page_views")} value={formatCompactNumber(data.page_views)} detail="Cloudflare traffic volume" accent="bg-gradient-to-br from-amber-500 to-yellow-400" />
+        <MetricCard title={t("cache_hit_ratio")} value={`${formatFixedNumber(data.cache_hit_ratio_pct)}%`} detail="Cloudflare cache effectiveness" accent="bg-gradient-to-br from-fuchsia-500 to-pink-400" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
         <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Storage Efficiency</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("storage_efficiency")}</p>
           <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(storageEfficiency)}%</div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Used over allocated capacity for R2 media storage.</p>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Used over allocated R2 capacity.</p>
         </div>
         <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">D1 Query Count</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("d1_queries")}</p>
           <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatCompactNumber(data.d1_queries_count)}</div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Aggregate database activity in the selected range.</p>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Aggregate database activity.</p>
         </div>
         <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">D1 Latency</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("d1_latency")}</p>
           <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(data.d1_avg_latency_ms)} ms</div>
-          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Average query latency for backend reads and writes.</p>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Average query latency.</p>
         </div>
       </div>
 
       <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Cloudflare Device Breakdown</p>
+        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("device_breakdown")}</p>
         <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-4">
           <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">Mobile</p>
+            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("mobile_device")}</p>
             <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_mobile || 0)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">Desktop</p>
+            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("desktop_device")}</p>
             <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_desktop || 0)}</p>
           </div>
           <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">Tablet</p>
+            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("tablet_device")}</p>
             <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_tablet || 0)}</p>
           </div>
         </div>
       </div>
-
       {data.top_zones && data.top_zones.length > 0 && (
         <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Cloudflare Top Zones</p>
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("top_geographic_zones")}</p>
           <div className="mt-3 space-y-2 sm:space-y-3 max-h-72 overflow-y-auto">
             {data.top_zones.slice(0, 5).map((zone) => (
               <div key={zone.zone} className="flex items-center justify-between gap-3 pb-2 sm:pb-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
@@ -220,11 +217,18 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
 }
 
 export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ role, userId }) => {
+  const { t } = useLanguage();
   const [timeRange, setTimeRange] = useState<AnalyticsTimeRange>('7d');
   const dashboardQuery = useAnalyticsDashboard(timeRange, role);
 
   const isAdmin = role === 'superadmin' || role === 'admin';
   const limitedView = role === 'employee';
+
+  const timeRanges: Array<{ value: AnalyticsTimeRange; label: string }> = [
+    { value: '24h', label: t('time_24h') },
+    { value: '7d', label: t('time_7d') },
+    { value: '30d', label: t('time_30d') },
+  ];
 
   return (
     <div className="space-y-4 sm:space-y-8">
@@ -234,32 +238,32 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
           <div className="space-y-2 sm:space-y-3 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-3 sm:px-4 py-1.5 sm:py-2 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.32em] text-slate-200">
-                <Sparkles size={12} className="flex-shrink-0" /> Analytics Overview
+                <Sparkles size={12} className="flex-shrink-0" /> {t("analytics_overview")}
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-emerald-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Analytics Engine Active
+                {t("analytics_engine_active")}
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-cyan-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                KV Cache Active
+                {t("kv_cache_active")}
               </div>
             </div>
             <div>
-              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight break-words">Operational dashboard for readership, content, and infrastructure.</h1>
+              <h1 className="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight break-words">{t("analytics_title")}</h1>
               <p className="mt-1 sm:mt-2 max-w-3xl text-xs sm:text-sm leading-5 sm:leading-6 text-slate-300">
-                Unifies Supabase engagement data with Cloudflare metrics so the team can monitor growth, favorites, storage, and delivery health in one place.
+                {t("analytics_desc")}
               </p>
             </div>
           </div>
 
           <div className="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:flex-wrap lg:flex-nowrap">
             <div className="rounded-lg sm:rounded-2xl border border-white/10 bg-white/10 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm backdrop-blur-sm">
-              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-300">Current Role</p>
-              <p className="mt-0.5 sm:mt-1 font-semibold text-white text-sm sm:text-base">{role ?? 'guest'}{limitedView ? ' · limited view' : ''}</p>
+              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-300">{t("role_label")}</p>
+              <p className="mt-0.5 sm:mt-1 font-semibold text-white text-sm sm:text-base">{role ?? 'guest'}{limitedView ? ` · ${t("limited_view")}` : ''}</p>
             </div>
             <div className="rounded-lg sm:rounded-2xl border border-white/10 bg-white/10 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm backdrop-blur-sm">
-              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-300">User ID</p>
+              <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-300">{t("user_id_label")}</p>
               <p className="mt-0.5 sm:mt-1 font-mono text-[10px] sm:text-xs text-slate-200 truncate">{userId ?? 'anonymous'}</p>
             </div>
             <button
@@ -268,8 +272,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
               className="inline-flex items-center justify-center gap-2 rounded-lg sm:rounded-2xl bg-white px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-black text-slate-950 transition-transform hover:-translate-y-0.5 active:translate-y-0"
             >
               <RefreshCw size={14} className={dashboardQuery.isFetching ? 'animate-spin' : ''} />
-              <span className="hidden sm:inline">Refresh Data</span>
-              <span className="sm:hidden">Refresh</span>
+              <span>{t("refresh_data")}</span>
             </button>
           </div>
         </div>
@@ -277,7 +280,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
 
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center rounded-lg sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-950/80 p-2 sm:p-3 shadow-sm backdrop-blur-sm">
         <div className="flex flex-wrap gap-1.5 sm:gap-3">
-          {TIME_RANGES.map((item) => {
+          {timeRanges.map((item) => {
             const active = timeRange === item.value;
             return (
               <button
@@ -300,14 +303,14 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
 
         <div className="ml-auto inline-flex items-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border border-slate-200 dark:border-slate-800 px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
           <Cloud size={13} className="flex-shrink-0" />
-          <span className="hidden sm:inline">{dashboardQuery.data?.meta.cached ? 'Cached snapshot' : 'Fresh aggregation'}</span>
-          <span className="sm:hidden">{dashboardQuery.data?.meta.cached ? 'Cached' : 'Fresh'}</span>
+          <span className="hidden sm:inline">{dashboardQuery.data?.meta.cached ? t("cached_snapshot") : t("fresh_aggregation")}</span>
+          <span className="sm:hidden">{dashboardQuery.data?.meta.cached ? t("cached") : t("fresh")}</span>
         </div>
       </div>
 
       {dashboardQuery.isLoading && (
         <div className="flex items-center gap-3 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 p-6 text-sm font-semibold text-slate-500 dark:text-slate-400">
-          <Loader2 className="animate-spin" size={18} /> Loading analytics data...
+          <Loader2 className="animate-spin" size={18} /> {t("loading_analytics")}
         </div>
       )}
 
@@ -315,8 +318,8 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
         <div className="flex items-start gap-3 rounded-3xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
           <AlertTriangle size={18} className="mt-0.5" />
           <div>
-            <p className="font-bold">Unable to load analytics dashboard.</p>
-            <p className="mt-1 text-sm">{dashboardQuery.error instanceof Error ? dashboardQuery.error.message : 'Unknown analytics error'}</p>
+            <p className="font-bold">{t("unable_to_load_analytics")}</p>
+            <p className="mt-1 text-sm">{dashboardQuery.error instanceof Error ? dashboardQuery.error.message : t("unknown_error")}</p>
           </div>
         </div>
       )}
@@ -324,15 +327,15 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
       {dashboardQuery.data && (
         <>
           <div className="grid grid-cols-1 gap-3 sm:gap-6">
-            <SectionShell tone="supabase" title="Supabase Engagement" description="Supabase-derived readership and retention signals." icon={<ShieldCheck size={16} className="sm:size-18" />}>
+            <SectionShell tone="supabase" title={t("supabase_engagement")} description={t("supabase_engagement_desc")} icon={<ShieldCheck size={16} className="sm:size-18" />}>
               <UserEngagementCard data={dashboardQuery.data.user_engagement} />
             </SectionShell>
 
-            <SectionShell tone="supabase" title="Supabase Content Performance" description="Chapter rankings and reading momentum from Supabase." icon={<TrendingUp size={16} className="sm:size-18" />}>
+            <SectionShell tone="supabase" title={t("supabase_content")} description={t("supabase_content_desc")} icon={<TrendingUp size={16} className="sm:size-18" />}>
               <ContentPerformanceCard data={dashboardQuery.data.content_performance} />
             </SectionShell>
 
-            <SectionShell tone="cloudflare" title="Cloudflare Infrastructure" description={isAdmin ? 'Cloudflare delivery, caching, device, and zone telemetry.' : 'Restricted view of public delivery health.'} icon={<Cloud size={16} className="sm:size-18" />}>
+            <SectionShell tone="cloudflare" title={t("cloudflare_infra")} description={isAdmin ? t("cloudflare_infra_desc") : t("cloudflare_infra_restricted")} icon={<Cloud size={16} className="sm:size-18" />}>
               <InfrastructureCard data={dashboardQuery.data.infrastructure} />
             </SectionShell>
 

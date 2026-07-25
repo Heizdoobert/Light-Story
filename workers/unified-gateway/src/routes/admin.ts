@@ -1010,6 +1010,43 @@ export async function handleAdminRequest(
       return res.ok ? json({ success: true }) : handleRes(res);
     }
 
+    // --- TRANSLATORS CRUD ENDPOINTS ---
+    if (method === 'GET' && path === '/admin/translators') {
+      const res = await sbGet('translators', 'select=*&order=created_at.desc', env, token);
+      return handleRes(res);
+    }
+
+    if (method === 'POST' && path === '/admin/translators') {
+      const body = (await request.json()) as any;
+      if (!body.name) return err('VALIDATION_ERROR', 'Translator name is required', 400);
+      const payload = {
+        name: String(body.name).trim(),
+        contact: body.contact ? String(body.contact).trim() : null,
+        notes: body.notes ? String(body.notes).trim() : null,
+        status: body.status || 'active',
+      };
+      const res = await sbPost('translators', payload, env, token);
+      return handleRes(res);
+    }
+
+    if (method === 'PATCH' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
+      const id = path.split('/')[3];
+      const body = (await request.json()) as any;
+      const payload: Record<string, any> = {};
+      if (body.name !== undefined) payload.name = String(body.name).trim();
+      if (body.contact !== undefined) payload.contact = String(body.contact).trim();
+      if (body.notes !== undefined) payload.notes = String(body.notes).trim();
+      if (body.status !== undefined) payload.status = body.status;
+      const res = await sbPatch('translators', `id=eq.${id}`, payload, env, token);
+      return handleRes(res);
+    }
+
+    if (method === 'DELETE' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
+      const id = path.split('/')[3];
+      const res = await sbDelete('translators', `id=eq.${id}`, env, token);
+      return res.ok ? json({ success: true }) : handleRes(res);
+    }
+
     return null;
   } catch (e: any) {
     return err(
