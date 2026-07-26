@@ -1,0 +1,53 @@
+name: Discord Notification
+on:
+  workflow_run:
+    workflows:
+      - light-story-ci
+      - Deploy
+      - Publish Docker Image
+      - Supabase Database Tests
+      - Agent Smoke Tests
+      - CodeQL Security Scan
+      - Worker E2E Smoke Tests
+    types: [completed]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord notification
+        run: |
+          STATUS="${{ github.event.workflow_run.conclusion }}"
+          WORKFLOW="${{ github.event.workflow_run.name }}"
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          REPO="${{ github.event.workflow_run.head_repository.full_name }}"
+          URL="${{ github.event.workflow_run.html_url }}"
+
+          if [ "$STATUS" = "success" ]; then
+            COLOR=3066993; EMOJI="✅"
+          elif [ "$STATUS" = "failure" ]; then
+            COLOR=15158332; EMOJI="❌"
+          elif [ "$STATUS" = "cancelled" ]; then
+            COLOR=16766720; EMOJI="🔄"
+          else
+            COLOR=10181046; EMOJI="ℹ️"
+          fi
+
+          curl -s -H "Content-Type: application/json" \
+            -d "$(cat <<-ENDJSON
+          {
+            "embeds": [{
+              "title": "${EMOJI} ${WORKFLOW}",
+              "color": ${COLOR},
+              "fields": [
+                {"name": "Status", "value": "${STATUS}", "inline": true},
+                {"name": "Branch", "value": "${BRANCH}", "inline": true},
+                {"name": "Repo", "value": "${REPO}", "inline": true}
+              ],
+              "url": "${URL}",
+              "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }]
+          }
+          ENDJSON
+          )" \
+            ${{ secrets.DISCORD_WEBHOOK }}
