@@ -78,10 +78,12 @@ async function handleSupabaseProxy(
   headers.delete('x-begin-timestamp');
   headers.delete('x-request-id');
 
+  const reqBody = request.method !== 'GET' && request.method !== 'HEAD' ? await request.arrayBuffer() : null;
+
   const upstreamReq = new Request(targetUrl, {
     method: request.method,
     headers,
-    body: request.body ?? undefined,
+    body: reqBody && reqBody.byteLength > 0 ? reqBody : undefined,
     redirect: 'manual',
   });
 
@@ -166,7 +168,7 @@ export default {
     let authCtx = null;
     try {
       if (authHeader)
-        authCtx = await validateJWT(authHeader);
+        authCtx = await validateJWT(authHeader, env);
     } catch (e) {
       if (e instanceof UnauthorizedError) {
         return new Response(

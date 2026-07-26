@@ -41,8 +41,9 @@ export async function handleAdminRequest(
     return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
   }
 
-  // Granular check: site-settings are superadmin and admin only
-  if (path.startsWith('/admin/site-settings') && !requireRole(userRole, ['superadmin', 'admin'])) {
+  // Granular check: site-settings are superadmin and admin only (except scope=public)
+  const isPublicScope = path === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public';
+  if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin', 'admin'])) {
     return err('FORBIDDEN', 'Site settings require admin privileges', 403);
   }
 
@@ -236,14 +237,18 @@ export async function handleAdminRequest(
       if (keys) {
         const keyList = keys
           .split(',')
-          .map((k) => `key=eq.${k.trim()}`)
+          .map((k) => k.trim())
+          .filter(Boolean)
+          .map((k) => `key.eq.${k}`)
           .join(',');
-        q += `&or=(${keyList})`;
+        if (keyList) {
+          q += `&or=(${keyList})`;
+        }
       }
       if (scope === 'admin') {
-        q += '&key=like.admin_*';
+        q += '&key=like.admin_%';
       } else if (scope === 'public') {
-        q += '&key=like.public_*';
+        q += '&key=like.public_%';
       }
       const res = await sbGet('site_settings', q, env, token);
       return handleRes(res);

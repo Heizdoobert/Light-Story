@@ -94,7 +94,7 @@ async function verifyJwtSignature(token: string, jwk: any): Promise<boolean> {
   return await crypto.subtle.verify(verifyAlg, cryptoKey, signature as unknown as ArrayBuffer, data);
 }
 
-export async function validateJWT(token: string): Promise<AuthContext> {
+export async function validateJWT(token: string, env?: any): Promise<AuthContext> {
   if (!token) throw new UnauthorizedError('Missing token');
   const cleaned = token.trim().replace(/^Bearer\s+/i, '');
   let payload: any;
@@ -115,9 +115,9 @@ export async function validateJWT(token: string): Promise<AuthContext> {
   const email = payload.email ?? undefined;
 
   const APP_ROLES = ['superadmin', 'admin', 'employee', 'user'];
-  if (!APP_ROLES.includes(role)) {
-    const sbUrl = (globalThis as any).SUPABASE_URL;
-    const sbKey = (globalThis as any).SUPABASE_ANON_KEY;
+  if (!APP_ROLES.includes(role) || role === 'authenticated') {
+    const sbUrl = env?.SUPABASE_URL || (globalThis as any).SUPABASE_URL;
+    const sbKey = env?.SUPABASE_SERVICE_ROLE_KEY || env?.SUPABASE_SERVICE_KEY || env?.SUPABASE_ANON_KEY || (globalThis as any).SUPABASE_ANON_KEY;
     if (sbUrl && sbKey) {
       const cacheKey = `__PROFILE_ROLE_${userId}__`;
       const cache: any = (globalThis as any)[cacheKey];
@@ -126,7 +126,7 @@ export async function validateJWT(token: string): Promise<AuthContext> {
       } else {
         try {
           const profileRes = await fetch(`${sbUrl}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(userId)}&limit=1`, {
-            headers: { apikey: sbKey, Authorization: `Bearer ${cleaned}` },
+            headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` },
           });
           if (profileRes.ok) {
             const profiles = await profileRes.json() as Array<{ role: string }>;
@@ -139,6 +139,8 @@ export async function validateJWT(token: string): Promise<AuthContext> {
       }
     }
   }
+
+  if (role === 'authenticated') role = 'user';
 
 
   const jwksUrl = (globalThis as any).SUPABASE_JWKS_URL || (globalThis as any).JWKS_URL || undefined;
