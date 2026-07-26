@@ -13,6 +13,7 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error'] } : false,
   },
   experimental: {
+    useTypeScriptCli: true,
     optimizePackageImports: [
       'lucide-react',
       '@tanstack/react-query',
