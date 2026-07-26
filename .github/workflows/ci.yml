@@ -31,7 +31,9 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          rm -f ../package-lock.json
+          npm install
 
       - name: Clean Next cache
         run: rm -rf .next
