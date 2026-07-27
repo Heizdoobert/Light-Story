@@ -22,7 +22,6 @@
         "name": "next"
       }
     ],
-    "types": ["node", "react", "react-dom"],
     "allowArbitraryExtensions": true,
     "paths": {
       "@/*": [
