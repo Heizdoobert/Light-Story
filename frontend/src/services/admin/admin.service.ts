@@ -23,7 +23,7 @@ export async function getDashboardData() {
       syncedAt: new Date().toISOString(),
     };
   } catch (e) {
-    if (process.env.NODE_ENV === 'development') console.warn('[AdminDashboardQueryGateway]', e);
+    if (typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') console.warn('[AdminDashboardQueryGateway]', e);
     return {
       stories: [],
       stats: { totalViews: 0, activeStories: 0, totalChapters: 0 },
