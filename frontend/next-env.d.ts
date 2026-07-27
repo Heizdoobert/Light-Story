@@ -1,5 +1,6 @@
 /// <reference types="next" />
 /// <reference types="next/image-types/global" />
+/// <reference types="node" />
 /// <reference types="react" />
 /// <reference types="react-dom" />
 import "./.next-dev/dev/types/routes.d.ts";
