@@ -25,12 +25,16 @@ jobs:
 
           if [ "$STATUS" = "success" ]; then
             COLOR=3066993; EMOJI="✅"
+            COMPONENTS_JSON=",\"components\":[{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"View Logs\",\"url\":\"${URL}\"}]}]"
           elif [ "$STATUS" = "failure" ]; then
             COLOR=15158332; EMOJI="❌"
+            COMPONENTS_JSON=",\"components\":[{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"View Logs\",\"url\":\"${URL}\"},{\"type\":2,\"style\":5,\"label\":\"Rerun on GitHub\",\"url\":\"${URL}\"}]}]"
           elif [ "$STATUS" = "cancelled" ]; then
             COLOR=16766720; EMOJI="🔄"
+            COMPONENTS_JSON=",\"components\":[{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"View Logs\",\"url\":\"${URL}\"}]}]"
           else
             COLOR=10181046; EMOJI="ℹ️"
+            COMPONENTS_JSON=",\"components\":[{\"type\":1,\"components\":[{\"type\":2,\"style\":5,\"label\":\"View Logs\",\"url\":\"${URL}\"}]}]"
           fi
 
           curl -s -H "Content-Type: application/json" \
@@ -47,6 +51,7 @@ jobs:
               "url": "${URL}",
               "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
             }]
+            ${COMPONENTS_JSON}
           }
           ENDJSON
           )" \
