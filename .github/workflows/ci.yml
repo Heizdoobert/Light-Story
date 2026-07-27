@@ -42,6 +42,7 @@ jobs:
   worker:
     name: Worker Type-Check (${{ matrix.worker }})
     runs-on: ubuntu-latest
+    strategy:
       matrix:
         worker:
           - unified-gateway
