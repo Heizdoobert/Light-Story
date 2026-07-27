@@ -20,13 +20,6 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - name: Discord Progress 25%
-        uses: ./.github/actions/discord-progress
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
-          progress: '25'
-          message: 'Starting Frontend Lint and Build...'
-          
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -103,13 +96,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Discord Progress 50%
-        uses: ./.github/actions/discord-progress
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
-          progress: '50'
-          message: 'Frontend passed. Starting API Mock Tests...'
-
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -155,13 +141,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Discord Progress 75%
-        uses: ./.github/actions/discord-progress
-        with:
-          webhook_url: ${{ secrets.DISCORD_WEBHOOK }}
-          progress: '75'
-          message: 'API Mock passed. Starting Contract Tests...'
 
       - name: Setup Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
