@@ -54,6 +54,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (!profile?.id || !supabase) return;
+    const sessionKey = `logged_access_${profile.id}_${new Date().toISOString().slice(0, 13)}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+    sessionStorage.setItem(sessionKey, '1');
+
+    void supabase
+      .from('audit_logs')
+      .insert({
+        user_id: profile.id,
+        action: 'dashboard_access',
+        metadata: {
+          path: typeof window !== 'undefined' ? window.location.pathname : '/admin',
+          user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+        },
+      });
+  }, [profile?.id]);
+
   const visibilityQuery = useQuery({
     queryKey: ["site_settings", "admin_visibility_controls"],
     staleTime: 60_000,

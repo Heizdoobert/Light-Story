@@ -77,13 +77,14 @@ async function handleSupabaseProxy(
   headers.delete('x-forwarded-by');
   headers.delete('x-begin-timestamp');
   headers.delete('x-request-id');
+  headers.delete('content-length');
 
-  const reqBody = request.method !== 'GET' && request.method !== 'HEAD' ? await request.arrayBuffer() : null;
+  const reqText = request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : null;
 
   const upstreamReq = new Request(targetUrl, {
     method: request.method,
     headers,
-    body: reqBody && reqBody.byteLength > 0 ? reqBody : undefined,
+    body: reqText ? reqText : undefined,
     redirect: 'manual',
   });
 

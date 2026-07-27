@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { SortDropdown } from "@/components/shared/comics/SortDropdown";
 import { Pagination } from "@/components/shared/navigation/Pagination";
 import { getStatusStyles } from "@/lib/utils/statusStyles";
+import { useLanguage } from "@/modules/language/LanguageContext";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -26,6 +27,7 @@ const getVietnameseStatus = (status: string) => {
 };
 
 function SearchContent() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
 
@@ -129,7 +131,7 @@ function SearchContent() {
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Bộ lọc
+                    {t("filter_menu_title")}
                   </span>
                 </div>
                 <button

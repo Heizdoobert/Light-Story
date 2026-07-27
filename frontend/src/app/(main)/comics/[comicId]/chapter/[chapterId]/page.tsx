@@ -26,6 +26,7 @@ import { AdZone } from "@/components/shared/ads/AdZone";
 import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
+import { useLanguage } from "@/modules/language/LanguageContext";
 
 // 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
@@ -90,6 +91,7 @@ const MOCK_IMAGES = [
 // ----------------------------------------
 
 export default function ReadChapterPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
 
@@ -299,7 +301,7 @@ export default function ReadChapterPage() {
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Bộ lọc
+                    {t("filter_menu_title")}
                   </span>
                 </div>
                 <button

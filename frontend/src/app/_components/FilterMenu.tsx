@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
 import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
+import { useLanguage } from "@/modules/language/LanguageContext";
 
 interface FilterMenuProps {
   onFilterChange?: (params: {
@@ -21,6 +22,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   onClose,
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState<"newest" | "most_viewed" | "oldest">(
@@ -100,7 +102,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
       {/* 1. Ô TÌM KIẾM CHUNG */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
-          Tìm kiếm
+          {t("search_label")}
         </label>
         <div className="relative w-full">
           <Search
@@ -109,7 +111,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           />
           <input
             type="text"
-            placeholder="Tên truyện, tác giả..."
+            placeholder={t("search_placeholder")}
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleApply()}
@@ -130,14 +132,14 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
         {/* 2. CUSTOM DROPDOWN THỂ LOẠI (Có thanh tìm kiếm) */}
         <div className="space-y-1.5 relative" ref={categoryRef}>
           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
-            Thể loại
+            {t("category_label")}
           </label>
           <div
             onClick={() => setIsCategoryOpen(!isCategoryOpen)}
             className="w-full flex items-center justify-between py-3.5 px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
           >
             <span className="truncate">
-              {category === "all" ? "Tất cả thể loại" : category}
+              {category === "all" ? t("all_categories") : category}
             </span>
             <ChevronDown
               size={18}
@@ -153,7 +155,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                 exit={{ opacity: 0, y: -10 }}
                 className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden"
               >
-                {/* Thanh tìm kiếm thể loại (Rất hữu ích khi có > 50 thể loại) */}
+                {/* Thanh tìm kiếm thể loại */}
                 <div className="p-2 border-b border-slate-100 dark:border-slate-700">
                   <div className="relative">
                     <Search
@@ -162,10 +164,10 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                     />
                     <input
                       type="text"
-                      placeholder="Tìm thể loại nhanh..."
+                      placeholder={t("quick_search_category")}
                       value={categorySearchTerm}
                       onChange={(e) => setCategorySearchTerm(e.target.value)}
-                      onClick={(e) => e.stopPropagation()} // Ngăn click làm đóng menu
+                      onClick={(e) => e.stopPropagation()}
                       className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none text-slate-800 dark:text-white"
                     />
                   </div>
@@ -180,7 +182,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                     }}
                     className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${category === "all" ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
                   >
-                    Tất cả thể loại
+                    {t("all_categories")}
                     {category === "all" && <Check size={16} />}
                   </div>
 
@@ -204,7 +206,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                     })
                   ) : (
                     <div className="px-4 py-3 text-sm text-center text-slate-500">
-                      Không tìm thấy "{categorySearchTerm}"
+                      No results for "{categorySearchTerm}"
                     </div>
                   )}
                 </div>
@@ -216,7 +218,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
         {/* 3. CUSTOM DROPDOWN SẮP XẾP */}
         <div className="space-y-1.5 relative" ref={sortRef}>
           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
-            Sắp xếp theo
+            {t("sort_by_label")}
           </label>
           <div
             onClick={() => setIsSortOpen(!isSortOpen)}
@@ -224,10 +226,10 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           >
             <span>
               {sort === "newest"
-                ? "Mới cập nhật"
+                ? t("sort_newest")
                 : sort === "most_viewed"
-                  ? "Lượt xem cao nhất"
-                  : "Cũ nhất"}
+                  ? t("sort_most_viewed")
+                  : t("sort_oldest")}
             </span>
             <ChevronDown
               size={18}
@@ -244,9 +246,9 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                 className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden p-2"
               >
                 {[
-                  { value: "newest", label: "Mới cập nhật" },
-                  { value: "most_viewed", label: "Lượt xem cao nhất" },
-                  { value: "oldest", label: "Cũ nhất" },
+                  { value: "newest", label: t("sort_newest") },
+                  { value: "most_viewed", label: t("sort_most_viewed") },
+                  { value: "oldest", label: t("sort_oldest") },
                 ].map((option) => (
                   <div
                     key={option.value}
@@ -273,7 +275,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           className="w-full flex items-center justify-center gap-2 px-6 py-4 mt-2 bg-gradient-to-r from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 text-white rounded-2xl font-bold text-sm hover:shadow-xl transition-all duration-300 shadow-lg shadow-blue-500/25 dark:shadow-indigo-900/40"
         >
           <Filter size={18} />
-          Áp dụng & Tìm kiếm
+          {t("apply_filter")}
         </motion.button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Bell, CheckCheck, Trash2, Info, CheckCircle2, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLanguage } from "@/modules/language/LanguageContext";
+import { useAuth } from "@/modules/auth/AuthContext";
 import { getSystemNotifications } from "@/services/admin/admin.service";
 
 export type NotificationItem = {
@@ -22,6 +23,8 @@ interface NotificationBellProps {
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
   const { t } = useLanguage();
+  const { role: authRole } = useAuth();
+  const currentRole = role ?? authRole;
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,7 +33,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
     let active = true;
     async function loadRealNotifications() {
       // Only fetch system notifications for admin/superadmin roles to avoid 403 permission errors
-      const isAdmin = role === "admin" || role === "superadmin";
+      const isAdmin = currentRole === "admin" || currentRole === "superadmin" || currentRole === "employee";
       if (!isAdmin) {
         if (active) setNotifications([]);
         return;
@@ -96,7 +99,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
         whileTap={{ scale: 0.92 }}
         whileHover={{ scale: 1.05 }}
         onClick={handleToggle}
-        className="relative p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300"
+        className="relative p-2.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-[#001eff]/30 hover:text-orange-600 dark:hover:text-[#39ff14] transition-all duration-300"
         aria-label="Notifications"
         title={t("notifications")}
       >
@@ -104,7 +107,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
         {unreadCount > 0 && (
           <span className="absolute top-1 right-1 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500 border-2 border-white dark:border-slate-900"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-[#ff008d] border-2 border-white dark:border-[#000000]"></span>
           </span>
         )}
       </motion.button>
@@ -116,15 +119,15 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 z-50 overflow-hidden"
+            className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1c1c1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 overflow-hidden"
           >
-            <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div className="p-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="font-black text-sm text-slate-900 dark:text-white">
                   {t("notifications")}
                 </h3>
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 text-[10px] font-black bg-rose-500 text-white rounded-full">
+                  <span className="px-2 py-0.5 text-[10px] font-black bg-[#ff008d] text-white rounded-full">
                     {unreadCount} {t("unread")}
                   </span>
                 )}
@@ -133,7 +136,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all text-xs font-bold flex items-center gap-1"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-[#000b13] dark:hover:text-[#39ff14] transition-all text-xs font-bold flex items-center gap-1"
                     title={t("mark_all_read")}
                   >
                     <CheckCheck size={16} />
@@ -142,7 +145,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-slate-800 transition-all text-xs font-bold"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-[#000b13] dark:hover:text-[#ff008d] transition-all text-xs font-bold"
                     title={t("clear_all")}
                   >
                     <Trash2 size={16} />
@@ -151,7 +154,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
               </div>
             </div>
 
-            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60 [scrollbar-width:thin]">
+            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-white/10 [scrollbar-width:thin]">
               {notifications.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-xs font-medium">
                   {t("no_notifications")}
@@ -163,8 +166,8 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
                     onClick={() => handleMarkItemRead(item.id)}
                     className={`p-4 flex items-start gap-3 cursor-pointer transition-colors ${
                       item.read
-                        ? "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400"
-                        : "bg-blue-50/50 dark:bg-slate-800/50 text-slate-900 dark:text-white"
+                        ? "bg-white dark:bg-[#1c1c1c] text-slate-500 dark:text-slate-400"
+                        : "bg-orange-50/50 dark:bg-[#000b13] text-slate-900 dark:text-white"
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">

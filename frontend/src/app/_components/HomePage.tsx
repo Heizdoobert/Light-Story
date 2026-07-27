@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Image as ImageIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
@@ -12,16 +12,8 @@ import { Chapter, Category } from "@/types/entities";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { Header } from "@/components/shared/navigation/Header";
-import { getStatusStyles } from "@/lib/utils/statusStyles";
 import { AdZone } from "@/components/shared/ads/AdZone";
-
-const getVietnameseStatus = (status: string) => {
-  if (status === "completed") return "Hoàn thành";
-  if (status === "ongoing") return "Đang cập nhật";
-  if (status === "published") return "Đã xuất bản";
-  if (status === "draft") return "Bản nháp";
-  return "Đang cập nhật";
-};
+import { useLanguage } from "@/modules/language/LanguageContext";
 
 type HomePageProps = {
   initialComics?: Comic[];
@@ -30,6 +22,7 @@ type HomePageProps = {
 const DEFAULT_INITIAL_COMICS: Comic[] = [];
 
 export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INITIAL_COMICS }) => {
+  const { t } = useLanguage();
   const [_categories, setCategories] = useState<Category[]>([]);
   const [comics, setComics] = useState<Comic[]>(initialComics);
   const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(
@@ -171,7 +164,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Tìm kiếm
+                    {t("filter_menu_title")}
                   </span>
                 </div>
                 <button
@@ -202,162 +195,182 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
         onClose={() => setIsLoginModalOpen(false)}
       />
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
+      <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
         {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
-        <AdZone zoneId="home-top" format="banner" className="mb-6" />
+        <AdZone zoneId="home-top" format="banner" className="mb-4" />
 
+        {/* 1. TRUYỆN PHỔ BIẾN / TRENDING SLIDER */}
         {trendingComics.length > 0 && (
-          <div className="mb-10 pt-2 sm:pt-4">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <span className="text-2xl">🔥</span>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
-                Đang Thịnh Hành
-              </h2>
+          <section className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-[#001eff] to-[#8900ff] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
+              <span>👍</span>
+              <h2>{t("popular_comics")}</h2>
             </div>
-            <div className="flex overflow-x-auto gap-3 sm:gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {trendingComics.map((comic, index) => (
+            <div className="p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 no-scrollbar scroll-smooth">
+              {trendingComics.map((comic) => (
                 <Link
                   key={`trending-${comic.id}`}
                   href={`/comics/${comic.id}`}
-                  className="group block relative w-[130px] sm:w-44 lg:w-48 flex-shrink-0 snap-start outline-none cursor-pointer"
+                  className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
                 >
-                  <div className="relative overflow-hidden rounded-2xl aspect-[3/4] bg-slate-100 dark:bg-slate-800 shadow-md group-hover:shadow-2xl transition-all duration-500 border border-slate-100 dark:border-slate-800">
+                  <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
                     <img
                       src={getComicCover(comic)}
                       alt={comic.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent opacity-90"></div>
-                    <div
-                      className={`absolute top-0 left-0 text-white font-black text-xs sm:text-sm px-2.5 sm:px-3 py-1 rounded-br-xl shadow-lg z-10 ${index === 0 ? "bg-gradient-to-br from-yellow-400 to-amber-600" : index === 1 ? "bg-gradient-to-br from-slate-300 to-slate-500" : index === 2 ? "bg-gradient-to-br from-amber-700 to-orange-900" : "bg-slate-800/80 backdrop-blur-md"}`}
-                    >
-                      #{index + 1}
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
-                      <h3 className="text-white font-bold text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-1.5 group-hover:text-primary transition-colors">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white">
+                      <h3 className="font-bold text-xs line-clamp-1 group-hover:text-[#39ff14] transition-colors">
                         {comic.title}
                       </h3>
-                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-300">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary/80"></span>
-                        {(comic.viewCount || 0).toLocaleString()} lượt xem
-                      </div>
+                      <p className="text-[10px] text-slate-300">
+                        {latestChapters[comic.id]?.title || "Chapter 1"}
+                      </p>
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* VÙNG QUẢNG CÁO GIỮA TRANG CHỦ */}
-        <AdZone zoneId="home-mid" format="banner" className="my-8" />
+        <AdZone zoneId="home-mid" format="banner" />
 
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">
-            Truyện Mới Cập Nhật
-          </h2>
-        </div>
+        {/* 2-COLUMN LAYOUT: TRUYỆN MỚI CẬP NHẬT + TOP TRUYỆN ĐỌC NHIỀU */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* LEFT COLUMN: TRUYỆN MỚI CẬP NHẬT (3/4 width) */}
+          <main className="lg:col-span-3 space-y-4">
+            <div className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+              <div className="bg-gradient-to-r from-[#001eff] to-[#8900ff] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
+                <span>🕒</span>
+                <h2>{t("newly_updated_comics")}</h2>
+              </div>
 
-        {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-          </div>
-        ) : comics.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center p-10 sm:p-20 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-200/50 dark:border-slate-800/50"
-          >
-            <div className="text-5xl sm:text-6xl mb-6">📭</div>
-            <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 text-sm sm:text-lg">
-              Chưa có bộ truyện nào trên hệ thống.
-            </p>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6">
-            {comics.map((comic, i) => (
-              <Link
-                key={comic.id}
-                href={`/comics/${comic.id}`}
-                className="block outline-none cursor-pointer"
-              >
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    delay: i * 0.05,
-                    type: "spring",
-                    stiffness: 100,
-                  }}
-                  className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-sm hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-2 transition-all duration-500 border border-slate-100 dark:border-slate-800"
-                >
-                  <div className="relative overflow-hidden rounded-2xl mb-2 sm:mb-3 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
-                    <img
-                      src={getComicCover(comic)}
-                      alt={comic.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                      referrerPolicy="no-referrer"
-                      onError={applyComicCoverFallback}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-3 sm:p-5">
-                      <span className="text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                        <ImageIcon size={14} className="sm:w-4 sm:h-4" /> Đọc
-                        ngay
-                      </span>
-                    </div>
-                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                      <span
-                        className={`px-2 py-1 rounded-full text-[9px] font-black uppercase shadow-sm ${getStatusStyles(comic.status)}`}
+              {loading ? (
+                <div className="py-16 flex justify-center">
+                  <div className="w-8 h-8 border-4 border-[#001eff]/30 border-t-[#001eff] rounded-full animate-spin"></div>
+                </div>
+              ) : comics.length === 0 ? (
+                <div className="text-center p-12 text-slate-500 dark:text-slate-400 font-medium text-sm">
+                  {t("no_comics_yet")}
+                </div>
+              ) : (
+                <div className="p-3 sm:p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {comics.map((comic) => (
+                    <div
+                      key={comic.id}
+                      className="flex gap-3 p-2 border border-slate-100 dark:border-white/10 rounded-lg hover:border-[#001eff] dark:hover:border-[#39ff14] transition-colors dark:bg-[#000b13]/60"
+                    >
+                      <Link
+                        href={`/comics/${comic.id}`}
+                        className="relative w-24 h-32 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-[#000000]"
                       >
-                        {getVietnameseStatus(comic.status)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="px-1 pb-1 flex flex-col flex-1">
-                    <h2 className="text-[13px] sm:text-base font-bold mb-1 text-slate-800 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
-                      {comic.title}
-                    </h2>
-                    <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mb-2 line-clamp-1">
-                      {comic.author || "Đang cập nhật"}
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 mb-3 sm:mb-4 mt-auto">
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 sm:px-2 sm:py-1 rounded sm:rounded-md line-clamp-1 w-fit max-w-full sm:max-w-[60%]">
-                        {latestChapters[comic.id]?.title || "Chưa có chương"}
-                      </span>
-                      <span className="text-[9px] sm:text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {latestChapters[comic.id]?.created_at
-                          ? new Date(
-                              latestChapters[comic.id].created_at,
-                            ).toLocaleDateString("vi-VN", {
-                              day: "2-digit",
-                              month: "2-digit",
-                              year: "numeric",
-                            })
-                          : ""}
-                      </span>
-                    </div>
-                    <div className="flex items-center pt-2 sm:pt-2.5 border-t border-slate-100 dark:border-slate-800/60">
-                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-semibold text-slate-400">
-                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-primary/60"></span>
-                        {(comic.viewCount || 0).toLocaleString()} lượt xem
+                        <img
+                          src={getComicCover(comic)}
+                          alt={comic.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={applyComicCoverFallback}
+                        />
+                      </Link>
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                        <div>
+                          <Link
+                            href={`/comics/${comic.id}`}
+                            className="font-bold text-sm text-slate-800 dark:text-white hover:text-[#ff008d] dark:hover:text-[#39ff14] transition-colors line-clamp-1"
+                          >
+                            {comic.title}
+                          </Link>
+                          <p className="text-xs text-slate-400 dark:text-slate-400 line-clamp-1 mt-0.5">
+                            {comic.author || t("updating")}
+                          </p>
+                        </div>
+                        <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                          <div className="flex justify-between items-center bg-slate-50 dark:bg-[#1c1c1c] px-2 py-1 rounded">
+                            <span className="font-medium text-[#001eff] dark:text-[#ff008d] truncate">
+                              » {latestChapters[comic.id]?.title || "Chapter 1"}
+                            </span>
+                            <span className="text-[10px] text-slate-400 dark:text-[#39ff14] shrink-0 ml-1">
+                              {t("new_badge")}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-center pt-2">
+              <Link
+                href="/search"
+                className="px-6 py-2.5 bg-[#001eff] hover:bg-[#8900ff] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors shadow-sm"
+              >
+                {t("view_all_comics")}
               </Link>
-            ))}
-          </div>
-        )}
-        <div className="flex justify-center mt-8 mb-12">
-          <Link
-            href="/search"
-            className="px-6 py-2.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-semibold rounded-md transition-colors shadow-sm"
-          >
-            Xem thêm nhiều truyện
-          </Link>
+            </div>
+          </main>
+
+          {/* RIGHT SIDEBAR: TOP TRUYỆN ĐỌC NHIỀU (1/4 width) */}
+          <aside className="lg:col-span-1">
+            <div className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm sticky top-24">
+              <div className="bg-gradient-to-r from-[#001eff] to-[#8900ff] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
+                <span>⭐</span>
+                <h2>{t("top_read_comics")}</h2>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-white/10">
+                {(trendingComics.length > 0 ? trendingComics : comics).slice(0, 10).map((comic, idx) => (
+                  <Link
+                    key={`top-${comic.id}`}
+                    href={`/comics/${comic.id}`}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
+                  >
+                    <span
+                      className={`w-6 h-6 rounded-md flex items-center justify-center font-black text-xs shrink-0 ${
+                        idx === 0
+                          ? "bg-[#ff008d] text-white"
+                          : idx === 1
+                          ? "bg-[#8900ff] text-white"
+                          : idx === 2
+                          ? "bg-[#001eff] text-white"
+                          : "bg-slate-100 dark:bg-[#000b13] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10"
+                      }`}
+                    >
+                      {idx + 1}
+                    </span>
+
+                    <div className="relative shrink-0 w-12 h-16 overflow-hidden rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#000000]">
+                      <img
+                        src={getComicCover(comic)}
+                        alt={comic.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        referrerPolicy="no-referrer"
+                        onError={applyComicCoverFallback}
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
+                      <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 group-hover:text-[#ff008d] dark:group-hover:text-[#39ff14] transition-colors line-clamp-1">
+                        {comic.title}
+                      </h3>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="font-medium text-[#001eff] dark:text-[#ff008d] truncate max-w-[80%]">
+                          » {latestChapters[comic.id]?.title || "Chapter 1"}
+                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-[#39ff14] shrink-0">
+                          {(comic.viewCount || 0).toLocaleString()} 👁
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>

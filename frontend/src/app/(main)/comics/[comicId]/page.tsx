@@ -27,6 +27,7 @@ import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/shared/user/BookmarkButton";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
+import { useLanguage } from "@/modules/language/LanguageContext";
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -37,6 +38,7 @@ const getVietnameseStatus = (status: string) => {
 };
 
 export default function ComicDetailPage() {
+  const { t } = useLanguage();
   const params = useParams();
   const comicId = params.comicId as string;
 
@@ -175,7 +177,7 @@ export default function ComicDetailPage() {
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    Bộ lọc
+                    {t("filter_menu_title")}
                   </span>
                 </div>
                 <button

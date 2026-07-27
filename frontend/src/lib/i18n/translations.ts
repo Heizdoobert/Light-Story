@@ -35,6 +35,39 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     admin_dashboard: "Quản trị",
     profile: "Hồ sơ cá nhân",
 
+    // Filter Menu & Search Page
+    filter_menu_title: "Bộ lọc & Tìm kiếm",
+    search_label: "Tìm kiếm",
+    search_placeholder: "Tên truyện, tác giả...",
+    category_label: "Thể loại",
+    sort_by_label: "Sắp xếp theo",
+    sort_newest: "Mới cập nhật",
+    sort_most_viewed: "Lượt xem cao nhất",
+    sort_oldest: "Cũ nhất",
+    apply_filter: "Áp dụng & Tìm kiếm",
+    quick_search_category: "Tìm thể loại nhanh...",
+
+    // Header & Sub Navigation
+    nav_home: "TRANG CHỦ",
+    nav_categories_title: "THỂ LOẠI",
+    nav_rankings: "XẾP HẠNG",
+    nav_search_comics: "TÌM TRUYỆN",
+    nav_bookmarks: "THEO DÕI",
+    nav_group: "GROUP",
+    nav_fanpage: "FANPAGE",
+    category_list_title: "DANH SÁCH THỂ LOẠI",
+    all_categories: "Tất cả thể loại",
+    see_all: "Xem tất cả »",
+
+    // Homepage Sections
+    popular_comics: "TRUYỆN PHỔ BIẾN",
+    newly_updated_comics: "TRUYỆN MỚI CẬP NHẬT",
+    top_read_comics: "TOP TRUYỆN ĐỌC NHIỀU",
+    view_all_comics: "Xem tất cả truyện »",
+    new_badge: "Mới",
+    no_comics_yet: "Chưa có bộ truyện nào.",
+    updating: "Đang cập nhật",
+
     // Navigation & Sidebar
     nav_dashboard: "Bảng điều khiển",
     nav_dashboard_access_logs: "Nhật ký truy cập Admin",
@@ -224,6 +257,39 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     save_settings: "Save Settings",
     admin_dashboard: "Admin Dashboard",
     profile: "My Profile",
+
+    // Filter Menu & Search Page
+    filter_menu_title: "Filter & Search",
+    search_label: "Search",
+    search_placeholder: "Comic title, author...",
+    category_label: "Category",
+    sort_by_label: "Sort By",
+    sort_newest: "Newly Updated",
+    sort_most_viewed: "Most Viewed",
+    sort_oldest: "Oldest",
+    apply_filter: "Apply & Search",
+    quick_search_category: "Quick category search...",
+
+    // Header & Sub Navigation
+    nav_home: "HOME",
+    nav_categories_title: "CATEGORIES",
+    nav_rankings: "RANKINGS",
+    nav_search_comics: "SEARCH",
+    nav_bookmarks: "BOOKMARKS",
+    nav_group: "COMMUNITY",
+    nav_fanpage: "FANPAGE",
+    category_list_title: "CATEGORY LIST",
+    all_categories: "All Categories",
+    see_all: "See all »",
+
+    // Homepage Sections
+    popular_comics: "POPULAR COMICS",
+    newly_updated_comics: "NEWLY UPDATED",
+    top_read_comics: "TOP READ COMICS",
+    view_all_comics: "View all comics »",
+    new_badge: "New",
+    no_comics_yet: "No comics available yet.",
+    updating: "Updating",
 
     // Navigation & Sidebar
     nav_dashboard: "Dashboard",
