@@ -9,6 +9,11 @@ declare global {
       [key: string]: string | undefined;
     }
   }
+
+  // Explicitly declare process for environments where @types/node isn't resolved locally
+  var process: {
+    env: NodeJS.ProcessEnv;
+  };
 }
 
 export {};
