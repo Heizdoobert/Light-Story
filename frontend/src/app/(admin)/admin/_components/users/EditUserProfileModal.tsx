@@ -162,7 +162,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                   <div className="flex items-center gap-4">
                     {safeAvatarUrl ? (
                       <img
-                        src={safeAvatarUrl}
+                        src={safeAvatarUrl.startsWith("blob:") || safeAvatarUrl.startsWith("http") || safeAvatarUrl.startsWith("/") ? safeAvatarUrl : undefined}
                         alt="Avatar"
                         className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                       />

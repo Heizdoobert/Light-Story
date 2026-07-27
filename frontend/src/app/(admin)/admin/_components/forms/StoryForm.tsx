@@ -189,7 +189,7 @@ export const StoryForm: React.FC = () => {
                   <div className="space-y-3">
                     <div className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
                       <img
-                        src={coverPreview}
+                        src={coverPreview.startsWith("blob:") || coverPreview.startsWith("http") ? coverPreview : undefined}
                         alt="Cover preview"
                         className="h-56 w-full object-cover"
                       />

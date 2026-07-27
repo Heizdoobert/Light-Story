@@ -6,7 +6,6 @@ import {
   sbGet,
   sbPost,
   sb,
-  sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';

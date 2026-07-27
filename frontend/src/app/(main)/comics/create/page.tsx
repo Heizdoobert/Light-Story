@@ -88,7 +88,7 @@ export default function CreateComic() {
               />
               {previewUrl?.startsWith("blob:") && (
                 <div className="w-20 h-20 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
-                  <img src={previewUrl} alt="cover preview" className="w-full h-full object-cover" />
+                  <img src={previewUrl.startsWith("blob:") ? previewUrl : undefined} alt="cover preview" className="w-full h-full object-cover" />
                 </div>
               )}
             </div>
