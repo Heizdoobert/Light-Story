@@ -2,17 +2,16 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
-import { X } from "lucide-react";
+
+
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { Chapter, Category } from "@/types/entities";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { FilterMenu } from "@/app/_components/FilterMenu";
 import { Header } from "@/components/shared/navigation/Header";
-import { AdZone } from "@/components/shared/ads/AdZone";
+import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useLanguage } from "@/modules/language/LanguageContext";
 
 type HomePageProps = {
@@ -30,7 +29,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
   );
   const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
 
-  const [showFilter, setShowFilter] = useState(false);
   const [loading, setLoading] = useState(initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -78,31 +76,22 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
         setLoading(false);
 
         if (comicsData.length > 0) {
-          const chapterMap: Record<string, Chapter> = {};
-          const chapterPromises = comicsData.map(async (comic: Comic) => {
-            try {
-              const chaptersRes = await apiClient
-                .get<any>(`/api/comics/${comic.id}/chapters`)
-                .catch(() => []);
-              const chapters: Chapter[] = Array.isArray(chaptersRes)
-                ? chaptersRes
-                : chaptersRes?.items || chaptersRes?.chapters || [];
-
-              if (chapters && chapters.length > 0) {
-                const sorted = chapters.sort(
-                  (a, b) =>
-                    new Date(b.created_at || 0).getTime() -
-                    new Date(a.created_at || 0).getTime(),
-                );
-                chapterMap[comic.id] = sorted[0];
-              }
-            } catch {
-              // silent fallback
+          try {
+            const comicIds = comicsData.map((c: Comic) => c.id).join(",");
+            const batchRes = await apiClient
+              .get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`)
+              .catch(() => []);
+            const chapters: any[] = Array.isArray(batchRes)
+              ? batchRes
+              : batchRes?.chapters || [];
+            const chapterMap: Record<string, Chapter> = {};
+            for (const ch of chapters) {
+              if (ch.story_id) chapterMap[ch.story_id] = ch;
             }
-          });
-
-          await Promise.all(chapterPromises);
-          if (isMounted) setLatestChapters(chapterMap);
+            if (isMounted) setLatestChapters(chapterMap);
+          } catch {
+            // silent fallback
+          }
         }
       } catch (error) {
         console.error("Lỗi tải danh sách truyện tranh:", error);
@@ -116,13 +105,6 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
     };
   }, []);
 
-  // Khóa cuộn trang khi mở bộ lọc
-  useEffect(() => {
-    document.body.style.overflow = showFilter ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [showFilter]);
 
   const getComicCover = useCallback((comic: any): string => {
     const raw = comic.coverUrl || comic.cover_url || "";
@@ -141,52 +123,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500">
-      <AnimatePresence>
-        {showFilter && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowFilter(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[70] shadow-2xl flex flex-col"
-            >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
-                    L
-                  </div>
-                  <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    {t("filter_menu_title")}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowFilter(false)}
-                  className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4 flex-1 overflow-y-auto">
-                {/* ĐIỂM QUAN TRỌNG: Không truyền onFilterChange nữa. 
-                  Điều này ép FilterMenu dùng useRouter chuyển sang trang /search 
-                */}
-                <FilterMenu onClose={() => setShowFilter(false)} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       <Header
-        onMenuClick={() => setShowFilter(true)}
         onLoginClick={() => setIsLoginModalOpen(true)}
       />
 
@@ -197,7 +134,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
 
       <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
         {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
-        <AdZone zoneId="home-top" format="banner" className="mb-4" />
+        <AdRenderer position="header" />
 
         {/* 1. TRUYỆN PHỔ BIẾN / TRENDING SLIDER */}
         {trendingComics.length > 0 && (
@@ -206,7 +143,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
               <span>👍</span>
               <h2>{t("popular_comics")}</h2>
             </div>
-            <div className="p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 no-scrollbar scroll-smooth">
+            <div className="trending-scroll p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 scroll-smooth">
               {trendingComics.map((comic) => (
                 <Link
                   key={`trending-${comic.id}`}
@@ -217,6 +154,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                     <img
                       src={getComicCover(comic)}
                       alt={comic.title}
+                      width={300}
+                      height={400}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
@@ -237,7 +176,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
         )}
 
         {/* VÙNG QUẢNG CÁO GIỮA TRANG CHỦ */}
-        <AdZone zoneId="home-mid" format="banner" />
+        <AdRenderer position="middle" />
 
         {/* 2-COLUMN LAYOUT: TRUYỆN MỚI CẬP NHẬT + TOP TRUYỆN ĐỌC NHIỀU */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -271,6 +210,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                         <img
                           src={getComicCover(comic)}
                           alt={comic.title}
+                          width={300}
+                          height={400}
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                           onError={applyComicCoverFallback}
@@ -347,6 +288,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                       <img
                         src={getComicCover(comic)}
                         alt={comic.title}
+                        width={300}
+                        height={400}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         referrerPolicy="no-referrer"
                         onError={applyComicCoverFallback}

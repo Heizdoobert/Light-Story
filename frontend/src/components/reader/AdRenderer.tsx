@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -7,19 +9,23 @@ import { apiClient } from '@/lib/api/apiClient';
 type SiteSettingItem = { key: string; value: unknown };
 
 interface AdRendererProps {
-  position: 'header' | 'middle' | 'sidebar';
+  position: 'header' | 'middle' | 'sidebar' | 'left_side' | 'right_side';
 }
 
 const SLOT_CLASSES: Record<AdSlotKey, string> = {
   ad_header: 'mb-6',
   ad_middle: 'my-8',
   ad_sidebar: 'sticky top-6',
+  ad_left_side: '',
+  ad_right_side: '',
 };
 
 const slotKeyByPosition: Record<AdRendererProps['position'], AdSlotKey> = {
   header: 'ad_header',
   middle: 'ad_middle',
   sidebar: 'ad_sidebar',
+  left_side: 'ad_left_side',
+  right_side: 'ad_right_side',
 };
 
 const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => {
@@ -230,7 +236,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
     }
   }, [markup, runtime.enabled]);
 
-  if (!runtime.enabled) return null;
+  if (!runtime.enabled || !markup) return null;
 
   return (
     <section

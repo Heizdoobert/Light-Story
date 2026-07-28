@@ -76,25 +76,17 @@ export const OperationsDataTab: React.FC = () => {
     queryKey: ['operations-data-overview'],
     queryFn: async () => {
       const client = supabase;
-      if (!client) {
-        return {};
+      if (!client) return {};
+
+      const { data, error } = await client.rpc('get_operations_table_counts');
+
+      if (error) throw error;
+
+      const map: TablesOverview = {};
+      for (const [table, count] of Object.entries((data ?? {}) as Record<string, number>)) {
+        map[table] = { count, error: null };
       }
-
-      const tableNames = DATA_GROUPS.flatMap((group) => group.tables.map((item) => item.table));
-      const results = await Promise.all(
-        tableNames.map(async (tableName) => {
-          const { count, error } = await client.from(tableName).select('created_at', { count: 'exact' });
-          return [
-            tableName,
-            {
-              count: error ? null : (count ?? 0),
-              error: error ? error.message : null,
-            } satisfies TableStatus,
-          ] as const;
-        }),
-      );
-
-      return Object.fromEntries(results);
+      return map;
     },
   });
 

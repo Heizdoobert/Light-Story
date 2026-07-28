@@ -7,7 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, ChevronRight, Menu, X, House, LayoutDashboard } from "lucide-react";
+import { LogOut, ChevronRight, Menu, X, House, LayoutDashboard, Users } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from '@/modules/auth/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { supabase } from '@/infrastructure/supabase/client';
 import { getAdminMenuItems } from '@/lib/admin/adminNavigation';
 import { useLanguage } from '@/modules/language/LanguageContext';
+import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/securityUtils';
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
@@ -42,6 +43,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const { profile, role, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -61,14 +63,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     sessionStorage.setItem(sessionKey, '1');
 
     void supabase
-      .from('audit_logs')
-      .insert({
-        user_id: profile.id,
-        action: 'dashboard_access',
-        metadata: {
+      .rpc('log_dashboard_access', {
+        p_actor_user_id: profile.id,
+        p_metadata: {
           path: typeof window !== 'undefined' ? window.location.pathname : '/admin',
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
         },
+      })
+      .then(({ error }: { error: unknown }) => {
+        if (error) console.error('Dashboard access log insert failed:', error);
       });
   }, [profile?.id]);
 
@@ -286,15 +289,61 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   {role}
                 </div>
               </div>
-              <img
-                src={
-                  profile?.avatar_url ||
-                  `https://ui-avatars.com/api/?name=${profile?.full_name || "Admin"}&background=random`
-                }
-                alt="Avatar"
-                className="h-10 w-10 rounded-xl object-cover border-2 border-slate-100 dark:border-slate-800 shadow-sm"
-                referrerPolicy="no-referrer"
-              />
+              
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-[#001eff] rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <img
+                    src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "Admin")}
+                    alt="Avatar"
+                    className="h-10 w-10 object-cover border-2 border-slate-100 dark:border-slate-800"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = getFallbackAvatar(profile?.full_name || "Admin");
+                    }}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1 z-50 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            onTabChange("users");
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
+                        >
+                          <Users size={16} />
+                          User Settings
+                        </button>
+                        <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+                        <button
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            handleSignOut();
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          {t("sign_out")}
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </header>

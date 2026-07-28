@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createCategory, updateCategory, deleteCategory } from '@/services/comics/taxonomy.service';
 import { useCategoryPresenter } from '@/hooks/presenters/useCategoryPresenter';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
+import { useCrudMutation } from '@/hooks/presenters/useTaxonomyCrud';
 
 export const CategoryManagementTab: React.FC = () => {
-  const queryClient = useQueryClient();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -17,51 +15,28 @@ export const CategoryManagementTab: React.FC = () => {
 
   const { categoriesQuery, linkedCounts } = useCategoryPresenter();
 
-  const createMutation = useMutation({
+  const createMutation = useCrudMutation({
     mutationFn: () => createCategory({ name, description }),
-    onMutate: () => {
-      const toastId = startDbChangeToast(`Creating category \"${name.trim() || 'new'}\"...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['category-story-links'] });
-      setName('');
-      setDescription('');
-      resolveDbChangeToast(context?.toastId, 'Category created successfully');
-    },
-    onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
+    queryKeys: [['categories'], ['category-story-links']],
+    successMsg: 'Category created successfully',
+    actionLabel: `Creating category "${name.trim() || 'new'}"`,
+    onSuccess: () => { setName(''); setDescription(''); },
   });
 
-  const updateMutation = useMutation({
+  const updateMutation = useCrudMutation({
     mutationFn: (payload: { id: string; name: string; description?: string }) =>
       updateCategory(payload.id, { name: payload.name, description: payload.description }),
-    onMutate: (payload) => {
-      const toastId = startDbChangeToast(`Updating category \"${payload.name.trim() || 'category'}\"...`);
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      setEditingId(null);
-      setEditName('');
-      setEditDescription('');
-      resolveDbChangeToast(context?.toastId, 'Category updated successfully');
-    },
-    onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
+    queryKeys: [['categories']],
+    successMsg: 'Category updated successfully',
+    actionLabel: (v) => `Updating category "${v.name.trim() || 'category'}"`,
+    onSuccess: () => { setEditingId(null); setEditName(''); setEditDescription(''); },
   });
 
-  const deleteMutation = useMutation({
+  const deleteMutation = useCrudMutation({
     mutationFn: (id: string) => deleteCategory(id),
-    onMutate: () => {
-      const toastId = startDbChangeToast('Deleting category...');
-      return { toastId };
-    },
-    onSuccess: (_data, _variables, context) => {
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['category-story-links'] });
-      resolveDbChangeToast(context?.toastId, 'Category deleted successfully');
-    },
-    onError: (error, _variables, context) => rejectDbChangeToast(context?.toastId, error),
+    queryKeys: [['categories'], ['category-story-links']],
+    successMsg: 'Category deleted successfully',
+    actionLabel: 'Deleting category',
   });
 
   

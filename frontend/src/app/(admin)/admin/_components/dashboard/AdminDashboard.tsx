@@ -28,9 +28,6 @@ const AdminUserManagement = lazy(() =>
 const OperationsCenterTab = lazy(() =>
   import("../system/OperationsCenterTab").then((m) => ({ default: m.OperationsCenterTab })),
 );
-const OperationsDataTab = lazy(() =>
-  import("../system/OperationsDataTab").then((m) => ({ default: m.OperationsDataTab })),
-);
 const AdminAuditLogsTab = lazy(() =>
   import("../system/AdminAuditLogsTab").then((m) => ({ default: m.AdminAuditLogsTab })),
 );
@@ -48,7 +45,6 @@ type AdminTabId =
   | "dashboard"
   | "dashboard_access_logs"
   | "audit_logs"
-  | "operations_data"
   | "create_story"
   | "stories"
   | "create_chapter"
@@ -75,7 +71,6 @@ const tabPreloaders: Partial<Record<AdminTabId, () => Promise<unknown>>> = {
   audit_logs: () => import("../system/AdminAuditLogsTab"),
   dashboard_access_logs: () => import("../system/DashboardAccessLogsTab"),
   operations: () => import("../system/OperationsCenterTab"),
-  operations_data: () => import("../system/OperationsDataTab"),
 };
 
 const TabLoadingFallback: React.FC = () => (
@@ -129,8 +124,6 @@ const AdminDashboardContent: React.FC<{
         return withSuspense(<AnalyticsDashboardTab role={analyticsRole} userId={userId} />);
       case "operations":
         return withSuspense(<OperationsCenterTab onNavigate={onTabChange} />);
-      case "operations_data":
-        return withSuspense(<OperationsDataTab />);
       case "create_story":
       case "create_chapter":
       case "stories":

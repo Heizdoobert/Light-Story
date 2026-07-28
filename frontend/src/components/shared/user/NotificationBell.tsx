@@ -99,7 +99,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
         whileTap={{ scale: 0.92 }}
         whileHover={{ scale: 1.05 }}
         onClick={handleToggle}
-        className="relative p-2.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-[#001eff]/30 hover:text-orange-600 dark:hover:text-[#39ff14] transition-all duration-300"
+        className="relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-[#001eff]/30 hover:text-orange-600 dark:hover:text-[#39ff14] transition-all duration-300"
         aria-label="Notifications"
         title={t("notifications")}
       >
@@ -119,7 +119,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-3 w-80 sm:w-96 bg-white dark:bg-[#1c1c1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 overflow-hidden"
+            className="absolute right-0 mt-3 w-[calc(100vw-32px)] sm:w-96 max-w-sm bg-white dark:bg-[#1c1c1c] rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 z-50 overflow-hidden"
           >
             <div className="p-4 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">

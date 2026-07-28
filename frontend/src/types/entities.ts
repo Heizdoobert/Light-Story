@@ -20,6 +20,16 @@ export interface Author {
   updated_at: string;
 }
 
+export interface Translator {
+  id: string;
+  name: string;
+  contact?: string | null;
+  notes?: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Category {
   id: string;
   name: string;

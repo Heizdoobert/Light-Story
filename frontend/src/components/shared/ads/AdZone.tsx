@@ -2,7 +2,7 @@
 
 import React from "react";
 
-type AdZoneFormat = "banner" | "in-feed" | "rectangle";
+type AdZoneFormat = "banner" | "in-feed" | "rectangle" | "skyscraper";
 
 type AdZoneProps = {
   zoneId: string;
@@ -29,38 +29,22 @@ export const AdZone: React.FC<AdZoneProps> = ({
         </div>
 
         {format === "banner" && (
-          <div className="min-h-[90px] w-full flex flex-col items-center justify-center gap-1.5 py-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Vùng Quảng Cáo Leaderboard ({zoneId})
-            </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500">
-              Hỗ trợ Kích thước Banner 728x90 / Responsive Ads
-            </span>
-          </div>
+          <div className="min-h-[90px] w-full flex flex-col items-center justify-center gap-1.5 py-4" />
         )}
 
         {format === "in-feed" && (
-          <div className="min-h-[120px] w-full flex flex-col items-center justify-center gap-1.5 py-6">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Vùng Quảng Cáo Giữa Trang ({zoneId})
-            </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500">
-              Tối ưu cho In-Feed Ads & Native Sponsor Banners
-            </span>
-          </div>
+          <div className="min-h-[120px] w-full flex flex-col items-center justify-center gap-1.5 py-6" />
         )}
 
         {format === "rectangle" && (
-          <div className="min-h-[250px] w-full max-w-[300px] mx-auto flex flex-col items-center justify-center gap-1.5 py-6">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Vùng Quảng Cáo Khối ({zoneId})
-            </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500">
-              Kích thước 300x250 Medium Rectangle
-            </span>
-          </div>
+          <div className="min-h-[250px] w-full max-w-[300px] mx-auto flex flex-col items-center justify-center gap-1.5 py-6" />
+        )}
+
+        {format === "skyscraper" && (
+            <div className="min-h-[400px] sm:min-h-[600px] w-full max-w-[80px] mx-auto flex flex-col items-center justify-center gap-1.5 py-6" />
         )}
       </div>
     </div>
   );
 };
+

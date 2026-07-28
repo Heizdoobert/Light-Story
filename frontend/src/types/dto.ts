@@ -116,7 +116,7 @@ export type TaxonomyUpdateRequest = {
 };
 
 export type TaxonomyManageRequest = {
-  entity: 'category' | 'author';
+  entity: 'category' | 'author' | 'translator';
   action: 'create' | 'update' | 'delete';
   id?: string;
   payload?: TaxonomyCreateRequest | TaxonomyUpdateRequest;

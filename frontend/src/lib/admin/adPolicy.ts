@@ -1,6 +1,6 @@
-export type AdSlotKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
+export type AdSlotKey = 'ad_header' | 'ad_middle' | 'ad_sidebar' | 'ad_left_side' | 'ad_right_side';
 
-export const AD_SLOT_KEYS: readonly AdSlotKey[] = ['ad_header', 'ad_middle', 'ad_sidebar'];
+export const AD_SLOT_KEYS: readonly AdSlotKey[] = ['ad_header', 'ad_middle', 'ad_sidebar', 'ad_left_side', 'ad_right_side'];
 
 export const AD_CONTROL_KEYS = {
   enabled: 'public_ads_enabled',
@@ -219,6 +219,8 @@ export const parseSiteSettingsRows = (rows: Array<{ key: string; value: unknown 
     ad_header: normalizeToString(map.get('ad_header')),
     ad_middle: normalizeToString(map.get('ad_middle')),
     ad_sidebar: normalizeToString(map.get('ad_sidebar')),
+    ad_left_side: normalizeToString(map.get('ad_left_side')),
+    ad_right_side: normalizeToString(map.get('ad_right_side')),
   };
 
   return { map, runtime, slotMarkup };
@@ -232,6 +234,8 @@ export const parseAdManagerState = (rows: Array<{ key: string; value: unknown }>
       ad_header: slotMarkup.ad_header,
       ad_middle: slotMarkup.ad_middle,
       ad_sidebar: slotMarkup.ad_sidebar,
+      ad_left_side: slotMarkup.ad_left_side,
+      ad_right_side: slotMarkup.ad_right_side,
     },
     controls: {
       enabled: runtime.enabled,
@@ -279,6 +283,8 @@ export const buildDefaultAdRows = (): Array<{ key: string; value: unknown }> => 
   { key: 'ad_header', value: '' },
   { key: 'ad_middle', value: '' },
   { key: 'ad_sidebar', value: '' },
+  { key: 'ad_left_side', value: '' },
+  { key: 'ad_right_side', value: '' },
 ];
 
 export const toSafeAdRows = (rows: Array<{ key: string; value: unknown }>): Array<{ key: string; value: unknown }> => {

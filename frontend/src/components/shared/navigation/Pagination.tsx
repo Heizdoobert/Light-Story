@@ -56,7 +56,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(1)}
         disabled={currentPage === 1}
-        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronsLeft size={18} />
       </button>
@@ -65,7 +65,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronLeft size={18} />
       </button>
@@ -77,7 +77,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             key={page}
             onClick={() => handlePageChange(page)}
-            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+            className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
               isActive
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110" // Màu cam giống ảnh của bạn
                 : "text-slate-600 bg-transparent hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -92,7 +92,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronRight size={18} />
       </button>
@@ -101,7 +101,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(totalPages)}
         disabled={currentPage === totalPages}
-        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronsRight size={18} />
       </button>

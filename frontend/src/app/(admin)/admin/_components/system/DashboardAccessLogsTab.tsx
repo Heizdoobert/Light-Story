@@ -4,7 +4,7 @@ import { supabase } from '@/infrastructure/supabase/client';
 
 type AccessLog = {
   id: string;
-  user_id: string | null;
+  actor_user_id: string | null;
   action: 'dashboard_access';
   metadata: Record<string, unknown> | null;
   created_at: string;
@@ -22,15 +22,31 @@ export const DashboardAccessLogsTab: React.FC = () => {
     queryFn: async () => {
       if (!supabase) return [] as AccessLog[];
 
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select('id, user_id, action, metadata, created_at')
-        .eq('action', 'dashboard_access')
-        .order('created_at', { ascending: false })
-        .limit(200);
+      const [oldRes, newRes] = await Promise.all([
+        supabase
+          .from('audit_logs')
+          .select('id, user_id, action, metadata, created_at')
+          .eq('action', 'dashboard_access')
+          .order('created_at', { ascending: false })
+          .limit(200),
+        supabase.rpc('read_dashboard_access_logs', { limit_count: 200 }),
+      ]);
 
-      if (error) throw error;
-      return (data ?? []) as AccessLog[];
+      if (oldRes.error && newRes.error) throw oldRes.error;
+
+      const normalized: AccessLog[] = [
+        ...(oldRes.data ?? []).map((r: Record<string, unknown>) => ({
+          id: r.id as string,
+          actor_user_id: r.user_id as string | null,
+          action: 'dashboard_access' as const,
+          metadata: r.metadata as Record<string, unknown> | null,
+          created_at: r.created_at as string,
+        })),
+        ...((newRes.data ?? []) as AccessLog[]),
+      ];
+
+      normalized.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return normalized.slice(0, 200);
     },
   });
 
@@ -45,7 +61,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'audit_logs',
+          table: 'admin_audit_logs',
           filter: 'action=eq.dashboard_access',
         },
         () => {
@@ -62,7 +78,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
     for (const row of logsQuery.data ?? []) {
-      if (row.user_id) ids.add(row.user_id);
+      if (row.actor_user_id) ids.add(row.actor_user_id);
     }
     return Array.from(ids);
   }, [logsQuery.data]);
@@ -124,8 +140,8 @@ export const DashboardAccessLogsTab: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {(logsQuery.data ?? []).map((log) => {
-                  const actor = log.user_id ? actorMap.get(log.user_id) : null;
-                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.user_id || 'Unknown';
+                  const actor = log.actor_user_id ? actorMap.get(log.actor_user_id) : null;
+                  const actorDisplay = actor?.full_name?.trim() || actor?.email || log.actor_user_id || 'Unknown';
                   const page = typeof log.metadata?.page === 'string' ? log.metadata.page : '/admin';
 
                   return (

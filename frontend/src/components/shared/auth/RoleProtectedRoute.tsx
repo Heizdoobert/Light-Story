@@ -2,6 +2,7 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, UserRole } from '@/modules/auth/AuthContext';
+import { LoadingScreen } from '@/components/shared/ui/LoadingScreen';
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
@@ -28,11 +29,7 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ children
   }, [allowedRoles, loading, pathname, role, router, user]);
 
   if (loading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user || !role || !allowedRoles.includes(role)) {

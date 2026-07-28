@@ -1,4 +1,4 @@
-import { Category } from '@/types/entities';
+import { Category, Translator } from '@/types/entities';
 import { apiClient } from '@/lib/api/apiClient';
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -36,4 +36,20 @@ export async function updateAuthor(id: string, payload: { name: string; bio?: st
 
 export async function deleteAuthor(id: string): Promise<void> {
   return apiClient.post('/api/admin/taxonomy', { entity: 'author', action: 'delete', id });
+}
+
+export async function fetchTranslators(): Promise<Translator[]> {
+  return apiClient.get<Translator[]>('/api/admin/translators');
+}
+
+export async function createTranslator(payload: { name: string; contact?: string; notes?: string; status?: string }): Promise<Translator> {
+  return apiClient.post('/api/admin/translators', payload);
+}
+
+export async function updateTranslator(id: string, payload: { name?: string; contact?: string; notes?: string; status?: string }): Promise<Translator> {
+  return apiClient.patch(`/api/admin/translators/${id}`, payload);
+}
+
+export async function deleteTranslator(id: string): Promise<void> {
+  return apiClient.delete(`/api/admin/translators/${id}`);
 }

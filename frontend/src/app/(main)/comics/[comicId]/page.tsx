@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   BookOpen,
   Clock,
@@ -14,7 +14,6 @@ import {
   ChevronRight,
   ArrowLeft,
   Play,
-  X,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
@@ -23,11 +22,10 @@ import { Chapter, Category } from "@/types/entities";
 import { Header } from "@/components/shared/navigation/Header";
 import { toast } from "sonner";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { FilterMenu } from "@/app/_components/FilterMenu";
 import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/shared/user/BookmarkButton";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
-import { useLanguage } from "@/modules/language/LanguageContext";
+
 
 const getVietnameseStatus = (status: string) => {
   if (status === "completed") return "Hoàn thành";
@@ -38,7 +36,6 @@ const getVietnameseStatus = (status: string) => {
 };
 
 export default function ComicDetailPage() {
-  const { t } = useLanguage();
   const params = useParams();
   const comicId = params.comicId as string;
 
@@ -50,7 +47,6 @@ export default function ComicDetailPage() {
 
   // States UI
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
     const fetchComicDetail = async () => {
@@ -93,12 +89,6 @@ export default function ComicDetailPage() {
     if (comicId) fetchComicDetail();
   }, [comicId]);
 
-  useEffect(() => {
-    document.body.style.overflow = showFilter ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [showFilter]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
@@ -153,50 +143,7 @@ export default function ComicDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      {/* SIDEBAR FILTER MENU */}
-      <AnimatePresence>
-        {showFilter && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowFilter(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]"
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[70] shadow-2xl flex flex-col"
-            >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
-                    L
-                  </div>
-                  <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    {t("filter_menu_title")}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowFilter(false)}
-                  className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4 flex-1 overflow-y-auto">
-                <FilterMenu onClose={() => setShowFilter(false)} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       <Header
-        onMenuClick={() => setShowFilter(true)}
         onLoginClick={() => setIsLoginModalOpen(true)}
       />
 

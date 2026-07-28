@@ -19,6 +19,22 @@ import {
   VALID_STATUSES,
 } from '../utils/validation';
 
+const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+
+async function okRes(res: Response): Promise<Response> {
+  return res.ok ? json({ success: true }) : await handleRes(res);
+}
+
+const pathSegment = (path: string, n: number) => path.split('/')[n];
+
+const COMIC_SCHEMA = [
+  { field: 'title', type: 'required-string', maxLength: 200 },
+  { field: 'author', type: 'optional-string', maxLength: 100 },
+  { field: 'description', type: 'optional-string', maxLength: 2000 },
+  { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+  { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+] as const;
+
 export async function handleAdminRequest(
   request: Request,
   env: Env,
@@ -85,9 +101,7 @@ export async function handleAdminRequest(
           env,
           token,
         );
-        return res.ok
-          ? json({ success: true })
-          : handleRes(res);
+        return okRes(res);
       }
 
       if (action === 'bulkUpdateStatus') {
@@ -102,9 +116,7 @@ export async function handleAdminRequest(
           env,
           token,
         );
-        return res.ok
-          ? json({ success: true })
-          : handleRes(res);
+        return okRes(res);
       }
 
       if (action === 'bulkDelete') {
@@ -163,9 +175,7 @@ export async function handleAdminRequest(
           env,
           token,
         );
-        return res.ok
-          ? json({ success: true })
-          : handleRes(res);
+        return okRes(res);
       }
 
       return err(
@@ -186,26 +196,18 @@ export async function handleAdminRequest(
         metadata: body.metadata || {},
       };
       const res = await sbPost('audit_logs', payload, env, token);
-      return res.ok
-        ? json({ success: true })
-        : handleRes(res);
+      return okRes(res);
     }
 
     if (method === 'GET' && path === '/admin/audit') {
-      const limit = Math.min(
-        500,
-        Math.max(1, parseInt(url.searchParams.get('limit') || '200')),
-      );
+      const limit = clamp(parseInt(url.searchParams.get('limit') || '200'), 1, 500);
       const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
       const res = await sbGet('audit_logs', q, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
-      const limit = Math.min(
-        50,
-        Math.max(1, parseInt(url.searchParams.get('limit') || '20')),
-      );
+      const limit = clamp(parseInt(url.searchParams.get('limit') || '20'), 1, 50);
       const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
       const res = await sbGet('audit_logs', q, env, token);
       if (!res.ok) {
@@ -289,31 +291,17 @@ export async function handleAdminRequest(
       return handleRes(res);
     }
 
+    const TAXONOMY_ENTITIES: Record<string, { table: string; select: string }> = {
+      category: { table: 'categories', select: 'id,name,description,created_at,updated_at' },
+      author: { table: 'authors', select: 'id,name,bio,created_at,updated_at' },
+    };
+
     if (method === 'GET' && path === '/admin/taxonomy') {
       const entity = url.searchParams.get('entity');
-      if (entity === 'category') {
-        const res = await sbGet(
-          'categories',
-          'select=id,name,description,created_at,updated_at&order=name.asc',
-          env,
-          token,
-        );
-        return handleRes(res);
-      }
-      if (entity === 'author') {
-        const res = await sbGet(
-          'authors',
-          'select=id,name,bio,created_at,updated_at&order=name.asc',
-          env,
-          token,
-        );
-        return handleRes(res);
-      }
-      return err(
-        'BAD_REQUEST',
-        'Unknown taxonomy entity',
-        400,
-      );
+      const tax = entity ? TAXONOMY_ENTITIES[entity] : undefined;
+      if (!tax) return err('BAD_REQUEST', 'Unknown taxonomy entity', 400);
+      const res = await sbGet(tax.table, `select=${tax.select}&order=name.asc`, env, token);
+      return handleRes(res);
     }
 
     if (
@@ -336,78 +324,23 @@ export async function handleAdminRequest(
     if (method === 'POST' && path === '/admin/taxonomy') {
       const body = (await request.json()) as any;
       const { entity, action: taxAction, id: taxId, payload: taxPayload } = body;
+      const tax = TAXONOMY_ENTITIES[entity];
+      if (!tax) return err('BAD_REQUEST', `Unknown taxonomy entity: ${entity}`, 400);
 
-      if (entity === 'category') {
-        if (taxAction === 'create') {
-          const res = await sbPost(
-            'categories',
-            taxPayload,
-            env,
-            token,
-          );
-          return handleRes(res);
-        }
-        if (taxAction === 'update') {
-          const res = await sbPatch(
-            'categories',
-            `id=eq.${taxId}`,
-            taxPayload,
-            env,
-            token,
-          );
-          return handleRes(res);
-        }
-        if (taxAction === 'delete') {
-          const res = await sbDelete(
-            'categories',
-            `id=eq.${taxId}`,
-            env,
-            token,
-          );
-          return res.ok
-            ? json({ success: true })
-            : handleRes(res);
-        }
+      if (taxAction === 'create') {
+        const res = await sbPost(tax.table, taxPayload, env, token);
+        return handleRes(res);
+      }
+      if (taxAction === 'update') {
+        const res = await sbPatch(tax.table, `id=eq.${taxId}`, taxPayload, env, token);
+        return handleRes(res);
+      }
+      if (taxAction === 'delete') {
+        const res = await sbDelete(tax.table, `id=eq.${taxId}`, env, token);
+        return okRes(res);
       }
 
-      if (entity === 'author') {
-        if (taxAction === 'create') {
-          const res = await sbPost(
-            'authors',
-            taxPayload,
-            env,
-            token,
-          );
-          return handleRes(res);
-        }
-        if (taxAction === 'update') {
-          const res = await sbPatch(
-            'authors',
-            `id=eq.${taxId}`,
-            taxPayload,
-            env,
-            token,
-          );
-          return handleRes(res);
-        }
-        if (taxAction === 'delete') {
-          const res = await sbDelete(
-            'authors',
-            `id=eq.${taxId}`,
-            env,
-            token,
-          );
-          return res.ok
-            ? json({ success: true })
-            : handleRes(res);
-        }
-      }
-
-      return err(
-        'BAD_REQUEST',
-        `Unknown taxonomy entity or action: ${entity}/${taxAction}`,
-        400,
-      );
+      return err('BAD_REQUEST', `Unknown taxonomy action: ${entity}/${taxAction}`, 400);
     }
 
     if (
@@ -539,9 +472,7 @@ export async function handleAdminRequest(
           env,
           token,
         );
-        return res.ok
-          ? json({ success: true })
-          : handleRes(res);
+        return okRes(res);
       }
 
       if (action === 'updateName') {
@@ -552,9 +483,7 @@ export async function handleAdminRequest(
           env,
           token,
         );
-        return res.ok
-          ? json({ success: true })
-          : handleRes(res);
+        return okRes(res);
       }
 
       return err(
@@ -642,10 +571,7 @@ export async function handleAdminRequest(
         1,
         parseInt(url.searchParams.get('page') || '1'),
       );
-      const pageSize = Math.min(
-        100,
-        Math.max(1, parseInt(url.searchParams.get('pageSize') || '50')),
-      );
+      const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50'), 1, 100);
       const offset = (page - 1) * pageSize;
       const q = `select=id,email,role,full_name,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       const res = await sbGet('profiles', q, env, token);
@@ -667,16 +593,14 @@ export async function handleAdminRequest(
       method === 'DELETE' &&
       path.match(/^\/admin\/profiles\/[^\/]+$/)
     ) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const res = await sbDelete(
         'profiles',
         `id=eq.${id}`,
         env,
         token,
       );
-      return res.ok
-        ? json({ success: true })
-        : handleRes(res);
+      return okRes(res);
     }
 
     // ── Comic CMS CRUD ─────────────────────────────────────
@@ -773,10 +697,6 @@ export async function handleAdminRequest(
 
     // ── Generate Presigned HMAC URL for R2 ─────────────────
     if (method === 'POST' && path === '/admin/r2/signed-url') {
-      const role = getAuthRole(request);
-      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
-        return err('FORBIDDEN', 'Staff role required', 403);
-      }
       const body = (await request.json().catch(() => ({}))) as { key?: string; expiresInSeconds?: number };
       if (!body.key) return err('BAD_REQUEST', 'Missing key parameter', 400);
 
@@ -794,10 +714,6 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path === '/admin/r2/list') {
-      const role = getAuthRole(request);
-      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
-        return err('FORBIDDEN', 'Staff role required', 403);
-      }
       const bucket = env.R2_BUCKET;
       if (!bucket) {
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
@@ -848,30 +764,13 @@ export async function handleAdminRequest(
     }
 
     if (method === 'POST' && path === '/admin/comics') {
-      const role = getAuthRole(request);
-      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
-        return err('FORBIDDEN', 'Staff role required', 403);
-      }
-
       const body = (await request.json()) as Record<string, unknown>;
-      const errors = validateBody(body, [
-        { field: 'title', type: 'required-string', maxLength: 200 },
-        { field: 'author', type: 'optional-string', maxLength: 100 },
-        { field: 'description', type: 'optional-string', maxLength: 2000 },
-        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
-        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
-      ]);
+      const errors = validateBody(body, COMIC_SCHEMA as any);
       if (errors.length > 0) {
         return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
       }
 
-      const s = sanitizeBody(body, [
-        { field: 'title', type: 'required-string', maxLength: 200 },
-        { field: 'author', type: 'optional-string', maxLength: 100 },
-        { field: 'description', type: 'optional-string', maxLength: 2000 },
-        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
-        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
-      ]);
+      const s = sanitizeBody(body, COMIC_SCHEMA as any);
 
       const payload: Record<string, unknown> = {
         title: s.title,
@@ -894,38 +793,26 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const res = await sbGet('stories', `id=eq.${id}&select=*,chapters(*)`, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
-      const comicId = path.split('/')[3];
+      const comicId = pathSegment(path, 3);
       const res = await sbGet('chapters', `story_id=eq.${comicId}&order=chapter_number.asc`, env, token);
       return handleRes(res);
     }
 
     if (method === 'PATCH' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const body = (await request.json()) as Record<string, unknown>;
-      const errors = validateBody(body, [
-        { field: 'title', type: 'optional-string', maxLength: 200 },
-        { field: 'author', type: 'optional-string', maxLength: 100 },
-        { field: 'description', type: 'optional-string', maxLength: 2000 },
-        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
-        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
-      ]);
+      const errors = validateBody(body, COMIC_SCHEMA as any);
       if (errors.length > 0) {
         return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
       }
 
-      const s = sanitizeBody(body, [
-        { field: 'title', type: 'optional-string', maxLength: 200 },
-        { field: 'author', type: 'optional-string', maxLength: 100 },
-        { field: 'description', type: 'optional-string', maxLength: 2000 },
-        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
-        { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
-      ]);
+      const s = sanitizeBody(body, COMIC_SCHEMA as any);
 
       const payload: Record<string, unknown> = {};
       if (s.title !== undefined) payload.title = s.title as string;
@@ -938,18 +825,13 @@ export async function handleAdminRequest(
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const res = await sbDelete('stories', `id=eq.${id}`, env, token);
-      return res.ok ? json({ success: true }) : handleRes(res);
+      return okRes(res);
     }
 
     if (method === 'POST' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
-      const role = getAuthRole(request);
-      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
-        return err('FORBIDDEN', 'Staff role required', 403);
-      }
-
-      const comicId = path.split('/')[3];
+      const comicId = pathSegment(path, 3);
       const body = (await request.json()) as Record<string, unknown>;
       const errors = validateBody(body, [
         { field: 'comicId', type: 'optional-string', maxLength: 100 },
@@ -1006,13 +888,9 @@ export async function handleAdminRequest(
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+\/chapters\/[^\/]+$/)) {
-      const role = getAuthRole(request);
-      if (!requireRole(role, ['superadmin', 'admin', 'employee'])) {
-        return err('FORBIDDEN', 'Staff role required', 403);
-      }
-      const chapterId = path.split('/')[5];
+      const chapterId = pathSegment(path, 5);
       const res = await sbDelete('chapters', `id=eq.${chapterId}`, env, token);
-      return res.ok ? json({ success: true }) : handleRes(res);
+      return okRes(res);
     }
 
     // --- TRANSLATORS CRUD ENDPOINTS ---
@@ -1035,7 +913,7 @@ export async function handleAdminRequest(
     }
 
     if (method === 'PATCH' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const body = (await request.json()) as any;
       const payload: Record<string, any> = {};
       if (body.name !== undefined) payload.name = String(body.name).trim();
@@ -1047,9 +925,9 @@ export async function handleAdminRequest(
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
-      const id = path.split('/')[3];
+      const id = pathSegment(path, 3);
       const res = await sbDelete('translators', `id=eq.${id}`, env, token);
-      return res.ok ? json({ success: true }) : handleRes(res);
+      return okRes(res);
     }
 
     return null;

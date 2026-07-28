@@ -41,8 +41,8 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
 
 export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
-  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
+  admin: ['dashboard', 'operations', 'create_story', 'stories', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
+  employee: ['dashboard', 'operations', 'create_story', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
   user: [],
 };
 

@@ -52,6 +52,10 @@ export const getErrorMessage = (error: unknown, context?: string): string => {
   }
 
   // Auth Specific Errors
+  if (lowercaseMessage.includes("email not confirmed")) {
+    return "Please verify your email before signing in. Check your inbox for the confirmation link.";
+  }
+
   if (lowercaseMessage.includes("invalid login credentials")) {
     return "Email or password is incorrect. Please try again.";
   }

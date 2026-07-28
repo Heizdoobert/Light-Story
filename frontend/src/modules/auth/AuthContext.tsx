@@ -3,6 +3,7 @@
 // This file manages the global authentication state and Role-Based Access Control (RBAC)
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/infrastructure/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/errorUtils";
@@ -36,6 +37,7 @@ type AuthProfile = Omit<AdminProfileDto, 'full_name' | 'role'> & {
   full_name: string;
   avatar_url: string | null;
   role: UserRole | null;
+  created_at: string | null;
 };
 
 const buildProfile = (user: User, profileData?: ProfileRow): AuthProfile => ({
@@ -49,9 +51,10 @@ const buildProfile = (user: User, profileData?: ProfileRow): AuthProfile => ({
   avatar_url:
     profileData?.avatar_url ?? user.user_metadata?.avatar_url ?? null,
   role: resolveRole(user, profileData?.role),
+  created_at: profileData?.created_at ?? null,
 });
 
-const PROFILE_SELECT = "id,email,full_name,avatar_url,role";
+const PROFILE_SELECT = "id,email,full_name,avatar_url,role,created_at";
 
 type ProfileRow = {
   id: string;
@@ -59,6 +62,7 @@ type ProfileRow = {
   full_name: string | null;
   avatar_url: string | null;
   role: UserRole | string | null;
+  created_at: string | null;
 };
 
 interface AuthContextType {
@@ -91,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     let isActive = true;
@@ -281,6 +286,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    queryClient.clear();
   };
 
   const register = async (

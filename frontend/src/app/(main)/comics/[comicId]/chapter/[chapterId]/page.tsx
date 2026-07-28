@@ -3,35 +3,30 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "motion/react";
+
 import {
   ChevronLeft,
   ChevronRight,
   Home,
   List,
   ArrowUp,
-  X,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import { Chapter, Category } from "@/types/entities";
+import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
 import { Header } from "@/components/shared/navigation/Header";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { FilterMenu } from "@/app/_components/FilterMenu";
 import { recordReadingHistory } from "@/services/reader/readerHub.service";
 import { ChapterImage } from "@/components/reader/ChapterImage";
-import { AdZone } from "@/components/shared/ads/AdZone";
+import { AdRenderer } from "@/components/reader/AdRenderer";
 import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
-import { useLanguage } from "@/modules/language/LanguageContext";
-
-// 🔴 BẬT/TẮT DỮ LIỆU GIẢ Ở ĐÂY
 const USE_MOCK_DATA = false;
 
-// --- BỘ DỮ LIỆU GIẢ LẬP (MOCK DATA) ---
+// --- MOCK DATA ---
 const MOCK_COMIC: Comic = {
   id: "comic-123",
   tenantKey: "tenant-1",
@@ -91,35 +86,26 @@ const MOCK_IMAGES = [
 // ----------------------------------------
 
 export default function ReadChapterPage() {
-  const { t } = useLanguage();
   const params = useParams();
   const router = useRouter();
 
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
-  const [_showFilter, setShowFilter] = useState(false);
+  const [_showFilter] = useState(false);
   const [comic, setComic] = useState<Comic | null>(null);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [images, setImages] = useState<string[]>([]);
-  const [_categories, setCategories] = useState<Category[]>([]); // Thêm state cho thể loại
   const [loading, setLoading] = useState(true);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
-  const [showSidebar, setShowSidebar] = useState(false); // Thêm state cho Sidebar Menu
 
   useEffect(() => {
     const fetchReadingData = async () => {
       try {
-        // Tải thể loại cho FilterMenu
-        const catsRes = await apiClient
-          .get<any>("/api/categories")
-          .catch(() => []);
-        if (Array.isArray(catsRes)) setCategories(catsRes);
-
         if (USE_MOCK_DATA) {
           await new Promise((resolve) => setTimeout(resolve, 500));
           setComic(MOCK_COMIC);
@@ -232,18 +218,6 @@ export default function ReadChapterPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // Khóa cuộn trang khi mở Sidebar
-  useEffect(() => {
-    if (showSidebar) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [showSidebar]);
-
   const handleSelectChapter = (selectedId: string) => {
     setShowChapterMenu(false);
     if (selectedId) router.push(`/comics/${comicId}/chapter/${selectedId}`);
@@ -261,68 +235,29 @@ export default function ReadChapterPage() {
     );
   }
 
-  const currentIndex =
-    allChapters.findIndex(
-      (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
-    ) !== -1
-      ? allChapters.findIndex(
-          (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
-        )
-      : 0;
+  const foundIdx = allChapters.findIndex(
+    (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
+  );
+  const currentIndex = foundIdx >= 0 ? foundIdx : 0;
   const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null;
   const nextChapter =
-    currentIndex !== -1 && currentIndex < allChapters.length - 1
+    currentIndex < allChapters.length - 1
       ? allChapters[currentIndex + 1]
       : null;
 
+  const chapterNavClass = (chapter: typeof prevChapter) =>
+    `flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
+      chapter
+        ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary"
+        : "border-transparent bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-600 pointer-events-none"
+    }`;
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
-      {/* SIDEBAR MENU (Mở khi bấm nút 3 gạch) */}
-      <AnimatePresence>
-        {showSidebar && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSidebar(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100]"
-            />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-900 z-[101] shadow-2xl flex flex-col"
-            >
-              <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center text-white font-black text-sm">
-                    L
-                  </div>
-                  <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
-                    {t("filter_menu_title")}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setShowSidebar(false)}
-                  className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-red-500 rounded-full transition-colors"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className="p-4 flex-1 overflow-y-auto">
-                <FilterMenu onClose={() => setShowFilter(false)} />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
 
-      {/* PHẦN 5: HEADER ĐẦU TRANG */}
+      {/* Header */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <Header
-          onMenuClick={() => setShowSidebar(true)} // ĐÃ KẾT NỐI NÚT 3 GẠCH Ở ĐÂY
           onLoginClick={() => setIsLoginModalOpen(true)}
         />
         <LoginModal
@@ -331,7 +266,7 @@ export default function ReadChapterPage() {
         />
       </div>
 
-      {/* PHẦN 1: THÔNG TIN CƠ BẢN CỦA CHAPTER */}
+      {/* Chapter info */}
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
         <Link
           href={`/comics/${comicId}`}
@@ -346,11 +281,11 @@ export default function ReadChapterPage() {
           {currentChapter?.title && ` - ${currentChapter.title}`}
         </div>
         
-        {/* VÙNG QUẢNG CÁO ĐẦU TRANG ĐỌC (Leaderboard) */}
-        <AdZone zoneId="reader-top" format="banner" className="mt-4" />
+        {/* Ad: header */}
+        <AdRenderer position="header" />
       </div>
 
-      {/* PHẦN 2: CHỨA CÁC TRANG TRUYỆN */}
+      {/* Chapter pages */}
       <div className="w-full max-w-[800px] mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm">
         {images.length === 0 ? (
           <div className="py-20 text-slate-400 dark:text-zinc-500 font-medium">
@@ -364,35 +299,27 @@ export default function ReadChapterPage() {
                 alt={`Trang ${idx + 1}`}
                 index={idx}
               />
-              {/* VÙNG QUẢNG CÁO GIỮA CÁC TRANG (Chèn sau mỗi 4 trang) */}
+              {/* Ad: inline every 4 pages */}
               {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
-                <AdZone
-                  zoneId={`reader-infeed-${Math.floor((idx + 1) / 4)}`}
-                  format="in-feed"
-                  className="my-2"
-                />
+                <AdRenderer position="middle" />
               )}
             </React.Fragment>
           ))
         )}
       </div>
 
-      {/* VÙNG QUẢNG CÁO CUỐI TRANG ĐỌC */}
+      {/* Ad: footer */}
       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 mt-2">
-        <AdZone zoneId="reader-bottom" format="banner" />
+        <AdRenderer position="sidebar" />
       </div>
 
-      {/* KHU VỰC ĐIỀU HƯỚNG GIỮA TRANG (Đã thiết kế lại phong cách Outlined) */}
+      {/* Mid-page navigation */}
       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 py-6 sm:py-8 flex items-center justify-between gap-3 sm:gap-4 border-t border-slate-200 dark:border-white/5 mt-4">
         <Link
           href={
             prevChapter ? `/comics/${comicId}/chapter/${prevChapter.id}` : "#"
           }
-          className={`flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
-            prevChapter
-              ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary"
-              : "border-transparent bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-600 pointer-events-none"
-          }`}
+          className={chapterNavClass(prevChapter)}
         >
           <ChevronLeft size={18} />{" "}
           <span className="line-clamp-1">Chương trước</span>
@@ -401,20 +328,14 @@ export default function ReadChapterPage() {
           href={
             nextChapter ? `/comics/${comicId}/chapter/${nextChapter.id}` : "#"
           }
-          className={`flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
-            nextChapter
-              ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary"
-              : "border-transparent bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-600 pointer-events-none"
-          }`}
+          className={chapterNavClass(nextChapter)}
         >
           <span className="line-clamp-1">Chương sau</span>{" "}
           <ChevronRight size={18} />
         </Link>
       </div>
 
-      {/* PHẦN 4: TÁI SỬ DỤNG FOOTER */}
-
-      {/* PHẦN 3: THANH CÔNG CỤ ĐỔI CHƯƠNG (Khớp màu hệ thống Light/Dark & Highlight Nút Chuyển Chương) */}
+      {/* Chapter switcher toolbar */}
       <div
         className={`fixed bottom-0 left-0 right-0 z-[60] pointer-events-none transition-transform duration-300 ease-in-out ${
           showToolbar ? "translate-y-0" : "translate-y-full"
@@ -424,7 +345,7 @@ export default function ReadChapterPage() {
           <div className="max-w-[700px] mx-auto flex items-center justify-between gap-2">
             <Link
               href="/"
-              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
+              className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
               title="Trang chủ"
             >
               <Home size={18} />
@@ -436,18 +357,19 @@ export default function ReadChapterPage() {
                   ? `/comics/${comicId}/chapter/${prevChapter.id}`
                   : "#"
               }
-              className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all flex-shrink-0 ${
-                prevChapter
+              className={
+                `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
+                (prevChapter
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none"
-              }`}
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
+              }
               title="Chương trước"
             >
               <ChevronLeft size={18} />
             </Link>
 
             <div className="flex-1 relative max-w-[280px] sm:max-w-[380px]">
-              {/* Highlight Button: Gradient + High contrast text + Glow */}
+              {/* Chapter selector */}
               <button
                 onClick={() => setShowChapterMenu(!showChapterMenu)}
                 className="w-full flex items-center justify-between gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-extrabold rounded-xl px-3.5 py-2 transition-all text-xs sm:text-sm shadow-md shadow-blue-500/25 dark:shadow-blue-900/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
@@ -463,7 +385,7 @@ export default function ReadChapterPage() {
                 />
               </button>
 
-              {/* Danh sách chương (Tương thích Light/Dark màu hệ thống) */}
+              {/* Chapter list */}
               {showChapterMenu && (
                 <div className="absolute bottom-full mb-3 left-0 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl max-h-[50vh] overflow-y-auto z-[70] p-1.5 transition-colors">
                   {allChapters.map((chap) => (
@@ -492,11 +414,12 @@ export default function ReadChapterPage() {
                   ? `/comics/${comicId}/chapter/${nextChapter.id}`
                   : "#"
               }
-              className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all flex-shrink-0 ${
-                nextChapter
+              className={
+                `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
+                (nextChapter
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none"
-              }`}
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
+              }
               title="Chương sau"
             >
               <ChevronRight size={18} />
@@ -504,7 +427,7 @@ export default function ReadChapterPage() {
 
             <button
               onClick={scrollToTop}
-              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
+              className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
               title="Cuộn lên đầu trang"
             >
               <ArrowUp size={18} />

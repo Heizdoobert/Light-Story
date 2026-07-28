@@ -5,7 +5,6 @@ export type AdminMenuId =
   | 'dashboard'
   | 'dashboard_access_logs'
   | 'audit_logs'
-  | 'operations_data'
   | 'create_story'
   | 'create_chapter'
   | 'stories'
@@ -14,8 +13,8 @@ export type AdminMenuId =
   | 'users'
   | 'ads'
   | 'settings'
-  | 'profile'
   | 'operations'
+  | 'profile'
   | 'create_comic';
 
 export type AdminMenuItem = {
@@ -48,12 +47,6 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     id: 'operations',
     label: 'Trung tâm vận hành',
     icon: Workflow,
-    roles: ['superadmin', 'admin', 'employee'],
-  },
-  {
-    id: 'operations_data',
-    label: 'Dữ liệu vận hành',
-    icon: Database,
     roles: ['superadmin', 'admin', 'employee'],
   },
   {
@@ -115,7 +108,7 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> = ADMIN_MENU_ITEMS.r
 
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
-  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'operations_data', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
-  employee: ['dashboard', 'operations', 'operations_data', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
+  admin: ['dashboard', 'dashboard_access_logs', 'operations', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'ads', 'settings', 'profile', 'create_comic'],
+  employee: ['dashboard', 'operations', 'create_story', 'create_chapter', 'stories', 'categories', 'authors', 'profile', 'create_comic'],
   user: [],
 };

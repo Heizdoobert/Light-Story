@@ -19,11 +19,12 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
   const { profile, user, updateProfile } = useAuth();
   const [fullName, setFullName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [fullNameError, setFullNameError] = useState<string | null>(null);
   const [avatarUrlError, setAvatarUrlError] = useState<string | null>(null);
-  const safeAvatarUrl = sanitizeImageUrl(avatarUrl);
+  const safeAvatarUrl = sanitizeImageUrl(previewUrl || avatarUrl);
 
   const validateFullName = (value: string): string | null => {
     const trimmed = value.trim();
@@ -54,8 +55,17 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
       setAvatarUrl(profile.avatar_url || '');
       setFullNameError(null);
       setAvatarUrlError(null);
+      setPreviewUrl(null);
     }
   }, [profile, isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -67,12 +77,14 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
       return;
     }
 
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
     setIsUploadingAvatar(true);
     setAvatarUrlError(null);
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')

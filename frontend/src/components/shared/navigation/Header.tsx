@@ -16,7 +16,9 @@ import {
   BarChart2,
   Bookmark,
   Users,
+  User,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { useAuth } from "@/modules/auth/AuthContext";
 import { useLanguage } from "@/modules/language/LanguageContext";
@@ -27,6 +29,7 @@ import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
+import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/securityUtils";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 
@@ -35,7 +38,6 @@ function isStaffRole(role: string | null | undefined): boolean {
 }
 
 type HeaderProps = {
-  onMenuClick: () => void;
   onLoginClick: () => void;
 };
 
@@ -63,7 +65,6 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export const Header: React.FC<HeaderProps> = ({
-  onMenuClick,
   onLoginClick,
 }) => {
   const router = useRouter();
@@ -76,8 +77,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const getComicCover = (comic: Comic) => {
     const raw = comic.coverUrl || (comic as any).cover_url || "";
@@ -130,10 +134,25 @@ export const Header: React.FC<HeaderProps> = ({
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(e.target as Node)) {
         setShowCategoryDropdown(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Prevent scroll when mobile menu is open
+  useEffect(() => {
+    if (showMobileMenu) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [showMobileMenu]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -170,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <motion.button
             {...bounceClick}
-            onClick={onMenuClick}
+            onClick={() => setShowMobileMenu(true)}
             className="p-2 rounded-xl bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all duration-300 shrink-0"
           >
             <Menu size={22} />
@@ -190,7 +209,16 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Header Center Search Box with Live Dropdown */}
-        <div ref={searchContainerRef} className="relative hidden sm:flex items-center flex-1 max-w-sm md:max-w-md mx-4">
+        {/* Mobile search icon */}
+        <button
+          onClick={() => router.push("/search")}
+          className="flex sm:hidden p-2.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0"
+          title={t("search")}
+        >
+          <Search size={18} />
+        </button>
+
+        <div ref={searchContainerRef} className="relative hidden sm:flex items-center w-80 mx-4">
           <form onSubmit={handleSearchSubmit} className="w-full flex items-center">
             <div className="relative w-full flex items-center">
               <input
@@ -279,7 +307,7 @@ export const Header: React.FC<HeaderProps> = ({
           <motion.button
             {...bounceClick}
             onClick={toggleLanguage}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0 cursor-pointer"
+            className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0 cursor-pointer"
             title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
           >
             <Globe size={14} className="text-orange-500 dark:text-[#39ff14]" />
@@ -290,7 +318,7 @@ export const Header: React.FC<HeaderProps> = ({
           <motion.button
             {...bounceClick}
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0 cursor-pointer"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0 cursor-pointer"
             title={
               theme === "light"
                 ? language === "VI"
@@ -327,25 +355,75 @@ export const Header: React.FC<HeaderProps> = ({
                     {role}
                   </div>
                 </div>
-                <img
-                  src={
-                    profile?.avatar_url ||
-                    `https://ui-avatars.com/api/?name=${profile?.full_name || "User"}&background=random`
-                  }
-                  alt="Avatar"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-orange-500 dark:border-[#001eff] shadow-md object-cover"
-                />
-                <motion.button
-                  {...bounceClick}
-                  onClick={() => {
-                    signOut();
-                    toast.success(t("logout_success"));
-                  }}
-                  className="p-2 sm:p-2.5 bg-slate-100 dark:bg-[#1c1c1c] rounded-full text-slate-500 dark:text-slate-400 hover:text-white hover:bg-red-500 dark:hover:bg-[#ff008d] transition-all"
-                  title={t("logout")}
-                >
-                  <LogOut size={18} />
-                </motion.button>
+                
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-[#001eff] rounded-full overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <img
+                      src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
+                      alt="Avatar"
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-orange-500 dark:border-[#001eff] object-cover"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                      }}
+                    />
+                  </button>
+
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1c1c1c] rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-1 z-50 overflow-hidden"
+                      >
+                        <div className="px-4 py-2 border-b border-slate-100 dark:border-white/10 sm:hidden">
+                          <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1">
+                            {profile?.full_name || user.email?.split("@")[0]}
+                          </div>
+                          <div className="text-[10px] font-black text-orange-500 dark:text-[#ff008d] uppercase tracking-wider">
+                            {role}
+                          </div>
+                        </div>
+
+                        {isStaffRole(role) && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2 sm:hidden"
+                          >
+                            <LayoutDashboard size={16} />
+                            {t("admin_dashboard")}
+                          </Link>
+                        )}
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                        >
+                          <Users size={16} />
+                          User Settings
+                        </Link>
+                        <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
+                        <button
+                          onClick={async () => {
+                            setIsUserMenuOpen(false);
+                            await signOut();
+                            toast.success(t("logout_success"));
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                        >
+                          <LogOut size={16} />
+                          {t("logout")}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </div>
           ) : (
@@ -415,6 +493,15 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{t("nav_bookmarks")}</span>
           </Link>
 
+          {/* HỒ SƠ */}
+          <Link
+            href="/profile"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
+          >
+            <User size={16} />
+            <span>{language === "VI" ? "HỒ SƠ" : "PROFILE"}</span>
+          </Link>
+
           {/* GROUP */}
           <a
             href="https://facebook.com"
@@ -437,6 +524,85 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{t("nav_fanpage")}</span>
           </a>
         </div>
+
+        {/* Mobile Nav Drawer */}
+        <AnimatePresence>
+          {showMobileMenu && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowMobileMenu(false)}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80]"
+              />
+              <motion.div
+                initial={{ x: "-100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-[#000b13] z-[90] shadow-2xl flex flex-col"
+              >
+                <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 dark:from-[#001eff] dark:to-[#8900ff] rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
+                      L
+                    </div>
+                    <span className="font-black text-xl tracking-tighter text-slate-800 dark:text-white">
+                      Light<span className="text-orange-500 dark:text-[#ff008d]">Story</span>
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setShowMobileMenu(false)}
+                    className="p-2 bg-slate-100 dark:bg-[#1c1c1c] text-slate-500 hover:text-red-500 rounded-full transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="p-4 flex-1 overflow-y-auto space-y-6">
+                  {/* Mobile Navigation Links */}
+                  <div className="flex flex-col gap-2">
+                    <Link href="/" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <Home size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_home")}
+                    </Link>
+                    <Link href="/search?sort=most_viewed" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <BarChart2 size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_rankings")}
+                    </Link>
+                    <Link href="/search" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <Search size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_search_comics")}
+                    </Link>
+                    <Link href="/bookmarks" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <Bookmark size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_bookmarks")}
+                    </Link>
+                    <Link href="/profile" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <User size={20} className="text-slate-400 dark:text-slate-500" /> {language === "VI" ? "Hồ Sơ" : "Profile"}
+                    </Link>
+                  </div>
+                  
+                  {/* Mobile Categories Grid */}
+                  <div>
+                    <h4 className="font-bold text-xs uppercase text-slate-400 dark:text-slate-500 mb-3 px-3">
+                      {t("category_list_title")}
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2">
+                      {categories.map(cat => (
+                        <Link 
+                          key={`mob-cat-${cat.id}`} 
+                          href={`/search?category=${encodeURIComponent(cat.name)}`} 
+                          onClick={() => setShowMobileMenu(false)} 
+                          className="px-3 py-2 rounded-lg bg-slate-50 dark:bg-[#1c1c1c] text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-500 dark:hover:text-orange-400 transition-colors truncate text-center"
+                        >
+                          {cat.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* Category Table Megamenu Popover (Outside overflow-x-auto) */}
         <AnimatePresence>

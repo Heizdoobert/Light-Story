@@ -10,7 +10,7 @@ import { motion } from 'motion/react';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
 import { AD_CONTROL_KEYS, parseAdManagerState } from '@/lib/admin/adPolicy';
 
-type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar';
+type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar' | 'ad_left_side' | 'ad_right_side';
 type AdConfigs = Record<AdConfigKey, string>;
 type RuntimeControlKey =
   | typeof AD_CONTROL_KEYS.enabled
@@ -31,12 +31,16 @@ const AD_SLOTS: ReadonlyArray<{ id: AdConfigKey; label: string; desc: string }> 
   { id: 'ad_header', label: 'Header Banner Slot', desc: 'Displayed at the very top of the reader page.' },
   { id: 'ad_middle', label: 'In-Content Slot', desc: 'Injected between paragraphs in the story content.' },
   { id: 'ad_sidebar', label: 'Sidebar Sticky Slot', desc: 'Floats on the right side of the desktop view.' },
+  { id: 'ad_left_side', label: 'Left Side Skyscraper', desc: 'Sticky column on the left side of desktop viewport.' },
+  { id: 'ad_right_side', label: 'Right Side Skyscraper', desc: 'Sticky column on the right side of the desktop viewport.' },
 ];
 
 const DEFAULT_CONFIGS: AdConfigs = {
   ad_header: '',
   ad_middle: '',
   ad_sidebar: '',
+  ad_left_side: '',
+  ad_right_side: '',
 };
 
 const DEFAULT_CONTROLS: RuntimeControls = {

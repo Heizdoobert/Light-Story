@@ -150,7 +150,6 @@ function SearchContent() {
       </AnimatePresence>
 
       <Header
-        onMenuClick={() => setShowFilter(true)}
         onLoginClick={() => setIsLoginModalOpen(true)}
       />
       <LoginModal
@@ -183,7 +182,14 @@ function SearchContent() {
             </div>
           </div>
 
-          <div className="flex-shrink-0 mt-2 sm:mt-0">
+          <div className="flex-shrink-0 mt-2 sm:mt-0 flex items-center gap-2">
+            <button
+              onClick={() => setShowFilter(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-orange-500 dark:hover:border-[#001eff] hover:text-orange-500 dark:hover:text-[#39ff14] transition-all shadow-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+              Bộ lọc
+            </button>
             <SortDropdown />
           </div>
         </div>

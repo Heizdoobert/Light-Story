@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "@/components/shared/navigation/Footer";
+import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
       {/* Thêm class để body chiếm tối thiểu 100% chiều cao màn hình và dàn dọc */}
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
+          <AdZoneColumns />
           {/* Main sẽ đẩy Footer xuống dưới cùng nhờ flex-grow */}
           <main className="flex-grow">{children}</main>
 

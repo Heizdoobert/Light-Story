@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/modules/auth/AuthContext';
-import { EditUserProfileModal } from './EditUserProfileModal';
+import { EditUserProfileModal } from '@/components/shared/user/EditUserProfileModal';
 import { Mail, User, Shield, Edit2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/securityUtils';
 
 export const UserProfileTab: React.FC = () => {
   const { user, profile } = useAuth();
@@ -51,11 +52,15 @@ export const UserProfileTab: React.FC = () => {
             whileHover={{ scale: 1.1 }}
             className="flex flex-col items-center gap-3"
           >
-            {profile.avatar_url ? (
+            {profile.avatar_url && sanitizeImageUrl(profile.avatar_url) ? (
               <img
-                src={profile.avatar_url}
+                src={proxyAvatarUrl(profile.avatar_url) || undefined}
                 alt="Avatar"
                 className="w-20 h-20 rounded-full border-4 border-white dark:border-slate-900 object-cover shadow-lg"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                }}
               />
             ) : (
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-500 border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg">

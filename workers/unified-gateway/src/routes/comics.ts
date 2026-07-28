@@ -108,6 +108,21 @@ export async function handleComicsRequest(
       return handleRes(res);
     }
 
+    if (method === 'GET' && pathname === '/comics/chapters/batch') {
+      const comicIds = url.searchParams.get('comicIds');
+      if (!comicIds) return json([]);
+      const ids = comicIds.split(',').filter(Boolean);
+      if (ids.length === 0) return json([]);
+      const res = await sbGet('chapters', `story_id=in.(${ids.map(encodeURIComponent).join(',')})&select=id,story_id,chapter_number,title,created_at,updated_at&order=chapter_number.desc`, env, token);
+      if (!res.ok) return handleRes(res);
+      const items = (await res.json()) as any[];
+      const map: Record<string, any> = {};
+      for (const item of items) {
+        if (!map[item.story_id]) map[item.story_id] = item;
+      }
+      return json(Object.values(map));
+    }
+
     if (
       method === 'GET' &&
       pathname.match(/^\/comics\/[^\/]+\/chapters$/)
