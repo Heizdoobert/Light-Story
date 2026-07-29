@@ -14,7 +14,7 @@ type RecommendedComicsProps = {
 export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId }) => {
   const { data: recommendations = [], isLoading } = useRecommendations(comicId);
 
-  if (isLoading || recommendations.length === 0) return null;
+  if (!isLoading && recommendations.length === 0) return null;
 
   return (
     <section className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
@@ -24,7 +24,16 @@ export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId })
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-        {recommendations.map((comic) => (
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={`rec-sk-${i}`} className="flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800/80">
+              <div className="aspect-[3/4] bg-slate-200 dark:bg-slate-800 animate-pulse"></div>
+              <div className="p-2.5">
+                <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-3/4 animate-pulse"></div>
+              </div>
+            </div>
+          ))
+        ) : recommendations.map((comic) => (
           <Link
             key={comic.id}
             href={`/comics/${comic.id}`}
