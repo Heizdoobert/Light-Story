@@ -1,7 +1,6 @@
 /** Comics endpoint handler */
 
 import {
-  Env,
   err,
   sbGet,
   sbPost,
@@ -24,6 +23,7 @@ export async function handleComicsRequest(
   token: string | null,
   pathname: string,
 ): Promise<Response | null> {
+  const ENC_KEY = env.ENC_KEY || 'light-story-master-secret-key-32b!';
   const url = new URL(request.url);
   const method = request.method;
 
@@ -138,7 +138,7 @@ export async function handleComicsRequest(
       const items = (await res.json()) as any[];
       if (Array.isArray(items)) {
         for (const item of items) {
-          if (item.content) item.content = await decryptField(item.content);
+          if (item.content) item.content = await decryptField(item.content, ENC_KEY);
         }
       }
       return json(items);
@@ -161,7 +161,7 @@ export async function handleComicsRequest(
         return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
       const item = Array.isArray(data) ? data[0] || null : data;
       if (item && item.content) {
-        item.content = await decryptField(item.content);
+        item.content = await decryptField(item.content, ENC_KEY);
       }
       return json(item);
     }
@@ -173,7 +173,7 @@ export async function handleComicsRequest(
       const comicId = pathname.split('/')[2];
       const body = (await request.json()) as any;
       const rawContent = typeof body.content === 'object' ? JSON.stringify(body.content) : (body.content || '');
-      const encryptedContent = await encryptField(rawContent);
+      const encryptedContent = await encryptField(rawContent, ENC_KEY);
       const payload = {
         story_id: body.storyId || comicId,
         chapter_number:
@@ -186,7 +186,7 @@ export async function handleComicsRequest(
       const created = await res.json();
       const item = Array.isArray(created) ? created[0] || created : created;
       if (item && item.content) {
-        item.content = await decryptField(item.content);
+        item.content = await decryptField(item.content, ENC_KEY);
       }
       return json(item);
     }

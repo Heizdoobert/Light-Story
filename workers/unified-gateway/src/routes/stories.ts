@@ -1,7 +1,6 @@
 /** Stories endpoint handler */
 
 import {
-  Env,
   err,
   sbGet,
   sbPost,

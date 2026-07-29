@@ -2,7 +2,7 @@
  * Client-Side AES-256-GCM Decryption & Encryption Utility
  */
 
-const DEFAULT_SECRET = 'light-story-master-secret-key-32b!';
+const DEFAULT_SECRET = process.env.NEXT_PUBLIC_ENC_KEY || 'light-story-master-secret-key-32b!';
 
 async function getKey(secret: string): Promise<CryptoKey> {
   const enc = new TextEncoder();

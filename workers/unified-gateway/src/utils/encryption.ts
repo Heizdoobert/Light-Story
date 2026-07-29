@@ -1,8 +1,7 @@
 /**
  * AES-256-GCM Web Crypto Field Encryption & Decryption Utility
+ * secret must be at least 32 chars
  */
-
-const DEFAULT_SECRET = 'light-story-master-secret-key-32b!'; // 32 chars = 256 bits
 
 async function getKey(secret: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
@@ -38,7 +37,7 @@ function base64ToBuffer(b64: string): ArrayBuffer {
  * Encrypts a text string using AES-256-GCM.
  * Output format: ENCv1:<iv_b64>:<ciphertext_b64>
  */
-export async function encryptField(text: string, secret: string = DEFAULT_SECRET): Promise<string> {
+export async function encryptField(text: string, secret: string): Promise<string> {
   if (!text) return text;
   if (text.startsWith('ENCv1:')) return text; // already encrypted
 
@@ -62,7 +61,7 @@ export async function encryptField(text: string, secret: string = DEFAULT_SECRET
 /**
  * Decrypts an ENCv1 encrypted string back into plaintext.
  */
-export async function decryptField(encryptedText: string, secret: string = DEFAULT_SECRET): Promise<string> {
+export async function decryptField(encryptedText: string, secret: string): Promise<string> {
   if (!encryptedText || !encryptedText.startsWith('ENCv1:')) return encryptedText;
 
   try {

@@ -6,6 +6,7 @@ interface __BaseEnv_Env {
 	SUPABASE_ANON_KEY: string;
 	SUPABASE_JWKS_URL: string;
 	USE_NEW_UNIFIED_GATEWAY: string;
+	ENC_KEY?: string;
 	APP_KV?: KVNamespace;
 	R2_BUCKET?: R2Bucket;
 	ANALYTICS_DATA?: AnalyticsEngineDataset;
