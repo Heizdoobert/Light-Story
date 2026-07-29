@@ -7,12 +7,11 @@ import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@
 import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '@/lib/admin/adminNavigation';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
-  DashboardTabVisibility,
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
-  SidebarMenuVisibility,
   getRoleVisibleTabs,
 } from '@/lib/admin/systemSettings';
+import { DashboardTabVisibility, SidebarMenuVisibility } from '@/types/settings';
 import { fetchSystemSettingsSnapshot, saveSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
 import { SystemSettingsSnapshotDto } from '@/types/dto';
 

@@ -9,8 +9,7 @@ import { Image as ImageIcon, SearchX, X } from "lucide-react";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Category } from "@/types/entities";
-import { Header } from "@/components/shared/navigation/Header";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
+
 import { FilterMenu } from "@/app/_components/FilterMenu";
 import { toast } from "sonner";
 import { SortDropdown } from "@/components/shared/comics/SortDropdown";
@@ -50,7 +49,6 @@ function SearchContent() {
   const [totalItems, setTotalItems] = useState(0);
 
   // States quản lý UI
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
@@ -148,14 +146,6 @@ function SearchContent() {
           </>
         )}
       </AnimatePresence>
-
-      <Header
-        onLoginClick={() => setIsLoginModalOpen(true)}
-      />
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
         <div className="mb-8 pt-4 border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">

@@ -57,8 +57,9 @@
     ".next-dev/dev/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": [
+"exclude": [
     "node_modules",
-    "tests/e2e"
+    "tests/e2e",
+    "src/specs"
   ]
 }

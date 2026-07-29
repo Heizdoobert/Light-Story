@@ -1,4 +1,4 @@
-import { DashboardTabVisibility, SidebarMenuVisibility } from '@/lib/admin/systemSettings';
+import { DashboardTabVisibility, SidebarMenuVisibility } from '@/types/settings';
 import { Story, Chapter, Category } from '@/types/entities';
 
 // ============================================

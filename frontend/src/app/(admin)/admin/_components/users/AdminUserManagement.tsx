@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
-import { useAuth, UserRole } from '@/modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { UserRole } from '@/types/roles';
 import { useAdminUserPresenter } from '@/hooks/presenters/useAdminUserPresenter';
 
 interface Profile {

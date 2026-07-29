@@ -6,8 +6,6 @@ import { EditUserProfileModal } from '@/components/shared/user/EditUserProfileMo
 import { Mail, User, Edit2, Clock, CheckCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/securityUtils';
-import { Header } from '@/components/shared/navigation/Header';
-import { LoginModal } from '@/components/shared/auth/LoginModal';
 import { AdZone } from '@/components/shared/ads/AdZone';
 
 const details = (profile: NonNullable<ReturnType<typeof useAuth>['profile']>) => [
@@ -20,16 +18,10 @@ const details = (profile: NonNullable<ReturnType<typeof useAuth>['profile']>) =>
 export default function ProfilePage() {
   const { user, profile } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   if (!user || !profile) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
@@ -38,7 +30,7 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Not signed in</h2>
             <p className="text-slate-500 dark:text-slate-400 mb-6">Sign in to view and manage your profile.</p>
             <button
-              onClick={() => setIsLoginModalOpen(true)}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-login-modal'))}
               className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:opacity-90 transition-all"
             >
               Sign In
@@ -51,8 +43,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-
       <div className="flex-1 w-full px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <EditUserProfileModal
