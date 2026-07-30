@@ -59,7 +59,6 @@ describe("Break Circular Dependencies in Frontend", () => {
     expect(dto).toMatch(/from\s+['"]@\/types\/settings['"]/);
     expect(dto).not.toMatch(/from\s+['"]@\/lib\/admin\/systemSettings['"]/);
 
-    const settings = read('lib/admin/systemSettings.ts');
     const settingsService = read('services/admin/systemSettings.service.ts');
     expect(settingsService).toMatch(/from\s+['"]@\/types\/dto['"]/);
     const dtoImportsSettings = (dto.match(/from\s+['"]@\/types\/settings['"]/g) || []).length > 0;
