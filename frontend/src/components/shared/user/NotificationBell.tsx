@@ -48,11 +48,13 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
         if (active) setNotifications([]);
       }
     }
-    loadRealNotifications();
+    loadRealNotifications().catch(() => {});
+    const interval = setInterval(() => { loadRealNotifications().catch(() => {}); }, 30000);
     return () => {
       active = false;
+      clearInterval(interval);
     };
-  }, [role]);
+  }, [currentRole]);
 
   const saveNotifications = (items: NotificationItem[]) => {
     setNotifications(items);

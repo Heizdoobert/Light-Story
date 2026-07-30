@@ -86,10 +86,21 @@ async function request<T>(
     headers.set('Content-Type', 'application/json');
   }
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    throw new ApiError(
+      0,
+      'NETWORK_ERROR',
+      err instanceof TypeError && err.message === 'Failed to fetch'
+        ? 'Unable to connect to server. Please check your internet connection and try again.'
+        : (err as Error)?.message || 'Network request failed',
+    );
+  }
 
   const bodyText = await res.text();
   let body: ApiResponse<T>;

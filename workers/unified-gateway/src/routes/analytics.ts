@@ -1,7 +1,6 @@
 /** Analytics endpoint handler */
 
 import {
-  Env,
   err,
   sbGet,
   sbRpc,
@@ -100,11 +99,11 @@ export async function handleAnalyticsRequest(
       const r2UsageGb = Number((r2SizeBytes / (1024 * 1024 * 1024)).toFixed(4));
       const r2AllocatedGb = 10; // Default 10GB tier benchmark
 
-      // Check if cached in KV Namespace (BINDING_NAME)
+      // Check if cached in KV Namespace
       let kvCachedStats: Record<string, any> = {};
-      if (env.BINDING_NAME) {
+      if (env.APP_KV) {
         try {
-          const rawKv = await env.BINDING_NAME.get('analytics_infrastructure');
+          const rawKv = await env.APP_KV.get('analytics_infrastructure');
           if (rawKv) kvCachedStats = JSON.parse(rawKv);
         } catch (_) {}
       }
@@ -128,14 +127,14 @@ export async function handleAnalyticsRequest(
           { zone: 'lightstory.app', requests: 8400, cache_hit_ratio_pct: 97.8 },
         ],
         analytics_engine: env.ANALYTICS_DATA ? 'bound' : 'unbound',
-        kv_binding: env.BINDING_NAME ? 'bound' : 'unbound',
+        kv_binding: env.APP_KV ? 'bound' : 'unbound',
         recorded_at: new Date().toISOString(),
       };
 
       // Persist latest infrastructure snapshot in KV Namespace
-      if (env.BINDING_NAME) {
+      if (env.APP_KV) {
         try {
-          await env.BINDING_NAME.put('analytics_infrastructure', JSON.stringify(responsePayload), { expirationTtl: 86400 });
+          await env.APP_KV.put('analytics_infrastructure', JSON.stringify(responsePayload), { expirationTtl: 86400 });
         } catch (_) {}
       }
 

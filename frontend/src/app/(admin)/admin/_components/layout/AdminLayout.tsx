@@ -183,6 +183,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </AnimatePresence>
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-expanded={isSidebarOpen}
             className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500"
           >
             {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
@@ -208,10 +210,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               key={item.id}
               onClick={() => {
                 onTabChange(item.id);
-                if (isMobile) {
-                  setIsSidebarOpen(false);
-                }
+                if (isMobile) setIsSidebarOpen(false);
               }}
+              aria-current={activeTab === item.id ? "page" : undefined}
               onMouseEnter={() => onTabPrefetch?.(item.id)}
               onFocus={() => onTabPrefetch?.(item.id)}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group ${
@@ -259,6 +260,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {/* Mobile Sidebar Toggle */}
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              aria-label="Open sidebar"
               className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500 md:hidden"
             >
               <Menu size={18} />
@@ -310,7 +312,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <AnimatePresence>
                   {isUserMenuOpen && (
                     <>
-                      <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                      <div className="fixed inset-0 z-40" aria-hidden="true" onClick={() => setIsUserMenuOpen(false)} />
                       <motion.div
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -351,7 +353,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <main className="flex-1 min-w-0 p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
           <div className="flex-1">{children}</div>
           <footer className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
-            <div>© 2026 LightStory Admin Console. All rights reserved.</div>
+            <div>© {new Date().getFullYear()} LightStory Admin Console. All rights reserved.</div>
             <div className="flex items-center gap-4">
               <span className="inline-flex items-center gap-1.5 font-medium">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>

@@ -18,12 +18,11 @@ import {
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
+import { getReadingHistory } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
-import { Header } from "@/components/shared/navigation/Header";
-import { toast } from "sonner";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/shared/user/BookmarkButton";
+import { toast } from "sonner";
+import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 
@@ -44,9 +43,6 @@ export default function ComicDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // States UI
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchComicDetail = async () => {
@@ -87,6 +83,15 @@ export default function ComicDetailPage() {
     };
 
     if (comicId) fetchComicDetail();
+  }, [comicId]);
+
+  useEffect(() => {
+    getReadingHistory().then((history) => {
+      const read = history
+        .filter((h) => h.comicId === comicId)
+        .map((h) => h.chapterNumber);
+      if (read.length) setReadChapters(new Set(read));
+    }).catch(() => {});
   }, [comicId]);
 
 
@@ -143,14 +148,6 @@ export default function ComicDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      <Header
-        onLoginClick={() => setIsLoginModalOpen(true)}
-      />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       <div className="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden">
         <div
@@ -295,34 +292,37 @@ export default function ComicDetailPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {chapters.map((chapter) => (
-                <Link
-                  key={chapter.id}
-                  href={`/comics/${comicId}/chapter/${chapter.id}`}
-                  className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/50 transition-all hover:shadow-md"
-                >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate group-hover:text-primary transition">
-                      {chapter.chapter_number
-                        ? `Chương ${chapter.chapter_number}`
-                        : chapter.title}
-                      {chapter.title &&
-                        chapter.title !== `Chương ${chapter.chapter_number}` &&
-                        ` - ${chapter.title}`}
-                    </h4>
-                    <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
-                      <span className="flex items-center gap-1">
-                        <Clock size={12} />
-                        {new Date(
-                          chapter.created_at || Date.now(),
-                        ).toLocaleDateString("vi-VN")}
-                      </span>
+                  <Link
+                    key={chapter.id}
+                    href={`/comics/${comicId}/chapter/${chapter.id}`}
+                    className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/50 transition-all hover:shadow-md"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate group-hover:text-primary transition flex items-center gap-2">
+                        {readChapters.has(chapter.chapter_number || 0) && (
+                          <span className="text-emerald-500 shrink-0" title="Đã đọc">✓</span>
+                        )}
+                        {chapter.chapter_number
+                          ? `Chương ${chapter.chapter_number}`
+                          : chapter.title}
+                        {chapter.title &&
+                          chapter.title !== `Chương ${chapter.chapter_number}` &&
+                          ` - ${chapter.title}`}
+                      </h4>
+                      <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} />
+                          {new Date(
+                            chapter.created_at || Date.now(),
+                          ).toLocaleDateString("vi-VN")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <ChevronRight
-                    size={18}
-                    className="text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1"
-                  />
-                </Link>
+                    <ChevronRight
+                      size={18}
+                      className="text-slate-300 group-hover:text-primary transition-transform group-hover:translate-x-1"
+                    />
+                  </Link>
               ))}
             </div>
           )}

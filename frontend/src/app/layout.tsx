@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "@/components/shared/navigation/Footer";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -43,6 +45,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <link rel="preconnect" href={process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787'} />
       </head>
       {/* Thêm class để body chiếm tối thiểu 100% chiều cao màn hình và dàn dọc */}
       <body className="min-h-screen flex flex-col antialiased">
@@ -53,7 +56,9 @@ export default function RootLayout({
 
           {/* Footer luôn nằm ở cuối */}
           <Footer />
+          <Analytics />
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );

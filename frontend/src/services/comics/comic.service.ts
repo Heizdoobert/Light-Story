@@ -56,6 +56,31 @@ type UploadOptions = {
   userId?: string;
 };
 
+async function convertToWebP(file: File): Promise<File> {
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (!ext || !['jpg', 'jpeg', 'png', 'webp', 'avif', 'tiff'].includes(ext)) return file;
+
+  if (!('createImageBitmap' in window)) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const canvas = document.createElement('canvas');
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) { bitmap.close(); return file; }
+    ctx.drawImage(bitmap, 0, 0);
+    bitmap.close();
+
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/webp', 0.85));
+    if (!blob) return file;
+    const name = file.name.replace(/\.[^.]+$/, '.webp');
+    return new File([blob], name, { type: 'image/webp' });
+  } catch {
+    return file;
+  }
+}
+
 async function uploadFilesToR2(bucket: string, files: File[], options: UploadOptions = {}): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === 'true';
 
@@ -66,8 +91,9 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
     return makeDevUrls(files);
   }
 
+  const webpFiles = await Promise.all(files.map(convertToWebP));
   const form = new FormData();
-  files.forEach((file) => form.append('file', file));
+  webpFiles.forEach((file) => form.append('file', file));
   if (options.folder) form.append('folder', options.folder);
   if (options.comicId) form.append('comicId', options.comicId);
   if (options.chapterNumber) form.append('chapterNumber', String(options.chapterNumber));

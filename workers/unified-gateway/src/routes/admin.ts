@@ -1,13 +1,12 @@
 /** Admin endpoint handler */
 
 import {
-  Env,
   err,
-  sbGet,
-  sbPost,
-  sbPatch,
-  sbDelete,
-  sbGetCount,
+  sbAdminGet as sbGet,
+  sbAdminPost as sbPost,
+  sbAdminPatch as sbPatch,
+  sbAdminDelete as sbDelete,
+  sbAdminGetCount as sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';
@@ -23,6 +22,35 @@ const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 async function okRes(res: Response): Promise<Response> {
   return res.ok ? json({ success: true }) : await handleRes(res);
+}
+
+async function handlePromote(request: Request, env: Env, token: string | null): Promise<Response> {
+  if (!token) return err('UNAUTHORIZED', 'Authentication required', 401);
+  const userInfo = JSON.parse(atob(token.split('.')[1]));
+  const userId = userInfo.sub;
+  const h = new Headers();
+  h.set('apikey', env.SUPABASE_SERVICE_KEY);
+  h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
+  h.set('Content-Type', 'application/json');
+  h.set('Accept', 'application/json');
+  const countRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/profiles?select=id&role=in.(superadmin,admin,employee)&limit=1`,
+    { method: 'HEAD', headers: { ...Object.fromEntries((h as any).entries()), Prefer: 'count=exact' } },
+  );
+  if (countRes.ok) {
+    const r = countRes.headers.get('content-range');
+    const existing = r ? parseInt(r.split('/')[1], 10) : 0;
+    if (existing > 0) return err('FORBIDDEN', 'An admin already exists; ask them to promote you', 403);
+  }
+  const rpcRes = await fetch(
+    `${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`,
+    { method: 'POST', headers: h, body: JSON.stringify({ target_user_id: userId, new_role: 'admin' }) },
+  );
+  if (!rpcRes.ok) {
+    const text = await rpcRes.text();
+    return err('SUPABASE_ERROR', text, rpcRes.status);
+  }
+  return json({ success: true });
 }
 
 const pathSegment = (path: string, n: number) => path.split('/')[n];
@@ -46,6 +74,11 @@ export async function handleAdminRequest(
   const path = pathname;
 
   const userRole = getAuthRole(request);
+
+  // Promote: first-time admin bootstrap — bypass blanket role check
+  if (method === 'POST' && path === '/admin/promote') {
+    return handlePromote(request, env, token);
+  }
 
   // Blanket check: only superadmin, admin, employee can access any /admin routes
   if (!requireRole(userRole, ['superadmin', 'admin', 'employee'])) {
@@ -252,42 +285,44 @@ export async function handleAdminRequest(
       } else if (scope === 'public') {
         q += '&key=like.public_%';
       }
-      const res = await sbGet('site_settings', q, env, token);
-      return handleRes(res);
+      const svcKey = env.SUPABASE_SERVICE_KEY;
+      if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
+      let supRes;
+      try {
+        supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+          headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` },
+        });
+        // ponytail: 5xx = Supabase unreachable (local dev), return empty
+        if (!supRes.ok && supRes.status >= 500) return json([]);
+      } catch {
+        return json([]);
+      }
+      return handleRes(supRes!);
     }
 
     if (method === 'POST' && path === '/admin/site-settings') {
+      const svcKey = env.SUPABASE_SERVICE_KEY;
+      if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
       const body = (await request.json()) as any;
       const userId = request.headers.get('x-user-id');
+      const headers = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
       if (body.payload && Array.isArray(body.payload)) {
         const results = [];
         for (const item of body.payload) {
-          const upsertRes = await sbPost(
-            'site_settings',
-            {
-              key: item.key,
-              value: item.value,
-              updated_by: userId || null,
-            },
-            env,
-            token,
-          );
-          results.push(
-            await upsertRes.json().catch(() => ({})),
-          );
+          const upsertRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
+            method: 'POST',
+            headers: { ...headers, Prefer: 'return=representation' },
+            body: JSON.stringify({ key: item.key, value: item.value, updated_by: userId || null }),
+          });
+          results.push(await upsertRes.json().catch(() => ({})));
         }
         return json({ success: true, results });
       }
-      const res = await sbPost(
-        'site_settings',
-        {
-          key: body.key,
-          value: body.value,
-          updated_by: userId || null,
-        },
-        env,
-        token,
-      );
+      const res = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'return=representation' },
+        body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
+      });
       return handleRes(res);
     }
 
@@ -663,6 +698,7 @@ export async function handleAdminRequest(
       if (!bucket) return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
 
       const rawKey = path.replace('/admin/r2/file/', '');
+      if (rawKey.includes('..')) return err('FORBIDDEN', 'Path traversal detected', 403);
       const rangeHeader = request.headers.get('range');
       const ifNoneMatch = request.headers.get('if-none-match');
 
@@ -700,7 +736,8 @@ export async function handleAdminRequest(
       const body = (await request.json().catch(() => ({}))) as { key?: string; expiresInSeconds?: number };
       if (!body.key) return err('BAD_REQUEST', 'Missing key parameter', 400);
 
-      const secret = (env as any).SUPABASE_JWT_SECRET || env.SUPABASE_ANON_KEY || 'default-secret-key';
+      const secret = (env as any).SUPABASE_JWT_SECRET || env.SUPABASE_ANON_KEY;
+      if (!secret) return err('CONFIG_ERROR', 'No signing secret configured', 500);
       const expires = Math.floor(Date.now() / 1000) + (body.expiresInSeconds || 3600);
       const payload = `GET:${body.key}:${expires}`;
 
@@ -739,7 +776,8 @@ export async function handleAdminRequest(
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
       }
       const body = (await request.json().catch(() => ({}))) as { prefix?: string; removeAllOld?: boolean };
-      const targetPrefix = body.prefix ?? '';
+      const targetPrefix = body.prefix;
+      if (!targetPrefix) return err('BAD_REQUEST', 'prefix parameter is required to prevent accidental full-bucket deletion', 400);
 
       let truncated = true;
       let cursor: string | undefined = undefined;
