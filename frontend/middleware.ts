@@ -52,11 +52,24 @@ export async function middleware(request: NextRequest) {
       );
     }
 
-    const role = (
+    let role = (
       user.app_metadata?.role ||
       user.user_metadata?.role ||
       ''
     ).toString().trim().toLowerCase();
+
+    // Fallback: If app_metadata is stale or missing, check the profiles table
+    if (!ADMIN_ROLES.includes(role)) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profile?.role) {
+        role = profile.role.toString().trim().toLowerCase();
+      }
+    }
 
     if (!ADMIN_ROLES.includes(role)) {
       return addSecurityHeaders(
