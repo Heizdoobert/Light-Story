@@ -54,7 +54,7 @@ export async function encryptField(text: string, secret: string): Promise<string
     return `ENCv1:${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
   } catch (error) {
     console.error('Encryption failed:', error);
-    return text;
+    throw new Error('Encryption failed');
   }
 }
 
@@ -82,6 +82,6 @@ export async function decryptField(encryptedText: string, secret: string): Promi
     return dec.decode(decrypted);
   } catch (error) {
     console.error('Decryption failed:', error);
-    return encryptedText;
+    throw new Error('Decryption failed');
   }
 }

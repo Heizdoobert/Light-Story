@@ -1,7 +1,15 @@
-﻿{
+{
   "name": "unified-gateway",
   "main": "workers/unified-gateway/src/index.ts",
   "compatibility_date": "2026-05-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "<YOUR_HYPERDRIVE_ID>",
+      "localConnectionString": "postgres://postgres:password@localhost:5432/postgres"
+    }
+  ],
   "minify": true,
   "r2_buckets": [
     {
