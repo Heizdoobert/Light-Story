@@ -8,6 +8,7 @@ import Link from "next/link";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
+import { getReadingHistory, HistoryItem } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
 import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { Header } from "@/components/shared/navigation/Header";
@@ -33,6 +34,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
   const [loading, setLoading] = useState(initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
+  const [historyComics, setHistoryComics] = useState<(Comic & { chapterNumber?: number; chapterId?: string })[]>([]);
+
   // TẢI THỂ LOẠI & TRUYỆN THỊNH HÀNH
   useEffect(() => {
     const loadInitData = async () => {
@@ -56,6 +59,34 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
       }
     };
     loadInitData();
+  }, []);
+
+  // TẢI LỊCH SỬ ĐỌC (Continue Reading)
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const history: HistoryItem[] = await getReadingHistory();
+        if (cancelled || !history?.length) { return; }
+        const comicIds = [...new Set(history.map(h => h.comicId))];
+        const details = await Promise.all(
+          comicIds.map(id =>
+            apiClient.get<any>(`/api/comics/${id}`).catch(() => null)
+          )
+        );
+        if (cancelled) return;
+        const merged = details
+          .filter(Boolean)
+          .map((d: any) => {
+            const h = history.find(h => h.comicId === d?.id);
+            return { ...d, chapterNumber: h?.chapterNumber, chapterId: h?.chapterId };
+          })
+          .slice(0, 8);
+        setHistoryComics(merged);
+      } catch { /* silent */ }
+    };
+    load();
+    return () => { cancelled = true; };
   }, []);
 
   // TẢI DANH SÁCH TRUYỆN MỚI NHẤT & CHAPTER (Chạy 1 lần duy nhất khi mount)
@@ -185,6 +216,45 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
             </div>
           ) : null}
         </section>
+
+        {/* CONTINUE READING */}
+        {historyComics.length > 0 ? (
+          <section className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-gradient-to-r from-[#8900ff] to-[#ff008d] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
+              <span>📖</span>
+              <h2>{t("continue_reading")}</h2>
+            </div>
+            <div className="p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 scroll-smooth">
+              {historyComics.map((comic) => (
+                <Link
+                  key={`history-${comic.id}`}
+                  href={`/comics/${comic.id}/chapter/${comic.chapterId}`}
+                  className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
+                >
+                  <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
+                    <img
+                      src={getComicCover(comic)}
+                      alt={comic.title}
+                      width={300}
+                      height={400}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      referrerPolicy="no-referrer"
+                      onError={applyComicCoverFallback}
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-2 text-white">
+                      <h3 className="font-bold text-xs line-clamp-1 group-hover:text-[#39ff14] transition-colors">
+                        {comic.title}
+                      </h3>
+                      <p className="text-[10px] text-slate-300">
+                        {t("chapter")} {comic.chapterNumber}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* VÙNG QUẢNG CÁO GIỮA TRANG CHỦ */}
         <AdRenderer position="middle" />
