@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 const ADMIN_ROLES = ['superadmin', 'admin', 'employee'];
 
 function addSecurityHeaders(res: NextResponse): NextResponse {
-  const csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.r2.cloudflarestorage.com; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
+  const csp = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.r2.cloudflarestorage.com https://placehold.co; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
   res.headers.set('Content-Security-Policy', csp);
   res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
   res.headers.set('X-Content-Type-Options', 'nosniff');

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ImageOff, RefreshCw } from 'lucide-react';
 
 type ChapterImageProps = {
@@ -8,13 +8,32 @@ type ChapterImageProps = {
   alt: string;
   index: number;
   className?: string;
+  fitScreen?: boolean;
 };
 
-export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, className = '' }) => {
+export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, className = '', fitScreen }) => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [imgKey, setImgKey] = useState(src);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const handleRetry = () => {
     setError(false);
@@ -24,8 +43,14 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
   };
 
   return (
-    <div className={`relative min-h-[300px] w-full flex items-center justify-center bg-slate-900/10 dark:bg-slate-950/40 rounded-xl overflow-hidden my-2 ${className}`}>
-      {!loaded && !error && (
+    <div ref={containerRef} className={`relative min-h-[100px] w-full flex items-center justify-center bg-slate-900/10 dark:bg-slate-950/40 overflow-hidden my-2 ${fitScreen ? 'max-h-screen' : 'rounded-xl'} ${className}`}>
+      {!visible && (
+        <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800/60 flex items-center justify-center">
+          <span className="text-xs font-semibold text-slate-400">&nbsp;</span>
+        </div>
+      )}
+
+      {visible && !loaded && !error && (
         <div className="absolute inset-0 animate-pulse bg-slate-200 dark:bg-slate-800/60 flex items-center justify-center">
           <span className="text-xs font-semibold text-slate-400">Đang tải trang {index + 1}...</span>
         </div>
@@ -43,15 +68,17 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
           </button>
         </div>
       ) : (
-        <img
-          key={imgKey}
-          src={src}
-          alt={alt}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          onError={() => setError(true)}
-          className={`w-full h-auto transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        />
+        visible && (
+          <img
+            key={imgKey}
+            src={src}
+            alt={alt}
+            decoding="async"
+            onLoad={() => setLoaded(true)}
+            onError={() => setError(true)}
+            className={`transition-opacity duration-300 ${fitScreen ? 'w-auto h-full max-w-full object-contain' : 'w-full h-auto'} ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          />
+        )
       )}
     </div>
   );

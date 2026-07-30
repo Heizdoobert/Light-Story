@@ -2,6 +2,7 @@
 
 import {
   err,
+  json,
   authToken,
 } from './utils/supabase-client';
 import {
@@ -20,6 +21,7 @@ import { handleComicsRequest } from './routes/comics';
 import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
 import { handleUserRequest } from './routes/user';
+import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 
@@ -270,6 +272,15 @@ export default {
 
     let res: Response | null = null;
 
+    const createForwardRequest = (targetUrl: string) => {
+      const isBodyAllowed = method !== 'GET' && method !== 'HEAD';
+      return new Request(targetUrl, {
+        method: request.method,
+        headers: downstreamHeaders,
+        body: isBodyAllowed ? (request.body ?? undefined) : undefined,
+      });
+    };
+
     // Route to appropriate handler
     if (
       strippedPath.startsWith('/stories') ||
@@ -277,22 +288,14 @@ export default {
       strippedPath.startsWith('/categories')
     ) {
       res = await handleStoriesRequest(
-        new Request(url.toString(), {
-          method: request.method,
-          headers: downstreamHeaders,
-          body: request.body ?? undefined,
-        }),
+        createForwardRequest(url.toString()),
         env,
         authToken(downstreamHeaders),
         strippedPath,
       );
     } else if (strippedPath.startsWith('/comics')) {
       res = await handleComicsRequest(
-        new Request(url.toString(), {
-          method: request.method,
-          headers: downstreamHeaders,
-          body: request.body ?? undefined,
-        }),
+        createForwardRequest(url.toString()),
         env,
         authToken(downstreamHeaders),
         strippedPath,
@@ -356,35 +359,57 @@ export default {
           }
         }
       }
+    } else if (strippedPath === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public') {
+      const svcKey = env.SUPABASE_SERVICE_KEY;
+      if (!svcKey) {
+        res = err('NOT_CONFIGURED', 'Service key not configured', 500);
+      } else {
+        let q = 'select=key,value&key=like.public_%';
+        const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+          headers: {
+            apikey: svcKey,
+            Authorization: `Bearer ${svcKey}`,
+          },
+        });
+        if (!supRes.ok) {
+          res = err('UPSTREAM', await supRes.text(), supRes.status);
+        } else {
+          const text = await supRes.text();
+          if (!text) {
+            res = json({ success: true, data: [] });
+          } else {
+            res = json({ success: true, data: JSON.parse(text) });
+          }
+        }
+      }
     } else if (strippedPath.startsWith('/admin')) {
-      res = await handleAdminRequest(
-        new Request(url.toString(), {
-          method: request.method,
-          headers: downstreamHeaders,
-          body: request.body ?? undefined,
-        }),
-        env,
-        authToken(downstreamHeaders),
-        strippedPath,
-      );
+      if (!authCtx && !strippedPath.startsWith('/admin/public')) {
+        res = err('UNAUTHORIZED', 'Authentication required', 401);
+      } else {
+        res = await handleAdminRequest(
+          createForwardRequest(url.toString()),
+          env,
+          authToken(downstreamHeaders),
+          strippedPath,
+        );
+      }
     } else if (strippedPath.startsWith('/analytics')) {
       res = await handleAnalyticsRequest(
-        new Request(url.toString(), {
-          method: request.method,
-          headers: downstreamHeaders,
-          body: request.body ?? undefined,
-        }),
+        createForwardRequest(url.toString()),
         env,
         authToken(downstreamHeaders),
         strippedPath,
       );
     } else if (strippedPath.startsWith('/user')) {
       res = await handleUserRequest(
-        new Request(url.toString(), {
-          method: request.method,
-          headers: downstreamHeaders,
-          body: request.body ?? undefined,
-        }),
+        createForwardRequest(url.toString()),
+        env,
+        authToken(downstreamHeaders),
+        strippedPath,
+      );
+    } else if (strippedPath.startsWith('/hyperdrive-test')) {
+      res = await handleHyperdriveRequest(
+        createForwardRequest(url.toString()),
         env,
         authToken(downstreamHeaders),
         strippedPath,

@@ -2,6 +2,7 @@
   "name": "unified-gateway",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-16",
+  "compatibility_flags": ["nodejs_compat"],
   "minify": true,
   "r2_buckets": [
     {
@@ -32,6 +33,13 @@
       }
     ]
   },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "e34fbae0b4a94fd48007b217837c00cb",
+      "localConnectionString": "postgresql://postgres.bfgrmdqpqbhjgbdtgkgu:Fillbert%401103@aws-0-us-west-1.pooler.supabase.com:5432/postgres"
+    }
+  ],
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,
