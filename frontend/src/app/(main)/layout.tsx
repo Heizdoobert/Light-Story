@@ -1,3 +1,5 @@
+import { UserShell } from '@/components/shared/layout/UserShell';
+
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <UserShell>{children}</UserShell>;
 }

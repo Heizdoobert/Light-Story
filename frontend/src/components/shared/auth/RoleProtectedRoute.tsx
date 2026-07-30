@@ -1,7 +1,8 @@
 // This component protects routes based on the user's role
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, UserRole } from '@/modules/auth/AuthContext';
+import { useAuth } from '@/modules/auth/AuthContext';
+import { UserRole } from '@/types/roles';
 import { LoadingScreen } from '@/components/shared/ui/LoadingScreen';
 
 interface RoleProtectedRouteProps {

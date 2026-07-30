@@ -764,17 +764,20 @@ create policy "categories_write_staff" on public.categories for all to authentic
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
 with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]));
 
--- Stories: V2 RLS — published + ongoing readable, staff write
+-- Stories: V2 RLS — published + ongoing readable, staff bypass for preview, staff write
 drop policy if exists "stories_select_public_or_staff" on public.stories;
 drop policy if exists "stories_write_staff" on public.stories;
 drop policy if exists "read_published_stories" on public.stories;
 create policy "read_published_stories" on public.stories for select
-using (status in ('published', 'ongoing', 'completed'));
+using (
+  status in ('published', 'ongoing', 'completed')
+  or app_private.has_role(array['superadmin', 'admin', 'employee']::text[])
+);
 create policy "stories_write_staff" on public.stories for all
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))
 with check (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]));
 
--- Chapters: V2 RLS — published chapters public, staff write
+-- Chapters: V2 RLS — published chapters public, staff bypass for preview, staff write
 drop policy if exists "chapters_select_public_or_staff" on public.chapters;
 drop policy if exists "chapters_write_staff" on public.chapters;
 drop policy if exists "read_free_chapters" on public.chapters;
@@ -784,6 +787,7 @@ using (
     select 1 from public.stories s
     where s.id = public.chapters.story_id and s.status = 'published'
   )
+  or app_private.has_role(array['superadmin', 'admin', 'employee']::text[])
 );
 create policy "chapters_write_staff" on public.chapters for all
 using (app_private.has_role(array['superadmin', 'admin', 'employee']::text[]))

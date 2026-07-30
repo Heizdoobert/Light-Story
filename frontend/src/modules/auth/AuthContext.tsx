@@ -8,19 +8,9 @@ import { supabase } from "@/infrastructure/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/errorUtils";
 import { type AdminProfileDto } from '@/types/dto';
+import { UserRole, normalizeRole } from '@/types/roles';
 
-export type UserRole = "superadmin" | "admin" | "employee" | "user";
-
-const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "user"];
-
-const isUserRole = (value: unknown): value is UserRole =>
-  typeof value === "string" && USER_ROLES.includes(value as UserRole);
-
-const normalizeRole = (value: unknown): UserRole | null => {
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase();
-  return isUserRole(normalized) ? normalized : null;
-};
+export type { UserRole };
 
 const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
   // Prefer role from profiles table to avoid stale app_metadata causing false 403.

@@ -158,11 +158,7 @@ export async function getSystemNotifications(limit = 20) {
       `/api/admin/notifications?limit=${limit}`
     );
     return res.notifications || [];
-  } catch (err: any) {
-    if (err?.status === 403 || err?.status === 401) {
-      return [];
-    }
-    console.error("[adminService] getSystemNotifications error:", err);
+  } catch {
     return [];
   }
 }

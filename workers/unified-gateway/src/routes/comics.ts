@@ -23,7 +23,7 @@ export async function handleComicsRequest(
   token: string | null,
   pathname: string,
 ): Promise<Response | null> {
-  const ENC_KEY = env.ENC_KEY || 'light-story-master-secret-key-32b!';
+  const ENC_KEY = env.ENC_KEY;
   const url = new URL(request.url);
   const method = request.method;
 

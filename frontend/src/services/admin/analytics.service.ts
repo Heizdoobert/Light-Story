@@ -150,6 +150,15 @@ function normalizeInfrastructure(metrics: Partial<InfrastructureMetrics> | null 
   return next;
 }
 
+async function callRpc<T>(name: string, payload: Record<string, unknown>): Promise<T | null> {
+  try {
+    return await apiClient.post<T>(`/api/supabase/rest/v1/rpc/${name}`, payload);
+  } catch (err) {
+    console.error(`[AnalyticsService] RPC ${name} failed:`, err);
+    return null;
+  }
+}
+
 async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<{
   userEngagement: UserEngagementMetrics;
   contentPerformance: ContentPerformanceMetrics;
@@ -158,16 +167,22 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
     traffic: Array<{ timestamp: string; value: number; label: string }>;
     storage: Array<{ timestamp: string; value: number; label: string }>;
   };
+  supabaseOk: boolean;
 }> {
   const timeRangeStr = range;
+  const daysBack = TIME_RANGE_DAYS[range] ?? 7;
   try {
     const [engagementData, signupTrendData, topChaptersData, totalViewsData, totalFavoritesData] = await Promise.all([
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_user_engagement_summary', { p_days_back: 7 }).catch(() => null),
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_signup_trend', { p_days_back: 30 }).catch(() => null),
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_top_chapters_by_reads', { p_limit: 5, p_time_range: timeRangeStr }).catch(() => null),
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_total_views', { p_time_range: timeRangeStr }).catch(() => null),
-      apiClient.post<any>('/api/supabase/rest/v1/rpc/get_total_favorites', {}).catch(() => null),
+      callRpc<any>('get_user_engagement_summary', { p_time_range: timeRangeStr }),
+      callRpc<any>('get_signup_trend', { p_days_back: daysBack }),
+      callRpc<any>('get_top_chapters_by_reads', { p_limit: 5, p_time_range: timeRangeStr }),
+      callRpc<any>('get_total_views', { p_time_range: timeRangeStr }),
+      callRpc<any>('get_total_favorites', {}),
     ]);
+
+    const supabaseOk = [engagementData, signupTrendData, topChaptersData, totalViewsData, totalFavoritesData].some(
+      (res) => res !== null,
+    );
 
     const totalViews = toNumber(totalViewsData ?? 0);
     const totalFavorites = toNumber(totalFavoritesData ?? 0);
@@ -216,12 +231,14 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
       storage: [],
     };
 
-    return { userEngagement, contentPerformance, trendData };
-  } catch {
+    return { userEngagement, contentPerformance, trendData, supabaseOk };
+  } catch (err) {
+    console.error('[AnalyticsService] fetchReadOnlySupabaseMetrics unhandled error:', err);
     return {
       userEngagement: createEmptyUserEngagement(),
       contentPerformance: createEmptyContentPerformance(),
       trendData: { user_growth: [], traffic: [], storage: [] },
+      supabaseOk: false,
     };
   }
 }
@@ -266,7 +283,7 @@ export async function getAnalyticsDashboardData(params: {
   const now = new Date();
   const workerResult = await fetchWorkerAnalytics(range, role);
 
-  const { userEngagement, contentPerformance, trendData } = await fetchReadOnlySupabaseMetrics(range);
+  const { userEngagement, contentPerformance, trendData, supabaseOk } = await fetchReadOnlySupabaseMetrics(range);
   const infrastructure = normalizeInfrastructure(workerResult?.infrastructure ?? DEFAULT_INFRASTRUCTURE);
   const restricted = applyRoleRestrictions(role, userEngagement, contentPerformance, infrastructure);
 
@@ -278,7 +295,7 @@ export async function getAnalyticsDashboardData(params: {
       cached: false,
       restricted: restricted.restricted,
       source_health: {
-        supabase: userEngagement.total_users > 0 || contentPerformance.top_chapters.length > 0 ? 'ready' : 'degraded',
+        supabase: supabaseOk ? 'ready' : 'degraded',
         cloudflare: workerResult?.infrastructure ? 'ready' : 'degraded',
       },
       time_window: {

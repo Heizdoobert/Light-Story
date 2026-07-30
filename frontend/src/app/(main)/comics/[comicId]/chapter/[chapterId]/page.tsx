@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -10,14 +10,20 @@ import {
   Home,
   List,
   ArrowUp,
+  Play,
+  Square,
+  Maximize2,
+  Minimize2,
+  LayoutGrid,
+  Download,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
-import { Header } from "@/components/shared/navigation/Header";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
 import { recordReadingHistory } from "@/services/reader/readerHub.service";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
@@ -98,10 +104,35 @@ export default function ReadChapterPage() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
+  const [autoAdvance, setAutoAdvance] = useState(false);
+  const [fitScreen, setFitScreen] = useState(false);
+  const [showThumbnails, setShowThumbnails] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const { theme, toggleTheme } = useTheme();
+  const restoreDoneRef = useRef(false);
+  const autoAdvanceRef = useRef(false);
+  const nextChapterRef = useRef<Chapter | null>(null);
+  const prevChapterRef = useRef<Chapter | null>(null);
+
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const target = dx > 0 ? prevChapterRef.current : nextChapterRef.current;
+    if (target) router.push(`/comics/${comicId}/chapter/${target.id}`);
+  }, [comicId, router]);
 
   useEffect(() => {
     const fetchReadingData = async () => {
@@ -203,8 +234,16 @@ export default function ReadChapterPage() {
   }, [comicId, chapterId]);
 
   useEffect(() => {
+    autoAdvanceRef.current = autoAdvance;
+  }, [autoAdvance]);
+
+  useEffect(() => {
+    let saveTimer: ReturnType<typeof setTimeout>;
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight;
+      const winHeight = window.innerHeight;
+      setProgress(docHeight > winHeight ? Math.min((currentScrollY + winHeight) / docHeight * 100, 100) : 100);
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowToolbar(false);
         setShowChapterMenu(false);
@@ -212,11 +251,49 @@ export default function ReadChapterPage() {
         setShowToolbar(true);
       }
       setLastScrollY(currentScrollY);
+
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try { localStorage.setItem(`reader:scroll:${chapterId}`, String(currentScrollY)); } catch {}
+      }, 500);
+
+      if (autoAdvanceRef.current && nextChapterRef.current) {
+        const docHeight = document.documentElement.scrollHeight;
+        const windowHeight = window.innerHeight;
+        if (docHeight - (currentScrollY + windowHeight) < 400) {
+          router.push(
+            `/comics/${comicId}/chapter/${nextChapterRef.current.id}`,
+          );
+        }
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, comicId, router]);
+
+  useEffect(() => {
+    if (!loading && images.length > 0 && !restoreDoneRef.current) {
+      restoreDoneRef.current = true;
+      try {
+        const saved = localStorage.getItem(`reader:scroll:${chapterId}`);
+        if (saved) {
+          const y = parseInt(saved, 10);
+          if (!isNaN(y)) requestAnimationFrame(() => window.scrollTo(0, y));
+        }
+      } catch {}
+    }
+  }, [loading, images, chapterId]);
+
+  useEffect(() => {
+    if (images.length === 0) return;
+    const preloadCount = Math.min(3, images.length);
+    const idx = images.length > preloadCount ? 0 : 0;
+    for (let i = idx; i < idx + preloadCount && i < images.length; i++) {
+      const img = new Image();
+      img.src = images[i];
+    }
+  }, [images]);
 
   const handleSelectChapter = (selectedId: string) => {
     setShowChapterMenu(false);
@@ -225,6 +302,32 @@ export default function ReadChapterPage() {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToPage = (idx: number) => {
+    setShowThumbnails(false);
+    document.getElementById(`page-${idx}`)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleDownload = async () => {
+    if (downloading || images.length === 0) return;
+    setDownloading(true);
+    try {
+      const cache = await caches.open("reader-pages");
+      const cached = new Set<string>();
+      const toCache = images.filter(u => !cached.has(u));
+      if (toCache.length === 0) { toast.info("Đã lưu offline."); return; }
+      let ok = 0, fail = 0;
+      for (const url of toCache) {
+        try {
+          const res = await fetch(url, { cache: "force-cache" });
+          if (res.ok) { await cache.put(url, res); cached.add(url); ok++; }
+          else fail++;
+        } catch { fail++; }
+      }
+      toast.success(`Đã lưu ${ok}/${images.length} trang offline.`);
+    } catch { toast.error("Lỗi lưu offline."); }
+    finally { setDownloading(false); }
   };
 
   if (loading) {
@@ -244,6 +347,8 @@ export default function ReadChapterPage() {
     currentIndex < allChapters.length - 1
       ? allChapters[currentIndex + 1]
       : null;
+  nextChapterRef.current = nextChapter;
+  prevChapterRef.current = prevChapter;
 
   const chapterNavClass = (chapter: typeof prevChapter) =>
     `flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
@@ -254,17 +359,6 @@ export default function ReadChapterPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
-
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <Header
-          onLoginClick={() => setIsLoginModalOpen(true)}
-        />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
-      </div>
 
       {/* Chapter info */}
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
@@ -286,7 +380,12 @@ export default function ReadChapterPage() {
       </div>
 
       {/* Chapter pages */}
-      <div className="w-full max-w-[800px] mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm">
+      <div
+        className={`w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y ${fitScreen ? 'max-w-full' : 'max-w-[800px]'}`}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onClick={() => setShowToolbar(!showToolbar)}
+      >
         {images.length === 0 ? (
           <div className="py-20 text-slate-400 dark:text-zinc-500 font-medium">
             Chương này chưa có nội dung (ảnh).
@@ -294,11 +393,14 @@ export default function ReadChapterPage() {
         ) : (
           images.map((imgUrl, idx) => (
             <React.Fragment key={`${imgUrl}-${idx}`}>
+              <div id={`page-${idx}`}>
               <ChapterImage
                 src={imgUrl}
                 alt={`Trang ${idx + 1}`}
                 index={idx}
+                fitScreen={fitScreen}
               />
+              </div>
               {/* Ad: inline every 4 pages */}
               {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
                 <AdRenderer position="middle" />
@@ -335,6 +437,28 @@ export default function ReadChapterPage() {
         </Link>
       </div>
 
+      {/* Thumbnail grid */}
+      {showThumbnails && (
+        <div className="fixed bottom-16 left-0 right-0 z-[65] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 py-2">
+          <div className="max-w-[700px] mx-auto flex gap-2 overflow-x-auto pb-1">
+            {images.map((imgUrl, idx) => (
+              <button
+                key={idx}
+                onClick={() => scrollToPage(idx)}
+                className="flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary dark:hover:border-primary transition-colors"
+              >
+                <img
+                  src={imgUrl}
+                  alt={`Trang ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Chapter switcher toolbar */}
       <div
         className={`fixed bottom-0 left-0 right-0 z-[60] pointer-events-none transition-transform duration-300 ease-in-out ${
@@ -350,6 +474,14 @@ export default function ReadChapterPage() {
             >
               <Home size={18} />
             </Link>
+
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
+              title={theme === 'dark' ? 'Sáng' : 'Tối'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
 
             <Link
               href={
@@ -424,6 +556,51 @@ export default function ReadChapterPage() {
             >
               <ChevronRight size={18} />
             </Link>
+
+            <button
+              onClick={() => setShowThumbnails(!showThumbnails)}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+                showThumbnails
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title="Xem ảnh nhỏ"
+            >
+              <LayoutGrid size={18} />
+            </button>
+
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0 disabled:opacity-40"
+              title={downloading ? "Đang lưu..." : "Lưu offline"}
+            >
+              <Download size={18} />
+            </button>
+
+            <button
+              onClick={() => setFitScreen(!fitScreen)}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+                fitScreen
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={fitScreen ? "Vừa khung hình" : "Vừa chiều rộng"}
+            >
+              {fitScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            </button>
+
+            <button
+              onClick={() => setAutoAdvance(!autoAdvance)}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+                autoAdvance
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={autoAdvance ? "Tắt tự động" : "Tự động chuyển chương"}
+            >
+              {autoAdvance ? <Play size={18} /> : <Square size={18} />}
+            </button>
 
             <button
               onClick={scrollToTop}

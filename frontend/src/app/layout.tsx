@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "@/components/shared/navigation/Footer";
@@ -55,6 +56,7 @@ export default function RootLayout({
 
           {/* Footer luôn nằm ở cuối */}
           <Footer />
+          <Analytics />
         </Providers>
         <SpeedInsights />
       </body>
