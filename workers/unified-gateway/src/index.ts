@@ -1,7 +1,6 @@
 /** Unified Gateway - Main entry point */
 
 import {
-  Env,
   err,
   authToken,
 } from './utils/supabase-client';
@@ -65,6 +64,9 @@ async function handleSupabaseProxy(
 
   const targetUrl = `${env.SUPABASE_URL}${sbPath}`;
   const headers = new Headers(request.headers);
+  headers.delete('x-user-role');
+  headers.delete('x-user-id');
+  headers.delete('x-user-email');
   headers.set('apikey', env.SUPABASE_ANON_KEY);
   const authHeader =
     request.headers.get('Authorization') ??
@@ -158,13 +160,6 @@ export default {
     const pathname = url.pathname;
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
 
-    if (
-      pathname.startsWith('/api/supabase/') ||
-      pathname.startsWith('/api/rpc/')
-    ) {
-      return handleSupabaseProxy(pathname, request, origin, env);
-    }
-
     const authHeader = request.headers.get('Authorization') ?? '';
     let authCtx = null;
     try {
@@ -198,7 +193,7 @@ export default {
       );
     }
 
-    const userRole = authCtx?.role || request.headers.get('x-user-role');
+    const userRole = authCtx?.role;
     const rateLimit = checkRateLimit(request, isAuthOrAdmin, userRole, pathname);
 
     if (!rateLimit.allowed) {
@@ -241,12 +236,22 @@ export default {
       );
     }
 
+    if (
+      strippedPath.startsWith('/supabase/') ||
+      strippedPath.startsWith('/rpc/')
+    ) {
+      return handleSupabaseProxy(pathname, request, origin, env);
+    }
+
     const responseHeaders = new Headers();
     const c = corsHeaders(origin);
     for (const [k, v] of Object.entries(c))
       responseHeaders.set(k, v as string);
 
     const downstreamHeaders = new Headers(request.headers);
+    downstreamHeaders.delete('x-user-role');
+    downstreamHeaders.delete('x-user-id');
+    downstreamHeaders.delete('x-user-email');
     downstreamHeaders.set(
       'x-request-id',
       crypto.randomUUID(),

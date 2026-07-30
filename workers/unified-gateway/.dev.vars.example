@@ -5,3 +5,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key-here
 SUPABASE_JWKS_URL=https://your-project.supabase.co/auth/v1/.well-known/jwks.json
 USE_NEW_UNIFIED_GATEWAY=true
+
+# AES-256-GCM encryption key for content field encryption (at least 32 chars)
+# Generate with: openssl rand -base64 32
+ENC_KEY=your-32-char-encryption-key-here!!

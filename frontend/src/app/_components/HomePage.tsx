@@ -27,6 +27,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
     {},
   );
   const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
+  const [trendingLoaded, setTrendingLoaded] = useState(false);
 
   const [loading, setLoading] = useState(initialComics.length === 0);
   
@@ -49,6 +50,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
         setTrendingComics(trendingData);
       } catch (error) {
         console.error("Lỗi tải dữ liệu khởi tạo:", error);
+      } finally {
+        setTrendingLoaded(true);
       }
     };
     loadInitData();
@@ -129,12 +132,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
         <AdRenderer position="header" />
 
         {/* 1. TRUYỆN PHỔ BIẾN / TRENDING SLIDER */}
-        {trendingComics.length > 0 && (
-          <section className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-gradient-to-r from-[#001eff] to-[#8900ff] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
-              <span>👍</span>
-              <h2>{t("popular_comics")}</h2>
-            </div>
+        <section className="bg-white dark:bg-[#1c1c1c] border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-[#001eff] to-[#8900ff] text-white px-4 py-2.5 flex items-center gap-2 font-bold uppercase text-sm tracking-wide">
+            <span>👍</span>
+            <h2>{t("popular_comics")}</h2>
+          </div>
+          {trendingComics.length > 0 ? (
             <div className="trending-scroll p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 scroll-smooth">
               {trendingComics.map((comic) => (
                 <Link
@@ -164,8 +167,16 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                 </Link>
               ))}
             </div>
-          </section>
-        )}
+          ) : !trendingLoaded ? (
+            <div className="p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={`skel-${i}`} className="w-32 sm:w-40 lg:w-44 flex-shrink-0">
+                  <div className="aspect-[3/4] bg-slate-200 dark:bg-slate-800 rounded-lg animate-pulse"></div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </section>
 
         {/* VÙNG QUẢNG CÁO GIỮA TRANG CHỦ */}
         <AdRenderer position="middle" />
@@ -255,8 +266,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
                 <span>⭐</span>
                 <h2>{t("top_read_comics")}</h2>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-white/10">
-                {(trendingComics.length > 0 ? trendingComics : comics).slice(0, 10).map((comic, idx) => (
+              <div className="divide-y divide-slate-100 dark:divide-white/10 min-h-[320px]">
+                {(comics.length > 0 ? (trendingComics.length > 0 ? trendingComics : comics) : []).slice(0, 10).map((comic, idx) => (
                   <Link
                     key={`top-${comic.id}`}
                     href={`/comics/${comic.id}`}

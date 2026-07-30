@@ -1,4 +1,4 @@
-import { Env, err, sbGet, sbPost, sb, handleRes, json } from '../utils/supabase-client';
+import { err, sbGet, sbPost, sb, handleRes, json } from '../utils/supabase-client';
 
 export async function handleUserRequest(
   request: Request,

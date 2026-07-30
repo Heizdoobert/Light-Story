@@ -1,6 +1,5 @@
 /** CORS and request handling middleware */
 
-import type { Env } from '../utils/supabase-client';
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
