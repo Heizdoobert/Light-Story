@@ -24,9 +24,6 @@ import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
-import { Header } from "@/components/shared/navigation/Header";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { useTheme } from "@/modules/theme/ThemeContext";
 import { recordReadingHistory } from "@/services/reader/readerHub.service";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
@@ -107,7 +104,6 @@ export default function ReadChapterPage() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
@@ -363,20 +359,6 @@ export default function ReadChapterPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
-
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <Header
-          onLoginClick={() => setIsLoginModalOpen(true)}
-        />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
-        <div className="h-1 bg-slate-200 dark:bg-slate-800">
-          <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
 
       {/* Chapter info */}
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">

@@ -1,6 +1,7 @@
 // Centralized keys, defaults, and parsers for system settings persisted in site_settings.
-import { UserRole } from '@/modules/auth/AuthContext';
+import { UserRole } from '@/types/roles';
 import { ADMIN_MENU_IDS, AdminMenuId } from './adminNavigation';
+import { DashboardTabId, DashboardTabVisibility, SidebarMenuVisibility } from '@/types/settings';
 
 export const SITE_SETTING_KEYS = {
   uiCompactMode: 'ui_compact_mode',
@@ -25,12 +26,6 @@ export const DASHBOARD_CONFIGURABLE_TABS = [
   'profile',
   'create_comic',
 ] as const;
-
-export type DashboardTabId = (typeof DASHBOARD_CONFIGURABLE_TABS)[number];
-
-export type DashboardTabVisibility = Record<UserRole, DashboardTabId[]>;
-
-export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
 
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],

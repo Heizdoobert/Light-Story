@@ -10,8 +10,7 @@ import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getReadingHistory, HistoryItem } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { Header } from "@/components/shared/navigation/Header";
+
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useLanguage } from "@/modules/language/LanguageContext";
 
@@ -32,7 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
   const [trendingLoaded, setTrendingLoaded] = useState(false);
 
   const [loading, setLoading] = useState(initialComics.length === 0);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  
 
   const [historyComics, setHistoryComics] = useState<(Comic & { chapterNumber?: number; chapterId?: string })[]>([]);
 
@@ -157,14 +156,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = DEFAULT_INIT
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500">
-      <Header
-        onLoginClick={() => setIsLoginModalOpen(true)}
-      />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
+      
 
       <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
         {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}

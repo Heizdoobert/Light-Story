@@ -20,11 +20,9 @@ import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { getReadingHistory } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
-import { Header } from "@/components/shared/navigation/Header";
-import { toast } from "sonner";
-import { LoginModal } from "@/components/shared/auth/LoginModal";
-import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/shared/user/BookmarkButton";
+import { toast } from "sonner";
+import { RecommendedComics } from "@/components/shared/comics/RecommendedComics";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 
@@ -45,10 +43,6 @@ export default function ComicDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // States UI
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchComicDetail = async () => {
@@ -154,14 +148,6 @@ export default function ComicDetailPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      <Header
-        onLoginClick={() => setIsLoginModalOpen(true)}
-      />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       <div className="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden">
         <div
