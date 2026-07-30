@@ -3,8 +3,8 @@ import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '../../../..');
-const WORKER_DOMAIN = 'truyen3new.workers.dev';
-const R2_ACCOUNT_ID = 'bbf18b60055b8c7fa366c8d74fd19eec';
+const WORKER_DOMAIN = process.env.CF_WORKER_DOMAIN ?? '';
+const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
 
 const WORKERS = [
   { name: 'api-gateway', routes: ['/', '/api/health'] },

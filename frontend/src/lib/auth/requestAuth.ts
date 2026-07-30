@@ -21,8 +21,6 @@ export async function getPrivilegedAuthHeaders(): Promise<Record<string, string>
 }
 
 function getInternalSecretHeader(): Record<string, string> {
-  const secret = process.env.NEXT_PUBLIC_INTERNAL_ADMIN_SECRET ?? '';
-  if (secret && secret.trim()) return { 'x-internal-secret': secret.trim() };
   return {};
 }
 

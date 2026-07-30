@@ -3,8 +3,8 @@ import { readFileSync, existsSync, readdirSync } from 'fs';
 import { resolve } from 'path';
 
 const PROJECT_ROOT = resolve(import.meta.dirname, '../../../..');
-const SUPABASE_URL = 'https://xgtlrztskoomimvfpdoy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhndGxyenRza29vbWltdmZwZG95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDAzOTUsImV4cCI6MjA5NDUxNjM5NX0.wLQjtFsLuXmCbvKMFdukK3fk3brft-mjZb4dz1QUH2Q';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
 
 describe('Supabase Integration', () => {
   it('SUPABASE_URL is configured and valid', () => {
