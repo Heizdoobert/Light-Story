@@ -5,6 +5,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "@/components/shared/navigation/Footer";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -57,6 +58,7 @@ export default function RootLayout({
           <Footer />
           <Analytics />
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
