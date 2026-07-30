@@ -931,6 +931,37 @@ export async function handleAdminRequest(
       return okRes(res);
     }
 
+    // ── Chapter CRUD (Option C: presigned upload flow) ──────
+
+    if (method === 'POST' && path === '/admin/chapters') {
+      const body = (await request.json()) as Record<string, unknown>;
+      const errors = validateBody(body, [
+        { field: 'story_id', type: 'required-string', maxLength: 100 },
+        { field: 'title', type: 'required-string', maxLength: 500 },
+        { field: 'chapter_number', type: 'optional-string' },
+        { field: 'cover_url', type: 'optional-string', maxLength: 1000 },
+      ]);
+      if (errors.length > 0) {
+        return err('VALIDATION_ERROR', errors.map(e => `${e.field}: ${e.message}`).join('; '), 400);
+      }
+      const s = sanitizeBody(body, [
+        { field: 'story_id', type: 'required-string', maxLength: 100 },
+        { field: 'title', type: 'required-string', maxLength: 500 },
+        { field: 'chapter_number', type: 'optional-string' },
+        { field: 'cover_url', type: 'optional-string', maxLength: 1000 },
+      ]);
+      const cn = Math.max(1, parseInt(String(s.chapter_number ?? '1'), 10) || 1);
+      const payload = {
+        story_id: s.story_id as string,
+        chapter_number: cn,
+        title: s.title as string,
+        status: 'uploading',
+        cover_url: s.cover_url ?? null,
+      };
+      const res = await sbPost('chapters', payload, env, token);
+      return handleRes(res);
+    }
+
     // --- TRANSLATORS CRUD ENDPOINTS ---
     if (method === 'GET' && path === '/admin/translators') {
       const res = await sbGet('translators', 'select=*&order=created_at.desc', env, token);
