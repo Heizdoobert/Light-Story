@@ -6,7 +6,7 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "<YOUR_HYPERDRIVE_ID>",
+      "id": "e34fbae0b4a94fd48007b217837c00cb",
       "localConnectionString": "postgres://postgres:password@localhost:5432/postgres"
     }
   ],
