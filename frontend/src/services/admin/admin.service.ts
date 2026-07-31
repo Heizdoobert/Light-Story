@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient';
+import { supabase } from '@/infrastructure/supabase/client';
 import { fetchSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
 
 export async function logDashboardAccess(actorUserId: string) {
