@@ -90,24 +90,30 @@ export async function updateProfileName(id: string, full_name: string | null) {
   await apiClient.post('/api/admin/profiles', { action: 'updateName', id, full_name });
 }
 
-function getAccessToken(): string | null {
+async function getAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null;
   try {
     const sbKeys = Object.keys(localStorage).filter((k) =>
       k.startsWith('sb-') && k.endsWith('-auth-token'),
     );
-    if (sbKeys.length === 0) return null;
-    const raw = localStorage.getItem(sbKeys[0]);
-    if (!raw) return null;
-    const session = JSON.parse(raw);
-    return session?.access_token ?? null;
+    if (sbKeys.length > 0) {
+      const raw = localStorage.getItem(sbKeys[0]);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session?.access_token) return session.access_token;
+      }
+    }
+    if (supabase) {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token ?? null;
+    }
   } catch {
-    return null;
   }
+  return null;
 }
 
 export async function callManageUserFunction(body: Record<string, unknown>) {
-  const accessToken = getAccessToken();
+  const accessToken = await getAccessToken();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
