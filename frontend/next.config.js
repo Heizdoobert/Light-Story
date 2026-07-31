@@ -39,7 +39,7 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value:
-               `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:* https://*.r2.cloudflarestorage.com https://placehold.co; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://unified-gateway.truyen3new.workers.dev'}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`,
+                `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http://localhost:* https://*.r2.cloudflarestorage.com https://placehold.co ${process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://unified-gateway.truyen3new.workers.dev'} https://*.supabase.co; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://unified-gateway.truyen3new.workers.dev'}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`,
           },
         ],
       },

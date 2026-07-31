@@ -14,11 +14,7 @@ export class ApiError extends Error {
 
 import { supabase } from '@/infrastructure/supabase/client';
 
-const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
-
-const BASE_URL = IS_MOCK
-  ? 'http://localhost:4010'
-  : (process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787');
+const BASE_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -35,8 +31,12 @@ function isTokenExpired(token: string): boolean {
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
+    const sbRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
+      /https:\/\/([^.]+)\.supabase\.co/,
+    )?.[1];
+    const keyPrefix = sbRef ? `sb-${sbRef}-` : 'sb-';
     const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith('sb-') && k.endsWith('-auth-token'),
+      k.startsWith(keyPrefix) && k.endsWith('-auth-token'),
     );
     if (sbKeys.length > 0) {
       const raw = localStorage.getItem(sbKeys[0]);

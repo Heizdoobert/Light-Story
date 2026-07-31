@@ -1,5 +1,4 @@
 // Presenters
-export * from './presenters/useAdminDashboardPresenter';
 export * from './presenters/useAdminUserPresenter';
 export * from './presenters/useAnalyticsDashboard';
 export * from './presenters/useAuditLogsPresenter';

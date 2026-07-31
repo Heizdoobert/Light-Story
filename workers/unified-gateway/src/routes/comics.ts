@@ -4,7 +4,7 @@ import {
   err,
   sbGet,
   sbPost,
-  sb,
+  sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';
@@ -39,16 +39,33 @@ export async function handleComicsRequest(
       );
       const pageSize = Math.min(
         100,
-        Math.max(1, parseInt(url.searchParams.get('pageSize') || '10')),
+        Math.max(1, parseInt(url.searchParams.get('pageSize') || url.searchParams.get('limit') || '10')),
       );
       const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
+      const sort = url.searchParams.get('sort') || 'newest';
       const offset = (page - 1) * pageSize;
-      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=neq.archived&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+
+      const sortMap: Record<string, string> = {
+        newest: 'created_at.desc',
+        popular: 'views.desc',
+        most_viewed: 'views.desc',
+        alphabet: 'title.asc',
+        newest_update: 'updated_at.desc',
+      };
+      const order = sortMap[sort] || 'created_at.desc';
+
+      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
+      let countQ = 'stories?status=neq.archived';
       if (keyword) {
-        q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+        const filter = `or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+        q += `&${filter}`;
+        countQ += `&${filter}`;
       }
       const res = await sbGet('stories', q, env, token);
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const items = await res.json();
+      const total = await sbGetCount(countQ, env, token);
+      return json({ items, total });
     }
 
     if (method === 'GET' && pathname.match(/^\/comics\/[^\/]+$/)) {

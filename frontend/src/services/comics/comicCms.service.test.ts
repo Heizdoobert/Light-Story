@@ -6,7 +6,6 @@ import type { ComicCmsFormValues } from '@/lib/validation/comicCmsSchemas';
 
 vi.mock('./comic.service', () => ({
   uploadComicCover: vi.fn(),
-  uploadChapterImages: vi.fn(),
 }));
 
 vi.mock('@/lib/api/apiClient', () => ({
@@ -58,7 +57,7 @@ describe('fetchComicCatalog', () => {
 
     const result = await service.fetchComicCatalog();
 
-    expect(apiClient.get).toHaveBeenCalledWith('/api/admin/comics');
+    expect(apiClient.get).toHaveBeenCalledWith('/api/admin/comics?pageSize=100');
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual(MOCK_RECORD);
     expect(JSON.parse(localStorage.getItem('comic-cms:catalog')!)).toEqual([MOCK_RECORD]);
@@ -293,69 +292,6 @@ describe('draft persistence', () => {
     localStorage.setItem('comic-cms:draft:test-key', JSON.stringify(draft));
     service.clearComicDraft('test-key');
     expect(localStorage.getItem('comic-cms:draft:test-key')).toBeNull();
-  });
-});
-
-describe('createComicChapterFromFiles', () => {
-  it('uploads images then POSTs chapter then updates catalog', async () => {
-    localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
-    vi.mocked(comicService.uploadChapterImages).mockResolvedValue(['https://r2.example.com/page1.jpg']);
-    vi.mocked(apiClient.post).mockResolvedValue({
-      id: 'chapter-1',
-      chapter_number: 1,
-      title: 'Chapter 1',
-      content: JSON.stringify(['https://r2.example.com/page1.jpg']),
-    });
-
-    const result = await service.createComicChapterFromFiles(
-      MOCK_RECORD,
-      { chapterNumber: 1, title: 'Chapter 1' },
-      [new File([], 'page1.png')],
-    );
-
-    expect(comicService.uploadChapterImages).toHaveBeenCalledTimes(1);
-    expect(apiClient.post).toHaveBeenCalledWith('/api/admin/comics/comic-1/chapters', {
-      comicId: 'comic-1',
-      chapterNumber: 1,
-      title: 'Chapter 1',
-      pageUrls: ['https://r2.example.com/page1.jpg'],
-    });
-    expect(result.id).toBe('chapter-1');
-    const catalog = JSON.parse(localStorage.getItem('comic-cms:catalog')!);
-    expect(catalog[0].chapters).toHaveLength(1);
-  });
-
-  it('falls back to placeholder URLs when image upload fails', async () => {
-    localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
-    vi.mocked(comicService.uploadChapterImages).mockRejectedValue(new Error('Upload failed'));
-    vi.mocked(apiClient.post).mockResolvedValue({
-      id: 'chapter-1',
-      chapter_number: 1,
-      title: 'Chapter 1',
-      content: '[]',
-    });
-
-    const result = await service.createComicChapterFromFiles(
-      MOCK_RECORD,
-      { chapterNumber: 1, title: 'Chapter 1' },
-      [new File([], 'page1.png')],
-    );
-
-    expect(result.pages[0].assetUrl).toContain('placehold.co');
-  });
-
-  it('rejects when API POST fails so UI shows error popup', async () => {
-    localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
-    vi.mocked(comicService.uploadChapterImages).mockResolvedValue(['https://r2.example.com/page1.jpg']);
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('API error'));
-
-    await expect(
-      service.createComicChapterFromFiles(
-        MOCK_RECORD,
-        { chapterNumber: 1, title: 'Chapter 1' },
-        [new File([], 'page1.png')],
-      ),
-    ).rejects.toThrow('API error');
   });
 });
 

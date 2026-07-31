@@ -28,7 +28,7 @@ export function corsHeaders(origin: string | null) {
       'Authorization, Content-Type, x-r2-bucket',
     'Access-Control-Expose-Headers':
       'x-request-id, x-begin-timestamp',
-    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Credentials': allowed !== '*' ? 'true' : 'false',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
   };

@@ -1,10 +1,9 @@
 import { apiClient } from "@/lib/api/apiClient";
 import type {
   ComicCmsFormValues,
-  ComicChapterFormValues,
   ComicStatus,
 } from "@/lib/validation/comicCmsSchemas";
-import { uploadChapterImages, uploadComicCover } from "./comic.service";
+import { uploadComicCover } from "./comic.service";
 
 const COMIC_CMS_CATALOG_KEY = "comic-cms:catalog";
 
@@ -162,7 +161,7 @@ export function loadComicRecord(id: string): ComicCmsRecord | null {
 
 export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   try {
-    const result = await apiClient.get<any[]>("/api/admin/comics");
+    const result = await apiClient.get<any[]>("/api/admin/comics?pageSize=100");
     const catalog: ComicCmsRecord[] = Array.isArray(result)
       ? result.map(mapDbRowToRecord)
       : [];
@@ -372,89 +371,6 @@ export async function deleteComic(id: string): Promise<void> {
   writeCatalog(catalog.filter((r) => r.id !== id));
 }
 
-export async function createComicChapterFromFiles(
-  comic: ComicCmsRecord,
-  chapterData: ComicChapterFormValues,
-  files: File[],
-): Promise<ComicCmsChapterRecord> {
-  const chapterId = crypto.randomUUID();
-  let imageUrls: string[] = [];
-  try {
-    imageUrls = await uploadChapterImages(files);
-  } catch (err) {
-    console.error("[comicCms] uploadChapterImages failed", err);
-    imageUrls = files.map(
-      (_, i) =>
-        `https://placehold.co/600x800?text=chapter+${chapterData.chapterNumber}+page+${i + 1}+${Date.now()}`,
-    );
-  }
-
-  const chapter: ComicCmsChapterRecord = {
-    id: chapterId,
-    chapterNumber: chapterData.chapterNumber,
-    title: chapterData.title || `Chapter ${chapterData.chapterNumber}`,
-    updatedAt: new Date().toISOString(),
-    pages: imageUrls.map((url, i) => ({
-      id: crypto.randomUUID(),
-      assetUrl: url,
-      previewUrl: url,
-      fileName: files[i]?.name ?? `page-${i + 1}.png`,
-    })),
-  };
-
-  try {
-    const raw = await apiClient.post<any>(
-      `/api/admin/comics/${comic.id}/chapters`,
-      {
-        comicId: comic.id,
-        chapterNumber: chapterData.chapterNumber,
-        title: chapter.title,
-        pageUrls: imageUrls,
-      },
-    );
-    const row = Array.isArray(raw) ? raw[0] : raw;
-    const created: ComicCmsChapterRecord = {
-      id: row.id || chapter.id,
-      chapterNumber: row.chapter_number ?? chapter.chapterNumber,
-      title: row.title || chapter.title,
-      updatedAt: row.updated_at || new Date().toISOString(),
-      pages: (() => {
-        try {
-          const urls = JSON.parse(row.content || "[]");
-          if (!Array.isArray(urls) || urls.length === 0) return chapter.pages;
-          return urls.map((url: string) => ({
-            id: crypto.randomUUID(),
-            assetUrl: url,
-            previewUrl: url,
-            fileName: url.split("/").pop() || "page",
-          }));
-        } catch {
-          return chapter.pages;
-        }
-      })(),
-    };
-    const catalog = readCatalog();
-    const comicIndex = catalog.findIndex((r) => r.id === comic.id);
-    if (comicIndex !== -1) {
-      const existingChIdx = catalog[comicIndex].chapters.findIndex(
-        (ch) => ch.id === created.id || ch.chapterNumber === created.chapterNumber,
-      );
-      if (existingChIdx !== -1) {
-        catalog[comicIndex].chapters[existingChIdx] = created;
-      } else {
-        catalog[comicIndex].chapters.push(created);
-      }
-      catalog[comicIndex].chapters.sort((a, b) => b.chapterNumber - a.chapterNumber);
-      catalog[comicIndex].lastUpdatedAt = new Date().toISOString();
-      writeCatalog(catalog);
-    }
-    return created;
-  } catch (err) {
-    console.error("[comicCms] createComicChapterFromFiles API error:", err);
-    throw err;
-  }
-}
-
 export async function deleteComicChapter(
   comicId: string,
   chapterId: string,
@@ -494,6 +410,74 @@ export async function requestComicCachePurge(_params: {
   assetKeys: string[];
 }): Promise<void> {
   // Cloudflare Cache Purge integration
+}
+
+export async function createChapter(data: {
+  story_id: string;
+  title: string;
+  chapter_number?: number;
+  cover_url?: string;
+}): Promise<{ id: string }> {
+  const result = await apiClient.post<any>("/api/admin/chapters", data);
+  return Array.isArray(result) ? result[0] : result;
+}
+
+export async function getPresignedPutUrls(
+  chapterId: string,
+  files: { name: string }[],
+): Promise<{ key: string; uploadUrl: string; publicUrl: string }[]> {
+  const res = await apiClient.post<{ urls: any[] }>("/api/admin/r2/presigned-urls", {
+    chapterId,
+    files,
+  });
+  return res.urls ?? [];
+}
+
+export async function uploadFileToPresignedUrl(url: string, file: File, onProgress?: (pct: number) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+      };
+    }
+    xhr.onload = () => (xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`)));
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    xhr.send(file);
+  });
+}
+
+export async function updateChapterImages(
+  chapterId: string,
+  content: { src: string; alt?: string; caption?: string }[],
+): Promise<void> {
+  await apiClient.put(`/api/admin/chapters/${chapterId}/images`, { content });
+}
+
+export async function createChapterWithPresignedUpload(
+  storyId: string,
+  chapterData: { title: string; chapterNumber: number },
+  files: File[],
+): Promise<ComicCmsChapterRecord> {
+  const chapter = await createChapter({ story_id: storyId, title: chapterData.title, chapter_number: chapterData.chapterNumber });
+  const urls = await getPresignedPutUrls(chapter.id, files.map((f) => ({ name: f.name })));
+  await Promise.all(urls.map((u, i) => uploadFileToPresignedUrl(u.uploadUrl, files[i])));
+  const content = urls.map((u) => ({ src: u.publicUrl, alt: u.key.split("/").pop() }));
+  await updateChapterImages(chapter.id, content);
+  return {
+    id: chapter.id,
+    chapterNumber: chapterData.chapterNumber,
+    title: chapterData.title,
+    pages: content.map((c, i) => ({
+      id: crypto.randomUUID(),
+      assetUrl: c.src,
+      previewUrl: c.src,
+      fileName: files[i]?.name ?? `page-${i + 1}.png`,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export async function uploadFilesToR2(

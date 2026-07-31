@@ -219,10 +219,7 @@ export default {
     const strippedPath = stripApiPrefix(pathname);
     const method = request.method;
 
-    // Reject unauthenticated mutations unless x-user-role admin header is provided for CLI maintenance
-    const isCliAdmin = userRole === 'superadmin' || userRole === 'admin' || userRole === 'employee';
-
-    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx && !isCliAdmin) {
+    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
       return new Response(
         JSON.stringify({
           status: 'error',
