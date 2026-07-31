@@ -12,9 +12,6 @@
   ],
   "vars": {
     "SUPABASE_URL": "https://xgtlrztskoomimvfpdoy.supabase.co",
-    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhndGxyenRza29vbWltdmZwZG95Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDAzOTUsImV4cCI6MjA5NDUxNjM5NX0.wLQjtFsLuXmCbvKMFdukK3fk3brft-mjZb4dz1QUH2Q",
-    "SUPABASE_SERVICE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhndGxyenRza29vbWltdmZwZG95Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODk0MDM5NSwiZXhwIjoyMDk0NTE2Mzk1fQ.J8c7_vHFFwHN73C2WmTuAFJ_YNs4c7e88WU7yvqlwDY",
-    "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhndGxyenRza29vbWltdmZwZG95Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODk0MDM5NSwiZXhwIjoyMDk0NTE2Mzk1fQ.J8c7_vHFFwHN73C2WmTuAFJ_YNs4c7e88WU7yvqlwDY",
     "SUPABASE_JWKS_URL": "https://xgtlrztskoomimvfpdoy.supabase.co/auth/v1/.well-known/jwks.json"
   },
   "kv_namespaces": [
