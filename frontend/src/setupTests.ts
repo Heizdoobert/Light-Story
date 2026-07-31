@@ -41,7 +41,7 @@ if (typeof window !== 'undefined' && (!window.localStorage || typeof window.loca
         }
         return Reflect.set(target, prop, value, receiver);
       },
-      deleteProperty(target, prop) {
+      deleteProperty(_target, prop) {
         if (typeof prop === 'string') {
           return store.delete(prop);
         }
