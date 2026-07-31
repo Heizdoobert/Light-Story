@@ -54,6 +54,10 @@ jobs:
 
       - name: Deploy Workers
         run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is missing in GitHub Secrets. Please add CLOUDFLARE_API_TOKEN under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
           npx wrangler deploy --config wrangler.jsonc
           npx wrangler deploy --config workers/unified-gateway/wrangler.jsonc
           npx wrangler deploy --config workers/r2-signed-url/wrangler.jsonc
