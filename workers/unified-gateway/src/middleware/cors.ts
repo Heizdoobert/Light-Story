@@ -15,6 +15,7 @@ export function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return true; // allow non-browser / curl requests
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return true;
+  if (origin.endsWith('.vercel.app')) return true;
   return false;
 }
 
