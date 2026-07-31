@@ -16,9 +16,19 @@ import { supabase } from '@/infrastructure/supabase/client';
 
 const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
 
-const BASE_URL = IS_MOCK
-  ? 'http://localhost:4010'
-  : (process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787');
+const getBaseUrl = (): string => {
+  if (IS_MOCK) return 'http://localhost:4010';
+  if (process.env.NODE_ENV === 'production') {
+    return (
+      process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
+      process.env.NEXT_PUBLIC_GATEWAY_URL ||
+      'https://unified-gateway.truyen3new.workers.dev'
+    );
+  }
+  return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+};
+
+const BASE_URL = getBaseUrl();
 
 function isTokenExpired(token: string): boolean {
   try {
