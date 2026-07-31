@@ -24,6 +24,8 @@
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1100.0",
+    "@aws-sdk/s3-request-presigner": "^3.1100.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@light-story/api-types": "file:../packages/api-types",
     "@modelcontextprotocol/sdk": "^1.24.3",
@@ -75,12 +77,12 @@
     "lightningcss-linux-x64-musl": "^1.29.1"
   },
   "overrides": {
+    "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.1",
     "body-parser": "2.3.0",
     "postcss": "8.5.22",
     "sharp": "0.35.3",
-    "brace-expansion": "5.0.8",
     "@hono/node-server": "2.0.11",
     "next": {
       "postcss": "8.5.22",
