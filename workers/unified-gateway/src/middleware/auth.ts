@@ -143,9 +143,14 @@ export async function validateJWT(token: string, env?: any): Promise<AuthContext
   if (role === 'authenticated') role = 'user';
 
 
-  const jwksUrl = env?.SUPABASE_JWKS_URL || env?.JWKS_URL || (globalThis as any).SUPABASE_JWKS_URL || (globalThis as any).JWKS_URL || undefined;
+  const jwksUrl =
+    env?.SUPABASE_JWKS_URL ||
+    env?.JWKS_URL ||
+    (globalThis as any).SUPABASE_JWKS_URL ||
+    (globalThis as any).JWKS_URL ||
+    'https://xgtlrztskoomimvfpdoy.supabase.co/auth/v1/.well-known/jwks.json';
   if (!jwksUrl) {
-   throw new UnauthorizedError('JWT verification not configured');
+    throw new UnauthorizedError('JWT verification not configured');
   }
 
   try {
