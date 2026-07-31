@@ -77,6 +77,7 @@
     "lightningcss-linux-x64-musl": "^1.29.1"
   },
   "overrides": {
+    "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.1",
     "body-parser": "2.3.0",
