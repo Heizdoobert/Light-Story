@@ -10,11 +10,7 @@ export default defineConfig({
     setupFiles: ["src/setupTests.ts"],
     include: ["**/*.test.ts", "**/*.test.tsx"],
     exclude: ["node_modules", ".next", "dist", "**/__integration__/**"],
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
+    fileParallelism: false,
   },
   resolve: {
     alias: {

@@ -9,11 +9,7 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "dist"],
     testTimeout: 30000,
     fileParallelism: false,
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
   },
   resolve: {
     alias: {
