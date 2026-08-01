@@ -45,3 +45,9 @@ Key central modules derived from the codebase knowledge graph (`graphify-out`):
 - **After file changes (creating, modifying, deleting)**:
   1. Run `graphify update .` from the project root to refresh the AST knowledge graph.
   2. Confirm graph consistency in `graphify-out/GRAPH_REPORT.md`.
+
+## 🧠 Obsidian Brain Rule (the vault is the project's brain)
+- **Definition**: The Obsidian vault at `D:\Ollama\AI_brain\AI_brain` is the canonical long-term memory for this project. Notes (`vault/01_*` … `vault/09_*`) are the distilled truth; `graphify-out` is the raw graph.
+- **Before starting work**: consult the relevant vault note(s) first (`vault/09_index.md` is the index). Use them as the primary orientation source, then confirm against `graphify-out/GRAPH_REPORT.md`.
+- **After finishing work**: refresh the affected vault note(s) with what changed (features, endpoints, hubs, new god nodes) so the brain stays current.
+- **Graph sync**: after `graphify update .`, re-copy the 5 root files of `graphify-out/` (`graph.json`, `GRAPH_REPORT.md`, `manifest.json`, `.graphify_labels.json`, `.graphify_root`) into `vault/graphify-out/` so the vault's graph copy matches. Snapshot dirs and `cache/` are skipped.

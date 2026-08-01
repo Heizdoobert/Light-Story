@@ -1,6 +1,6 @@
 'use client';
 
-import { NotFoundPage } from '../_components/NotFoundPage';
+import { NotFoundPage } from '@/components/errors/NotFoundPage';
 
 export default function Page404() {
   return <NotFoundPage />;

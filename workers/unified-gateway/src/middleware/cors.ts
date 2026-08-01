@@ -15,6 +15,12 @@ export function isOriginAllowed(origin: string | null): boolean {
   if (!origin) return true; // allow non-browser / curl requests
   if (ALLOWED_ORIGINS.includes(origin)) return true;
   if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return true;
+  try {
+    const hostname = new URL(origin).hostname;
+    if (hostname.endsWith('.vercel.app')) return true;
+  } catch {
+    // Malformed origin header
+  }
   return false;
 }
 

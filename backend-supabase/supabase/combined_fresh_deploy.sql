@@ -71,7 +71,7 @@ create table if not exists public.profiles (
   email text unique not null,
   full_name text,
   avatar_url text,
-  role text not null default 'user' check (role in ('superadmin', 'admin', 'employee', 'user')),
+  role text not null default 'user' check (role in ('superadmin', 'admin', 'employee', 'user', 'haunt')),
   created_at timestamptz not null default timezone('utc'::text, now()),
   updated_at timestamptz not null default timezone('utc'::text, now())
 );

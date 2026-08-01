@@ -1,6 +1,6 @@
 'use client';
 
-import { ResetPasswordPage } from './_components/ResetPasswordPage';
+import { ResetPasswordPage } from '@/components/auth/ResetPasswordPage';
 
 export default function AuthResetPasswordPage() {
   return <ResetPasswordPage />;

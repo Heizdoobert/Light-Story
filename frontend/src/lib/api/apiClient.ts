@@ -18,14 +18,16 @@ const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
 
 const getBaseUrl = (): string => {
   if (IS_MOCK) return 'http://localhost:4010';
+  let rawUrl = '';
   if (process.env.NODE_ENV === 'production') {
-    return (
+    rawUrl =
       process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
       process.env.NEXT_PUBLIC_GATEWAY_URL ||
-      'https://unified-gateway.truyen3new.workers.dev'
-    );
+      'https://unified-gateway.truyen3new.workers.dev';
+  } else {
+    rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
   }
-  return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  return rawUrl.replace(/\/+$/, '');
 };
 
 const BASE_URL = getBaseUrl();

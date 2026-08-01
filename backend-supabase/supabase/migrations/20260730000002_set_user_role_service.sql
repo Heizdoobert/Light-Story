@@ -9,7 +9,7 @@ security definer
 set search_path = public, app_private
 as $$
 begin
-  if new_role not in ('superadmin', 'admin', 'employee', 'user') then
+  if new_role not in ('superadmin', 'admin', 'employee', 'user', 'haunt') then
     raise exception 'Invalid role value';
   end if;
   update public.profiles
