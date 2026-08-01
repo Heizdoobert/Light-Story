@@ -164,35 +164,42 @@ export default {
 
     const authHeader = request.headers.get('Authorization') ?? '';
     let authCtx = null;
-    try {
-      if (authHeader)
+    if (authHeader) {
+      try {
         authCtx = await validateJWT(authHeader, env);
-    } catch (e) {
-      if (e instanceof UnauthorizedError) {
-        return new Response(
-          JSON.stringify({
-            status: 'error',
-            error: {
-              code: 'UNAUTHORIZED',
-              message: e.message,
-            },
-          }),
-          {
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders(origin),
-            },
-          },
-        );
+      } catch (e) {
+        // If route is protected/admin or non-GET write operation, enforce 401
+        if (isAuthOrAdmin || (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS')) {
+          if (e instanceof UnauthorizedError) {
+            return new Response(
+              JSON.stringify({
+                status: 'error',
+                error: {
+                  code: 'UNAUTHORIZED',
+                  message: e.message,
+                },
+              }),
+              {
+                status: 401,
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...corsHeaders(origin),
+                },
+              },
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              status: 'error',
+              error: { code: 'INTERNAL_ERROR' },
+            }),
+            { status: 500 },
+          );
+        }
+        // For public GET requests, log warning and allow unauthenticated fallback
+        console.warn('Ignored invalid/expired token on public GET request:', (e as Error).message);
+        authCtx = null;
       }
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          error: { code: 'INTERNAL_ERROR' },
-        }),
-        { status: 500 },
-      );
     }
 
     const userRole = authCtx?.role;
