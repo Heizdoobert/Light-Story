@@ -19,7 +19,8 @@
   ],
   "vars": {
     "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
-    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ3bnpzbW1mdnNldGZjbmtqb3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjY4NjksImV4cCI6MjA5MTkwMjg2OX0.l5cPC8csdrSdu9G9H1h4z74gy0q7z4hqB-RKlPSn14g"
   },
   "kv_namespaces": [
     {
