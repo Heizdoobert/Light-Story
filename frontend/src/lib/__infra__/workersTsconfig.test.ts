@@ -24,7 +24,7 @@ function readTsconfig(relativePath: string): WorkerTsconfig {
 }
 
 describe.each([
-  ['workers/unified-gateway/tsconfig.json'],
+  ['workers/kv-worker/tsconfig.json'],
 ])('%s', (relativePath) => {
   it('is valid, parseable JSON', () => {
     expect(() => readTsconfig(relativePath)).not.toThrow();

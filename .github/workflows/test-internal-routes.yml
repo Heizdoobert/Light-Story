@@ -24,7 +24,7 @@ jobs:
       
       - name: Start wrangler dev
         run: |
-          npx wrangler dev --config workers/unified-gateway/wrangler.jsonc --port 8787 &
+          npx wrangler dev --config workers/kv-worker/wrangler.jsonc --port 8787 &
           echo "Waiting for worker to start..."
           for _ in $(seq 1 30); do
             curl -sf http://localhost:8787/api/stories?page=1\&pageSize=3 2>/dev/null && break

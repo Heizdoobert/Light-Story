@@ -60,8 +60,8 @@ jobs:
 
       - name: Type-check worker
         run: |
-          if [ -f workers/unified-gateway/tsconfig.json ]; then
-            npx tsc --noEmit -p workers/unified-gateway/tsconfig.json
+          if [ -f workers/kv-worker/tsconfig.json ]; then
+            npx tsc --noEmit -p workers/kv-worker/tsconfig.json
           fi
 
   backend-supabase:
@@ -120,7 +120,7 @@ jobs:
         run: npm install -g wrangler
 
       - name: Deploy Unified Gateway (preview)
-        working-directory: workers/unified-gateway
+        working-directory: workers/kv-worker
         run: |
           wrangler deploy --env preview || echo "Preview deploy skipped (no preview env configured)"
         env:
