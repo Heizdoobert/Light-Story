@@ -1,5 +1,5 @@
 {
-  "name": "unified-gateway",
+  "name": "kv-worker",
   "main": "workers/unified-gateway/src/index.ts",
   "compatibility_date": "2026-07-02",
   "compatibility_flags": ["nodejs_compat"],

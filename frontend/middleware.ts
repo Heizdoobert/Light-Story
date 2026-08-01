@@ -5,7 +5,7 @@ const ADMIN_ROLES = ['superadmin', 'admin', 'employee'];
 
 function addSecurityHeaders(res: NextResponse): NextResponse {
   const r2Domain = process.env.R2_CLOUDFLARE_STORAGE_DOMAIN || '*.r2.cloudflarestorage.com';
-  const workerDomain = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://unified-gateway.truyen3new.workers.dev';
+  const workerDomain = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://kv-worker.truyen3new.workers.dev';
   const csp = `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://${r2Domain} https://placehold.co; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`;
   res.headers.set('Content-Security-Policy', csp);
   res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');

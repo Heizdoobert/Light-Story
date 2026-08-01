@@ -23,7 +23,7 @@ const getBaseUrl = (): string => {
     rawUrl =
       process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
       process.env.NEXT_PUBLIC_GATEWAY_URL ||
-      'https://unified-gateway.truyen3new.workers.dev';
+      'https://kv-worker.truyen3new.workers.dev';
   } else {
     rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
   }
