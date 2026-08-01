@@ -1,6 +1,6 @@
 'use client';
 
-import { ServiceUnavailablePage } from '../_components/ServiceUnavailablePage';
+import { ServiceUnavailablePage } from '@/components/errors/ServiceUnavailablePage';
 
 export default function Page503() {
   return <ServiceUnavailablePage />;

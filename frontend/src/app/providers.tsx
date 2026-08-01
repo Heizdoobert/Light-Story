@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster, toast } from 'sonner';
-import { AuthProvider } from '../modules/auth/AuthContext';
-import { ThemeProvider } from '../modules/theme/ThemeContext';
-import { LanguageProvider } from '../modules/language/LanguageContext';
-import { ErrorBoundary } from '@/components/shared/errors/ErrorBoundary';
+import { AuthProvider } from '@/context/AuthContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { LanguageProvider } from '@/context/LanguageContext';
+import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 import { useGlobalErrorHandler, getErrorMessage } from '@/hooks/common/useGlobalErrorHandler';
 
 /**

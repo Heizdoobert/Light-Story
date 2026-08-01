@@ -3,7 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Footer } from "@/components/shared/navigation/Footer";
+import { Footer } from "@/components/navigation/Footer";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -23,7 +23,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={plusJakartaSans.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={plusJakartaSans.variable}
+      suppressHydrationWarning
+    >
       <head>
         {/* Inject theme-setting script to prevent dark mode FOUC */}
         <script
@@ -52,7 +56,6 @@ export default function RootLayout({
           <AdZoneColumns />
           {/* Main sẽ đẩy Footer xuống dưới cùng nhờ flex-grow */}
           <main className="flex-grow">{children}</main>
-
           {/* Footer luôn nằm ở cuối */}
           <Footer />
           <Analytics />

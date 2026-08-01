@@ -460,10 +460,11 @@ export async function updateChapterImages(
 }
 
 export async function createChapterWithPresignedUpload(
-  storyId: string,
+  storyIdOrRecord: string | ComicCmsRecord,
   chapterData: { title: string; chapterNumber: number },
   files: File[],
 ): Promise<ComicCmsChapterRecord> {
+  const storyId = typeof storyIdOrRecord === "string" ? storyIdOrRecord : storyIdOrRecord.id;
   const chapter = await createChapter({ story_id: storyId, title: chapterData.title, chapter_number: chapterData.chapterNumber });
   const urls = await getPresignedPutUrls(chapter.id, files.map((f) => ({ name: f.name })));
   await Promise.all(urls.map((u, i) => uploadFileToPresignedUrl(u.uploadUrl, files[i])));
@@ -482,6 +483,8 @@ export async function createChapterWithPresignedUpload(
     updatedAt: new Date().toISOString(),
   };
 }
+
+export const createComicChapterFromFiles = createChapterWithPresignedUpload;
 
 export async function uploadFilesToR2(
   files: File[],

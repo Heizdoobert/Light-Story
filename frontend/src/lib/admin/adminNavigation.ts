@@ -1,5 +1,5 @@
 import { BookOpen, Database, DollarSign, LayoutDashboard, Library, PenSquare, Settings, User, Users, Workflow, type LucideIcon } from 'lucide-react';
-import { UserRole } from '@/modules/auth/AuthContext';
+import { UserRole } from '@/context/AuthContext';
 
 export type AdminMenuId =
   | 'dashboard'

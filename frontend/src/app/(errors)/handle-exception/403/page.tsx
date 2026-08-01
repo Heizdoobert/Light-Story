@@ -1,6 +1,6 @@
 'use client';
 
-import { ForbiddenPage } from '../_components/ForbiddenPage';
+import { ForbiddenPage } from '@/components/errors/ForbiddenPage';
 
 export default function Page403() {
   return <ForbiddenPage />;

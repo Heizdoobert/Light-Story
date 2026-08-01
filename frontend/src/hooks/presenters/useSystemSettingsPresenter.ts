@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useAuth } from '@/modules/auth/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { getErrorMessage } from '@/lib/utils/errorUtils';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
 import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '@/lib/admin/adminNavigation';

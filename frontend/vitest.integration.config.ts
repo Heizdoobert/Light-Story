@@ -1,17 +1,23 @@
-import { defineConfig } from 'vitest/config';
-import path from 'path';
+import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
   test: {
     globals: true,
-    environment: 'node',
-    include: ['**/__integration__/*.test.ts'],
-    exclude: ['node_modules', '.next', 'dist'],
+    environment: "node",
+    include: ["**/__integration__/*.test.ts"],
+    exclude: ["node_modules", ".next", "dist"],
     testTimeout: 30000,
+    fileParallelism: false,
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./"),
     },
   },
 });

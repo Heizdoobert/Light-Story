@@ -116,6 +116,15 @@ export default {
       }
     }
 
+    if (request.method === 'PUT') {
+      await env.ASSETS_BUCKET.put(key, request.body, {
+        httpMetadata: {
+          contentType: request.headers.get('content-type') ?? undefined,
+        },
+      });
+      return new Response(`Put ${key} successfully!`);
+    }
+
     try {
       const isHead = request.method === 'HEAD';
       const rangeHeader = request.headers.get('range');

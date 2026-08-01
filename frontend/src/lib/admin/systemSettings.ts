@@ -1,5 +1,5 @@
 // Centralized keys, defaults, and parsers for system settings persisted in site_settings.
-import { UserRole } from '@/modules/auth/AuthContext';
+import { UserRole } from '@/context/AuthContext';
 import { ADMIN_MENU_IDS, AdminMenuId } from './adminNavigation';
 
 export const SITE_SETTING_KEYS = {

@@ -47,12 +47,8 @@ function isTokenExpired(token: string): boolean {
 function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    const sbRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(
-      /https:\/\/([^.]+)\.supabase\.co/,
-    )?.[1];
-    const keyPrefix = sbRef ? `sb-${sbRef}-` : 'sb-';
     const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith(keyPrefix) && k.endsWith('-auth-token'),
+      k.startsWith('sb-') && k.endsWith('-auth-token'),
     );
     if (sbKeys.length > 0) {
       const raw = localStorage.getItem(sbKeys[0]);
