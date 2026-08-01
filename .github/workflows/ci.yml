@@ -46,11 +46,6 @@ jobs:
       matrix:
         worker:
           - unified-gateway
-          - stories-worker
-          - comics-worker
-          - admin-worker
-          - analytics-worker
-          - r2-signed-url
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

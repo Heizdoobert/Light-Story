@@ -24,7 +24,6 @@ function readTsconfig(relativePath: string): WorkerTsconfig {
 }
 
 describe.each([
-  ['workers/r2-signed-url/tsconfig.json'],
   ['workers/unified-gateway/tsconfig.json'],
 ])('%s', (relativePath) => {
   it('is valid, parseable JSON', () => {
@@ -58,13 +57,5 @@ describe.each([
     expect(config.compilerOptions.moduleResolution).toBe('Bundler');
     expect(config.compilerOptions.skipLibCheck).toBe(true);
     expect(config.compilerOptions.noEmit).toBe(true);
-  });
-});
-
-describe('worker tsconfig.json consistency', () => {
-  it('r2-signed-url and unified-gateway share an identical compiler configuration', () => {
-    const r2Config = readTsconfig('workers/r2-signed-url/tsconfig.json');
-    const gatewayConfig = readTsconfig('workers/unified-gateway/tsconfig.json');
-    expect(r2Config).toEqual(gatewayConfig);
   });
 });

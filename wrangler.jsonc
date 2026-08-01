@@ -17,10 +17,18 @@
       "bucket_name": "lightstory-assets"
     }
   ],
+  "vars": {
+    "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
+  },
   "kv_namespaces": [
     {
       "binding": "APP_KV",
       "id": "bde008a5d4b54e53af699933f366dabe"
+    },
+    {
+      "binding": "COMIC_METADATA",
+      "id": "dcedc9ebb0d846838d4be79df5a2698c"
     }
   ],
   "queues": {
