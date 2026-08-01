@@ -10,6 +10,10 @@
       "bucket_name": "lightstory-assets"
     }
   ],
+  "vars": {
+    "SUPABASE_URL": "https://xgtlrztskoomimvfpdoy.supabase.co",
+    "SUPABASE_JWKS_URL": "https://xgtlrztskoomimvfpdoy.supabase.co/auth/v1/.well-known/jwks.json"
+  },
   "kv_namespaces": [
     {
       "binding": "APP_KV",

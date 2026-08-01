@@ -2,7 +2,6 @@
  *  @type {import('next').NextConfig}
  *  */
 const nextConfig = {
-  //distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   reactStrictMode: true,
   poweredByHeader: false,

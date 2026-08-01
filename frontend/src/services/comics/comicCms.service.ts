@@ -283,7 +283,10 @@ export function proxiedR2ImageUrl(url: string): string {
     return "";
   }
 
-  const gateway = process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
+  const gateway =
+    process.env.NODE_ENV === "production"
+      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || "https://unified-gateway.truyen3new.workers.dev"
+      : process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
 
   if (url.startsWith("/api/admin/r2/file/")) {
     const key = url.replace("/api/admin/r2/file/", "");

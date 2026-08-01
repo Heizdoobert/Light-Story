@@ -19,7 +19,7 @@ export function isOriginAllowed(origin: string | null): boolean {
     const hostname = new URL(origin).hostname;
     if (hostname.endsWith('.vercel.app')) return true;
   } catch {
-    // Malformed origin header
+    if (origin.endsWith('.vercel.app')) return true;
   }
   return false;
 }

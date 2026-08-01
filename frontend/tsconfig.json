@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
@@ -9,7 +9,7 @@
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "allowJs": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -44,10 +44,7 @@
     "next-env.d.ts",
     ".next-dev/types/**/*.ts",
     ".next-dev/dev/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "src/app/api/avatar/route.js",
-    "src/app/not-found.js",
-    "src/app/page.js"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules", "tests/e2e", "src/specs"]
 }
