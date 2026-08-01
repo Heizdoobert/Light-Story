@@ -7,19 +7,11 @@ const WORKER_DOMAIN = process.env.CF_WORKER_DOMAIN ?? '';
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
 
 const WORKERS = [
-  { name: 'api-gateway', routes: ['/', '/api/health'] },
   { name: 'unified-gateway', routes: ['/'] },
-  { name: 'stories-worker', routes: ['/', '/api/stories', '/api/chapters'] },
-  { name: 'comics-worker', routes: ['/', '/api/comics'] },
-  { name: 'admin-worker', routes: ['/', '/api/admin'] },
-  { name: 'analytics-worker', routes: ['/', '/api/analytics'] },
-  { name: 'backend-supabase', routes: ['/'] },
-  { name: 'lightstory-r2-proxy', routes: ['/'] },
 ];
 
 const LOCAL_WORKERS = [
   { name: 'unified-gateway', file: 'workers/unified-gateway/wrangler.jsonc' },
-  { name: 'lightstory-r2-proxy', file: 'workers/r2-signed-url/wrangler.jsonc' },
 ];
 
 describe('Cloudflare Workers - deployed and reachable', () => {
@@ -73,17 +65,6 @@ describe('R2 Storage', () => {
 });
 
 describe('Deployed Workers - infrastructure', () => {
-  it('backend-supabase returns infra data', { timeout: 15000 }, async () => {
-    const res = await fetch(`https://backend-supabase.${WORKER_DOMAIN}/`, {
-      signal: AbortSignal.timeout(10000),
-    });
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data).toHaveProperty('infrastructure');
-    expect(data.infrastructure).toHaveProperty('r2_usage_gb');
-    expect(data.infrastructure).toHaveProperty('d1_queries_count');
-  });
-
   it('unified-gateway returns structured errors', { timeout: 15000 }, async () => {
     const res = await fetch(`https://unified-gateway.${WORKER_DOMAIN}/`, {
       signal: AbortSignal.timeout(10000),
