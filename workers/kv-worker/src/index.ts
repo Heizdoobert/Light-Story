@@ -152,7 +152,7 @@ export default {
     const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS') {
-      return handleCorsPreflightRequest(origin);
+      return handleCorsPreflightRequest(request);
     }
 
     if (origin && !isOriginAllowed(origin)) {

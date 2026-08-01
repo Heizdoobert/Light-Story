@@ -24,16 +24,22 @@ export function isOriginAllowed(origin: string | null): boolean {
   return false;
 }
 
-export function corsHeaders(origin: string | null) {
+const DEFAULT_ALLOWED_HEADERS =
+  'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-user-role, x-user-id, x-user-email';
+
+export function corsHeaders(
+  origin: string | null,
+  requestHeaders?: string | null,
+) {
   const allowed = origin && isOriginAllowed(origin) ? origin : '*';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods':
       'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers':
-      'Authorization, Content-Type, x-r2-bucket',
+      requestHeaders || DEFAULT_ALLOWED_HEADERS,
     'Access-Control-Expose-Headers':
-      'x-request-id, x-begin-timestamp',
+      'x-request-id, x-begin-timestamp, content-range',
     'Access-Control-Allow-Credentials': allowed !== '*' ? 'true' : 'false',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
@@ -41,11 +47,13 @@ export function corsHeaders(origin: string | null) {
 }
 
 export function handleCorsPreflightRequest(
-  origin: string | null,
+  request: Request,
 ): Response {
+  const origin = request.headers.get('Origin');
+  const reqHeaders = request.headers.get('Access-Control-Request-Headers');
   return new Response(null, {
     status: 204,
-    headers: corsHeaders(origin),
+    headers: corsHeaders(origin, reqHeaders),
   });
 }
 
