@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
