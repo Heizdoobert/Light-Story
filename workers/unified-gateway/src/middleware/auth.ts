@@ -198,7 +198,6 @@ export async function validateJWT(
   if (!jwksUrl) {
     throw new UnauthorizedError("JWT verification not configured");
   }
-  }
 
   try {
     const header = decodeJwtHeader(cleaned);
