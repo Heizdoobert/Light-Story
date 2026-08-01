@@ -263,14 +263,14 @@ export default {
       crypto.randomUUID(),
     );
     downstreamHeaders.set('x-begin-timestamp', String(Date.now()));
-    if (authHeader) {
-      downstreamHeaders.set('Authorization', authHeader);
-    }
     if (authCtx) {
+      downstreamHeaders.set('Authorization', authHeader);
       downstreamHeaders.set('x-user-id', authCtx.userId);
       downstreamHeaders.set('x-user-role', authCtx.role);
       if (authCtx.email)
         downstreamHeaders.set('x-user-email', authCtx.email);
+    } else {
+      downstreamHeaders.delete('Authorization');
     }
     downstreamHeaders.set('x-forwarded-by', 'unified-gateway');
 
