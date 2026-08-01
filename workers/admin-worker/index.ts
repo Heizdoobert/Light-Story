@@ -1,5 +1,9 @@
+interface Env {
+  MY_BUCKET: R2Bucket;
+}
+
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request: Request, env: Env): Promise<Response> {
     // Get the object key from the URL path
     // For example: /images/cat.png → images/cat.png
     const url = new URL(request.url);
