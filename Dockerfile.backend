@@ -20,4 +20,4 @@ COPY --from=build /app ./
 
 EXPOSE 8787
 
-CMD ["npx", "wrangler", "dev", "--ip", "0.0.0.0", "--port", "8787", "--config", "workers/unified-gateway/wrangler.jsonc"]
+CMD ["npx", "wrangler", "dev", "--ip", "0.0.0.0", "--port", "8787", "--config", "workers/kv-worker/wrangler.jsonc"]

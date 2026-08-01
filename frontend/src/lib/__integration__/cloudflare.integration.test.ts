@@ -7,11 +7,11 @@ const WORKER_DOMAIN = process.env.CF_WORKER_DOMAIN ?? '';
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? '';
 
 const WORKERS = [
-  { name: 'unified-gateway', routes: ['/'] },
+  { name: 'kv-worker', routes: ['/'] },
 ];
 
 const LOCAL_WORKERS = [
-  { name: 'unified-gateway', file: 'workers/unified-gateway/wrangler.jsonc' },
+  { name: 'kv-worker', file: 'workers/kv-worker/wrangler.jsonc' },
 ];
 
 describe('Cloudflare Workers - deployed and reachable', () => {
@@ -65,8 +65,8 @@ describe('R2 Storage', () => {
 });
 
 describe('Deployed Workers - infrastructure', () => {
-  it('unified-gateway returns structured errors', { timeout: 15000 }, async () => {
-    const res = await fetch(`https://unified-gateway.${WORKER_DOMAIN}/`, {
+  it('kv-worker returns structured errors', { timeout: 15000 }, async () => {
+    const res = await fetch(`https://kv-worker.${WORKER_DOMAIN}/`, {
       signal: AbortSignal.timeout(10000),
     });
     expect(res.status).toBe(404);
