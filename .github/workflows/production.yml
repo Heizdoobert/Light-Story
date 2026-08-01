@@ -58,7 +58,6 @@ jobs:
             echo "::error::CLOUDFLARE_API_TOKEN is missing in GitHub Secrets. Please add CLOUDFLARE_API_TOKEN under Settings > Secrets and variables > Actions."
             exit 1
           fi
-          npx wrangler deploy --config wrangler.jsonc
           npx wrangler deploy --config workers/unified-gateway/wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -68,7 +67,7 @@ jobs:
 
       - name: Push Supabase migrations
         run: |
-          supabase link --project-ref xgtlrztskoomimvfpdoy
+          supabase link --project-ref rwnzsmmfvsetfcnkjoxt
           supabase migration repair --status reverted 20260730000004 || true
           supabase db push --linked
         working-directory: backend-supabase
