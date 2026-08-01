@@ -77,7 +77,7 @@ jobs:
       - name: Smoke test
         run: |
           for i in {1..5}; do
-            if curl -sf "https://kv-worker.truyen3new.workers.dev/api/stories?page=1&pageSize=5" > /dev/null 2>&1; then
+            if curl -sf "https://kv-worker.hhhuygiau.workers.dev/api/stories?page=1&pageSize=5" > /dev/null 2>&1; then
               echo "Smoke test passed"
               exit 0
             fi

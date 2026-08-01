@@ -42,7 +42,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <link rel="preconnect" href={process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://kv-worker.truyen3new.workers.dev') : (process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787')} />
+        <link rel="preconnect" href={process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://kv-worker.hhhuygiau.workers.dev') : (process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787')} />
       </head>
       {/* Thêm class để body chiếm tối thiểu 100% chiều cao màn hình và dàn dọc */}
       <body className="min-h-screen flex flex-col antialiased">
