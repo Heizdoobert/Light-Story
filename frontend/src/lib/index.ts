@@ -11,6 +11,8 @@ export * from './auth/securityUtils';
 // API & Server
 export * from './api/apiClient';
 export * from './api/server';
+export * from './r2';
+
 
 // Utilities & Errors
 export * from './utils/dbChangeToast';

@@ -19,7 +19,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'http://localhost:54321';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTYxNjQyNDk2MCwiZXhwIjoxNjMyMDA5OTYwfQ.VrGRQDzjEa5YrYuKQwTQ4kNY3pNxbSLgXzUE2Wz1-ps';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '';
 
 // Test user sessions (mock tokens or real tokens from your auth setup)
 const testUsers = {

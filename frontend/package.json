@@ -24,6 +24,8 @@
     "env:use-emulator": "node ./scripts/use_emulator.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1100.0",
+    "@aws-sdk/s3-request-presigner": "^3.1100.0",
     "@fontsource-variable/geist": "^5.3.0",
     "@light-story/api-types": "file:../packages/api-types",
     "@modelcontextprotocol/sdk": "^1.24.3",

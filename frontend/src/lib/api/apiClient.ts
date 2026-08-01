@@ -14,7 +14,23 @@ export class ApiError extends Error {
 
 import { supabase } from '@/infrastructure/supabase/client';
 
-const BASE_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
+
+const getBaseUrl = (): string => {
+  if (IS_MOCK) return 'http://localhost:4010';
+  let rawUrl = '';
+  if (process.env.NODE_ENV === 'production') {
+    rawUrl =
+      process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
+      process.env.NEXT_PUBLIC_GATEWAY_URL ||
+      'https://unified-gateway.truyen3new.workers.dev';
+  } else {
+    rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  }
+  return rawUrl.replace(/\/+$/, '');
+};
+
+const BASE_URL = getBaseUrl();
 
 function isTokenExpired(token: string): boolean {
   try {
