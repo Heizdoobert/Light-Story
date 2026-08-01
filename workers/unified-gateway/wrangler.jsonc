@@ -1,7 +1,7 @@
 {
   "name": "unified-gateway",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-16",
+  "compatibility_date": "2026-07-02",
   "compatibility_flags": ["nodejs_compat"],
   "minify": true,
   "r2_buckets": [
