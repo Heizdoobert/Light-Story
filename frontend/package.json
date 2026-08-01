@@ -27,6 +27,7 @@
     "@aws-sdk/client-s3": "^3.1100.0",
     "@aws-sdk/s3-request-presigner": "^3.1100.0",
     "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@light-story/api-types": "file:../packages/api-types",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@supabase/ssr": "^0.12.3",

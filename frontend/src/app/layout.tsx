@@ -1,16 +1,10 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Footer } from "@/components/navigation/Footer";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "Light Story",
@@ -25,7 +19,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={plusJakartaSans.variable}
+      style={{ "--font-sans": '"Plus Jakarta Sans Variable"' } as React.CSSProperties}
       suppressHydrationWarning
     >
       <head>
