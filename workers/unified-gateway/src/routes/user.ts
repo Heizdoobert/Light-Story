@@ -10,6 +10,9 @@ export async function handleUserRequest(
   const userId = request.headers.get('x-user-id');
 
   if (!userId) {
+    if (method === 'GET' && (pathname === '/user/history' || pathname === '/user/bookmarks')) {
+      return json([]);
+    }
     return err('UNAUTHORIZED', 'User ID required', 401);
   }
 
