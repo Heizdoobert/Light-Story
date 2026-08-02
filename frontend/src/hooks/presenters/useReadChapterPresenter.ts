@@ -35,6 +35,7 @@ const MOCK_CHAPTERS: Chapter[] = [
     chapter_number: 1,
     title: "Sự khởi đầu",
     content: "",
+    status: "published",
     created_at: "2026-06-01T10:00:00Z",
   },
   {
@@ -43,6 +44,7 @@ const MOCK_CHAPTERS: Chapter[] = [
     chapter_number: 2,
     title: "Hầm ngục kép",
     content: "",
+    status: "published",
     created_at: "2026-06-08T10:00:00Z",
   },
 ];

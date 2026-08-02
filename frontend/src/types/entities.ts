@@ -44,6 +44,7 @@ export interface Chapter {
   chapter_number: number;
   title: string;
   content: string;
+  status: 'uploading' | 'draft' | 'published';
   created_at: string;
 }
 
