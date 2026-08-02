@@ -368,22 +368,24 @@ export default {
       if (!svcKey) {
         res = err('NOT_CONFIGURED', 'Service key not configured', 500);
       } else {
-        let q = 'select=key,value&key=like.public_%';
-        const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
-          headers: {
-            apikey: svcKey,
-            Authorization: `Bearer ${svcKey}`,
-          },
-        });
-        if (!supRes.ok) {
-          res = err('UPSTREAM', await supRes.text(), supRes.status);
-        } else {
-          const text = await supRes.text();
-          if (!text) {
+        try {
+          let q = 'select=key,value&key=like.public_%';
+          const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+            headers: {
+              apikey: svcKey,
+              Authorization: `Bearer ${svcKey}`,
+            },
+          });
+          if (!supRes.ok && supRes.status >= 500) {
             res = json({ success: true, data: [] });
+          } else if (!supRes.ok) {
+            res = err('UPSTREAM', await supRes.text(), supRes.status);
           } else {
-            res = json({ success: true, data: JSON.parse(text) });
+            const text = await supRes.text();
+            res = json({ success: true, data: text ? JSON.parse(text) : [] });
           }
+        } catch {
+          res = json({ success: true, data: [] });
         }
       }
     } else if (strippedPath.startsWith('/admin')) {
