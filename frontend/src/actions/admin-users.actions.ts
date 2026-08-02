@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
-import { fetchApi } from '@/actions/http';
+import { fetchApi, messageFromResponse } from '@/actions/http';
 import { createClient } from '@/lib/api/server';
 
 const updateProfileRoleSchema = z.object({
@@ -103,19 +103,4 @@ export async function manageAdminUser(input: z.infer<typeof manageAdminUserSchem
 
     return { ok: false, error };
   });
-}
-
-// ponytail: mirrors apiClient's inline error extraction for non-ok bodies; statusText fallback keeps it dependency-free
-async function messageFromResponse(res: Response): Promise<string> {
-  try {
-    const body = await res.json();
-    return (
-      (typeof body?.error === 'string' ? body.error : undefined) ??
-      body?.error?.message ??
-      body?.message ??
-      (res.statusText || `HTTP Error ${res.status}`)
-    );
-  } catch {
-    return res.statusText || `HTTP Error ${res.status}`;
-  }
 }
