@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { createAuthor, updateAuthor, deleteAuthor, createTranslator, updateTranslator, deleteTranslator } from '@/actions/taxonomy.actions';
+import { createAuthor, updateAuthor, deleteAuthor } from '@/actions/taxonomy.actions';
+import { createTranslator, updateTranslator, deleteTranslator } from '@/actions/translators.actions';
 import { useAuthorPresenter } from '@/hooks/presenters/useAuthorPresenter';
 import { useTranslatorPresenter } from '@/hooks/presenters/useTranslatorPresenter';
 import { useCrudMutation } from '@/hooks/presenters/useTaxonomyCrud';
