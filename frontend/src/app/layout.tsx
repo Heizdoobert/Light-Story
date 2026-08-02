@@ -6,9 +6,28 @@ import { Providers } from "./providers";
 import { Footer } from "@/components/navigation/Footer";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lightstory.org';
+
 export const metadata: Metadata = {
-  title: "Light Story",
-  description: "Light Story application",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Light Story - Read Manga, Manhua & Light Novels Online",
+    template: "%s | Light Story",
+  },
+  description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online on Light Story.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: siteUrl,
+    siteName: "Light Story",
+    title: "Light Story - Read Manga & Light Novels",
+    description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Light Story",
+    description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online.",
+  },
 };
 
 export default function RootLayout({
