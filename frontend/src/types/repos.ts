@@ -9,7 +9,6 @@ export interface IStoryRepository {
 export interface IChapterRepository {
   getChapterById(id: string): Promise<Chapter | null>;
   getChaptersByStoryId(storyId: string): Promise<Chapter[]>;
-  saveChapter(chapter: Partial<Chapter>): Promise<Chapter>;
 }
 
 export interface ISettingsRepository {

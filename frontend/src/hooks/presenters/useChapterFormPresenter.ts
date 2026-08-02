@@ -2,7 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchStories } from '@/services/comics/story.service';
-import { saveChapter } from '@/services/comics/chapter.service';
+import { createChapter } from '@/actions/chapter-form.actions';
+import type { CreateChapterInput } from '@/actions/chapter-form.actions';
 import { Chapter } from '@/types/entities';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
 
@@ -16,14 +17,15 @@ export function useChapterFormPresenter() {
   });
 
   const saveChapterMutation = useMutation({
-    mutationFn: (newChapter: Partial<Chapter>) => saveChapter(newChapter),
+    mutationFn: (newChapter: Partial<Chapter>) => createChapter(newChapter as CreateChapterInput),
     onMutate: (newChapter) => {
       const title = newChapter.title?.trim() || 'new chapter';
       const toastId = startDbChangeToast(`Creating \"${title}\"...`);
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
+    onSuccess: (_data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ['chapters'] });
+      queryClient.invalidateQueries({ queryKey: ['story', variables.story_id] });
       resolveDbChangeToast(context?.toastId, 'Chapter created successfully');
     },
     onError: (error, _variables, context) => {
