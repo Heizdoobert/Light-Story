@@ -43,9 +43,11 @@ describe('F4 worker gateway health probe', () => {
     expect(source).toContain('toISOString()');
   });
 
-  it('DEVIATION: worker has no /api/health route (spec expects worker: "kv-worker" response)', () => {
+  it('worker exposes GET /api/health returning the spec health contract (status ok, worker kv-worker, ISO timestamp)', () => {
     const workerSource = readRepoFile(WORKER_INDEX);
-    expect(workerSource).not.toContain('/api/health');
-    expect(workerSource).not.toContain('kv-worker');
+    expect(workerSource).toContain('/api/health');
+    expect(workerSource).toContain("status: 'ok'");
+    expect(workerSource).toContain("worker: 'kv-worker'");
+    expect(workerSource).toContain('toISOString()');
   });
 });

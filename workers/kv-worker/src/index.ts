@@ -160,6 +160,24 @@ export default {
     }
 
     const pathname = url.pathname;
+
+    if (request.method === 'GET' && pathname === '/api/health') {
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          worker: 'kv-worker',
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders(origin),
+          },
+        },
+      );
+    }
+
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
 
     const authHeader = request.headers.get('Authorization') ?? '';
