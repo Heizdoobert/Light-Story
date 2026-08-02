@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getBookmarks, toggleBookmark } from '@/services/reader/readerHub.service';
+import { getBookmarks } from '@/services/reader/readerHub.service';
+import { toggleBookmark } from '@/actions/bookmarks.actions';
 
 export function useBookmarks() {
   const queryClient = useQueryClient();
@@ -11,7 +12,12 @@ export function useBookmarks() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: toggleBookmark,
+    mutationFn: async (comicId: string) => {
+      const wasBookmarked = (query.data ?? []).includes(comicId);
+      const r = await toggleBookmark(comicId);
+      if (!r.success) throw new Error(r.error ?? 'Bookmark toggle failed');
+      return !wasBookmarked;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookmarks'] });
     },
