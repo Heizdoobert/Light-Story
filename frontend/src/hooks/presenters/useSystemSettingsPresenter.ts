@@ -13,7 +13,8 @@ import {
   SidebarMenuVisibility,
   getRoleVisibleTabs,
 } from '@/lib/admin/systemSettings';
-import { fetchSystemSettingsSnapshot, saveSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
+import * as systemSettingsActions from '@/actions/system-settings.actions';
+import { fetchSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
 import { SystemSettingsSnapshotDto } from '@/types/dto';
 
 type SystemLogEntry = {
@@ -116,19 +117,22 @@ export const useSystemSettingsPresenter = () => {
   }, [compactMode, showSyncBadge, visibility, menuVisibility]);
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      await saveSystemSettingsSnapshot({
+    mutationFn: () =>
+      systemSettingsActions.saveSystemSettings({
         compactMode,
         showSyncBadge,
         dashboardTabVisibility: visibility,
         sidebarMenuVisibility: menuVisibility,
-      });
-    },
+      }),
     onMutate: () => {
       const toastId = startDbChangeToast('Saving system settings...');
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
+    onSuccess: (data, _variables, context) => {
+      if (!data?.success) {
+        rejectDbChangeToast(context?.toastId, data?.error ?? 'Failed to save system settings', 'update_settings');
+        return;
+      }
       queryClient.invalidateQueries({ queryKey: ['site_settings'] });
       resolveDbChangeToast(context?.toastId, 'System settings saved successfully');
       appendSystemLog('Save settings', 'Persisted interface, tab visibility, and sidebar visibility settings.');

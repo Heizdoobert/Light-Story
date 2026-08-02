@@ -5,8 +5,10 @@ import {
   parseDashboardTabVisibility,
   parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
+  type DashboardTabVisibility,
+  type SidebarMenuVisibility,
 } from '@/lib/admin/systemSettings';
-import { SiteSettingDto, SystemSettingsSnapshotDto } from '@/types/dto';
+import { SiteSettingDto } from '@/types/dto';
 import { apiClient } from '@/lib/api/apiClient';
 
 const SETTINGS_KEYS = [
@@ -31,7 +33,12 @@ const toRows = (input: unknown): SiteSettingDto[] => {
     .filter((row) => row.key.length > 0);
 };
 
-export async function fetchSystemSettingsSnapshot(): Promise<SystemSettingsSnapshotDto> {
+export async function fetchSystemSettingsSnapshot(): Promise<{
+  compactMode: boolean;
+  showSyncBadge: boolean;
+  dashboardTabVisibility: DashboardTabVisibility;
+  sidebarMenuVisibility: SidebarMenuVisibility;
+}> {
   try {
     const keysParam = SETTINGS_KEYS.join(',');
     const rows = toRows(
@@ -59,15 +66,4 @@ export async function fetchSystemSettingsSnapshot(): Promise<SystemSettingsSnaps
       sidebarMenuVisibility: DEFAULT_SIDEBAR_MENU_VISIBILITY,
     };
   }
-}
-
-export async function saveSystemSettingsSnapshot(snapshot: SystemSettingsSnapshotDto): Promise<void> {
-  const payload = [
-    { key: SITE_SETTING_KEYS.uiCompactMode, value: snapshot.compactMode },
-    { key: SITE_SETTING_KEYS.uiShowSyncBadge, value: snapshot.showSyncBadge },
-    { key: SITE_SETTING_KEYS.dashboardTabVisibility, value: snapshot.dashboardTabVisibility },
-    { key: SITE_SETTING_KEYS.sidebarMenuVisibility, value: snapshot.sidebarMenuVisibility },
-  ];
-
-  await apiClient.post('/api/admin/site-settings', { payload });
 }
