@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptimisticUpdate } from '@/hooks/common/useOptimisticUpdate';
 import { apiClient } from '@/lib/api/apiClient';
+import { toggleStoryLike } from '@/actions/story.actions';
 
 /**
  * Hook for story-related mutations with optimistic updates.
@@ -40,13 +41,14 @@ export const useStoryMutations = () => {
    */
   const useLikeStoryMutation = () => {
     return useMutation({
-      mutationFn: async ({ storyId }: { storyId: string; isCurrentlyLiked?: boolean }) => {
-        await apiClient.post('/api/rpc/toggle_story_like', { story_id_param: storyId });
+      mutationFn: async ({ storyId }: { storyId: string }) => {
+        const r = await toggleStoryLike(storyId);
+        if (!r.success) throw new Error(r.error ?? 'Failed to toggle like');
       },
-      onMutate: async ({ storyId, isCurrentlyLiked }) => {
+      onMutate: async ({ storyId }) => {
         await queryClient.cancelQueries({ queryKey: ['story', storyId] });
         const cached = queryClient.getQueryData(['story', storyId]) as any;
-        const liked = isCurrentlyLiked ?? cached?.is_liked_by_user ?? false;
+        const liked = cached?.is_liked_by_user ?? false;
         const rollback = optimisticToggleLike(storyId, liked);
         return { rollback };
       },

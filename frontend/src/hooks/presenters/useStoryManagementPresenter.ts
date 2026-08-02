@@ -1,13 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  fetchStoriesPage,
-  updateStory,
-  deleteStory,
-  bulkUpdateStatus,
-  bulkDeleteStories
-} from '@/services/comics/story.service';
+import { fetchStoriesPage } from '@/services/comics/story.service';
+import * as adminStoriesActions from '@/actions/admin-stories.actions';
 import { Story } from '@/types/entities';
 import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
 
@@ -48,7 +43,8 @@ export function useStoryManagementPresenter(params: {
 
   const updateStoryMutation = useMutation({
     mutationFn: (payload: { id: string; title: string; description: string; status: StoryStatus }) =>
-      updateStory(payload.id, {
+      adminStoriesActions.updateStory({
+        id: payload.id,
         title: payload.title,
         description: payload.description,
         status: payload.status,
@@ -57,9 +53,13 @@ export function useStoryManagementPresenter(params: {
       const toastId = startDbChangeToast(`Updating "${payload.title}"...`);
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Story updated successfully');
+    onSuccess: (data, _variables, context) => {
+      if (!data?.success) {
+        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
+        return;
+      }
       invalidateStories();
+      resolveDbChangeToast(context?.toastId, 'Story updated successfully');
     },
     onError: (error, _variables, context) => {
       rejectDbChangeToast(context?.toastId, error, 'save_story');
@@ -67,14 +67,18 @@ export function useStoryManagementPresenter(params: {
   });
 
   const deleteStoryMutation = useMutation({
-    mutationFn: (id: string) => deleteStory(id),
+    mutationFn: (id: string) => adminStoriesActions.deleteStory({ id }),
     onMutate: () => {
       const toastId = startDbChangeToast('Deleting story...');
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Story deleted successfully');
+    onSuccess: (data, _variables, context) => {
+      if (!data?.success) {
+        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
+        return;
+      }
       invalidateStories();
+      resolveDbChangeToast(context?.toastId, 'Story deleted successfully');
     },
     onError: (error, _variables, context) => {
       rejectDbChangeToast(context?.toastId, error, 'save_story');
@@ -83,14 +87,18 @@ export function useStoryManagementPresenter(params: {
 
   const bulkStatusMutation = useMutation({
     mutationFn: ({ ids, status }: { ids: string[]; status: StoryStatus }) =>
-      bulkUpdateStatus(ids, status),
+      adminStoriesActions.bulkUpdateStatus({ ids, status }),
     onMutate: ({ ids, status }) => {
       const toastId = startDbChangeToast(`Updating ${ids.length} stories to ${status}...`);
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Bulk status updated');
+    onSuccess: (data, _variables, context) => {
+      if (!data?.success) {
+        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
+        return;
+      }
       invalidateStories();
+      resolveDbChangeToast(context?.toastId, 'Bulk status updated');
     },
     onError: (error, _variables, context) => {
       rejectDbChangeToast(context?.toastId, error, 'save_story');
@@ -98,14 +106,18 @@ export function useStoryManagementPresenter(params: {
   });
 
   const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => bulkDeleteStories(ids),
+    mutationFn: (ids: string[]) => adminStoriesActions.bulkDeleteStories({ ids }),
     onMutate: (ids) => {
       const toastId = startDbChangeToast(`Deleting ${ids.length} selected stories...`);
       return { toastId };
     },
-    onSuccess: (_data, _variables, context) => {
-      resolveDbChangeToast(context?.toastId, 'Selected stories deleted');
+    onSuccess: (data, _variables, context) => {
+      if (!data?.success) {
+        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
+        return;
+      }
       invalidateStories();
+      resolveDbChangeToast(context?.toastId, 'Selected stories deleted');
     },
     onError: (error, _variables, context) => {
       rejectDbChangeToast(context?.toastId, error, 'save_story');

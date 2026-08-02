@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createCategory, updateCategory, deleteCategory } from '@/services/comics/taxonomy.service';
+import { createCategory, updateCategory, deleteCategory } from '@/actions/taxonomy.actions';
 import { useCategoryPresenter } from '@/hooks/presenters/useCategoryPresenter';
 import { useAuth } from '@/context/AuthContext';
 import { useCrudMutation } from '@/hooks/presenters/useTaxonomyCrud';
@@ -25,7 +25,7 @@ export const CategoryManagementTab: React.FC = () => {
 
   const updateMutation = useCrudMutation({
     mutationFn: (payload: { id: string; name: string; description?: string }) =>
-      updateCategory(payload.id, { name: payload.name, description: payload.description }),
+      updateCategory({ id: payload.id, name: payload.name, description: payload.description }),
     queryKeys: [['categories']],
     successMsg: 'Category updated successfully',
     actionLabel: (v) => `Updating category "${v.name.trim() || 'category'}"`,
@@ -33,7 +33,7 @@ export const CategoryManagementTab: React.FC = () => {
   });
 
   const deleteMutation = useCrudMutation({
-    mutationFn: (id: string) => deleteCategory(id),
+    mutationFn: (id: string) => deleteCategory({ id }),
     queryKeys: [['categories'], ['category-story-links']],
     successMsg: 'Category deleted successfully',
     actionLabel: 'Deleting category',

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react";
 import { motion } from "motion/react";
 import { Plus, Search, Edit2, Trash2, Languages, Check, X, UserCheck, Loader2 } from "lucide-react";
 import { apiClient } from "@/lib/api/apiClient";
+import { createTranslator, updateTranslator, deleteTranslator } from "@/actions/translators.actions";
 import { toast } from "sonner";
 import type { ComicCmsRecord } from "@/services/comics/comicCms.service";
 
@@ -154,40 +155,16 @@ export const TranslatorManagementTab: React.FC<TranslatorManagementTabProps> = (
     };
 
     try {
-      if (editingId) {
-        await apiClient.patch(`/admin/translators/${editingId}`, payload);
-        toast.success("Cập nhật thông tin nhóm dịch thành công!");
-      } else {
-        await apiClient.post("/admin/translators", payload);
-        toast.success("Tạo nhóm dịch mới thành công!");
+      const res = editingId
+        ? await updateTranslator({ id: editingId, ...payload })
+        : await createTranslator(payload);
+      if (!res?.success) {
+        toast.error(res?.error ?? "Operation failed");
+        return;
       }
+      toast.success(editingId ? "Cập nhật thông tin nhóm dịch thành công!" : "Tạo nhóm dịch mới thành công!");
       setIsModalOpen(false);
       await fetchTranslators();
-    } catch (err: any) {
-      console.error("[TranslatorManagement] Failed to save", err);
-      // Fallback local update
-      let updated: TranslatorRecord[];
-      if (editingId) {
-        updated = translators.map((t) =>
-          t.id === editingId
-            ? { ...t, name: name.trim(), contact: contact.trim(), notes: notes.trim(), status }
-            : t
-        );
-      } else {
-        const newRecord: TranslatorRecord = {
-          id: `trans-${Date.now()}`,
-          name: name.trim(),
-          contact: contact.trim(),
-          notes: notes.trim(),
-          status,
-          createdAt: new Date().toISOString().slice(0, 10),
-        };
-        updated = [newRecord, ...translators];
-      }
-      setTranslators(updated);
-      saveTranslators(updated);
-      setIsModalOpen(false);
-      toast.success(editingId ? "Đã cập nhật nhóm dịch!" : "Đã thêm nhóm dịch!");
     } finally {
       setSaving(false);
     }
@@ -195,17 +172,13 @@ export const TranslatorManagementTab: React.FC<TranslatorManagementTabProps> = (
 
   const handleDelete = async (id: string, name: string) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa nhóm dịch "${name}" không?`)) {
-      try {
-        await apiClient.delete(`/admin/translators/${id}`);
-        toast.success(`Đã xóa nhóm dịch "${name}"`);
-        await fetchTranslators();
-      } catch (err) {
-        console.error("[TranslatorManagement] Failed to delete", err);
-        const updated = translators.filter((t) => t.id !== id);
-        setTranslators(updated);
-        saveTranslators(updated);
-        toast.success(`Đã xóa nhóm dịch "${name}"`);
+      const res = await deleteTranslator({ id });
+      if (!res?.success) {
+        toast.error(res?.error ?? "Operation failed");
+        return;
       }
+      toast.success(`Đã xóa nhóm dịch "${name}"`);
+      await fetchTranslators();
     }
   };
 

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as storyService from '@/services/comics/story.service';
+import { incrementStoryView } from '@/actions/stories.actions';
 import { toast } from 'sonner';
 
 export const useStories = () => {
@@ -13,7 +14,8 @@ export const useStories = () => {
 
   const incrementViewMutation = useMutation({
     mutationFn: async (storyId: string) => {
-      await storyService.incrementViews(storyId);
+      const result = await incrementStoryView(storyId);
+      if (!result.success) throw new Error(result.error ?? 'Failed to increment view');
     },
     onMutate: async (storyId) => {
       await queryClient.cancelQueries({ queryKey: ['stories'] });
@@ -29,6 +31,9 @@ export const useStories = () => {
       queryClient.setQueryData(['stories'], context?.previousStories);
       console.error('Failed to increment view:', _err);
       toast.error('Failed to increment view');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['stories'] });
     },
   });
 

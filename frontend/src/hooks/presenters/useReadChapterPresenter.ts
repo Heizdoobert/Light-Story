@@ -7,7 +7,7 @@ import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeContext";
-import { recordReadingHistory } from "@/services/reader/readerHub.service";
+import { saveReadingProgress } from "@/actions/reading-history.actions";
 import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
@@ -145,7 +145,7 @@ export function useReadChapterPresenter() {
           : currentRes?.chapter || currentRes;
         setCurrentChapter(currentData);
         if (currentData) {
-          recordReadingHistory(comicId, chapterId, currentData.chapter_number || 1);
+          saveReadingProgress({ comicId: comicId, chapterId: chapterId, chapterNumber: currentData.chapter_number || 1 });
         }
 
         let imgArray: string[] = [];

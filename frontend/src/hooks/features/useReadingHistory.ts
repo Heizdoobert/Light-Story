@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getReadingHistory, recordReadingHistory } from '@/services/reader/readerHub.service';
+import { getReadingHistory, mirrorReadingHistory } from '@/services/reader/readerHub.service';
+import { saveReadingProgress } from '@/actions/reading-history.actions';
 
 export function useReadingHistory() {
   const queryClient = useQueryClient();
@@ -11,8 +12,11 @@ export function useReadingHistory() {
   });
 
   const recordMutation = useMutation({
-    mutationFn: ({ comicId, chapterId, chapterNumber }: { comicId: string; chapterId: string; chapterNumber: number }) =>
-      recordReadingHistory(comicId, chapterId, chapterNumber),
+    mutationFn: async (args: { comicId: string; chapterId: string; chapterNumber: number }) => {
+      mirrorReadingHistory(args);
+      await saveReadingProgress(args);
+      return args;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reading-history'] });
     },

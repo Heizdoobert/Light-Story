@@ -74,9 +74,12 @@ export async function getReadingHistory(): Promise<HistoryItem[]> {
   return getLocalHistory();
 }
 
-export async function recordReadingHistory(comicId: string, chapterId: string, chapterNumber: number): Promise<void> {
-  await apiClient.post('/api/user/history', { comicId, chapterId, chapterNumber }).catch(() => {});
-
+export function mirrorReadingHistory(item: {
+  comicId: string;
+  chapterId: string;
+  chapterNumber: number;
+}): void {
+  const { comicId, chapterId, chapterNumber } = item;
   const history = getLocalHistory().filter((h) => h.comicId !== comicId);
   const newItem: HistoryItem = {
     comicId,

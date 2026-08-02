@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { supabase } from '@/infrastructure/supabase/client';
 import { fetchSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
 
 export async function getUiSettings() {
@@ -50,73 +49,6 @@ export default {};
 
 export async function fetchProfiles() {
   return apiClient.get<Array<any>>('/api/admin/profiles?page=1&pageSize=500');
-}
-
-export async function updateProfileRole(id: string, role: string) {
-  await apiClient.post('/api/admin/profiles', { action: 'updateRole', id, role });
-}
-
-export async function updateProfileName(id: string, full_name: string | null) {
-  await apiClient.post('/api/admin/profiles', { action: 'updateName', id, full_name });
-}
-
-async function getAccessToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  try {
-    const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith('sb-') && k.endsWith('-auth-token'),
-    );
-    if (sbKeys.length > 0) {
-      const raw = localStorage.getItem(sbKeys[0]);
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.access_token) return session.access_token;
-      }
-    }
-    if (supabase) {
-      const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
-    }
-  } catch {
-  }
-  return null;
-}
-
-export async function callManageUserFunction(body: Record<string, unknown>) {
-  const accessToken = await getAccessToken();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  try {
-    const data = await apiClient.post<any>('/api/admin/manage-user', body);
-    return { data, error: null };
-  } catch (err: any) {
-    const errorMessage = err?.message ?? 'Request failed';
-    const shouldFallbackToEdgeFunction =
-      err?.status >= 500 &&
-      /server supabase unavailable|createUser failed|createUser exception|Internal error|Cannot read properties of undefined/i.test(errorMessage);
-
-    if (shouldFallbackToEdgeFunction && supabaseUrl && supabaseKey && accessToken) {
-      const edgeResponse = await fetch(`${supabaseUrl}/functions/v1/manage-user`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(body),
-      });
-
-      const edgeJson = await edgeResponse.json().catch(() => ({ raw: '' }));
-      if (!edgeResponse.ok) {
-        return { data: edgeJson, error: new Error(edgeJson?.error ?? `Request failed ${edgeResponse.status}`) };
-      }
-
-      return { data: edgeJson, error: null };
-    }
-
-    return { data: null, error: err instanceof Error ? err : new Error(errorMessage) };
-  }
 }
 
 export async function getAuditLogs(limit = 200) {
