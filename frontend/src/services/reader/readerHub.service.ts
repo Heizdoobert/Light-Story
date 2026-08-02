@@ -89,7 +89,3 @@ export function mirrorReadingHistory(item: {
   };
   setLocalHistory([newItem, ...history].slice(0, 50));
 }
-
-export async function recordReadingHistory(comicId: string, chapterId: string, chapterNumber: number): Promise<void> {
-  mirrorReadingHistory({ comicId, chapterId, chapterNumber });
-}
