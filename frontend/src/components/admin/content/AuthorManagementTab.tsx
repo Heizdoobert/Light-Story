@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createAuthor, updateAuthor, deleteAuthor, createTranslator, updateTranslator, deleteTranslator } from '@/services/comics/taxonomy.service';
+import { createAuthor, updateAuthor, deleteAuthor, createTranslator, updateTranslator, deleteTranslator } from '@/actions/taxonomy.actions';
 import { useAuthorPresenter } from '@/hooks/presenters/useAuthorPresenter';
 import { useTranslatorPresenter } from '@/hooks/presenters/useTranslatorPresenter';
 import { useCrudMutation } from '@/hooks/presenters/useTaxonomyCrud';
@@ -60,7 +60,7 @@ const AuthorsSection: React.FC = () => {
 
   const updateMutation = useCrudMutation({
     mutationFn: (payload: { id: string; name: string; bio?: string }) =>
-      updateAuthor(payload.id, { name: payload.name, bio: payload.bio }),
+      updateAuthor({ id: payload.id, name: payload.name, bio: payload.bio }),
     queryKeys: [['authors']],
     successMsg: 'Author updated successfully',
     actionLabel: (v) => `Updating author "${v.name.trim() || 'author'}"`,
@@ -68,7 +68,7 @@ const AuthorsSection: React.FC = () => {
   });
 
   const deleteMutation = useCrudMutation({
-    mutationFn: (id: string) => deleteAuthor(id),
+    mutationFn: (id: string) => deleteAuthor({ id }),
     queryKeys: [['authors'], ['author-story-links']],
     successMsg: 'Author deleted successfully',
     actionLabel: 'Deleting author...',
@@ -255,7 +255,7 @@ const TranslatorsSection: React.FC = () => {
   });
 
   const updateMutation = useCrudMutation({
-    mutationFn: () => updateTranslator(editingId!, { name: formName.trim(), contact: formContact.trim(), notes: formNotes.trim(), status: formStatus }),
+    mutationFn: () => updateTranslator({ id: editingId!, name: formName.trim(), contact: formContact.trim(), notes: formNotes.trim(), status: formStatus }),
     queryKeys: [['translators']],
     successMsg: 'Translator updated successfully',
     actionLabel: `Updating translator "${formName.trim()}"`,
@@ -263,7 +263,7 @@ const TranslatorsSection: React.FC = () => {
   });
 
   const deleteMutation = useCrudMutation({
-    mutationFn: (id: string) => deleteTranslator(id),
+    mutationFn: (id: string) => deleteTranslator({ id }),
     queryKeys: [['translators']],
     successMsg: 'Translator deleted successfully',
     actionLabel: 'Deleting translator...',
