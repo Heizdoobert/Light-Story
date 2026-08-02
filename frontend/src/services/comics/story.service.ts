@@ -32,13 +32,6 @@ export async function incrementViews(storyId: string): Promise<void> {
   await apiClient.post('/api/stories/views', { storyId });
 }
 
-export async function saveStory(story: Partial<Story>): Promise<Story> {
-  const result = await apiClient.post<Story[] | { story: Story }>('/api/admin/manage-story', { story });
-  const created = Array.isArray(result) ? result[0] : result.story;
-  if (!created) throw new Error('Story was created but the server did not return the record');
-  return created;
-}
-
 export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPageResult> {
   const searchParams = new URLSearchParams();
   searchParams.set('page', String(Math.max(1, params.page ?? 1)));
@@ -58,6 +51,5 @@ export default {
   fetchStories,
   fetchStoryById,
   incrementViews,
-  saveStory,
   fetchStoriesPage,
 };

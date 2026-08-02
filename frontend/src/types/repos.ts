@@ -4,7 +4,6 @@ export interface IStoryRepository {
   getStories(): Promise<Story[]>;
   getStoryById(id: string): Promise<Story | null>;
   incrementViews(storyId: string): Promise<void>;
-  saveStory(story: Partial<Story>): Promise<Story>;
 }
 
 export interface IChapterRepository {

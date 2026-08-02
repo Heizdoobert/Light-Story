@@ -1,7 +1,8 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { saveStory } from '@/services/comics/story.service';
+import { createStory } from '@/actions/story-form.actions';
+import type { CreateStoryInput } from '@/actions/story-form.actions';
 import { fetchAuthors, fetchCategories } from '@/services/comics/taxonomy.service';
 import { uploadStoryCoverImage } from '@/services/comics/storyMedia.service';
 import { Story } from '@/types/entities';
@@ -28,7 +29,7 @@ export function useStoryFormPresenter() {
   const createStoryMutation = useMutation({
     mutationFn: async ({ story, coverFile }: StoryCreatePayload) => {
       const coverUrl = await uploadStoryCoverImage(coverFile);
-      return saveStory({ ...story, cover_url: coverUrl });
+      return createStory({ ...story, cover_url: coverUrl } as CreateStoryInput);
     },
     onMutate: (payload) => {
       const title = payload.story.title?.trim() || 'new story';
