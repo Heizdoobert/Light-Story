@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { ChevronLeft, BookOpen, Eye, List, Clock, User } from "lucide-react";
 import { useStoryDetail } from "@/hooks/features/useStoryDetail";
+import { cn } from "@/lib/utils";
 
 interface StoryDetailPageContentProps {
   storyId: string;
@@ -69,18 +71,26 @@ export function StoryDetailPageContent({ storyId }: StoryDetailPageContentProps)
             className="w-full md:w-[260px] shrink-0 mx-auto md:mx-0"
           >
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 border-4 border-white dark:border-slate-800">
-              <img
+              <Image
                 src={
                   story.cover_url ||
                   `https://picsum.photos/seed/${story.id}/400/600`
                 }
                 alt={story.title}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 260px"
+                unoptimized
                 referrerPolicy="no-referrer"
+                className="object-cover"
               />
               <div className="absolute top-3 right-3">
                 <span
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase shadow-sm backdrop-blur-md ${story.status === "completed" ? "bg-emerald-500/90 text-white" : "bg-primary/90 text-white"}`}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-[11px] font-black uppercase shadow-sm backdrop-blur-md",
+                    story.status === "completed"
+                      ? "bg-emerald-500/90 text-white"
+                      : "bg-primary/90 text-white",
+                  )}
                 >
                   {story.status === "completed"
                     ? "Hoàn thành"

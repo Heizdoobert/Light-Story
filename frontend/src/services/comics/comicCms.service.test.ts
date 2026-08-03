@@ -3,6 +3,12 @@ import * as comicService from './comic.service';
 import * as service from './comicCms.service';
 import { apiClient } from '@/lib/api/apiClient';
 import type { ComicCmsFormValues } from '@/lib/validation/comicCmsSchemas';
+import {
+  createComicFromMetadata as mockCreateComicFromMetadataAction,
+  updateComicRecord as mockUpdateComicRecordAction,
+  deleteComic as mockDeleteComicAction,
+  recordComicAudit as mockRecordComicAuditAction,
+} from '@/actions/admin-comics.actions';
 
 vi.mock('./comic.service', () => ({
   uploadComicCover: vi.fn(),
@@ -15,6 +21,16 @@ vi.mock('@/lib/api/apiClient', () => ({
     patch: vi.fn(),
     delete: vi.fn(),
   },
+}));
+
+vi.mock('@/actions/admin-comics.actions', () => ({
+  createComicFromMetadata: vi.fn(),
+  updateComicRecord: vi.fn(),
+  deleteComic: vi.fn(),
+  deleteComicChapter: vi.fn(),
+  recordComicAudit: vi.fn(),
+  createChapter: vi.fn(),
+  updateChapterImages: vi.fn(),
 }));
 
 const MOCK_DB_ROW = {
@@ -90,17 +106,20 @@ describe('createComicFromMetadata', () => {
     coverUrl: '',
   };
 
-  it('uploads cover then POSTs comic then prepends to catalog', async () => {
+  it('uploads cover then creates comic via action then prepends to catalog', async () => {
     vi.mocked(comicService.uploadComicCover).mockResolvedValue('https://r2.example.com/cover.jpg');
-    vi.mocked(apiClient.post).mockResolvedValue({
-      id: 'new-id',
-      title: 'New Comic',
-      author: 'New Author',
-      description: 'Brand new',
-      status: 'draft',
-      cover_url: 'https://r2.example.com/cover.jpg',
-      views: 0,
-      updated_at: '2026-06-15T00:00:00Z',
+    vi.mocked(mockCreateComicFromMetadataAction).mockResolvedValue({
+      success: true,
+      data: {
+        id: 'new-id',
+        title: 'New Comic',
+        author: 'New Author',
+        description: 'Brand new',
+        status: 'draft',
+        cover_url: 'https://r2.example.com/cover.jpg',
+        views: 0,
+        updated_at: '2026-06-15T00:00:00Z',
+      },
     });
     const existing = { ...MOCK_RECORD, id: 'other' };
     localStorage.setItem('comic-cms:catalog', JSON.stringify([existing]));
@@ -108,7 +127,7 @@ describe('createComicFromMetadata', () => {
     const result = await service.createComicFromMetadata({ ...formValues, coverFile: new File([], 'cover.png') });
 
     expect(comicService.uploadComicCover).toHaveBeenCalledTimes(1);
-    expect(apiClient.post).toHaveBeenCalledWith('/api/admin/comics', {
+    expect(mockCreateComicFromMetadataAction).toHaveBeenCalledWith({
       title: 'New Comic',
       author: 'New Author',
       description: 'Brand new',
@@ -122,35 +141,38 @@ describe('createComicFromMetadata', () => {
     expect(catalog[0].id).toBe('new-id');
   });
 
-  it('POSTs without cover when no coverFile provided', async () => {
-    vi.mocked(apiClient.post).mockResolvedValue(MOCK_DB_ROW);
+  it('creates comic without cover when no coverFile provided', async () => {
+    vi.mocked(mockCreateComicFromMetadataAction).mockResolvedValue({ success: true, data: MOCK_DB_ROW });
 
     const result = await service.createComicFromMetadata({ ...formValues, coverFile: null });
 
     expect(comicService.uploadComicCover).not.toHaveBeenCalled();
-    expect(apiClient.post).toHaveBeenCalled();
+    expect(mockCreateComicFromMetadataAction).toHaveBeenCalledWith(expect.objectContaining({
+      coverUrl: undefined,
+    }));
     expect(result.title).toBe('Test Comic');
   });
 
   it('defaults author to Unknown when empty', async () => {
-    vi.mocked(apiClient.post).mockResolvedValue(MOCK_DB_ROW);
+    vi.mocked(mockCreateComicFromMetadataAction).mockResolvedValue({ success: true, data: MOCK_DB_ROW });
 
     await service.createComicFromMetadata({ ...formValues, author: '', coverFile: null });
 
-    expect(apiClient.post).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+    expect(mockCreateComicFromMetadataAction).toHaveBeenCalledWith(expect.objectContaining({
       author: 'Unknown',
     }));
   });
 });
 
 describe('updateComicRecord', () => {
-  it('PATCHes comic and updates catalog', async () => {
+  it('updates comic via action and updates catalog', async () => {
     localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
-    vi.mocked(apiClient.patch).mockResolvedValue({ ...MOCK_DB_ROW, title: 'Updated Title' });
+    vi.mocked(mockUpdateComicRecordAction).mockResolvedValue({ success: true, data: { ...MOCK_DB_ROW, title: 'Updated Title' } });
 
     const result = await service.updateComicRecord({ ...MOCK_RECORD, title: 'Updated Title' });
 
-    expect(apiClient.patch).toHaveBeenCalledWith('/api/admin/comics/comic-1', {
+    expect(mockUpdateComicRecordAction).toHaveBeenCalledWith({
+      id: 'comic-1',
       title: 'Updated Title',
       author: 'Test Author',
       description: 'A test comic',
@@ -163,7 +185,7 @@ describe('updateComicRecord', () => {
   });
 
   it('prepends to catalog when comic not found', async () => {
-    vi.mocked(apiClient.patch).mockResolvedValue(MOCK_DB_ROW);
+    vi.mocked(mockUpdateComicRecordAction).mockResolvedValue({ success: true, data: MOCK_DB_ROW });
 
     await service.updateComicRecord(MOCK_RECORD);
 
@@ -173,13 +195,13 @@ describe('updateComicRecord', () => {
 });
 
 describe('deleteComic', () => {
-  it('DELETEs comic and removes from catalog', async () => {
+  it('deletes comic via action and removes from catalog', async () => {
     localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD, { ...MOCK_RECORD, id: 'other' }]));
-    vi.mocked(apiClient.delete).mockResolvedValue({ success: true });
+    vi.mocked(mockDeleteComicAction).mockResolvedValue({ success: true });
 
     await service.deleteComic('comic-1');
 
-    expect(apiClient.delete).toHaveBeenCalledWith('/api/admin/comics/comic-1');
+    expect(mockDeleteComicAction).toHaveBeenCalledWith({ id: 'comic-1' });
     const catalog = JSON.parse(localStorage.getItem('comic-cms:catalog')!);
     expect(catalog).toHaveLength(1);
     expect(catalog[0].id).toBe('other');
@@ -296,19 +318,19 @@ describe('draft persistence', () => {
 });
 
 describe('recordComicAudit', () => {
-  it('POSTs audit event, does not throw on failure', async () => {
-    vi.mocked(apiClient.post).mockResolvedValue({ success: true });
+  it('records audit event via action, does not throw on failure', async () => {
+    vi.mocked(mockRecordComicAuditAction).mockResolvedValue({ success: true });
 
     await service.recordComicAudit('comic.create', { comicId: 'c1' });
 
-    expect(apiClient.post).toHaveBeenCalledWith('/api/admin/audit', expect.objectContaining({
+    expect(mockRecordComicAuditAction).toHaveBeenCalledWith(expect.objectContaining({
       action: 'comic.create',
-      entity_type: 'comic',
+      entityType: 'comic',
     }));
   });
 
   it('swallows errors gracefully', async () => {
-    vi.mocked(apiClient.post).mockRejectedValue(new Error('Network error'));
+    vi.mocked(mockRecordComicAuditAction).mockRejectedValue(new Error('Network error'));
     await expect(service.recordComicAudit('comic.create', {})).resolves.toBeUndefined();
   });
 });

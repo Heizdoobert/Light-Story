@@ -25,7 +25,7 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
   if (!(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  return fetch(`${getBaseUrl()}${path}`, { ...init, headers });
+  return fetch(`${getBaseUrl()}${path}`, { cache: 'no-store', ...init, headers });
 }
 
 // ponytail: mirrors apiClient's inline error chain; shared by all action modules

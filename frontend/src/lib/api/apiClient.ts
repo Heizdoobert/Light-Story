@@ -101,6 +101,7 @@ async function request<T>(
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
+      cache: 'no-store',
       ...options,
       headers,
     });

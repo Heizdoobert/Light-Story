@@ -6,15 +6,15 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 
-export const setMaintenanceModeSchema = z.object({
+const setMaintenanceModeSchema = z.object({
   enabled: z.boolean(),
 });
 
-export const clearCacheSchema = z.object({
+const clearCacheSchema = z.object({
   target: z.string().optional(),
 });
 
-export const triggerBackupSchema = z.object({
+const triggerBackupSchema = z.object({
   type: z.string().optional(),
 });
 

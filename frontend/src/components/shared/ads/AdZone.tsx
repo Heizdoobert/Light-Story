@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { cn } from "@/lib/utils";
 
 type AdZoneFormat = "banner" | "in-feed" | "rectangle" | "skyscraper";
 
@@ -21,7 +20,7 @@ export const AdZone: React.FC<AdZoneProps> = ({
     <div
       id={`ad-zone-${zoneId}`}
       data-ad-zone={zoneId}
-      className={`my-4 w-full flex flex-col items-center justify-center transition-all ${className}`}
+      className={cn("my-4 w-full flex flex-col items-center justify-center transition-all", className)}
     >
       <div className="w-full max-w-[800px] relative rounded-2xl border border-dashed border-slate-300/80 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-900/40 p-3 sm:p-4 text-center overflow-hidden">
         <div className="absolute top-2 right-3 text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500 bg-slate-200/60 dark:bg-slate-800/60 px-2 py-0.5 rounded-full">

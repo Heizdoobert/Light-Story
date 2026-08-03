@@ -1,5 +1,3 @@
-"use client";
-
 import { Suspense } from "react";
 import { SearchPageContent } from "@/components/comics/SearchPageContent";
 

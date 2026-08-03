@@ -6,7 +6,7 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 
-export const createStorySchema = z.object({
+const createStorySchema = z.object({
   title: z.string().min(1),
   author: z.string().min(1),
   description: z.string(),

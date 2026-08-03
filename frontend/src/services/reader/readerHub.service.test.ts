@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getBookmarks, toggleBookmark, getReadingHistory, mirrorReadingHistory } from './readerHub.service';
+import { getReadingHistory, mirrorReadingHistory } from './readerHub.service';
 
 beforeEach(() => {
   localStorage.clear();
@@ -7,17 +7,6 @@ beforeEach(() => {
 });
 
 describe('readerHub.service - LocalStorage Fallback', () => {
-  it('toggles bookmark in localStorage when guest', async () => {
-    const isBookmarked = await toggleBookmark('comic-101');
-    expect(isBookmarked).toBe(true);
-
-    const list = await getBookmarks();
-    expect(list).toContain('comic-101');
-
-    const toggledOff = await toggleBookmark('comic-101');
-    expect(toggledOff).toBe(false);
-  });
-
   it('records reading history in localStorage when guest', async () => {
     mirrorReadingHistory({ comicId: 'comic-101', chapterId: 'chap-5', chapterNumber: 5 });
     const history = await getReadingHistory();

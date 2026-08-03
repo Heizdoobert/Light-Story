@@ -2,10 +2,12 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, Eye } from 'lucide-react';
 import { useRecommendations } from '@/hooks/features/useRecommendations';
 import { getStatusStyles } from '@/lib/utils/statusStyles';
 import { proxiedR2ImageUrl } from '@/services/comics/comicCms.service';
+import { cn } from '@/lib/utils';
 
 type RecommendedComicsProps = {
   comicId: string;
@@ -40,12 +42,15 @@ export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId })
             className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 dark:border-slate-800/80"
           >
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-              <img
+              <Image
                 src={proxiedR2ImageUrl((comic as any).coverUrl || (comic as any).cover_url || '') || 'https://placehold.co/300x400?text=No+Cover'}
                 alt={comic.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fill
+                sizes="(max-width: 768px) 50vw, 16vw"
+                unoptimized
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <span className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm ${getStatusStyles(comic.status)}`}>
+              <span className={cn('absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm', getStatusStyles(comic.status))}>
                 {comic.status === 'completed' ? 'Hoàn thành' : 'Đang ra'}
               </span>
             </div>

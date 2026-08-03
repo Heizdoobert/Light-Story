@@ -4,6 +4,15 @@ import type {
   ComicStatus,
 } from "@/lib/validation/comicCmsSchemas";
 import { uploadComicCover } from "./comic.service";
+import {
+  createComicFromMetadata as createComicFromMetadataAction,
+  updateComicRecord as updateComicRecordAction,
+  deleteComic as deleteComicAction,
+  deleteComicChapter as deleteComicChapterAction,
+  recordComicAudit as recordComicAuditAction,
+  createChapter as createChapterAction,
+  updateChapterImages as updateChapterImagesAction,
+} from "@/actions/admin-comics.actions";
 
 const COMIC_CMS_CATALOG_KEY = "comic-cms:catalog";
 
@@ -333,14 +342,15 @@ export async function createComicFromMetadata(
   if (input.coverFile) {
     coverUrl = await uploadComicCover(input.coverFile);
   }
-  const result = await apiClient.post<any>("/api/admin/comics", {
+  const res = await createComicFromMetadataAction({
     title: input.title,
     author: input.author || "Unknown",
     description: input.description || "",
     status: input.status || "draft",
     coverUrl: coverUrl || undefined,
   });
-  const created = Array.isArray(result) ? result[0] : result;
+  if (!res.success) throw new Error(res.error ?? "Failed to create comic");
+  const created = Array.isArray(res.data) ? res.data[0] : res.data;
   const record = mapDbRowToRecord(created);
   const catalog = readCatalog();
   catalog.unshift(record);
@@ -351,14 +361,16 @@ export async function createComicFromMetadata(
 export async function updateComicRecord(
   record: ComicCmsRecord,
 ): Promise<ComicCmsRecord> {
-  const result = await apiClient.patch<any>(`/api/admin/comics/${record.id}`, {
+  const res = await updateComicRecordAction({
+    id: record.id,
     title: record.title,
     author: record.author,
     description: record.description,
     status: record.status,
     coverUrl: record.coverUrl,
   });
-  const updated = Array.isArray(result) ? result[0] : result;
+  if (!res.success) throw new Error(res.error ?? "Failed to update comic");
+  const updated = Array.isArray(res.data) ? res.data[0] : res.data;
   const mapped = mapDbRowToRecord(updated);
   const catalog = readCatalog();
   const index = catalog.findIndex((r) => r.id === record.id);
@@ -369,7 +381,8 @@ export async function updateComicRecord(
 }
 
 export async function deleteComic(id: string): Promise<void> {
-  await apiClient.delete(`/api/admin/comics/${id}`);
+  const res = await deleteComicAction({ id });
+  if (!res.success) throw new Error(res.error ?? "Failed to delete comic");
   const catalog = readCatalog();
   writeCatalog(catalog.filter((r) => r.id !== id));
 }
@@ -378,7 +391,8 @@ export async function deleteComicChapter(
   comicId: string,
   chapterId: string,
 ): Promise<void> {
-  await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
+  const res = await deleteComicChapterAction({ comicId, chapterId });
+  if (!res.success) throw new Error(res.error ?? "Failed to delete chapter");
   const catalog = readCatalog();
   const comicIndex = catalog.findIndex((r) => r.id === comicId);
   if (comicIndex !== -1) {
@@ -395,13 +409,7 @@ export async function recordComicAudit(
   entityId?: string,
 ): Promise<void> {
   try {
-    await apiClient.post("/api/admin/audit", {
-      action,
-      metadata,
-      entity_type: entityType,
-      entity_id: entityId,
-      timestamp: new Date().toISOString(),
-    });
+    await recordComicAuditAction({ action, metadata, entityType, entityId });
   } catch (err) {
     console.error("[comicCms] recordComicAudit failed", err);
   }
@@ -421,8 +429,13 @@ export async function createChapter(data: {
   chapter_number?: number;
   cover_url?: string;
 }): Promise<{ id: string }> {
-  const result = await apiClient.post<any>("/api/admin/chapters", data);
-  return Array.isArray(result) ? result[0] : result;
+  const res = await createChapterAction({
+    story_id: data.story_id,
+    title: data.title,
+    chapter_number: data.chapter_number,
+  });
+  if (!res.success) throw new Error(res.error ?? "Failed to create chapter");
+  return (Array.isArray(res.data) ? res.data[0] : res.data) as { id: string };
 }
 
 export async function getPresignedPutUrls(
@@ -456,7 +469,11 @@ export async function updateChapterImages(
   chapterId: string,
   content: { src: string; alt?: string; caption?: string }[],
 ): Promise<void> {
-  await apiClient.put(`/api/admin/chapters/${chapterId}/images`, { content });
+  const res = await updateChapterImagesAction({
+    chapterId,
+    content: content.map((c) => ({ src: c.src, alt: c.alt ?? "" })),
+  });
+  if (!res.success) throw new Error(res.error ?? "Failed to update chapter images");
 }
 
 export async function createChapterWithPresignedUpload(

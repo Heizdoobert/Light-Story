@@ -7,12 +7,10 @@ import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { AD_CONTROL_KEYS } from '@/lib/admin/adPolicy';
 
-export const updateAdConfigSchema = z.object({
+const updateAdConfigSchema = z.object({
   key: z.string().min(1),
   value: z.unknown(),
 });
-
-export const updateSiteSettingSchema = updateAdConfigSchema;
 
 export async function updateAdConfig(input: {
   key: string;
@@ -39,7 +37,7 @@ export async function updateSiteSetting(input: {
   return updateAdConfig(input);
 }
 
-export const updateAdSlotSchema = z.object({
+const updateAdSlotSchema = z.object({
   slot: z.string().min(1),
   code: z.string(),
 });
@@ -62,7 +60,7 @@ export async function updateAdSlot(input: {
   });
 }
 
-export const toggleAdSlotSchema = z.object({
+const toggleAdSlotSchema = z.object({
   slot: z.string().min(1).optional(),
   enabled: z.boolean(),
 });

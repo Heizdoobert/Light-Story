@@ -1,7 +1,6 @@
-"use client";
-
 import React from 'react';
 import { AlertTriangle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type ChartContainerProps = {
   title: string;
@@ -21,7 +20,7 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-6 ${className}`}>
+    <div className={cn("rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 p-6", className)}>
       <div className="mb-6">
         <h3 className="text-lg font-bold text-slate-950 dark:text-white">{title}</h3>
         {description && (

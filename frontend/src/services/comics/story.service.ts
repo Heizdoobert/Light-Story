@@ -28,10 +28,6 @@ export async function fetchStoryById(id: string): Promise<Story | null> {
   return apiClient.get<Story>(`/api/stories/${id}`);
 }
 
-export async function incrementViews(storyId: string): Promise<void> {
-  await apiClient.post('/api/stories/views', { storyId });
-}
-
 export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPageResult> {
   const searchParams = new URLSearchParams();
   searchParams.set('page', String(Math.max(1, params.page ?? 1)));
@@ -50,6 +46,5 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
 export default {
   fetchStories,
   fetchStoryById,
-  incrementViews,
   fetchStoriesPage,
 };

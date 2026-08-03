@@ -6,37 +6,37 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 
-export const updateStoryStatusSchema = z.object({
+const updateStoryStatusSchema = z.object({
   id: z.string().min(1),
   status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
 });
 
-export const featureStorySchema = z.object({
+const featureStorySchema = z.object({
   id: z.string().min(1),
   isFeatured: z.boolean().optional(),
 });
 
-export const deleteStoryAdminSchema = z.object({
+const deleteStoryAdminSchema = z.object({
   id: z.string().min(1),
 });
 
-export const updateStorySchema = z.object({
+const updateStorySchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   description: z.string(),
   status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
 });
 
-export const deleteStorySchema = z.object({
+const deleteStorySchema = z.object({
   id: z.string().min(1),
 });
 
-export const bulkUpdateStatusSchema = z.object({
+const bulkUpdateStatusSchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
   status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
 });
 
-export const bulkDeleteStoriesSchema = z.object({
+const bulkDeleteStoriesSchema = z.object({
   ids: z.array(z.string().min(1)).min(1),
 });
 
@@ -101,18 +101,7 @@ export async function updateStory(input: z.infer<typeof updateStorySchema>): Pro
 }
 
 export async function deleteStory(input: z.infer<typeof deleteStorySchema>): Promise<ActionResult> {
-  return act(deleteStorySchema, input, async ({ id }) => {
-    const res = await fetchApi('/api/admin/manage-story', {
-      method: 'POST',
-      body: JSON.stringify({ action: 'delete', id }),
-    });
-    if (!res.ok) {
-      return { ok: false, error: await messageFromResponse(res) };
-    }
-    revalidateTag('admin_stories', 'max');
-    revalidateTag('admin-dashboard-metrics', 'max');
-    return { ok: true };
-  });
+  return deleteStoryAdmin(input);
 }
 
 export async function bulkUpdateStatus(input: z.infer<typeof bulkUpdateStatusSchema>): Promise<ActionResult> {

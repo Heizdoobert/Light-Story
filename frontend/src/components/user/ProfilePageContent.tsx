@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
@@ -98,9 +99,12 @@ export const ProfilePageContent: React.FC = () => {
             <div className="px-8 pb-8">
               <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 mb-8">
                 {profile.avatar_url && sanitizeImageUrl(profile.avatar_url) ? (
-                  <img
-                    src={proxyAvatarUrl(profile.avatar_url) || undefined}
+                  <Image
+                    src={proxyAvatarUrl(profile.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                     alt="Avatar"
+                    width={80}
+                    height={80}
+                    unoptimized
                     className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
                     onError={(e) => {
                       e.currentTarget.onerror = null;

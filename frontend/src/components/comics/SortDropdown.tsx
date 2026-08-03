@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { cn } from "@/lib/utils";
 
 // Danh sách các tùy chọn để dễ quản lý
 const SORT_OPTIONS = [
@@ -58,16 +59,17 @@ export const SortDropdown = () => {
         {/* 1. NÚT BẤM (Giao diện bo góc 2px như bạn yêu cầu) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center justify-between gap-3 pl-3.5 pr-3 py-2 min-w-[170px] bg-white dark:bg-slate-900 border rounded-xl text-sm font-bold transition-all shadow-xs focus:outline-none ${
+          className={cn(
+            "flex items-center justify-between gap-3 pl-3.5 pr-3 py-2 min-w-[170px] bg-white dark:bg-slate-900 border rounded-xl text-sm font-bold transition-all shadow-xs focus:outline-none",
             isOpen
               ? "border-primary text-primary dark:border-primary dark:text-primary ring-2 ring-primary/20"
-              : "border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-slate-700"
-          }`}
+              : "border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-slate-700",
+          )}
         >
           <span>{currentLabel}</span>
           <ChevronDown
             size={16}
-            className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-primary" : "text-slate-500"}`}
+            className={cn("transition-transform duration-300", isOpen ? "rotate-180 text-primary" : "text-slate-500")}
           />
         </button>
 
@@ -88,11 +90,12 @@ export const SortDropdown = () => {
                     <button
                       key={option.value}
                       onClick={() => handleSortChange(option.value)}
-                      className={`flex items-center justify-between px-3 py-2.5 text-sm font-medium text-left transition-colors ${
+                      className={cn(
+                        "flex items-center justify-between px-3 py-2.5 text-sm font-medium text-left transition-colors",
                         isSelected
                           ? "bg-primary/10 text-primary dark:bg-primary/20"
-                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                      }`}
+                          : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700",
+                      )}
                     >
                       {option.label}
                       {/* Dấu tích V cho item đang được chọn */}

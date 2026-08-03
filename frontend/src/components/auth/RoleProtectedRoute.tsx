@@ -1,3 +1,5 @@
+'use client';
+
 // This component protects routes based on the user's role
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';

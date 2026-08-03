@@ -1,5 +1,3 @@
-'use client';
-
 export function LoadingScreen() {
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">

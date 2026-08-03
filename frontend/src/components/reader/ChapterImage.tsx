@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { ImageOff, RefreshCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type ChapterImageProps = {
   src: string;
@@ -43,7 +45,14 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
   };
 
   return (
-    <div ref={containerRef} className={`relative min-h-[100px] w-full flex items-center justify-center bg-slate-900/10 dark:bg-slate-950/40 overflow-hidden my-2 ${fitScreen ? 'max-h-screen' : 'rounded-xl'} ${className}`}>
+    <div
+      ref={containerRef}
+      className={cn(
+        'relative min-h-[100px] w-full flex items-center justify-center bg-slate-900/10 dark:bg-slate-950/40 overflow-hidden my-2',
+        fitScreen ? 'max-h-screen' : 'rounded-xl',
+        className,
+      )}
+    >
       {!visible && (
         <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800/60 flex items-center justify-center">
           <span className="text-xs font-semibold text-slate-400">&nbsp;</span>
@@ -69,14 +78,20 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
         </div>
       ) : (
         visible && (
-          <img
+          <Image
             key={imgKey}
             src={src}
             alt={alt}
-            decoding="async"
+            width={800}
+            height={1200}
+            unoptimized
             onLoad={() => setLoaded(true)}
             onError={() => setError(true)}
-            className={`transition-opacity duration-300 ${fitScreen ? 'w-auto h-full max-w-full object-contain' : 'w-full h-auto'} ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            className={cn(
+              'transition-opacity duration-300',
+              fitScreen ? 'w-auto h-full max-w-full object-contain' : 'w-full h-auto',
+              loaded ? 'opacity-100' : 'opacity-0',
+            )}
           />
         )
       )}

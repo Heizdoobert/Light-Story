@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { supabase } from '@/infrastructure/supabase/client';
+import { createComic as createComicAction, createComicChapter as createComicChapterAction } from '@/actions/comics.actions';
 
 export type ComicContext = {
   id: string;
@@ -185,28 +186,17 @@ export async function uploadChapterImages(images: File[], comicId?: string, chap
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {
-  const result = await apiClient.post<any>('/api/comics', {
-    title: input.title,
-    description: input.description,
-    cover_url: input.coverUrl,
-    author: input.author ?? 'Unknown',
-    status: input.status ?? 'ongoing',
-    category: input.category ?? [],
-  });
-  const comic = Array.isArray(result) ? result[0] : result.comic;
+  const res = await createComicAction(input);
+  if (!res.success) throw new Error(res.error ?? 'Failed to create comic');
+  const comic = Array.isArray(res.data) ? res.data[0] : (res.data as any)?.comic;
   if (!comic) throw new Error('Comic creation succeeded but no comic was returned');
   return comic;
 }
 
 export async function createComicChapter(input: ChapterCreateInput): Promise<ChapterCreateResponse['chapter']> {
-  const result = await apiClient.post<any>(`/api/comics/${input.comicId}/chapters`, {
-    storyId: input.storyId,
-    tenantKey: input.tenantKey,
-    chapterNumber: input.chapterNumber,
-    title: input.title,
-    content: input.content,
-  });
-  const chapter = Array.isArray(result) ? result[0] : result.chapter;
+  const res = await createComicChapterAction(input);
+  if (!res.success) throw new Error(res.error ?? 'Failed to create chapter');
+  const chapter = Array.isArray(res.data) ? res.data[0] : (res.data as any)?.chapter;
   if (!chapter) throw new Error('Chapter creation succeeded but no chapter was returned');
   return chapter;
 }

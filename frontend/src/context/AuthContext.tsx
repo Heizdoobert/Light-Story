@@ -8,6 +8,7 @@ import { supabase } from "@/infrastructure/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/errorUtils";
 import { type AdminProfileDto } from '@/types/dto';
+import { upsertProfile as upsertProfileAction, updateProfile as updateProfileAction } from '@/actions/profiles.actions';
 
 export type UserRole = "superadmin" | "admin" | "employee" | "user";
 
@@ -159,23 +160,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const ensureProfileExists = async (authUser: User) => {
-    if (!supabase) return;
     try {
-      await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: authUser.id,
-            email: authUser.email ?? "",
-            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
-            avatar_url: authUser.user_metadata?.avatar_url ?? null,
-            role: "user",
-          },
-          {
-            onConflict: "id",
-            ignoreDuplicates: true,
-          },
-        );
+      const res = await upsertProfileAction({
+        id: authUser.id,
+        email: authUser.email ?? "",
+        full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+        avatar_url: authUser.user_metadata?.avatar_url ?? null,
+        role: "user",
+      });
+      if (!res.success) {
+        console.warn("Could not auto-create profile:", res.error);
+      }
     } catch (err) {
       console.warn("Could not auto-create profile:", getErrorMessage(err));
     }
@@ -332,13 +327,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       updates.avatar_url = payload.avatar_url;
     }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id);
-
-    if (error) {
-      throw error;
+    const res = await updateProfileAction(updates);
+    if (!res.success) {
+      throw new Error(res.error ?? "Failed to update profile");
     }
 
     const { data: freshProfile, error: refreshError } = await supabase

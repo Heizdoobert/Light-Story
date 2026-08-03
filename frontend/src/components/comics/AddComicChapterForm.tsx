@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { createComicChapter, uploadChapterImages } from "@/services/comics/comic.service";
 import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
 
@@ -146,7 +147,7 @@ export function AddComicChapterForm({ comicId, storyId, tenantKey }: AddComicCha
           <div className="space-y-2">
             {images.map((img) => (
               <div key={img.id} className="flex items-center gap-3 p-2 rounded bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
-                <img src={img.preview} className="w-20 h-20 object-cover rounded" alt="preview" />
+                <Image src={img.preview} width={80} height={80} className="w-20 h-20 object-cover rounded" alt="preview" unoptimized />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="text-sm font-medium">Image {img.order}</div>

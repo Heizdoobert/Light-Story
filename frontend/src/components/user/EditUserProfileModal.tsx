@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/infrastructure/supabase/client';
 import { X, Loader } from 'lucide-react';
@@ -6,6 +7,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/utils/errorUtils';
 import { sanitizeImageUrl } from '@/lib/auth/securityUtils';
+import { cn } from '@/lib/utils';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;
@@ -173,9 +175,12 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                   <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Profile Picture</label>
                   <div className="flex items-center gap-4">
                     {safeAvatarUrl ? (
-                      <img
-                        src={safeAvatarUrl.startsWith("blob:") || safeAvatarUrl.startsWith("http") || safeAvatarUrl.startsWith("/") ? safeAvatarUrl : undefined}
+                      <Image
+                        src={safeAvatarUrl}
                         alt="Avatar"
+                        width={64}
+                        height={64}
+                        unoptimized
                         className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                       />
                     ) : (
@@ -222,9 +227,10 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
-                    className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors ${
-                      fullNameError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
-                    }`}
+                    className={cn(
+                      'w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
+                      fullNameError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600',
+                    )}
                   />
                   {fullNameError && (
                     <p className="text-xs font-semibold text-red-500">{fullNameError}</p>
@@ -242,9 +248,10 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                     value={avatarUrl}
                     onChange={(e) => setAvatarUrl(e.target.value)}
                     placeholder="https://example.com/avatar.jpg"
-                    className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors ${
-                      avatarUrlError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
-                    }`}
+                    className={cn(
+                      'w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors',
+                      avatarUrlError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600',
+                    )}
                   />
                   {avatarUrlError && (
                     <p className="text-xs font-semibold text-red-500">{avatarUrlError}</p>

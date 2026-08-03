@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, SearchX, X } from "lucide-react";
 import { Header } from "@/components/navigation/Header";
@@ -11,6 +12,7 @@ import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
 import { getStatusStyles } from "@/lib/utils/statusStyles";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
+import { cn } from "@/lib/utils";
 
 export const SearchPageContent: React.FC = () => {
   const {
@@ -166,10 +168,13 @@ export const SearchPageContent: React.FC = () => {
                     className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-xs hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-1.5 transition-all duration-300 border border-slate-200/80 dark:border-slate-800"
                   >
                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
-                      <img
+                      <Image
                         src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        fill
+                        sizes="(max-width: 768px) 33vw, (max-width: 1280px) 20vw, 14vw"
+                        unoptimized
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         onError={applyComicCoverFallback}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2.5">
@@ -179,7 +184,10 @@ export const SearchPageContent: React.FC = () => {
                       </div>
                       <div className="absolute top-1.5 right-1.5">
                         <span
-                          className={`px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase shadow-xs backdrop-blur-md ${getStatusStyles(comic.status)}`}
+                          className={cn(
+                            "px-1.5 py-0.5 rounded-md text-[8px] sm:text-[9px] font-black uppercase shadow-xs backdrop-blur-md",
+                            getStatusStyles(comic.status),
+                          )}
                         >
                           {getVietnameseStatus(comic.status)}
                         </span>

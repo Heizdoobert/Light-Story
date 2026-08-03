@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { RoleProtectedRoute } from "@/components/auth/RoleProtectedRoute";
 import { useCreateComicPresenter } from "@/hooks/presenters/useCreateComicPresenter";
 
@@ -53,7 +54,7 @@ export const CreateComicForm: React.FC = () => {
               />
               {previewUrl?.startsWith("blob:") && (
                 <div className="w-20 h-20 rounded overflow-hidden border border-slate-200 dark:border-slate-800">
-                  <img src={previewUrl.startsWith("blob:") ? previewUrl : undefined} alt="cover preview" className="w-full h-full object-cover" />
+                  <Image src={previewUrl} alt="cover preview" width={80} height={80} className="w-full h-full object-cover" unoptimized />
                 </div>
               )}
             </div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ import { LoginModal } from "@/components/auth/LoginModal";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
+import { cn } from "@/lib/utils";
 
 export const ChapterReaderPageContent: React.FC = () => {
   const {
@@ -67,11 +69,12 @@ export const ChapterReaderPageContent: React.FC = () => {
   }
 
   const chapterNavClass = (chapter: typeof prevChapter) =>
-    `flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
+    cn(
+      "flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border",
       chapter
         ? "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary"
-        : "border-transparent bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-600 pointer-events-none"
-    }`;
+        : "border-transparent bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-zinc-600 pointer-events-none",
+    );
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
@@ -104,7 +107,10 @@ export const ChapterReaderPageContent: React.FC = () => {
       </div>
 
       <div
-        className={`w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y ${fitScreen ? "max-w-full" : "max-w-[800px]"}`}
+        className={cn(
+          "w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y",
+          fitScreen ? "max-w-full" : "max-w-[800px]",
+        )}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={() => setShowToolbar(!showToolbar)}
@@ -166,11 +172,14 @@ export const ChapterReaderPageContent: React.FC = () => {
                 onClick={() => scrollToPage(idx)}
                 className="flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary dark:hover:border-primary transition-colors"
               >
-                <img
+                <Image
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="64px"
+                  unoptimized
                   loading="lazy"
+                  className="w-full h-full object-cover"
                 />
               </button>
             ))}
@@ -179,9 +188,10 @@ export const ChapterReaderPageContent: React.FC = () => {
       )}
 
       <div
-        className={`fixed bottom-0 left-0 right-0 z-[60] pointer-events-none transition-transform duration-300 ease-in-out ${
-          showToolbar ? "translate-y-0" : "translate-y-full"
-        }`}
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-[60] pointer-events-none transition-transform duration-300 ease-in-out",
+          showToolbar ? "translate-y-0" : "translate-y-full",
+        )}
       >
         <div className="pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-3 py-2 sm:py-2.5 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-colors">
           <div className="max-w-[700px] mx-auto flex items-center justify-between gap-2">
@@ -207,12 +217,12 @@ export const ChapterReaderPageContent: React.FC = () => {
                   ? `/comics/${comicId}/chapter/${prevChapter.id}`
                   : "#"
               }
-              className={
-                `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
-                (prevChapter
+              className={cn(
+                "flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0",
+                prevChapter
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
-              }
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none",
+              )}
               title="Chương trước"
             >
               <ChevronLeft size={18} />
@@ -237,11 +247,12 @@ export const ChapterReaderPageContent: React.FC = () => {
                     <button
                       key={chap.id}
                       onClick={() => handleSelectChapter(chap.id)}
-                      className={`w-full text-left px-3.5 py-2.5 rounded-lg text-xs sm:text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 ${
+                      className={cn(
+                        "w-full text-left px-3.5 py-2.5 rounded-lg text-xs sm:text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800",
                         chapterId === chap.id
                           ? "text-blue-600 dark:text-blue-400 font-black bg-blue-50 dark:bg-blue-950/40"
-                          : "text-slate-700 dark:text-slate-200 font-semibold"
-                      }`}
+                          : "text-slate-700 dark:text-slate-200 font-semibold",
+                      )}
                     >
                       {chap.chapter_number
                         ? `Chương ${chap.chapter_number}`
@@ -258,12 +269,12 @@ export const ChapterReaderPageContent: React.FC = () => {
                   ? `/comics/${comicId}/chapter/${nextChapter.id}`
                   : "#"
               }
-              className={
-                `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
-                (nextChapter
+              className={cn(
+                "flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0",
+                nextChapter
                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
-                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
-              }
+                  : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none",
+              )}
               title="Chương sau"
             >
               <ChevronRight size={18} />
@@ -271,11 +282,12 @@ export const ChapterReaderPageContent: React.FC = () => {
 
             <button
               onClick={() => setShowThumbnails(!showThumbnails)}
-              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+              className={cn(
+                "p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0",
                 showThumbnails
                   ? "bg-primary text-white shadow-md shadow-primary/30"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700",
+              )}
               title="Xem ảnh nhỏ"
             >
               <LayoutGrid size={18} />
@@ -292,11 +304,12 @@ export const ChapterReaderPageContent: React.FC = () => {
 
             <button
               onClick={() => setFitScreen(!fitScreen)}
-              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+              className={cn(
+                "p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0",
                 fitScreen
                   ? "bg-primary text-white shadow-md shadow-primary/30"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700",
+              )}
               title={fitScreen ? "Vừa khung hình" : "Vừa chiều rộng"}
             >
               {fitScreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
@@ -304,11 +317,12 @@ export const ChapterReaderPageContent: React.FC = () => {
 
             <button
               onClick={() => setAutoAdvance(!autoAdvance)}
-              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+              className={cn(
+                "p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0",
                 autoAdvance
                   ? "bg-primary text-white shadow-md shadow-primary/30"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700",
+              )}
               title={autoAdvance ? "Tắt tự động" : "Tự động chuyển chương"}
             >
               {autoAdvance ? <Play size={18} /> : <Square size={18} />}

@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
 import { apiClient } from "@/lib/api/apiClient";
+import { cn } from "@/lib/utils";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -28,7 +30,17 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const [sort, setSort] = useState<"newest" | "most_viewed" | "oldest">(
     "newest",
   );
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await apiClient.get<any>("/api/categories");
+      if (Array.isArray(res)) return res;
+      if (res && res.items) return res.items;
+      if (res && res.data) return res.data;
+      return [];
+    },
+    retry: false,
+  });
 
   // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -40,24 +52,6 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   // Refs để xử lý click ra ngoài thì tự đóng Dropdown
   const categoryRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await apiClient.get<any>("/api/categories");
-        if (Array.isArray(res)) {
-          setCategories(res);
-        } else if (res && res.items) {
-          setCategories(res.items);
-        } else if (res && res.data) {
-          setCategories(res.data);
-        }
-      } catch (error) {
-        console.error("Lỗi tải danh sách thể loại trong FilterMenu:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   // Xử lý Click Outside để đóng menu
   useEffect(() => {
@@ -143,7 +137,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
             </span>
             <ChevronDown
               size={18}
-              className={`text-slate-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
+              className={cn("text-slate-400 transition-transform duration-300", isCategoryOpen && "rotate-180")}
             />
           </div>
 
@@ -180,7 +174,12 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                       setCategory("all");
                       setIsCategoryOpen(false);
                     }}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${category === "all" ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors",
+                      category === "all"
+                        ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30",
+                    )}
                   >
                     {t("all_categories")}
                     {category === "all" && <Check size={16} />}
@@ -197,7 +196,12 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                             setCategory(catName);
                             setIsCategoryOpen(false);
                           }}
-                          className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors mt-1 ${isSelected ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
+                          className={cn(
+                            "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors mt-1",
+                            isSelected
+                              ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400"
+                              : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30",
+                          )}
                         >
                           {catName}
                           {isSelected && <Check size={16} />}
@@ -233,7 +237,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
             </span>
             <ChevronDown
               size={18}
-              className={`text-slate-400 transition-transform duration-300 ${isSortOpen ? "rotate-180" : ""}`}
+              className={cn("text-slate-400 transition-transform duration-300", isSortOpen && "rotate-180")}
             />
           </div>
 
@@ -256,7 +260,12 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                       setSort(option.value as any);
                       setIsSortOpen(false);
                     }}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${sort === option.value ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
+                    className={cn(
+                      "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors",
+                      sort === option.value
+                        ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30",
+                    )}
                   >
                     {option.label}
                     {sort === option.value && <Check size={16} />}

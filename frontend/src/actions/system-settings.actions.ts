@@ -7,14 +7,14 @@ import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { SITE_SETTING_KEYS } from '@/lib/admin/systemSettings';
 
-export const saveSystemSettingsSchema = z.object({
+const saveSystemSettingsSchema = z.object({
   compactMode: z.boolean(),
   showSyncBadge: z.boolean(),
   dashboardTabVisibility: z.record(z.string(), z.array(z.string())),
   sidebarMenuVisibility: z.record(z.string(), z.array(z.string())),
 });
 
-export const updateSystemSettingsSchema = saveSystemSettingsSchema;
+const updateSystemSettingsSchema = saveSystemSettingsSchema;
 
 export async function saveSystemSettings(
   input: z.infer<typeof saveSystemSettingsSchema>,

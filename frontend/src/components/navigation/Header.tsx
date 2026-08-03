@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LogIn,
@@ -30,6 +32,7 @@ import { Category } from "@/types/entities";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/securityUtils";
+import { cn } from "@/lib/utils";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 
@@ -71,7 +74,17 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile, signOut, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const { data: categories } = useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await apiClient.get<any>("/api/categories").catch(() => []);
+      if (Array.isArray(res)) return res;
+      if (res?.items) return res.items;
+      if (res?.data) return res.data;
+      return DEFAULT_CATEGORIES;
+    },
+    initialData: DEFAULT_CATEGORIES,
+  });
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Comic[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -153,24 +166,6 @@ export const Header: React.FC<HeaderProps> = ({
       document.body.style.overflow = "unset";
     };
   }, [showMobileMenu]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const res = await apiClient.get<any>("/api/categories").catch(() => []);
-        if (Array.isArray(res)) {
-          setCategories(res);
-        } else if (res?.items) {
-          setCategories(res.items);
-        } else if (res?.data) {
-          setCategories(res.data);
-        }
-      } catch {
-        // quiet fallback
-      }
-    };
-    void loadCategories();
-  }, []);
 
   const bounceClick = {
     whileTap: { scale: 0.92 },
@@ -269,9 +264,12 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => setShowResults(false)}
                         className="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
                       >
-                        <img
+                        <Image
                           src={getComicCover(comic)}
                           alt={comic.title}
+                          width={40}
+                          height={56}
+                          unoptimized
                           className="w-10 h-14 rounded object-cover border border-slate-200 dark:border-white/10 shrink-0"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
@@ -361,9 +359,12 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-[#001eff] rounded-full overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <img
+                    <Image
                       src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                       alt="Avatar"
+                      width={40}
+                      height={40}
+                      unoptimized
                       className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-orange-500 dark:border-[#001eff] object-cover"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
@@ -460,9 +461,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{t("nav_categories_title")}</span>
             <ChevronDown
               size={12}
-              className={`transition-transform duration-200 ${
-                showCategoryDropdown ? "rotate-180" : ""
-              }`}
+              className={cn("transition-transform duration-200", showCategoryDropdown && "rotate-180")}
             />
           </button>
 

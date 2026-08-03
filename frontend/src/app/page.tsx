@@ -1,5 +1,5 @@
-import { HomePage } from "@/components/comics/HomePage";
+import { redirect } from 'next/navigation';
 
-export default async function Page() {
-  return <HomePage />;
+export default async function HomePage() {
+  redirect('/dashboard');
 }

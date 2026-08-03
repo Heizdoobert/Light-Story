@@ -2,11 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { Header } from "@/components/navigation/Header";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useHomePagePresenter } from "@/hooks/presenters/useHomePagePresenter";
+import { cn } from "@/lib/utils";
 
 type HomePageProps = {
   initialComics?: Comic[];
@@ -48,18 +50,20 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           </div>
           {trendingComics.length > 0 ? (
             <div className="trending-scroll p-3 sm:p-4 flex overflow-x-auto gap-3 sm:gap-4 scroll-smooth">
-              {trendingComics.map((comic) => (
+              {trendingComics.map((comic, idx) => (
                 <Link
                   key={`trending-${comic.id}`}
                   href={`/comics/${comic.id}`}
                   className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
                 >
                   <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
-                    <img
+                    <Image
                       src={getComicCover(comic)}
                       alt={comic.title}
                       width={300}
                       height={400}
+                      unoptimized
+                      priority={idx === 0}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
@@ -102,11 +106,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                   className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
                 >
                   <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
-                    <img
+                    <Image
                       src={getComicCover(comic)}
                       alt={comic.title}
                       width={300}
                       height={400}
+                      unoptimized
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
@@ -158,11 +163,12 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                         href={`/comics/${comic.id}`}
                         className="relative w-24 h-32 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-[#000000]"
                       >
-                        <img
+                        <Image
                           src={getComicCover(comic)}
                           alt={comic.title}
                           width={300}
                           height={400}
+                          unoptimized
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                           onError={applyComicCoverFallback}
@@ -222,25 +228,27 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
                   >
                     <span
-                      className={`w-6 h-6 rounded-md flex items-center justify-center font-black text-xs shrink-0 ${
+                      className={cn(
+                        "w-6 h-6 rounded-md flex items-center justify-center font-black text-xs shrink-0",
                         idx === 0
                           ? "bg-[#ff008d] text-white"
                           : idx === 1
-                          ? "bg-[#8900ff] text-white"
-                          : idx === 2
-                          ? "bg-[#001eff] text-white"
-                          : "bg-slate-100 dark:bg-[#000b13] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10"
-                      }`}
+                            ? "bg-[#8900ff] text-white"
+                            : idx === 2
+                              ? "bg-[#001eff] text-white"
+                              : "bg-slate-100 dark:bg-[#000b13] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10",
+                      )}
                     >
                       {idx + 1}
                     </span>
 
                     <div className="relative shrink-0 w-12 h-16 overflow-hidden rounded border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#000000]">
-                      <img
+                      <Image
                         src={getComicCover(comic)}
                         alt={comic.title}
                         width={300}
                         height={400}
+                        unoptimized
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         referrerPolicy="no-referrer"
                         onError={applyComicCoverFallback}

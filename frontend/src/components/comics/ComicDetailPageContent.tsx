@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "motion/react";
 import {
   BookOpen,
@@ -19,6 +20,7 @@ import { LoginModal } from "@/components/auth/LoginModal";
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/user/BookmarkButton";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
+import { cn } from "@/lib/utils";
 
 export const ComicDetailPageContent: React.FC = () => {
   const {
@@ -88,14 +90,22 @@ export const ComicDetailPageContent: React.FC = () => {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-48 relative z-20">
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10">
           <div className="flex-shrink-0 flex flex-col items-center sm:items-start w-48 sm:w-64 mx-auto sm:mx-0">
-            <motion.img
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              src={coverUrl}
-              alt={comic.title}
-              onError={handleImageError}
-              className="w-full aspect-[3/4] object-cover rounded-2xl shadow-2xl shadow-primary/20 border-4 border-white dark:border-slate-800"
-            />
+              className="w-full aspect-[3/4]"
+            >
+              <Image
+                src={coverUrl}
+                alt={comic.title}
+                width={400}
+                height={600}
+                unoptimized
+                priority
+                onError={handleImageError}
+                className="w-full h-full object-cover rounded-2xl shadow-2xl shadow-primary/20 border-4 border-white dark:border-slate-800"
+              />
+            </motion.div>
 
             <div className="w-full mt-6 space-y-3">
               <Link
@@ -104,7 +114,12 @@ export const ComicDetailPageContent: React.FC = () => {
                     ? `/comics/${comicId}/chapter/${firstChapter.id}`
                     : "#"
                 }
-                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg ${firstChapter ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1" : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"}`}
+                className={cn(
+                  "flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg",
+                  firstChapter
+                    ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1"
+                    : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed",
+                )}
               >
                 <BookOpen size={18} /> Đọc từ đầu
               </Link>
@@ -115,7 +130,12 @@ export const ComicDetailPageContent: React.FC = () => {
                     ? `/comics/${comicId}/chapter/${latestChapter.id}`
                     : "#"
                 }
-                className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2 ${latestChapter ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"}`}
+                className={cn(
+                  "flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2",
+                  latestChapter
+                    ? "border-primary text-primary hover:bg-primary hover:text-white"
+                    : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed",
+                )}
               >
                 <Play size={18} /> Đọc mới nhất
               </Link>
@@ -131,7 +151,12 @@ export const ComicDetailPageContent: React.FC = () => {
             >
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <span
-                  className={`px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${comic.status === "completed" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-primary/10 text-primary"}`}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider",
+                    comic.status === "completed"
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-primary/10 text-primary",
+                  )}
                 >
                   {getVietnameseStatus(comic.status)}
                 </span>

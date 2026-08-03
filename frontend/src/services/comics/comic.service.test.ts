@@ -23,8 +23,15 @@ const mockApiClient = {
   delete: vi.fn(),
 };
 
+const mockCreateComicAction = vi.fn();
+const mockCreateComicChapterAction = vi.fn();
+
 vi.mock('@/infrastructure/supabase/client', () => ({ supabase: mockSupabase }));
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: mockApiClient }));
+vi.mock('@/actions/comics.actions', () => ({
+  createComic: mockCreateComicAction,
+  createComicChapter: mockCreateComicChapterAction,
+}));
 
 beforeEach(() => {
   localStorage.clear();
@@ -114,21 +121,22 @@ describe('uploadComicCover', () => {
 });
 
 describe('createComic', () => {
-  it('sends POST to /api/comics and returns comic', async () => {
-    mockApiClient.post.mockResolvedValue({ comic: { id: 'c1', title: 'Test' } });
+  it('delegates to createComic action and returns comic', async () => {
+    mockCreateComicAction.mockResolvedValue({ success: true, data: { comic: { id: 'c1', title: 'Test' } } });
 
     const { createComic } = await import('./comic.service');
     const result = await createComic({ title: 'Test', description: 'Desc', coverUrl: 'https://img.test' });
 
     expect(result.title).toBe('Test');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/api/comics', {
-      title: 'Test',
-      description: 'Desc',
-      cover_url: 'https://img.test',
-      author: 'Unknown',
-      status: 'ongoing',
-      category: [],
-    });
+    expect(mockCreateComicAction).toHaveBeenCalledWith({ title: 'Test', description: 'Desc', coverUrl: 'https://img.test' });
+    expect(mockApiClient.post).not.toHaveBeenCalled();
+  });
+
+  it('throws when action fails', async () => {
+    mockCreateComicAction.mockResolvedValue({ success: false, error: 'Gateway exploded' });
+
+    const { createComic } = await import('./comic.service');
+    await expect(createComic({ title: 'Test', description: '', coverUrl: '' })).rejects.toThrow('Gateway exploded');
   });
 });
 

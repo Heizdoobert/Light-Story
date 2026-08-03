@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Category } from "@/types/entities";
@@ -21,53 +22,46 @@ export function useSearchPresenter() {
   const pageParam = searchParams.get("page") || "1";
   const currentPage = parseInt(pageParam, 10) || 1;
 
-  const [comics, setComics] = useState<Comic[]>([]);
-  const [_categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
-  useEffect(() => {
-    apiClient
-      .get<any>("/api/categories")
-      .then((res) => {
-        if (Array.isArray(res)) setCategories(res);
-      })
-      .catch((err) => console.error("Lỗi tải thể loại:", err));
-  }, []);
+  useQuery<Category[]>({
+    queryKey: ["categories"],
+    queryFn: async () => {
+      const res = await apiClient.get<any>("/api/categories");
+      return Array.isArray(res) ? res : [];
+    },
+    retry: false,
+  });
 
-  useEffect(() => {
-    const fetchAndFilterResults = async () => {
-      setLoading(true);
+  const { data, isLoading: loading } = useQuery<{
+    items?: Comic[];
+    total?: number;
+  }>({
+    queryKey: ["search", keyword, category, sort, currentPage],
+    queryFn: async () => {
+      const queryParams = new URLSearchParams();
+      if (keyword) queryParams.append("keyword", keyword);
+      if (category !== "all") queryParams.append("category", category);
+      queryParams.append("sort", sort);
+      queryParams.append("page", String(currentPage));
+      queryParams.append("pageSize", "12");
+
       try {
-        const queryParams = new URLSearchParams();
-        if (keyword) queryParams.append("keyword", keyword);
-        if (category !== "all") queryParams.append("category", category);
-        queryParams.append("sort", sort);
-        queryParams.append("page", String(currentPage));
-        queryParams.append("pageSize", "12");
-
-        const response = await apiClient.get<any>(
+        return await apiClient.get<any>(
           `/api/stories?${queryParams.toString()}`,
         );
-
-        setComics(response?.items || []);
-        setTotalPages(Math.ceil((response?.total || 0) / 12) || 1);
-        setTotalItems(response?.total || 0);
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
-      } finally {
-        setLoading(false);
+        throw error;
       }
-    };
+    },
+  });
 
-    fetchAndFilterResults();
-  }, [keyword, category, sort, currentPage]);
+  const comics = data?.items || [];
+  const totalPages = Math.ceil((data?.total || 0) / 12) || 1;
+  const totalItems = data?.total || 0;
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";

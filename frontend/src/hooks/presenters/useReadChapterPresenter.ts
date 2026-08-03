@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Chapter } from "@/types/entities";
@@ -61,12 +62,6 @@ export function useReadChapterPresenter() {
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
 
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
-  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
-  const [images, setImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -98,27 +93,35 @@ export function useReadChapterPresenter() {
     if (target) router.push(`/comics/${comicId}/chapter/${target.id}`);
   }, [comicId, router]);
 
-  useEffect(() => {
-    const fetchReadingData = async () => {
+  const { data, isLoading } = useQuery<{
+    comic: Comic | null;
+    chapters: Chapter[];
+    currentChapter: Chapter | null;
+    images: string[];
+  }>({
+    queryKey: ["reader", comicId, chapterId],
+    queryFn: async () => {
       try {
         if (USE_MOCK_DATA) {
           await new Promise((resolve) => setTimeout(resolve, 500));
-          setComic(MOCK_COMIC);
-          setAllChapters(MOCK_CHAPTERS);
           const foundChap =
             MOCK_CHAPTERS.find((c) => c.id === chapterId) || MOCK_CHAPTERS[0];
-          setCurrentChapter(foundChap);
-          setImages(MOCK_IMAGES);
-          return;
+          return {
+            comic: MOCK_COMIC,
+            chapters: MOCK_CHAPTERS,
+            currentChapter: foundChap,
+            images: MOCK_IMAGES,
+          };
         }
 
         const comicRes = await apiClient
           .get<any>(`/api/comics/${comicId}`)
           .catch(() => null);
-        if (comicRes)
-          setComic(
-            Array.isArray(comicRes) ? comicRes[0] : comicRes?.comic || comicRes,
-          );
+        const comic = comicRes
+          ? Array.isArray(comicRes)
+            ? comicRes[0]
+            : comicRes?.comic || comicRes
+          : null;
 
         const chaptersRes = await apiClient
           .get<any>(`/api/comics/${comicId}/chapters`)
@@ -135,24 +138,22 @@ export function useReadChapterPresenter() {
             new Date(b.created_at || 0).getTime()
           );
         });
-        setAllChapters(sortedChapters);
 
         const currentRes = await apiClient.get<any>(
           `/api/comics/${comicId}/chapters/${chapterId}`,
         );
-        const currentData = Array.isArray(currentRes)
+        const currentChapter = Array.isArray(currentRes)
           ? currentRes[0]
           : currentRes?.chapter || currentRes;
-        setCurrentChapter(currentData);
-        if (currentData) {
-          saveReadingProgress({ comicId: comicId, chapterId: chapterId, chapterNumber: currentData.chapter_number || 1 });
+        if (currentChapter) {
+          saveReadingProgress({ comicId: comicId, chapterId: chapterId, chapterNumber: currentChapter.chapter_number || 1 });
         }
 
         let imgArray: string[] = [];
-        if (currentData?.content) {
-          const rawText = typeof currentData.content === "string"
-            ? await decryptFieldClient(currentData.content)
-            : currentData.content;
+        if (currentChapter?.content) {
+          const rawText = typeof currentChapter.content === "string"
+            ? await decryptFieldClient(currentChapter.content)
+            : currentChapter.content;
 
           if (typeof rawText === "string") {
             try {
@@ -169,33 +170,45 @@ export function useReadChapterPresenter() {
 
         const cbzTargetUrl =
           imgArray.find((item) => typeof item === "string" && isCbzUrl(item)) ||
-          (typeof currentData?.content === "string" && isCbzUrl(currentData.content)
-            ? currentData.content
+          (typeof currentChapter?.content === "string" && isCbzUrl(currentChapter.content)
+            ? currentChapter.content
             : null);
 
+        let images: string[];
         if (cbzTargetUrl) {
           try {
             toast.info("Đang giải nén tập tin .cbz...");
             const proxiedUrl = proxiedR2ImageUrl(cbzTargetUrl);
-            const unpackedBlobUrls = await loadCbzPagesFromUrl(proxiedUrl);
-            setImages(unpackedBlobUrls);
+            images = await loadCbzPagesFromUrl(proxiedUrl);
           } catch (err) {
             console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
             toast.error("Không thể giải nén file .cbz của chương truyện.");
-            setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
+            images = imgArray.map((url) => proxiedR2ImageUrl(url));
           }
         } else {
-          setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
+          images = imgArray.map((url) => proxiedR2ImageUrl(url));
         }
+
+        return {
+          comic,
+          chapters: sortedChapters,
+          currentChapter,
+          images,
+        };
       } catch (error) {
         toast.error("Không thể tải nội dung chương truyện.");
-      } finally {
-        setLoading(false);
+        throw error;
       }
-    };
+    },
+    enabled: !!(comicId && chapterId),
+    refetchOnWindowFocus: false,
+  });
 
-    if (comicId && chapterId) fetchReadingData();
-  }, [comicId, chapterId]);
+  const comic = data?.comic ?? null;
+  const currentChapter = data?.currentChapter ?? null;
+  const allChapters = data?.chapters ?? [];
+  const images = data?.images ?? [];
+  const loading = isLoading || !comicId || !chapterId;
 
   useEffect(() => {
     autoAdvanceRef.current = autoAdvance;

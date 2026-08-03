@@ -6,7 +6,7 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 
-export const createChapterSchema = z.object({
+const createChapterSchema = z.object({
   story_id: z.string().min(1),
   chapter_number: z.number().int().positive(),
   title: z.string().min(1),
