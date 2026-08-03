@@ -208,7 +208,7 @@ describe("F7 fullstack boundary (createComicFromMetadata)", () => {
     mockApiClient.post.mockRejectedValue(new Error("Server error"));
 
     await expect(
-      createComicFromMetadata({ title: "T", description: "D", author: "", status: "draft", coverFile: null }),
+      createComicFromMetadata({ title: "T", description: "D", author: "", status: "draft", coverFile: null, slug: "slug-t", translator: "", coverUrl: "" }),
     ).rejects.toThrow("Server error");
 
     expect(mockUploadComicCover).not.toHaveBeenCalled();
@@ -218,7 +218,7 @@ describe("F7 fullstack boundary (createComicFromMetadata)", () => {
   it("posts empty coverUrl as undefined when no cover file or url provided", async () => {
     mockApiClient.post.mockResolvedValue({ id: "new-id", title: "T", author: "A", description: "D", status: "draft" });
 
-    await createComicFromMetadata({ title: "T", description: "D", author: "", status: "draft", coverFile: null });
+    await createComicFromMetadata({ title: "T", description: "D", author: "", status: "draft", coverFile: null, slug: "slug-t", translator: "", coverUrl: "" });
 
     expect(mockApiClient.post).toHaveBeenCalledWith("/api/admin/comics", {
       title: "T",

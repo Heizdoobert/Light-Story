@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getReadingHistory, mirrorReadingHistory } from '@/services/reader/readerHub.service';
-import { saveReadingProgress } from '@/actions/reading-history.actions';
+import { saveReadingProgress, clearReadingHistory } from '@/actions/reading-history.actions';
 
 export function useReadingHistory() {
   const queryClient = useQueryClient();
@@ -11,20 +11,32 @@ export function useReadingHistory() {
     staleTime: 30_000,
   });
 
-  const recordMutation = useMutation({
-    mutationFn: async (args: { comicId: string; chapterId: string; chapterNumber: number }) => {
-      mirrorReadingHistory(args);
-      await saveReadingProgress(args);
-      return args;
-    },
-    onSuccess: () => {
+  const recordHistory = async (args: { comicId: string; chapterId: string; chapterNumber: number }) => {
+    mirrorReadingHistory(args);
+    const res = await saveReadingProgress(args);
+    if (res.success) {
       queryClient.invalidateQueries({ queryKey: ['reading-history'] });
-    },
-  });
+    }
+    return res;
+  };
+
+  const clearHistory = async () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('reader:history');
+      } catch {}
+    }
+    const res = await clearReadingHistory();
+    if (res.success) {
+      queryClient.invalidateQueries({ queryKey: ['reading-history'] });
+    }
+    return res;
+  };
 
   return {
     history: query.data ?? [],
     isLoading: query.isLoading,
-    recordHistory: recordMutation.mutate,
+    recordHistory,
+    clearHistory,
   };
 }

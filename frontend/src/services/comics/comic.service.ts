@@ -43,6 +43,7 @@ type ChapterCreateResponse = {
     title: string;
     content: string;
     view_count: number;
+    status: 'uploading' | 'draft' | 'published';
   };
 };
 

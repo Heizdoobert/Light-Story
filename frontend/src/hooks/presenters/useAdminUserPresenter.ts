@@ -1,4 +1,5 @@
 "use client";
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as adminService from '@/services/admin/admin.service';
 import * as adminUserActions from '@/actions/admin-users.actions';
@@ -13,7 +14,7 @@ export function useAdminUserPresenter(canAccess: boolean) {
   });
 
   const roleMutation = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: string }) => adminUserActions.updateProfileRole({ id, role }),
+    mutationFn: ({ id, role }: { id: string; role: string }) => adminUserActions.updateUserRole({ id, role }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
   });
 
@@ -25,13 +26,13 @@ export function useAdminUserPresenter(canAccess: boolean) {
 
   const deleteMutation = useMutation({
     mutationFn: ({ id, email }: { id: string; email: string }) =>
-      adminUserActions.manageAdminUser({ action: 'delete', id, targetEmail: email }),
+      adminUserActions.deleteUser({ id, email }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
   });
 
   const createMutation = useMutation({
     mutationFn: (payload: { email: string; password: string; fullName?: string | null; role?: string }) =>
-      adminUserActions.manageAdminUser({ action: 'create', ...payload }),
+      adminUserActions.createUser(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profiles'] }),
   });
 

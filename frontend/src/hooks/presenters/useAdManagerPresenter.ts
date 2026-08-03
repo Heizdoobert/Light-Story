@@ -22,8 +22,13 @@ export function useAdConfigsQuery() {
 export function useUpdateAdConfig() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, value }: { key: string; value: unknown }) =>
-      adActions.updateSiteSetting({ key, value }),
+    mutationFn: async ({ key, value }: { key: string; value: unknown }) => {
+      const res = await adActions.updateAdConfig({ key, value });
+      if (!res.success) {
+        throw new Error(res.error ?? 'Failed to update ad configuration');
+      }
+      return res;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['site_settings', 'ad_slots'] });
       qc.invalidateQueries({ queryKey: ['site_settings', 'ad_runtime'] });

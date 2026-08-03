@@ -1,49 +1,33 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import * as storyService from '@/services/comics/story.service';
 import { incrementStoryView } from '@/actions/stories.actions';
+import type { IncrementStoryViewInput } from '@/actions/stories.actions';
 import { toast } from 'sonner';
 
 export const useStories = () => {
-  const queryClient = useQueryClient();
-
   const storiesQuery = useQuery({
     queryKey: ['stories'],
     queryFn: () => storyService.fetchStories(),
     staleTime: 1000 * 60 * 5,
   });
 
-  const incrementViewMutation = useMutation({
-    mutationFn: async (storyId: string) => {
-      const result = await incrementStoryView(storyId);
-      if (!result.success) throw new Error(result.error ?? 'Failed to increment view');
-    },
-    onMutate: async (storyId) => {
-      await queryClient.cancelQueries({ queryKey: ['stories'] });
-      const previousStories = queryClient.getQueryData(['stories']);
-
-      queryClient.setQueryData(['stories'], (old: any) =>
-        old?.map((s: any) => (s.id === storyId ? { ...s, views: (s.views || 0) + 1 } : s))
-      );
-
-      return { previousStories };
-    },
-    onError: (_err, _storyId, context) => {
-      queryClient.setQueryData(['stories'], context?.previousStories);
-      console.error('Failed to increment view:', _err);
+  const incrementView = async (input: IncrementStoryViewInput) => {
+    const result = await incrementStoryView(input);
+    if (!result.success) {
+      console.error('Failed to increment view:', result.error);
       toast.error('Failed to increment view');
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['stories'] });
-    },
-  });
+    }
+    return result;
+  };
 
   return {
     stories: storiesQuery.data || [],
     isLoading: storiesQuery.isLoading,
     error: storiesQuery.error,
-    incrementView: incrementViewMutation.mutate,
+    incrementView,
   };
 };
 
 export default useStories;
+
 

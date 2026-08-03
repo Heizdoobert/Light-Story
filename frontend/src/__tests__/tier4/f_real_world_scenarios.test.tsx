@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
 
@@ -214,7 +213,7 @@ describe('Journey 4: Health check API', () => {
   it('returns 200 with status ok and a recent ISO timestamp', async () => {
     const before = Date.now();
     const res = await GET();
-    const body = await res.json();
+    const body = (await res.json()) as { status: string; timestamp: string };
     expect(res.status).toBe(200);
     expect(body.status).toBe('ok');
     const ts = Date.parse(body.timestamp);

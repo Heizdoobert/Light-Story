@@ -1,3 +1,5 @@
+'use server';
+
 import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
@@ -19,6 +21,21 @@ export async function saveReadingProgress(input: {
     const res = await fetchApi('/api/user/history', {
       method: 'POST',
       body: JSON.stringify({ comicId, chapterId, chapterNumber }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('reading-history', 'max');
+    return { ok: true };
+  });
+}
+
+const clearReadingHistorySchema = z.object({}).optional();
+
+export async function clearReadingHistory(): Promise<ActionResult> {
+  return act(clearReadingHistorySchema, {}, async () => {
+    const res = await fetchApi('/api/user/history', {
+      method: 'DELETE',
     });
     if (!res.ok) {
       return { ok: false, error: await messageFromResponse(res) };

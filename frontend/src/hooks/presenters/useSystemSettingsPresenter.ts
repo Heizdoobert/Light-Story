@@ -118,7 +118,7 @@ export const useSystemSettingsPresenter = () => {
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      systemSettingsActions.saveSystemSettings({
+      systemSettingsActions.updateSystemSettings({
         compactMode,
         showSyncBadge,
         dashboardTabVisibility: visibility,

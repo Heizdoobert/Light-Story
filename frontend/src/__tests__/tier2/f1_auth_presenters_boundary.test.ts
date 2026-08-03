@@ -19,9 +19,7 @@ vi.mock("@/context/AuthContext", () => ({ useAuth: () => authMocks }));
 const toastMocks = { success: vi.fn(), error: vi.fn() };
 vi.mock("sonner", () => ({ toast: toastMocks }));
 
-type UseAuthModalPresenter = Awaited<
-  ReturnType<typeof import("@/hooks/presenters/useAuthModalPresenter")>
->["useAuthModalPresenter"];
+type UseAuthModalPresenter = typeof import("@/hooks/presenters/useAuthModalPresenter")["useAuthModalPresenter"];
 
 const event = (): FormEvent => ({ preventDefault: vi.fn() } as unknown as FormEvent);
 

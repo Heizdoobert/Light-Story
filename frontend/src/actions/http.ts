@@ -31,7 +31,7 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
 // ponytail: mirrors apiClient's inline error chain; shared by all action modules
 export async function messageFromResponse(res: Response): Promise<string> {
   try {
-    const body = await res.json();
+    const body: any = await res.json(); // ponytail: legacy/mock APIs send mixed shapes (string or {code,message}); mirrors apiClient's (body as any) pattern
     return (
       (typeof body?.error === 'string' ? body.error : undefined) ??
       body?.error?.message ??

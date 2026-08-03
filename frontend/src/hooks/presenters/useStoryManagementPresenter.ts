@@ -1,6 +1,7 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchStoriesPage } from '@/services/comics/story.service';
 import * as adminStoriesActions from '@/actions/admin-stories.actions';
 import { Story } from '@/types/entities';
@@ -20,6 +21,11 @@ export function useStoryManagementPresenter(params: {
 }) {
   const { page, statusFilter, sortMode, keyword } = params;
   const queryClient = useQueryClient();
+
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isBulkUpdatingStatus, setIsBulkUpdatingStatus] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const storiesQuery = useQuery({
     queryKey: ['admin_stories', { page, statusFilter, sortMode, keyword }],
@@ -41,88 +47,104 @@ export function useStoryManagementPresenter(params: {
     queryClient.invalidateQueries({ queryKey: ['admin-dashboard-metrics'] });
   };
 
-  const updateStoryMutation = useMutation({
-    mutationFn: (payload: { id: string; title: string; description: string; status: StoryStatus }) =>
-      adminStoriesActions.updateStory({
-        id: payload.id,
-        title: payload.title,
-        description: payload.description,
-        status: payload.status,
-      }),
-    onMutate: (payload) => {
+  const updateStoryMutation = {
+    isPending: isUpdating,
+    mutate: async (
+      payload: { id: string; title: string; description: string; status: StoryStatus },
+      options?: { onSuccess?: () => void }
+    ) => {
+      setIsUpdating(true);
       const toastId = startDbChangeToast(`Updating "${payload.title}"...`);
-      return { toastId };
-    },
-    onSuccess: (data, _variables, context) => {
-      if (!data?.success) {
-        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
-        return;
+      try {
+        const res = await adminStoriesActions.updateStory({
+          id: payload.id,
+          title: payload.title,
+          description: payload.description,
+          status: payload.status,
+        });
+        if (!res?.success) {
+          rejectDbChangeToast(toastId, res?.error ?? 'Operation failed', 'save_story');
+          return;
+        }
+        invalidateStories();
+        resolveDbChangeToast(toastId, 'Story updated successfully');
+        options?.onSuccess?.();
+      } catch (error: any) {
+        rejectDbChangeToast(toastId, error?.message ?? error, 'save_story');
+      } finally {
+        setIsUpdating(false);
       }
-      invalidateStories();
-      resolveDbChangeToast(context?.toastId, 'Story updated successfully');
     },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
+  };
 
-  const deleteStoryMutation = useMutation({
-    mutationFn: (id: string) => adminStoriesActions.deleteStory({ id }),
-    onMutate: () => {
+  const deleteStoryMutation = {
+    isPending: isDeleting,
+    mutate: async (id: string, options?: { onSuccess?: () => void }) => {
+      setIsDeleting(true);
       const toastId = startDbChangeToast('Deleting story...');
-      return { toastId };
-    },
-    onSuccess: (data, _variables, context) => {
-      if (!data?.success) {
-        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
-        return;
+      try {
+        const res = await adminStoriesActions.deleteStory({ id });
+        if (!res?.success) {
+          rejectDbChangeToast(toastId, res?.error ?? 'Operation failed', 'save_story');
+          return;
+        }
+        invalidateStories();
+        resolveDbChangeToast(toastId, 'Story deleted successfully');
+        options?.onSuccess?.();
+      } catch (error: any) {
+        rejectDbChangeToast(toastId, error?.message ?? error, 'save_story');
+      } finally {
+        setIsDeleting(false);
       }
-      invalidateStories();
-      resolveDbChangeToast(context?.toastId, 'Story deleted successfully');
     },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
+  };
 
-  const bulkStatusMutation = useMutation({
-    mutationFn: ({ ids, status }: { ids: string[]; status: StoryStatus }) =>
-      adminStoriesActions.bulkUpdateStatus({ ids, status }),
-    onMutate: ({ ids, status }) => {
+  const bulkStatusMutation = {
+    isPending: isBulkUpdatingStatus,
+    mutate: async (
+      { ids, status }: { ids: string[]; status: StoryStatus },
+      options?: { onSuccess?: () => void }
+    ) => {
+      setIsBulkUpdatingStatus(true);
       const toastId = startDbChangeToast(`Updating ${ids.length} stories to ${status}...`);
-      return { toastId };
-    },
-    onSuccess: (data, _variables, context) => {
-      if (!data?.success) {
-        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
-        return;
+      try {
+        const res = await adminStoriesActions.bulkUpdateStatus({ ids, status });
+        if (!res?.success) {
+          rejectDbChangeToast(toastId, res?.error ?? 'Operation failed', 'save_story');
+          return;
+        }
+        invalidateStories();
+        resolveDbChangeToast(toastId, 'Bulk status updated');
+        options?.onSuccess?.();
+      } catch (error: any) {
+        rejectDbChangeToast(toastId, error?.message ?? error, 'save_story');
+      } finally {
+        setIsBulkUpdatingStatus(false);
       }
-      invalidateStories();
-      resolveDbChangeToast(context?.toastId, 'Bulk status updated');
     },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
+  };
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: (ids: string[]) => adminStoriesActions.bulkDeleteStories({ ids }),
-    onMutate: (ids) => {
+  const bulkDeleteMutation = {
+    isPending: isBulkDeleting,
+    mutate: async (ids: string[], options?: { onSuccess?: () => void }) => {
+      setIsBulkDeleting(true);
       const toastId = startDbChangeToast(`Deleting ${ids.length} selected stories...`);
-      return { toastId };
-    },
-    onSuccess: (data, _variables, context) => {
-      if (!data?.success) {
-        rejectDbChangeToast(context?.toastId, data?.error ?? 'Operation failed', 'save_story');
-        return;
+      try {
+        const res = await adminStoriesActions.bulkDeleteStories({ ids });
+        if (!res?.success) {
+          rejectDbChangeToast(toastId, res?.error ?? 'Operation failed', 'save_story');
+          return;
+        }
+        invalidateStories();
+        resolveDbChangeToast(toastId, 'Selected stories deleted');
+        options?.onSuccess?.();
+      } catch (error: any) {
+        rejectDbChangeToast(toastId, error?.message ?? error, 'save_story');
+      } finally {
+        setIsBulkDeleting(false);
       }
-      invalidateStories();
-      resolveDbChangeToast(context?.toastId, 'Selected stories deleted');
     },
-    onError: (error, _variables, context) => {
-      rejectDbChangeToast(context?.toastId, error, 'save_story');
-    },
-  });
+  };
 
   return {
     storiesQuery,

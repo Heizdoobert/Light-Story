@@ -28,9 +28,7 @@ vi.mock('next/navigation', () => ({
 const event = (): FormEvent => ({ preventDefault: vi.fn() } as unknown as FormEvent);
 
 describe('F1 useAuthModalPresenter', () => {
-  let useAuthModalPresenter: Awaited<
-    ReturnType<typeof import('@/hooks/presenters/useAuthModalPresenter')>
-  >['useAuthModalPresenter'];
+  let useAuthModalPresenter: typeof import('@/hooks/presenters/useAuthModalPresenter')['useAuthModalPresenter'];
 
   beforeEach(async () => {
     vi.clearAllMocks();
@@ -219,9 +217,7 @@ describe('F1 useAuthModalPresenter', () => {
 });
 
 describe('F1 useResetPasswordPresenter', () => {
-  let useResetPasswordPresenter: Awaited<
-    ReturnType<typeof import('@/hooks/presenters/useResetPasswordPresenter')>
-  >['useResetPasswordPresenter'];
+  let useResetPasswordPresenter: typeof import('@/hooks/presenters/useResetPasswordPresenter')['useResetPasswordPresenter'];
 
   beforeEach(async () => {
     vi.clearAllMocks();

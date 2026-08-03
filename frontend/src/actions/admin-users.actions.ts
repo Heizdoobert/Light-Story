@@ -1,3 +1,5 @@
+'use server';
+
 import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
@@ -24,6 +26,10 @@ export async function updateProfileRole(input: { id: string; role: string }): Pr
   });
 }
 
+export async function updateUserRole(input: { id: string; role: string }): Promise<ActionResult> {
+  return updateProfileRole(input);
+}
+
 const updateProfileNameSchema = z.object({
   id: z.string().min(1),
   full_name: z.string().nullable(),
@@ -46,8 +52,34 @@ export async function updateProfileName(input: {
   });
 }
 
+export async function updateUserName(input: {
+  id: string;
+  full_name: string | null;
+}): Promise<ActionResult> {
+  return updateProfileName(input);
+}
+
+const updateUserStatusSchema = z.object({
+  id: z.string().min(1),
+  status: z.string().min(1),
+});
+
+export async function updateUserStatus(input: { id: string; status: string }): Promise<ActionResult> {
+  return act(updateUserStatusSchema, input, async ({ id, status }) => {
+    const res = await fetchApi('/api/admin/profiles', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateStatus', id, status }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('profiles', 'max');
+    return { ok: true };
+  });
+}
+
 const manageAdminUserSchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('delete'), id: z.string().min(1), targetEmail: z.string().email() }),
+  z.object({ action: z.literal('delete'), id: z.string().min(1), targetEmail: z.string().optional() }),
   z.object({
     action: z.literal('create'),
     email: z.string().email(),
@@ -92,7 +124,10 @@ export async function manageAdminUser(input: z.infer<typeof manageAdminUserSchem
           body: JSON.stringify(payload),
         });
 
-        const edgeJson = await edgeResponse.json().catch(() => ({ raw: '' }));
+        const edgeJson = (await edgeResponse.json().catch(() => ({ raw: '' }))) as {
+          raw?: string;
+          error?: string;
+        };
         if (edgeResponse.ok) {
           revalidateTag('profiles', 'max');
           return { ok: true, data: edgeJson };
@@ -103,4 +138,17 @@ export async function manageAdminUser(input: z.infer<typeof manageAdminUserSchem
 
     return { ok: false, error };
   });
+}
+
+export async function deleteUser(input: { id: string; email?: string }): Promise<ActionResult> {
+  return manageAdminUser({ action: 'delete', id: input.id, targetEmail: input.email || '' });
+}
+
+export async function createUser(input: {
+  email: string;
+  password: string;
+  fullName?: string | null;
+  role?: string;
+}): Promise<ActionResult> {
+  return manageAdminUser({ action: 'create', ...input });
 }

@@ -2,8 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useOptimisticUpdate } from '@/hooks/common/useOptimisticUpdate';
-import { apiClient } from '@/lib/api/apiClient';
-import { toggleStoryLike } from '@/actions/story.actions';
+import { toggleStoryLike, incrementStoryView } from '@/actions/story.actions';
 
 /**
  * Hook for story-related mutations with optimistic updates.
@@ -18,7 +17,10 @@ export const useStoryMutations = () => {
   const useIncrementViewMutation = () => {
     return useMutation({
       mutationFn: async (storyId: string) => {
-        await apiClient.post('/api/stories/views', { storyId });
+        const res = await incrementStoryView(storyId);
+        if (!res.success) {
+          throw new Error(res.error ?? 'Failed to increment view');
+        }
       },
       onMutate: async (storyId) => {
         // Cancel outgoing refetches

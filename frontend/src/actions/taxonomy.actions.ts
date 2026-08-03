@@ -1,3 +1,5 @@
+'use server';
+
 import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
@@ -30,6 +32,7 @@ const authorUpdateSchema = z.object({
   bio: z.string().nullable().optional(),
 });
 
+// Category actions
 export async function createCategory(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
   return act(taxonomyItemSchema, input, async ({ name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
@@ -72,6 +75,7 @@ export async function deleteCategory(input: z.infer<typeof taxonomyDeleteSchema>
   });
 }
 
+// Author actions
 export async function createAuthor(input: z.infer<typeof authorItemSchema>): Promise<ActionResult> {
   return act(authorItemSchema, input, async ({ name, bio }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
@@ -105,6 +109,92 @@ export async function deleteAuthor(input: z.infer<typeof taxonomyDeleteSchema>):
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
       body: JSON.stringify({ entity: 'author', action: 'delete', id }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+// Genre actions
+export async function createGenre(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
+  return act(taxonomyItemSchema, input, async ({ name, description }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'genre', action: 'create', payload: { name, description } }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+export async function updateGenre(input: z.infer<typeof taxonomyUpdateSchema>): Promise<ActionResult> {
+  return act(taxonomyUpdateSchema, input, async ({ id, name, description }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'genre', action: 'update', id, payload: { name, description } }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+export async function deleteGenre(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  return act(taxonomyDeleteSchema, input, async ({ id }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'genre', action: 'delete', id }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+// Tag actions
+export async function createTag(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
+  return act(taxonomyItemSchema, input, async ({ name, description }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'tag', action: 'create', payload: { name, description } }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+export async function updateTag(input: z.infer<typeof taxonomyUpdateSchema>): Promise<ActionResult> {
+  return act(taxonomyUpdateSchema, input, async ({ id, name, description }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'tag', action: 'update', id, payload: { name, description } }),
+    });
+    if (!res.ok) {
+      return { ok: false, error: await messageFromResponse(res) };
+    }
+    revalidateTag('taxonomy', 'max');
+    return { ok: true };
+  });
+}
+
+export async function deleteTag(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  return act(taxonomyDeleteSchema, input, async ({ id }) => {
+    const res = await fetchApi('/api/admin/taxonomy', {
+      method: 'POST',
+      body: JSON.stringify({ entity: 'tag', action: 'delete', id }),
     });
     if (!res.ok) {
       return { ok: false, error: await messageFromResponse(res) };

@@ -27,7 +27,7 @@ describe('Supabase Integration', () => {
       signal: AbortSignal.timeout(10000),
     });
     expect(res.ok).toBe(true);
-    const body = await res.json();
+    const body = (await res.json()) as { keys: Array<Record<string, unknown>> };
     expect(body).toHaveProperty('keys');
     expect(Array.isArray(body.keys)).toBe(true);
     if (body.keys.length > 0) {

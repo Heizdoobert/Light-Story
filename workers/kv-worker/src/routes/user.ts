@@ -27,6 +27,49 @@ export async function handleUserRequest(
       return handleRes(res);
     }
 
+    if (method === 'POST' && pathname === '/user/bookmarks/add') {
+      const body = (await request.json()) as { comicId?: string };
+      if (!body.comicId) return err('BAD_REQUEST', 'comicId required', 400);
+
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (!Array.isArray(existing) || existing.length === 0) {
+        await sbPost('bookmarks', { user_id: userId, comic_id: body.comicId }, env, token);
+      }
+      return json({ bookmarked: true });
+    }
+
+    if (method === 'POST' && pathname === '/user/bookmarks/remove') {
+      const body = (await request.json()) as { comicId?: string };
+      if (!body.comicId) return err('BAD_REQUEST', 'comicId required', 400);
+
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        await sb(
+          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          { method: 'DELETE' },
+          env,
+          token,
+        );
+      }
+      return json({ bookmarked: false });
+    }
+
     if (method === 'POST' && pathname === '/user/bookmarks/toggle') {
       const body = (await request.json()) as { comicId?: string };
       if (!body.comicId) return err('BAD_REQUEST', 'comicId required', 400);

@@ -7,13 +7,13 @@ export type ActionResult<T = unknown> = {
   error?: string;
 };
 
-type RunResult = { ok: true; data?: unknown } | { ok: false; error: string };
+type RunResult<R = unknown> = { ok: true; data?: R } | { ok: false; error: string };
 
-export async function act<T>(
+export async function act<T, R = unknown>(
   schema: z.ZodType<T>,
   input: unknown,
-  run: (parsed: T) => Promise<RunResult>,
-): Promise<ActionResult> {
+  run: (parsed: T) => Promise<RunResult<R>>,
+): Promise<ActionResult<R>> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     const detail = parsed.error.issues
