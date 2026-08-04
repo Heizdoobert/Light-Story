@@ -1,9 +1,10 @@
 /**
  * Auth middleware: Phase 1 simplification
  * Removes gateway JWKS validation, uses Supabase JWT directly.
+ * Scope: Chỉ dùng trong Client Component / Server Actions / API Handlers
  */
 
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 /**
  * Get current user's auth token directly from Supabase.
@@ -25,10 +26,12 @@ export async function getAuthToken(): Promise<string | null> {
  */
 export function verifyTokenNotExpired(token: string): boolean {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) return false;
 
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")),
+    );
     const now = Math.floor(Date.now() / 1000);
 
     return !payload.exp || now < payload.exp;

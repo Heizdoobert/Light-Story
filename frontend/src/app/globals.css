@@ -35,14 +35,22 @@
 
   html {
     font-size: 14.5px;
-    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    font-family:
+      var(--font-roboto),
+      system-ui,
+      -apple-system,
+      sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply dark:bg-slate-950 min-h-screen transition-colors duration-300 bg-background text-foreground;
-    font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+    font-family:
+      var(--font-roboto),
+      system-ui,
+      -apple-system,
+      sans-serif;
   }
   * {
     @apply border-border outline-ring/50;

@@ -1,69 +1,123 @@
-# Spec: Next.js App Router Architecture, SEO, OG Images & Production Pipeline
+# Spec: Frontend Architecture & Directory Restructuring
 
 ## Objective
-Implement Next.js App Router production, SEO, networking, and deployment standards for Light-Story:
-1. **SEO & Dynamic OG Images**: Add `metadataBase`, dynamic `generateMetadata()` for comic/chapter pages, and Edge `next/og` `opengraph-image.tsx` routes.
-2. **Route Handlers & Middleware Audit**: Clean API verb handlers (`GET`, `POST`, `OPTIONS`), lightweight middleware security headers, and health endpoint (`/api/health`).
-3. **Deployment Readiness**: Verify `standalone` Docker config (`next.config.js`), Zod env schema validation, and zero-downtime CI check.
+Refactor the frontend codebase to strictly conform to the user's target directory structure. Migrate existing components, services, and route handlers into the new layout, clean up redundant legacy directories (`src/views`, `src/@core`, `src/@layouts`, `src/@menu`, `src/configs`), and establish clear architectural boundaries between Public, User, and Admin route groups.
 
 ## Tech Stack
-- **Framework**: Next.js (App Router), React 18 / 19
-- **OG Generation**: `next/og` (`ImageResponse` on Edge Runtime)
-- **State & Data**: React Query (`@tanstack/react-query`), Supabase SSR
-- **Types & Env**: TypeScript, Zod
+- **Framework**: Next.js 16 (App Router), React 19
+- **Database & Auth**: Supabase SSR (@supabase/ssr)
+- **Storage**: Cloudflare R2 Presigned POST / S3 SDK
+- **State & Data**: TanStack React Query v5
+- **UI & Styling**: Tailwind CSS, Lucide React, clsx + tailwind-merge (`lib/utils/cn.ts`)
+- **Validation**: Zod schemas (`lib/schemas/`)
 
 ## Commands
 - Build: `npm run build` (inside `frontend/`)
-- Test: `npm run test:run` (inside `frontend/`)
 - Lint/Typecheck: `npm run lint` (inside `frontend/`)
+- Test: `npm run test:run` (inside `frontend/`)
 - Dev: `npm run dev` (inside `frontend/`)
 
-## Project Structure
+## Target Project Structure
 ```
-frontend/
-├── middleware.ts                   → Global Edge security headers & route protection
-├── next.config.js                  → Standalone build output & security headers
-├── src/
-│   ├── env.mjs                     → Zod environment variable validation
-│   ├── app/
-│   │   ├── layout.tsx              → Root metadataBase & base metadata configuration
-│   │   ├── api/
-│   │   │   └── health/route.ts     → Orchestration health check route handler
-│   │   └── opengraph-image.tsx     → Global default dynamic open-graph image
-tasks/
-├── spec.md                         → This specification document
-├── plan.md                         → Execution plan
-└── todo.md                         → Task checklist
+frontend/src/ (or frontend/)
+├── app/
+│   ├── (public)/                           → Public route group (no auth required)
+│   │   ├── page.tsx                        → Home page (banner, featured comics, recent updates)
+│   │   ├── comics/                         → Comics list & details
+│   │   │   ├── page.tsx                    → All comics list (filter, search, pagination)
+│   │   │   └── [comicId]/
+│   │   │       ├── page.tsx                → Comic detail (info, chapters, ratings, comments)
+│   │   │       └── chapter/
+│   │   │           └── [chapterId]/
+│   │   │               └── page.tsx        → Chapter reader (vertical/horizontal photo reader)
+│   │   ├── genres/
+│   │   │   └── [genreSlug]/
+│   │   │       └── page.tsx                → Comics by genre
+│   │   └── layout.tsx                      → Public layout (PublicHeader, PublicFooter, Providers)
+│   │
+│   ├── (user)/                             → User route group (authenticated users)
+│   │   ├── dashboard/
+│   │   │   └── page.tsx                    → User personal dashboard (reading progress, recommendations)
+│   │   ├── history/
+│   │   │   └── page.tsx                    → Reading history
+│   │   ├── bookmarks/
+│   │   │   └── page.tsx                    → Bookmarked / followed comics
+│   │   ├── profile/
+│   │   │   └── page.tsx                    → User profile & security settings
+│   │   └── layout.tsx                      → User layout (UserSidebar, profile dropdown)
+│   │
+│   ├── (admin)/                            → Admin route group (staff / admin role required)
+│   │   ├── admin/                          → /admin URL prefix
+│   │   │   ├── dashboard/
+│   │   │   │   └── page.tsx                → Admin overview (comics, chapters, new users)
+│   │   │   ├── comics/
+│   │   │   │   ├── page.tsx                → Comic management table (CRUD, search)
+│   │   │   │   ├── new/
+│   │   │   │   │   └── page.tsx            → Create comic form
+│   │   │   │   └── [comicId]/
+│   │   │   │       └── page.tsx            → Edit comic form
+│   │   │   ├── chapters/
+│   │   │   │   ├── page.tsx                → Chapter management
+│   │   │   │   └── [chapterId]/
+│   │   │   │       └── page.tsx            → Edit chapter & image drag-drop manager
+│   │   │   ├── users/
+│   │   │   │   └── page.tsx                → User management (roles, ban/unban)
+│   │   │   └── audit/
+│   │   │       └── page.tsx                → Audit log activity
+│   │   └── layout.tsx                      → Admin layout (AdminSidebar, RBAC check)
+│   │
+│   ├── api/
+│   │   └── webhooks/
+│   │       └── supabase/route.ts           → Supabase webhooks handler
+│   ├── layout.tsx                          → Root layout (<html>, <body>, global CSS, Providers)
+│   ├── globals.css
+│   ├── loading.tsx                         → Root loading skeleton
+│   └── error.tsx                           → Root error boundary
+│
+├── components/
+│   ├── ui/                                 → Primitives (button, input, card, skeleton, badge, modal, dropdown-menu, index.ts)
+│   ├── layout/                             → Layouts (public-header, public-footer, user-sidebar, admin-sidebar, mobile-nav)
+│   ├── comic/                              → Comic components (comic-card, comic-list, chapter-list, chapter-reader, rating-stars, genre-badge)
+│   ├── admin/                              → Admin components (data-table, form-editor, image-uploader, stat-card)
+│   └── user/                               → User components (bookmark-button, reading-progress)
+│
+├── lib/
+│   ├── schemas/                            → Zod validation schemas (comic.ts, chapter.ts, audit.ts)
+│   ├── actions/                            → Server Actions ('use server') (comic.actions.ts, chapter.actions.ts, audit.actions.ts, user.actions.ts)
+│   ├── supabase/                           → Supabase client setup (client.ts, server.ts, middleware.ts)
+│   ├── r2/                                 → Cloudflare R2 utilities (client.ts, upload.ts)
+│   ├── hooks/                              → React custom hooks (use-user.ts, use-chapter-images.ts, use-debounce.ts)
+│   ├── constants/                          → Application constants (routes.ts, cache-tags.ts, comic-status.ts, pagination.ts)
+│   └── utils/                              → Pure utility functions (cn.ts, format-date.ts, api-client.ts, image-url.ts)
+│
+├── providers/                              → Context Providers (theme-provider, supabase-provider, query-provider)
+│
+├── middleware.ts                           → Root Next.js middleware (session refresh & RBAC protection)
 ```
 
 ## Code Style
-```tsx
-// Route Handler Standard (app/api/health/route.ts)
-import { NextResponse } from 'next/server';
-
-export async function GET() {
-  return NextResponse.json({ status: 'ok', timestamp: new Date().toISOString() }, { status: 200 });
-}
-```
-- Direct services in `frontend/src/services/`.
-- No over-engineered domain/clean layers.
-- Mark minimal code choices with `// ponytail:` comment.
+- Client components use `"use client";` at top.
+- Server Actions use `"use server";` at top of file (in `lib/actions/`).
+- Import paths use `@/` alias mapped to `src/` (e.g. `@/components/ui`, `@/lib/utils/cn`, `@/lib/constants/routes`).
+- Component files follow kebab-case (`comic-card.tsx`, `public-header.tsx`).
 
 ## Testing Strategy
 - Framework: Vitest (`npm run test:run`)
-- Verification: Standalone build test (`npm run build`) & TypeScript check (`npm run lint`).
+- Quality Checks: ESLint & TypeScript compilation (`npm run lint`)
+- Build Check: Production Next.js build (`npm run build`)
 
 ## Boundaries
-- **Always do**: Run lint & typecheck before committing (`npm run lint`), scope changes to `fix/bug-fix` branch.
-- **Ask first**: Schema modifications in Supabase or structural rewrite of `middleware.ts`.
-- **Never do**: Push directly to `main`, remove failing tests, hardcode production secrets.
+- **Always do**: Maintain full working functionality, preserve existing working API routes & Supabase bindings, run `npm run lint` and `npm run test:run` after refactoring.
+- **Ask first**: Major database schema migrations or changes to external Cloudflare worker APIs.
+- **Never do**: Break existing user or admin features, leave orphaned/dangling imports to deleted directories, hardcode production credentials.
 
-## Success Criteria
-- [ ] `metadataBase` configured in root `layout.tsx`.
-- [ ] Global default dynamic OG image (`app/opengraph-image.tsx`) created with `next/og`.
-- [ ] Health check endpoint (`/api/health/route.ts`) returning 200 status JSON.
-- [ ] Environment variable validation (`src/env.mjs`) with Zod.
-- [ ] `npm run build` succeeds cleanly in `frontend/`.
+## Reframed Success Criteria
+1. `src/app/` route hierarchy updated to match `(public)`, `(user)`, `(admin)` group structure exactly.
+2. `src/components/` structured into `ui/`, `layout/`, `comic/`, `admin/`, and `user/`.
+3. `src/lib/` organized into `schemas/`, `actions/`, `supabase/`, `r2/`, `hooks/`, `constants/`, and `utils/`.
+4. `src/providers/` created containing `theme-provider.tsx`, `supabase-provider.tsx`, `query-provider.tsx`.
+5. Legacy directories (`src/views`, `src/@core`, `src/@layouts`, `src/@menu`, `src/configs`) cleaned up.
+6. `npm run lint`, `npm run test:run`, and `npm run build` pass cleanly without errors.
 
 ## Open Questions
-- None. Ready for Phase 2 (Plan & Tasks).
+- Assumptions surfaced for human confirmation before execution.

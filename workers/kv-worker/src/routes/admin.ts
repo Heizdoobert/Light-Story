@@ -285,7 +285,7 @@ export async function handleAdminRequest(
       } else if (scope === 'public') {
         q += '&key=like.public_%';
       }
-      const svcKey = env.SUPABASE_SERVICE_KEY;
+      const svcKey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
       let supRes;
       try {
@@ -301,7 +301,7 @@ export async function handleAdminRequest(
     }
 
     if (method === 'POST' && path === '/admin/site-settings') {
-      const svcKey = env.SUPABASE_SERVICE_KEY;
+      const svcKey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
       const body = (await request.json()) as any;
       const userId = request.headers.get('x-user-id');

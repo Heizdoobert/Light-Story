@@ -382,7 +382,7 @@ export default {
         }
       }
     } else if (strippedPath === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public') {
-      const svcKey = env.SUPABASE_SERVICE_KEY;
+      const svcKey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
       if (!svcKey) {
         res = err('NOT_CONFIGURED', 'Service key not configured', 500);
       } else {
