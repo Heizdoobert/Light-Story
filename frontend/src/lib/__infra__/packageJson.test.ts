@@ -31,7 +31,7 @@ describe('root package.json', () => {
   it('scopes the postcss/sharp override to the "next" dependency', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
     expect(overrides.next).toEqual({
-      postcss: '8.5.22',
+      postcss: '8.5.25',
       sharp: '0.35.3',
     });
   });
@@ -46,9 +46,9 @@ describe('root package.json', () => {
   it('retains the top-level pinned overrides', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
     expect(overrides['shell-quote']).toBe('1.10.0');
-    expect(overrides['fast-uri']).toBe('4.1.1');
+    expect(overrides['fast-uri']).toBe('4.1.2');
     expect(overrides['body-parser']).toBe('2.3.0');
-    expect(overrides.postcss).toBe('8.5.22');
+    expect(overrides.postcss).toBe('8.5.25');
     expect(overrides.sharp).toBe('0.35.3');
     expect(overrides['@hono/node-server']).toBe('2.0.11');
   });
@@ -81,7 +81,7 @@ describe('frontend package.json', () => {
   it('scopes the postcss/sharp override to the "next" dependency', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
     expect(overrides.next).toEqual({
-      postcss: '8.5.22',
+      postcss: '8.5.25',
       sharp: '0.35.3',
     });
   });
