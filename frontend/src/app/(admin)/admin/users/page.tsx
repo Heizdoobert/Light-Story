@@ -1,97 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Users, Search, ShieldCheck, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { updateUserRole } from "@/lib/actions/user.actions";
-
-export interface UserRow {
-  id: string;
-  email?: string;
-  full_name?: string;
-  avatar_url?: string;
-  role: string;
-  created_at?: string;
-}
+import { useAdminUsers } from "@/lib/hooks/use-admin-users";
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-
-  // Role Edit Modal
-  const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
-  const [newRole, setNewRole] = useState<string>("user");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const loadUsers = async () => {
-    setLoading(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, avatar_url, role, created_at")
-        .order("created_at", { ascending: false });
-
-      if (data) {
-        setUsers(data as UserRow[]);
-      }
-    } catch (err) {
-      console.error("Failed to load admin users:", err);
-      toast.error("Không thể tải danh sách người dùng");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const handleOpenRoleModal = (user: UserRow) => {
-    setSelectedUser(user);
-    setNewRole(user.role || "user");
-  };
-
-  const handleSaveRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-
-    setIsSubmitting(true);
-    try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", selectedUser.id);
-
-      if (error) {
-        // Fallback to server action
-        const actionRes = await updateUserRole(selectedUser.id, newRole);
-        if (!actionRes.success) throw new Error(actionRes.error);
-      }
-
-      toast.success(`Đã cập nhật vai trò người dùng thành "${newRole}"`);
-      setSelectedUser(null);
-      loadUsers();
-    } catch (err: any) {
-      toast.error(err.message || "Cập nhật vai trò thất bại");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const filteredUsers = users.filter((u) => {
-    const query = search.toLowerCase();
-    return (
-      (u.email && u.email.toLowerCase().includes(query)) ||
-      (u.full_name && u.full_name.toLowerCase().includes(query)) ||
-      u.role.toLowerCase().includes(query)
-    );
-  });
+  const {
+    users,
+    loading,
+    search,
+    setSearch,
+    selectedUser,
+    setSelectedUser,
+    newRole,
+    setNewRole,
+    isSubmitting,
+    handleOpenRoleModal,
+    handleSaveRole,
+  } = useAdminUsers();
 
   return (
     <div className="space-y-6">
@@ -136,8 +63,8 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {filteredUsers.length > 0 ? (
-                filteredUsers.map((u) => (
+              {users.length > 0 ? (
+                users.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
                     <td className="p-4 font-bold text-white flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 font-bold flex items-center justify-center border border-orange-500/30">
