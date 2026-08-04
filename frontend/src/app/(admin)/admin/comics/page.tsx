@@ -1,83 +1,396 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { DataTable, type Column } from '@/components/admin/data-table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus, Edit, Trash2, Search, BookOpen, Layers, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { ImageUploader } from "@/components/admin/image-uploader";
+import { getR2ImageUrl } from "@/lib/utils/image-url";
 
-export interface ComicRow {
+export interface ComicItem {
   id: string;
   title: string;
   author: string;
+  category?: string;
+  cover_url?: string | null;
   status: string;
   created_at: string;
+  views?: number;
 }
 
 export default function AdminComicsPage() {
-  const [comics, setComics] = useState<ComicRow[]>([]);
+  const [comics, setComics] = useState<ComicItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingComic, setEditingComic] = useState<ComicItem | null>(null);
+
+  // Form State
+  const [title, setTitle] = useState("");
+  const [author, setAuthor] = useState("");
+  const [category, setCategory] = useState("Fantasy");
+  const [status, setStatus] = useState("published");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadComics = async () => {
+    setLoading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data } = await supabase
+        .from("stories")
+        .select("id, title, author, category, cover_url, status, created_at, views")
+        .order("created_at", { ascending: false });
+
+      if (data) {
+        setComics(data as ComicItem[]);
+      }
+    } catch (err) {
+      console.error("Failed to load admin comics:", err);
+      toast.error("Không thể tải danh sách truyện");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadComics() {
-      try {
-        const supabase = getSupabaseBrowserClient();
-        const { data } = await supabase.from('stories').select('id, title, author, status, created_at').order('created_at', { ascending: false });
-        if (data && data.length > 0) {
-          setComics(data as ComicRow[]);
-        } else {
-          setComics([
-            { id: '1', title: 'Võ Luyện Đỉnh Phong', author: 'Phong Lăng', status: 'ongoing', created_at: new Date().toISOString() },
-            { id: '2', title: 'Đấu La Đại Lục', author: 'Đường Gia Tam Thiếu', status: 'completed', created_at: new Date().toISOString() },
-          ]);
-        }
-      } catch (err) {
-        console.error('Failed to load admin comics:', err);
-      }
-    }
     loadComics();
   }, []);
 
-  const columns: Column<ComicRow>[] = [
-    { key: 'title', header: 'Tên Truyện', render: (item) => <span className="font-bold">{item.title}</span> },
-    { key: 'author', header: 'Tác Giả' },
-    {
-      key: 'status',
-      header: 'Trạng Thái',
-      render: (item) => (
-        <Badge variant={item.status === 'completed' ? 'success' : 'default'}>{item.status}</Badge>
-      ),
-    },
-    {
-      key: 'actions',
-      header: 'Thao Tác',
-      render: (item) => (
-        <div className="flex gap-2">
-          <Link href={`/admin/comics/${item.id}`}>
-            <Button size="sm" variant="outline"><Edit size={14} /></Button>
-          </Link>
-          <Button size="sm" variant="danger"><Trash2 size={14} /></Button>
-        </div>
-      ),
-    },
-  ];
+  const handleOpenCreateModal = () => {
+    setEditingComic(null);
+    setTitle("");
+    setAuthor("");
+    setCategory("Fantasy");
+    setStatus("published");
+    setCoverUrl("");
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (comic: ComicItem) => {
+    setEditingComic(comic);
+    setTitle(comic.title);
+    setAuthor(comic.author || "");
+    setCategory(comic.category || "Fantasy");
+    setStatus(comic.status || "published");
+    setCoverUrl(comic.cover_url || "");
+    setIsModalOpen(true);
+  };
+
+  const handleSaveComic = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) {
+      toast.error("Vui lòng nhập tên truyện");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+
+      if (editingComic) {
+        // UPDATE
+        const { error } = await supabase
+          .from("stories")
+          .update({
+            title,
+            author,
+            category,
+            status,
+            cover_url: coverUrl,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingComic.id);
+
+        if (error) throw error;
+        toast.success("Cập nhật truyện thành công!");
+      } else {
+        // CREATE
+        const { error } = await supabase.from("stories").insert([
+          {
+            title,
+            author,
+            category,
+            status,
+            cover_url: coverUrl,
+          },
+        ]);
+
+        if (error) throw error;
+        toast.success("Tạo bộ truyện mới thành công!");
+      }
+
+      setIsModalOpen(false);
+      loadComics();
+    } catch (err: any) {
+      toast.error(err.message || "Lưu truyện thất bại");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteComic = async (id: string, titleName: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa bộ truyện "${titleName}"?`)) return;
+
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.from("stories").delete().eq("id", id);
+      if (error) throw error;
+
+      toast.success(`Đã xóa truyện "${titleName}"`);
+      setComics((prev) => prev.filter((c) => c.id !== id));
+    } catch (err: any) {
+      toast.error(err.message || "Xóa truyện thất bại");
+    }
+  };
+
+  const filteredComics = comics.filter((comic) => {
+    const matchSearch =
+      comic.title.toLowerCase().includes(search.toLowerCase()) ||
+      (comic.author && comic.author.toLowerCase().includes(search.toLowerCase()));
+    const matchStatus = statusFilter === "all" || comic.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">Quản Lý Truyện</h1>
-          <p className="text-sm text-slate-500 mt-1">Danh sách tất cả các bộ truyện trong hệ thống</p>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <BookOpen className="text-orange-500" size={28} />
+            Quản Lý Danh Sách Truyện
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Quản lý, thêm mới, cập nhật ảnh bìa R2 và xóa các bộ truyện trên hệ thống
+          </p>
         </div>
-        <Link href="/admin/comics/new">
-          <Button className="gap-2">
-            <Plus size={16} /> Thêm Truyện Mới
-          </Button>
-        </Link>
+        <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
+          <Plus size={18} /> Thêm Truyện Mới
+        </Button>
       </div>
 
-      <DataTable columns={columns} data={comics} />
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+        <div className="relative flex-1 w-full">
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm tên truyện, tác giả..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+          />
+        </div>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer shrink-0"
+        >
+          <option value="all">Tất cả trạng thái</option>
+          <option value="published">Đã xuất bản (Published)</option>
+          <option value="ongoing">Đang tiến hành (Ongoing)</option>
+          <option value="completed">Đã hoàn thành (Completed)</option>
+          <option value="draft">Bản nháp (Draft)</option>
+        </select>
+      </div>
+
+      {/* Comics Table */}
+      <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl overflow-hidden shadow-xl">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <tr>
+                <th className="p-4">Ảnh Bìa R2</th>
+                <th className="p-4">Tên Truyện</th>
+                <th className="p-4">Tác Giả</th>
+                <th className="p-4">Thể Loại</th>
+                <th className="p-4">Lượt Xem</th>
+                <th className="p-4">Trạng Thái</th>
+                <th className="p-4 text-right">Thao Tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
+              {filteredComics.length > 0 ? (
+                filteredComics.map((comic) => (
+                  <tr key={comic.id} className="hover:bg-slate-800/40 transition-colors">
+                    <td className="p-4">
+                      <img
+                        src={getR2ImageUrl(comic.cover_url)}
+                        alt={comic.title}
+                        className="w-12 h-16 rounded-lg object-cover border border-slate-800 bg-slate-950"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder-cover.jpg";
+                        }}
+                      />
+                    </td>
+                    <td className="p-4 font-bold text-white max-w-xs truncate">{comic.title}</td>
+                    <td className="p-4 text-slate-300">{comic.author || "Chưa cập nhật"}</td>
+                    <td className="p-4">
+                      <span className="px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium">
+                        {comic.category || "Fantasy"}
+                      </span>
+                    </td>
+                    <td className="p-4 font-semibold text-orange-400">
+                      {comic.views?.toLocaleString() || 0}
+                    </td>
+                    <td className="p-4">
+                      <Badge
+                        variant={
+                          comic.status === "completed"
+                            ? "success"
+                            : comic.status === "published"
+                            ? "default"
+                            : "default"
+                        }
+                      >
+                        {comic.status}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/admin/chapters?comicId=${comic.id}`}>
+                          <Button size="sm" variant="outline" className="gap-1 text-xs" title="Quản lý chương">
+                            <Layers size={14} /> Chương
+                          </Button>
+                        </Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEditModal(comic)}
+                          title="Sửa truyện"
+                        >
+                          <Edit size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() => handleDeleteComic(comic.id, comic.title)}
+                          title="Xóa truyện"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                    {loading ? "Đang tải danh sách truyện..." : "Không tìm thấy bộ truyện nào."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Create / Edit Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h2 className="text-lg font-bold">
+                {editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveComic} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Nhập tên truyện..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tác Giả</label>
+                  <input
+                    type="text"
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    placeholder="Tên tác giả..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại</label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="Action">Action</option>
+                    <option value="Fantasy">Fantasy</option>
+                    <option value="Romance">Romance</option>
+                    <option value="Comedy">Comedy</option>
+                    <option value="Drama">Drama</option>
+                    <option value="Horror">Horror</option>
+                    <option value="Mystery">Mystery</option>
+                    <option value="Science Fiction">Science Fiction</option>
+                    <option value="Slice of Life">Slice of Life</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Trạng Thái</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                >
+                  <option value="published">Đã xuất bản (Published)</option>
+                  <option value="ongoing">Đang tiến hành (Ongoing)</option>
+                  <option value="completed">Đã hoàn thành (Completed)</option>
+                  <option value="draft">Bản nháp (Draft)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Upload Ảnh Bìa (Cloudflare R2 Bucket)
+                </label>
+                <ImageUploader
+                  folder="covers"
+                  onImagesUploaded={(urls) => {
+                    if (urls.length > 0) setCoverUrl(urls[0]);
+                  }}
+                />
+                {coverUrl && (
+                  <p className="text-[11px] text-orange-400 mt-1 truncate">Đường dẫn R2: {coverUrl}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                  Hủy
+                </Button>
+                <Button type="submit" disabled={submitting} className="bg-orange-500 hover:bg-orange-600">
+                  {submitting ? "Đang lưu..." : "Lưu Thay Đổi"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
