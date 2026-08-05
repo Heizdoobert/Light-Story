@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
-// ponytail: edge runtime for fast zero-latency og image generation
-export const runtime = 'edge';
+// Use nodejs runtime for Next.js 16 compatibility
+export const runtime = 'nodejs';
 export const alt = 'Light Story - Read Manga & Light Novels';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
