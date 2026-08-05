@@ -1,21 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { ReadingProgress } from "@/components/user/reading-progress";
-import { ComicList } from "@/components/comic/comic-list";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/lib/hooks/use-user";
-import type { ComicCardProps } from "@/components/comic/comic-card";
+
+interface RecommendedItem {
+  id: string;
+  title: string;
+  latestChapter?: number;
+}
 
 export default function UserDashboardPage() {
   const { user } = useUser();
   const [readingList, setReadingList] = useState<any[]>([]);
-  const [recommended, setRecommended] = useState<ComicCardProps[]>([]);
+  const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock user dashboard telemetry
     setReadingList([
       {
         id: "1",
@@ -84,7 +88,22 @@ export default function UserDashboardPage() {
         {isLoading ? (
           <Skeleton className="h-48 w-full rounded-2xl" />
         ) : (
-          <ComicList comics={recommended} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {recommended.map((rec) => (
+              <Link key={rec.id} href={`/comics/${rec.id}`}>
+                <Card className="p-4 hover:border-primary transition-all cursor-pointer">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {rec.title}
+                  </h3>
+                  {rec.latestChapter && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Mới nhất: Chap {rec.latestChapter}
+                    </p>
+                  )}
+                </Card>
+              </Link>
+            ))}
+          </div>
         )}
       </section>
     </div>
