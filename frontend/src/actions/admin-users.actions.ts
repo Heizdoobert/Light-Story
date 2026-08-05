@@ -17,10 +17,44 @@ export async function updateProfileRole(input: { id: string; role: string }): Pr
     const res = await fetchApi('/api/admin/profiles', {
       method: 'POST',
       body: JSON.stringify({ action: 'updateRole', id, role }),
-    });
-    if (!res.ok) {
-      return { ok: false, error: await messageFromResponse(res) };
+    }).catch(() => null);
+
+    if (res && res.ok) {
+      revalidateTag('profiles', 'max');
+      return { ok: true };
     }
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    if (supabaseUrl && serviceRoleKey) {
+      const response = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({ role }),
+      }).catch(() => null);
+
+      if (response && response.ok) {
+        revalidateTag('profiles', 'max');
+        return { ok: true };
+      }
+    }
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', id);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
     revalidateTag('profiles', 'max');
     return { ok: true };
   });

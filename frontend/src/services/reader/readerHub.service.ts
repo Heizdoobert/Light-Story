@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient';
+import { getAccessToken } from '../comics/comic.service';
 
 const BOOKMARKS_KEY = 'reader:bookmarks';
 const HISTORY_KEY = 'reader:history';
@@ -42,8 +43,11 @@ function setLocalHistory(list: HistoryItem[]): void {
 
 export async function getBookmarks(): Promise<string[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/user/bookmarks').catch(() => null);
-    if (Array.isArray(res)) return res.map((item) => item.comic_id || item.comicId);
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiClient.get<any[]>('/api/user/bookmarks').catch(() => null);
+      if (Array.isArray(res)) return res.map((item) => item.comic_id || item.comicId);
+    }
   } catch {}
   return getLocalBookmarks();
 }
@@ -52,7 +56,12 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
   const local = getLocalBookmarks();
   const exists = local.includes(comicId);
 
-  await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
+    }
+  } catch {}
 
   const updated = exists ? local.filter((id) => id !== comicId) : [...local, comicId];
   setLocalBookmarks(updated);
@@ -61,14 +70,17 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
 
 export async function getReadingHistory(): Promise<HistoryItem[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/user/history').catch(() => null);
-    if (Array.isArray(res)) {
-      return res.map((item) => ({
-        comicId: item.comic_id || item.comicId,
-        chapterId: item.chapter_id || item.chapterId,
-        chapterNumber: item.chapter_number || item.chapterNumber || 1,
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-      }));
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiClient.get<any[]>('/api/user/history').catch(() => null);
+      if (Array.isArray(res)) {
+        return res.map((item) => ({
+          comicId: item.comic_id || item.comicId,
+          chapterId: item.chapter_id || item.chapterId,
+          chapterNumber: item.chapter_number || item.chapterNumber || 1,
+          updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
+        }));
+      }
     }
   } catch {}
   return getLocalHistory();

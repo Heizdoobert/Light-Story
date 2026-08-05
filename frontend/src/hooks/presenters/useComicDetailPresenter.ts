@@ -9,6 +9,10 @@ import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
+import { fetchStoryById } from "@/services/comics/story.service";
+import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
+import { supabase } from "@/infrastructure/supabase/client";
+
 export function useComicDetailPresenter() {
   const params = useParams();
   const comicId = params.comicId as string;
@@ -23,33 +27,30 @@ export function useComicDetailPresenter() {
 
   useEffect(() => {
     const fetchComicDetail = async () => {
+      setLoading(true);
       try {
-        const [comicRes, chaptersRes, catsRes] = await Promise.all([
-          apiClient.get<any>(`/api/comics/${comicId}`).catch(() => null),
-          apiClient.get<any>(`/api/comics/${comicId}/chapters`).catch(() => []),
+        const [comicData, chaptersData, catsRes] = await Promise.all([
+          fetchStoryById(comicId).catch(() => null),
+          fetchChaptersByStoryId(comicId).catch(() => []),
           apiClient.get<any>("/api/categories").catch(() => []),
         ]);
 
-        if (comicRes) {
-          const comicData = Array.isArray(comicRes)
-            ? comicRes[0]
-            : comicRes?.comic || comicRes;
-          setComic(comicData);
+        if (comicData) {
+          setComic(comicData as any);
         }
 
-        const chaptersData: Chapter[] = Array.isArray(chaptersRes)
-          ? chaptersRes
-          : chaptersRes?.items || chaptersRes?.chapters || [];
-
-        const sortedChapters = chaptersData.sort(
+        const sortedChapters = (chaptersData || []).sort(
           (a, b) =>
             new Date(b.created_at || 0).getTime() -
             new Date(a.created_at || 0).getTime(),
         );
         setChapters(sortedChapters);
 
-        if (Array.isArray(catsRes)) {
+        if (Array.isArray(catsRes) && catsRes.length > 0) {
           setCategories(catsRes);
+        } else if (supabase) {
+          const { data } = await supabase.from("categories").select("*");
+          if (data) setCategories(data as Category[]);
         }
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiClient } from "@/lib/api/apiClient";
+import { fetchStoriesPage } from "@/services/comics/story.service";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Category } from "@/types/entities";
 import { toast } from "sonner";
@@ -44,20 +45,17 @@ export function useSearchPresenter() {
     const fetchAndFilterResults = async () => {
       setLoading(true);
       try {
-        const queryParams = new URLSearchParams();
-        if (keyword) queryParams.append("keyword", keyword);
-        if (category !== "all") queryParams.append("category", category);
-        queryParams.append("sort", sort);
-        queryParams.append("page", String(currentPage));
-        queryParams.append("pageSize", "12");
+        const { items, total } = await fetchStoriesPage({
+          page: currentPage,
+          pageSize: 12,
+          keyword,
+          category,
+          sort: sort as any,
+        });
 
-        const response = await apiClient.get<any>(
-          `/api/stories?${queryParams.toString()}`,
-        );
-
-        setComics(response?.items || []);
-        setTotalPages(Math.ceil((response?.total || 0) / 12) || 1);
-        setTotalItems(response?.total || 0);
+        setComics(items as any);
+        setTotalPages(Math.ceil((total || 0) / 12) || 1);
+        setTotalItems(total || 0);
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");

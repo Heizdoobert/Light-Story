@@ -98,11 +98,16 @@ async function request<T>(
     headers.set('Content-Type', 'application/json');
   }
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const signal = options.signal || controller.signal;
+
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
+      signal,
     });
   } catch (err) {
     throw new ApiError(
@@ -110,8 +115,12 @@ async function request<T>(
       'NETWORK_ERROR',
       err instanceof TypeError && err.message === 'Failed to fetch'
         ? 'Unable to connect to server. Please check your internet connection and try again.'
+        : (err as Error)?.name === 'AbortError'
+        ? 'Request timed out'
         : (err as Error)?.message || 'Network request failed',
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   const bodyText = await res.text();
@@ -162,7 +171,11 @@ async function request<T>(
   }
 
   // Unwrap and return data
-  return body.data as T;
+  if (body && typeof body === 'object' && 'data' in body && body.data !== undefined) {
+    return body.data as T;
+  }
+
+  return body as unknown as T;
 }
 
 export const apiClient = {

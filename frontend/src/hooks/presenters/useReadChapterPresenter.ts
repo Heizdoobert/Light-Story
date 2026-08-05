@@ -12,6 +12,10 @@ import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
 
+import { fetchStoryById } from "@/services/comics/story.service";
+import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
+import { supabase } from "@/infrastructure/supabase/client";
+
 const USE_MOCK_DATA = false;
 
 const MOCK_COMIC: Comic = {
@@ -112,37 +116,49 @@ export function useReadChapterPresenter() {
           return;
         }
 
-        const comicRes = await apiClient
-          .get<any>(`/api/comics/${comicId}`)
-          .catch(() => null);
-        if (comicRes)
-          setComic(
-            Array.isArray(comicRes) ? comicRes[0] : comicRes?.comic || comicRes,
-          );
+        const [comicData, chaptersData] = await Promise.all([
+          fetchStoryById(comicId).catch(() => null),
+          fetchChaptersByStoryId(comicId).catch(() => []),
+        ]);
+        if (comicData) setComic(comicData as any);
 
-        const chaptersRes = await apiClient
-          .get<any>(`/api/comics/${comicId}/chapters`)
-          .catch(() => []);
-        const chaptersData: Chapter[] = Array.isArray(chaptersRes)
-          ? chaptersRes
-          : chaptersRes?.items || chaptersRes?.chapters || [];
-
-        const sortedChapters = chaptersData.sort((a, b) => {
+        const sortedChapters = (chaptersData || []).sort((a, b) => {
           if (a.chapter_number && b.chapter_number)
             return a.chapter_number - b.chapter_number;
           return (
             new Date(a.created_at || 0).getTime() -
-            new Date(b.created_at || 0).getTime()
+            new Date(a.created_at || 0).getTime()
           );
         });
         setAllChapters(sortedChapters);
 
-        const currentRes = await apiClient.get<any>(
-          `/api/comics/${comicId}/chapters/${chapterId}`,
-        );
-        const currentData = Array.isArray(currentRes)
-          ? currentRes[0]
-          : currentRes?.chapter || currentRes;
+        let currentData: Chapter | null = null;
+        try {
+          const currentRes = await apiClient.get<any>(
+            `/api/comics/${comicId}/chapters/${chapterId}`,
+          ).catch(() => null);
+          if (currentRes) {
+            currentData = Array.isArray(currentRes)
+              ? currentRes[0]
+              : currentRes?.chapter || currentRes;
+          }
+        } catch {}
+
+        if (!currentData) {
+          currentData = sortedChapters.find((ch) => ch.id === chapterId) || null;
+        }
+
+        if (!currentData && supabase) {
+          try {
+            const { data } = await supabase
+              .from("chapters")
+              .select("*")
+              .eq("id", chapterId)
+              .maybeSingle();
+            if (data) currentData = data as Chapter;
+          } catch {}
+        }
+
         setCurrentChapter(currentData);
         if (currentData) {
           saveReadingProgress({ comicId: comicId, chapterId: chapterId, chapterNumber: currentData.chapter_number || 1 });

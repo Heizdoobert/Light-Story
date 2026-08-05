@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/apiClient";
+import { supabase } from "@/infrastructure/supabase/client";
 import type {
   ComicCmsFormValues,
   ComicStatus,
@@ -161,16 +162,32 @@ export function loadComicRecord(id: string): ComicCmsRecord | null {
 
 export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   try {
-    const result = await apiClient.get<any[]>("/api/admin/comics?pageSize=100");
-    const catalog: ComicCmsRecord[] = Array.isArray(result)
-      ? result.map(mapDbRowToRecord)
-      : [];
-    writeCatalog(catalog);
-    return catalog;
+    const result = await apiClient.get<any>("/api/admin/comics?pageSize=100");
+    const rawList = Array.isArray(result) ? result : result?.items || result?.comics || [];
+    const catalog: ComicCmsRecord[] = rawList.map(mapDbRowToRecord);
+    if (catalog.length > 0) {
+      writeCatalog(catalog);
+      return catalog;
+    }
   } catch (err) {
     console.error("[comicCms] fetchComicCatalog failed", err);
-    return [];
   }
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from("stories")
+        .select("*, chapters(*)")
+        .neq("status", "archived")
+        .order("updated_at", { ascending: false });
+      if (data && data.length > 0) {
+        const catalog = data.map(mapDbRowToRecord);
+        writeCatalog(catalog);
+        return catalog;
+      }
+    } catch {}
+  }
+  return readCatalog();
 }
 
 function mapDbRowToRecord(row: any): ComicCmsRecord {
@@ -303,7 +320,10 @@ export function proxiedR2ImageUrl(url: string): string {
     hostname = new URL(url).hostname.toLowerCase();
   } catch {
     if (url.startsWith("/")) {
-      return `${gateway}${encodeURI(url)}`;
+      return `${gateway}/api/media/${encodeURIComponent(url.slice(1))}`;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      return `${gateway}/api/media/${encodeURIComponent(url)}`;
     }
     return url;
   }
