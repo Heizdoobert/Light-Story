@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormEditor } from '@/components/admin/form-editor';
 import { Input } from '@/components/ui/input';
 import { updateComic } from '@/lib/actions/comic.actions';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export default function AdminEditComicPage({ params }: { params: { comicId: string } }) {
+export default function AdminEditComicPage({ params }: { params: Promise<{ comicId: string }> }) {
+  const { comicId } = use(params);
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
@@ -17,7 +18,7 @@ export default function AdminEditComicPage({ params }: { params: { comicId: stri
   useEffect(() => {
     async function loadComic() {
       const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase.from('stories').select('*').eq('id', params.comicId).maybeSingle();
+      const { data } = await supabase.from('stories').select('*').eq('id', comicId).maybeSingle();
       if (data) {
         setTitle(data.title || '');
         setAuthor(data.author || '');
@@ -25,12 +26,12 @@ export default function AdminEditComicPage({ params }: { params: { comicId: stri
       }
     }
     loadComic();
-  }, [params.comicId]);
+  }, [comicId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const res = await updateComic(params.comicId, { title, author, description });
+    const res = await updateComic(comicId, { title, author, description });
     if (res.success) {
       router.push('/admin/comics');
     }

@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { ComicList } from '@/components/comic/comic-list';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import type { ComicCardProps } from '@/components/comic/comic-card';
 
-export default function GenreDetailPage({ params }: { params: { genreSlug: string } }) {
+export default function GenreDetailPage({ params }: { params: Promise<{ genreSlug: string }> }) {
+  const { genreSlug } = use(params);
   const [comics, setComics] = useState<ComicCardProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,15 +39,15 @@ export default function GenreDetailPage({ params }: { params: { genreSlug: strin
       }
     }
     fetchGenreComics();
-  }, [params.genreSlug]);
+  }, [genreSlug]);
 
   return (
     <div className="space-y-8 py-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 capitalize">
-          Thể Loại: {params.genreSlug}
+          Thể Loại: {genreSlug}
         </h1>
-        <p className="text-sm text-slate-500">Danh sách các bộ truyện thuộc thể loại {params.genreSlug}</p>
+        <p className="text-sm text-slate-500">Danh sách các bộ truyện thuộc thể loại {genreSlug}</p>
       </div>
 
       {isLoading ? (

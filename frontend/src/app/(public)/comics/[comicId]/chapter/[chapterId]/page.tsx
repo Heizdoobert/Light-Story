@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChapterReader } from '@/components/comic/chapter-reader';
@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export default function ChapterReaderPage({ params }: { params: { comicId: string; chapterId: string } }) {
+export default function ChapterReaderPage({
+  params,
+}: {
+  params: Promise<{ comicId: string; chapterId: string }>;
+}) {
+  const { comicId, chapterId } = use(params);
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -19,7 +24,7 @@ export default function ChapterReaderPage({ params }: { params: { comicId: strin
         const { data } = await supabase
           .from('chapter_images')
           .select('image_url')
-          .eq('chapter_id', params.chapterId)
+          .eq('chapter_id', chapterId)
           .order('page_number', { ascending: true });
 
         if (data && data.length > 0) {
@@ -37,13 +42,13 @@ export default function ChapterReaderPage({ params }: { params: { comicId: strin
       }
     }
     loadChapterImages();
-  }, [params.chapterId]);
+  }, [chapterId]);
 
   return (
     <div className="py-6 space-y-6 max-w-4xl mx-auto">
       {/* Navigation Header */}
       <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-20 z-40">
-        <Link href={`/comics/${params.comicId}`}>
+        <Link href={`/comics/${comicId}`}>
           <Button variant="ghost" size="sm" className="gap-2">
             <ArrowLeft size={16} /> Chi Tiết Truyện
           </Button>

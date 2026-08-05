@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { use, useState } from 'react';
 import { FormEditor } from '@/components/admin/form-editor';
 import { ImageUploader } from '@/components/admin/image-uploader';
 import { Input } from '@/components/ui/input';
 import { updateChapter } from '@/lib/actions/chapter.actions';
 
-export default function AdminEditChapterPage({ params }: { params: { chapterId: string } }) {
+export default function AdminEditChapterPage({ params }: { params: Promise<{ chapterId: string }> }) {
+  const { chapterId } = use(params);
   const [chapterNumber, setChapterNumber] = useState('1');
   const [title, setTitle] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,7 +15,7 @@ export default function AdminEditChapterPage({ params }: { params: { chapterId: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await updateChapter(params.chapterId, '1', {
+    await updateChapter(chapterId, '1', {
       chapter_number: Number(chapterNumber),
       title,
     });
@@ -38,7 +39,7 @@ export default function AdminEditChapterPage({ params }: { params: { chapterId: 
 
       <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Tải Lên Ảnh Chương (Kéo Thả)</h2>
-        <ImageUploader folder={`chapters/${params.chapterId}`} />
+        <ImageUploader folder={`chapters/${chapterId}`} />
       </div>
     </div>
   );

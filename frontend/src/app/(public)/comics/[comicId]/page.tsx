@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { BookOpen, User, Calendar } from 'lucide-react';
 import { ChapterList, type ChapterItem } from '@/components/comic/chapter-list';
@@ -12,7 +12,8 @@ import { Card } from '@/components/ui/card';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { getR2ImageUrl } from '@/lib/utils/image-url';
 
-export default function ComicDetailPage({ params }: { params: { comicId: string } }) {
+export default function ComicDetailPage({ params }: { params: Promise<{ comicId: string }> }) {
+  const { comicId } = use(params);
   const [comic, setComic] = useState<any>(null);
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,14 +25,14 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
         const { data: story } = await supabase
           .from('stories')
           .select('*')
-          .eq('id', params.comicId)
+          .eq('id', comicId)
           .maybeSingle();
 
         if (story) {
           setComic(story);
         } else {
           setComic({
-            id: params.comicId,
+            id: comicId,
             title: 'Chi Tiết Truyện',
             author: 'Tác Giả',
             description: 'Mô tả chi tiết truyện tranh...',
@@ -43,7 +44,7 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
         const { data: chData } = await supabase
           .from('chapters')
           .select('id, chapter_number, title, created_at')
-          .eq('story_id', params.comicId)
+          .eq('story_id', comicId)
           .order('chapter_number', { ascending: false });
 
         if (chData && chData.length > 0) {
@@ -60,7 +61,7 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
       }
     }
     loadComicDetail();
-  }, [params.comicId]);
+  }, [comicId]);
 
   if (isLoading) {
     return (
@@ -89,7 +90,7 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
         <div className="space-y-4 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100">{comic?.title}</h1>
-            <BookmarkButton comicId={params.comicId} />
+            <BookmarkButton comicId={comicId} />
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
@@ -114,7 +115,7 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
           {chapters.length > 0 && (
             <div className="pt-2">
               <Link
-                href={`/comics/${params.comicId}/chapter/${chapters[chapters.length - 1].id}`}
+                href={`/comics/${comicId}/chapter/${chapters[chapters.length - 1].id}`}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm shadow-md transition-colors"
               >
                 <BookOpen size={16} /> Đọc Từ Đầu
@@ -128,7 +129,7 @@ export default function ComicDetailPage({ params }: { params: { comicId: string 
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Danh Sách Chương ({chapters.length})</h2>
         <Card className="p-4">
-          <ChapterList comicId={params.comicId} chapters={chapters} />
+          <ChapterList comicId={comicId} chapters={chapters} />
         </Card>
       </section>
     </div>
