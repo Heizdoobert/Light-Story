@@ -1,6 +1,6 @@
 "use client";
 
-import { User, ShieldCheck, Mail, Calendar, LogOut, Save } from "lucide-react";
+import { User, Mail, Calendar, LogOut, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ImageUploader } from "@/components/admin/image-uploader";
@@ -85,10 +85,6 @@ export default function AdminProfilePage() {
             <div className="flex items-center gap-2">
               <Mail size={14} className="text-slate-500" />
               <span>Email: <strong className="text-slate-200">{user?.email}</strong></span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={14} className="text-slate-500" />
-              <span>ID Tài khoản: <strong className="text-slate-200 font-mono text-[11px]">{user?.id?.slice(0, 18)}...</strong></span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar size={14} className="text-slate-500" />

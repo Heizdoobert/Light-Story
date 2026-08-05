@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { User, Mail, Calendar, Shield, Bookmark, History, Save, LogOut } from "lucide-react";
+import { User, Mail, Calendar, Bookmark, History, Save, LogOut } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -152,10 +152,6 @@ export default function UserProfilePage() {
             <div className="flex items-center gap-2">
               <Mail size={14} className="text-slate-400" />
               <span>Email: <strong className="text-slate-800 dark:text-slate-200">{user.email}</strong></span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Shield size={14} className="text-slate-400" />
-              <span>ID Tài khoản: <strong className="text-slate-800 dark:text-slate-200 font-mono text-[11px]">{user.id.slice(0, 16)}...</strong></span>
             </div>
             <div className="flex items-center gap-2">
               <Calendar size={14} className="text-slate-400" />
