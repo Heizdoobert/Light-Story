@@ -500,12 +500,23 @@ export default {
 
   async queue(
     batch: MessageBatch<any>,
-    _env: Env,
+    env: Env,
     _ctx: ExecutionContext,
   ): Promise<void> {
     for (const message of batch.messages) {
       try {
-        console.log(`[Queue] Processing message ${message.id}:`, message.body);
+        const payload = message.body;
+        console.log(`[Queue] Processing message ${message.id} (type: ${payload?.type || 'UNKNOWN'}):`, payload);
+
+        if (payload?.type === 'CACHE_INVALIDATION' && payload?.key && env.APP_KV) {
+          await env.APP_KV.delete(payload.key);
+          console.log(`[Queue] Invalidated KV key: ${payload.key}`);
+        } else if (payload?.type === 'ANALYTICS_EVENT') {
+          console.log(`[Queue] Ingested analytics event for comic: ${payload?.comicId || 'N/A'}`);
+        } else if (payload?.type === 'AUDIT_EVENT') {
+          console.log(`[Queue] Recorded audit log for action: ${payload?.action || 'N/A'}`);
+        }
+
         message.ack();
       } catch (err) {
         console.error(`[Queue] Error processing message ${message.id}:`, err);
