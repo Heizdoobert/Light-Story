@@ -285,8 +285,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = async () => {
     if (!supabase) return;
-    await supabase.auth.signOut();
-    queryClient.clear();
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (err) {
+      console.error("SignOut error:", err);
+    } finally {
+      setUser(null);
+      setProfile(null);
+      queryClient.clear();
+
+      if (typeof window !== "undefined") {
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith("sb-") || key.includes("supabase"))) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (e) {
+          console.error("Error clearing local storage auth tokens:", e);
+        }
+      }
+    }
   };
 
   const register = async (

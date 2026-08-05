@@ -1,20 +1,17 @@
-import { createBrowserClient } from '@supabase/ssr';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-export const supabase: SupabaseClient | null = supabaseUrl && supabaseKey
-  ? (createBrowserClient(supabaseUrl, supabaseKey) as unknown as SupabaseClient)
-  : null;
+export const supabase: SupabaseClient | null =
+  typeof window !== "undefined" ? getSupabaseBrowserClient() : null;
 
 export function createSupabaseClient(): SupabaseClient {
-  if (!supabase) throw new Error('Supabase environment variables not configured');
-  return supabase;
+  const client = getSupabaseBrowserClient();
+  if (!client) throw new Error("Supabase environment variables not configured");
+  return client;
 }
 
-export function getSupabaseClient() {
-  return supabase;
+export function getSupabaseClient(): SupabaseClient | null {
+  return getSupabaseBrowserClient();
 }
 
 export default supabase;

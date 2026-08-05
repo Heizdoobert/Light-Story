@@ -1,22 +1,32 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export function createClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let clientInstance: SupabaseClient | null = null;
 
-  if (!url || !key) {
-    throw new Error("Missing enviroment key SUPABASE (url/anon_key)");
+export function createClient(): SupabaseClient {
+  if (clientInstance) {
+    return clientInstance;
   }
 
-  return createBrowserClient(url, key);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!url || !key) {
+    throw new Error("Missing environment key SUPABASE (url/anon_key)");
+  }
+
+  clientInstance = createBrowserClient(url, key) as unknown as SupabaseClient;
+  return clientInstance;
 }
 
-export function getSupabaseBrowserClient() {
+export function getSupabaseBrowserClient(): SupabaseClient {
   return createClient();
 }
 
-export function createSupabaseBrowserClient() {
+export function createSupabaseBrowserClient(): SupabaseClient {
   return createClient();
 }
 
-export const supabase = createClient();
+export const supabase = typeof window !== "undefined" ? createClient() : null as unknown as SupabaseClient;

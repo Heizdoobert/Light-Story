@@ -16,6 +16,7 @@ export function useUser() {
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser();
+
       if (currentUser) {
         setUser(currentUser);
         const { data: prof } = await supabase
@@ -35,6 +36,9 @@ export function useUser() {
       }
     } catch (err) {
       console.error("Error fetching user session:", err);
+      setUser(null);
+      setProfile(null);
+      setRole(null);
     } finally {
       setIsLoading(false);
     }
@@ -65,16 +69,27 @@ export function useUser() {
   const signOut = async () => {
     try {
       const supabase = getSupabaseBrowserClient();
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "global" });
     } catch (err) {
       console.error("SignOut error:", err);
     } finally {
       setUser(null);
       setProfile(null);
       setRole(null);
-      
-      // Wait for 2s and auto-redirect to home page '/'
+
+      // Clean stale auth tokens from browser storage to ensure next login is fresh
       if (typeof window !== "undefined") {
+        try {
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith("sb-") || key.includes("supabase"))) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (e) {
+          console.error("Error clearing local storage auth tokens:", e);
+        }
+
         setTimeout(() => {
           window.location.href = "/";
         }, 2000);
