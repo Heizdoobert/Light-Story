@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import { LoginModal } from "@/components/auth/LoginModal";
+import LoginModal from "@/components/auth/login-modal";
 import { Header } from "@/components/navigation/Header";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useHomePagePresenter } from "@/hooks/presenters/useHomePagePresenter";

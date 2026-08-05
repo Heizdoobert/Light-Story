@@ -18,7 +18,7 @@ import {
   Moon,
 } from "lucide-react";
 import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import LoginModal from "@/components/auth/login-modal";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";

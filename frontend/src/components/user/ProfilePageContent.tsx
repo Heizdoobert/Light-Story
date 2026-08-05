@@ -6,7 +6,7 @@ import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
 import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import LoginModal from "@/components/auth/login-modal";
 import { AdZone } from "@/components/shared/ads/AdZone";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";

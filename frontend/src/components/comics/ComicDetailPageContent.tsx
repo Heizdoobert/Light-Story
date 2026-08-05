@@ -15,9 +15,9 @@ import {
   Play,
 } from "lucide-react";
 import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import LoginModal from "@/components/auth/login-modal";
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
-import { BookmarkButton } from "@/components/user/BookmarkButton";
+import { BookmarkButton } from "@/components/user/bookmark-button";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
 
 export const ComicDetailPageContent: React.FC = () => {

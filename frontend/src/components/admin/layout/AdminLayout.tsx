@@ -11,7 +11,7 @@ import { LogOut, ChevronRight, Menu, X, House, LayoutDashboard, Users } from "lu
 import Link from "next/link";
 import { useAuth } from '@/context/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
-import { NotificationBell } from "@/components/user/NotificationBell";
+import { NotificationBell } from "@/components/ui/notification-bell";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase/client';
 import { getAdminMenuItems } from '@/lib/admin/admin-navigation';

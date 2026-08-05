@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, SearchX, X } from "lucide-react";
 import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import LoginModal from "@/components/auth/login-modal";
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
