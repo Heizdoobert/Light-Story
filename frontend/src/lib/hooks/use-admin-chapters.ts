@@ -110,6 +110,7 @@ export function useAdminChapters(initialComicId: string = "all") {
     setSubmitting(true);
     try {
       const supabase = getSupabaseBrowserClient();
+      let targetChapterId = editingChapter?.id;
 
       if (editingChapter) {
         const { error } = await supabase
@@ -118,25 +119,41 @@ export function useAdminChapters(initialComicId: string = "all") {
             chapter_number: Number(chapterNumber),
             title,
             images,
+            updated_at: new Date().toISOString(),
           })
           .eq("id", editingChapter.id);
 
         if (error) throw error;
-        toast.success("Cập nhật chương thành công!");
       } else {
-        const { error } = await supabase.from("chapters").insert([
-          {
-            story_id: targetComicId,
-            chapter_number: Number(chapterNumber),
-            title,
-            images,
-          },
-        ]);
+        const { data: inserted, error } = await supabase
+          .from("chapters")
+          .insert([
+            {
+              story_id: targetComicId,
+              chapter_number: Number(chapterNumber),
+              title,
+              images,
+            },
+          ])
+          .select("id")
+          .single();
 
         if (error) throw error;
-        toast.success("Tạo chương mới thành công!");
+        if (inserted) targetChapterId = inserted.id;
       }
 
+      // Sync to chapter_images table for public reader compatibility
+      if (targetChapterId && images.length > 0) {
+        await supabase.from("chapter_images").delete().eq("chapter_id", targetChapterId);
+        const chapterImageRows = images.map((imgUrl, index) => ({
+          chapter_id: targetChapterId,
+          image_url: imgUrl,
+          page_number: index + 1,
+        }));
+        await supabase.from("chapter_images").insert(chapterImageRows);
+      }
+
+      toast.success(editingChapter ? "Cập nhật chương thành công!" : "Tạo chương mới thành công!");
       setIsModalOpen(false);
       loadInitialData();
     } catch (err: any) {
@@ -151,6 +168,7 @@ export function useAdminChapters(initialComicId: string = "all") {
 
     try {
       const supabase = getSupabaseBrowserClient();
+      await supabase.from("chapter_images").delete().eq("chapter_id", id);
       const { error } = await supabase.from("chapters").delete().eq("id", id);
       if (error) throw error;
 

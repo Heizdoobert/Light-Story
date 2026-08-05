@@ -2,7 +2,7 @@
 
 import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
 import { ChapterReader } from '@/components/comic/chapter-reader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,25 +15,42 @@ export default function ChapterReaderPage({
 }) {
   const { comicId, chapterId } = use(params);
   const [images, setImages] = useState<string[]>([]);
+  const [chapterTitle, setChapterTitle] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadChapterImages() {
       try {
         const supabase = getSupabaseBrowserClient();
-        const { data } = await supabase
+
+        // Query chapter title
+        const { data: chapterInfo } = await supabase
+          .from('chapters')
+          .select('title, chapter_number, images')
+          .eq('id', chapterId)
+          .maybeSingle();
+
+        if (chapterInfo) {
+          setChapterTitle(
+            chapterInfo.title
+              ? `Chương ${chapterInfo.chapter_number}: ${chapterInfo.title}`
+              : `Chương ${chapterInfo.chapter_number}`
+          );
+        }
+
+        // Query pages from chapter_images table
+        const { data: chImages } = await supabase
           .from('chapter_images')
           .select('image_url')
           .eq('chapter_id', chapterId)
           .order('page_number', { ascending: true });
 
-        if (data && data.length > 0) {
-          setImages(data.map((item) => item.image_url));
+        if (chImages && chImages.length > 0) {
+          setImages(chImages.map((item) => item.image_url));
+        } else if (chapterInfo?.images && Array.isArray(chapterInfo.images) && chapterInfo.images.length > 0) {
+          setImages(chapterInfo.images);
         } else {
-          setImages([
-            'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-            'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800',
-          ]);
+          setImages([]);
         }
       } catch (err) {
         console.error('Failed to load chapter images:', err);
@@ -49,14 +66,19 @@ export default function ChapterReaderPage({
       {/* Navigation Header */}
       <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-20 z-40">
         <Link href={`/comics/${comicId}`}>
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2 text-slate-700 dark:text-slate-200">
             <ArrowLeft size={16} /> Chi Tiết Truyện
           </Button>
         </Link>
-        <span className="font-bold text-sm text-slate-800 dark:text-slate-200">Đang Đọc Chapter</span>
+
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-sm">
+          <BookOpen size={16} className="text-orange-500" />
+          <span className="truncate max-w-xs">{chapterTitle || 'Đang Đọc Chapter'}</span>
+        </div>
+
         <div className="flex gap-2">
-          <Button variant="outline" size="sm"><ChevronLeft size={16} /></Button>
-          <Button variant="outline" size="sm"><ChevronRight size={16} /></Button>
+          <Button variant="outline" size="sm" title="Chương trước"><ChevronLeft size={16} /></Button>
+          <Button variant="outline" size="sm" title="Chương kế"><ChevronRight size={16} /></Button>
         </div>
       </div>
 

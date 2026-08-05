@@ -3,9 +3,19 @@ import { requireRouteAuthorization } from '@/lib/auth/route-auth';
 import { getBucketForFolder, putObject } from '@/lib/r2/s3';
 
 const ALLOWED_ROLES = ['admin', 'superadmin', 'employee'] as const;
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif']);
-const ALLOWED_FOLDERS = new Set(['chapters', 'covers']);
+const MAX_FILE_SIZE = 250 * 1024 * 1024; // Allow up to 250MB for comic archive .cbz/.zip uploads
+const ALLOWED_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif',
+  'application/x-cbz',
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/octet-stream',
+]);
+const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
 
 export async function POST(request: NextRequest) {
   const auth = await requireRouteAuthorization(request, { allowedRoles: ALLOWED_ROLES });
@@ -27,11 +37,15 @@ export async function POST(request: NextRequest) {
   if (!ALLOWED_FOLDERS.has(folder)) {
     return NextResponse.json({ error: 'invalid folder', success: false }, { status: 400 });
   }
-  if (!ALLOWED_TYPES.has(file.type)) {
+
+  const extension = (file.name.split('.').pop() ?? '').toLowerCase();
+  const isCbzOrZip = extension === 'cbz' || extension === 'zip';
+
+  if (!isCbzOrZip && !ALLOWED_TYPES.has(file.type)) {
     return NextResponse.json({ error: 'unsupported file type', success: false }, { status: 415 });
   }
   if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: 'file too large', success: false }, { status: 413 });
+    return NextResponse.json({ error: 'file too large (max 250MB)', success: false }, { status: 413 });
   }
 
   const bucket = getBucketForFolder(folder);
@@ -39,12 +53,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'storage not configured', success: false }, { status: 500 });
   }
 
-  const extension = (file.name.split('.').pop() ?? '').toLowerCase();
   const key = `${folder}/${Date.now()}-${crypto.randomUUID()}${extension ? `.${extension}` : ''}`;
 
   try {
     const body = new Uint8Array(await file.arrayBuffer());
-    await putObject(bucket, key, body, file.type);
+    await putObject(bucket, key, body, file.type || 'application/octet-stream');
     return NextResponse.json({ success: true, key, url: key });
   } catch (error) {
     console.error('R2 upload failed', error);
