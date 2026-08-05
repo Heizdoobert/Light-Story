@@ -21,6 +21,7 @@ import { Header } from "@/components/navigation/Header";
 import LoginModal from "@/components/auth/login-modal";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
+import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
 import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
 
 export const ChapterReaderPageContent: React.FC = () => {
@@ -340,6 +341,12 @@ export const ChapterReaderPageContent: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ChapterCommentsSection
+        chapterId={chapterId}
+        comicId={comicId}
+        onLoginClick={() => setIsLoginModalOpen(true)}
+      />
 
       {showChapterMenu && (
         <div
