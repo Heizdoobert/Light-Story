@@ -14,19 +14,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let comicRoutes: MetadataRoute.Sitemap = [];
   try {
     const supabase = await getServerSupabase();
-    const { data: stories } = await supabase
-      .from('stories')
-      .select('id, title, updated_at')
-      .order('updated_at', { ascending: false })
-      .limit(500);
+    if (supabase) {
+      const { data: stories } = await supabase
+        .from('stories')
+        .select('id, title, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(500);
 
-    if (stories) {
-      comicRoutes = stories.map((story) => ({
-        url: `${BASE_URL}/comics/${story.id}`,
-        lastModified: story.updated_at ? new Date(story.updated_at) : new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.8,
-      }));
+      if (stories) {
+        comicRoutes = stories.map((story) => ({
+          url: `${BASE_URL}/comics/${story.id}`,
+          lastModified: story.updated_at ? new Date(story.updated_at) : new Date(),
+          changeFrequency: 'daily' as const,
+          priority: 0.8,
+        }));
+      }
     }
   } catch {
     comicRoutes = [];

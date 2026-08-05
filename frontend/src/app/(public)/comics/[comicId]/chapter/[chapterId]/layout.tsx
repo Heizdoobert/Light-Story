@@ -9,6 +9,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { comicId, chapterId } = await params;
   const supabase = await getServerSupabase();
 
+  if (!supabase) {
+    return { title: 'Truyện tranh | Light Story' };
+  }
+
   const [{ data: comic }, { data: chapter }] = await Promise.all([
     supabase.from('stories').select('title').eq('id', comicId).maybeSingle(),
     supabase

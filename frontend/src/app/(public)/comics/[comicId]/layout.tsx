@@ -7,6 +7,11 @@ type Props = { params: Promise<{ comicId: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { comicId } = await params;
   const supabase = await getServerSupabase();
+
+  if (!supabase) {
+    return { title: 'Chi tiết truyện | Light Story' };
+  }
+
   const { data: comic } = await supabase
     .from('stories')
     .select('title, description, cover_url, author')
