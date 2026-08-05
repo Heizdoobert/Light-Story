@@ -3,23 +3,23 @@
  */
 
 const DEFAULT_SECRET = process.env.NEXT_PUBLIC_ENC_KEY as string;
-if (!DEFAULT_SECRET) throw new Error("Missing NEXT_PUBLIC_ENC_KEY");
+if (!DEFAULT_SECRET) throw new Error('Missing NEXT_PUBLIC_ENC_KEY');
 
 async function getKey(secret: string): Promise<CryptoKey> {
   const enc = new TextEncoder();
-  const keyData = enc.encode(secret.padEnd(32, "!").slice(0, 32));
+  const keyData = enc.encode(secret.padEnd(32, '!').slice(0, 32));
   return await window.crypto.subtle.importKey(
-    "raw",
+    'raw',
     keyData,
-    { name: "AES-GCM" },
+    { name: 'AES-GCM' },
     false,
-    ["encrypt", "decrypt"],
+    ['encrypt', 'decrypt']
   );
 }
 
 function bufferToBase64(buf: ArrayBuffer): string {
   const bytes = new Uint8Array(buf);
-  let binary = "";
+  let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }
@@ -35,44 +35,34 @@ function base64ToBuffer(b64: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-export async function encryptFieldClient(
-  text: string,
-  secret: string = DEFAULT_SECRET,
-): Promise<string> {
-  if (!text || typeof text !== "string") return text;
-  if (text.startsWith("ENCv1:")) return text;
+export async function encryptFieldClient(text: string, secret: string = DEFAULT_SECRET): Promise<string> {
+  if (!text || typeof text !== 'string') return text;
+  if (text.startsWith('ENCv1:')) return text;
 
   try {
     const key = await getKey(secret);
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const enc = new TextEncoder();
     const ciphertext = await window.crypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
+      { name: 'AES-GCM', iv },
       key,
-      enc.encode(text),
+      enc.encode(text)
     );
 
     return `ENCv1:${bufferToBase64(iv.buffer)}:${bufferToBase64(ciphertext)}`;
   } catch (error) {
-    console.error("Client encryption failed:", error);
+    console.error('Client encryption failed:', error);
     return text;
   }
 }
 
-export async function decryptFieldClient(
-  encryptedText: string,
-  secret: string = DEFAULT_SECRET,
-): Promise<string> {
-  if (
-    !encryptedText ||
-    typeof encryptedText !== "string" ||
-    !encryptedText.startsWith("ENCv1:")
-  ) {
+export async function decryptFieldClient(encryptedText: string, secret: string = DEFAULT_SECRET): Promise<string> {
+  if (!encryptedText || typeof encryptedText !== 'string' || !encryptedText.startsWith('ENCv1:')) {
     return encryptedText;
   }
 
   try {
-    const parts = encryptedText.split(":");
+    const parts = encryptedText.split(':');
     if (parts.length !== 3) return encryptedText;
 
     const ivBuf = base64ToBuffer(parts[1]);
@@ -80,15 +70,16 @@ export async function decryptFieldClient(
     const key = await getKey(secret);
 
     const decrypted = await window.crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: new Uint8Array(ivBuf) },
+      { name: 'AES-GCM', iv: new Uint8Array(ivBuf) },
       key,
-      cipherBuf,
+      cipherBuf
     );
 
     const dec = new TextDecoder();
     return dec.decode(decrypted);
   } catch (error) {
-    console.error("Client decryption failed:", error);
+    console.error('Client decryption failed:', error);
     return encryptedText;
   }
 }
+

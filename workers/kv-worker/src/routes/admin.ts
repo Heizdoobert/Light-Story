@@ -285,7 +285,7 @@ export async function handleAdminRequest(
       } else if (scope === 'public') {
         q += '&key=like.public_%';
       }
-      const svcKey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+      const svcKey = env.SUPABASE_SERVICE_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
       let supRes;
       try {
@@ -301,7 +301,7 @@ export async function handleAdminRequest(
     }
 
     if (method === 'POST' && path === '/admin/site-settings') {
-      const svcKey = env.SUPABASE_SERVICE_KEY || env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+      const svcKey = env.SUPABASE_SERVICE_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
       const body = (await request.json()) as any;
       const userId = request.headers.get('x-user-id');
@@ -500,6 +500,23 @@ export async function handleAdminRequest(
       const { action, id } = body;
 
       if (action === 'updateRole') {
+        const svcKey = env.SUPABASE_SERVICE_KEY || (env as any).SUPABASE_SERVICE_ROLE_KEY;
+        if (svcKey) {
+          const rpcRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`, {
+            method: 'POST',
+            headers: {
+              apikey: svcKey,
+              Authorization: `Bearer ${svcKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ target_user_id: id, new_role: body.role }),
+          }).catch(() => null);
+
+          if (rpcRes && rpcRes.ok) {
+            return json({ success: true });
+          }
+        }
+
         const res = await sbPatch(
           'profiles',
           `id=eq.${id}`,
@@ -569,6 +586,21 @@ export async function handleAdminRequest(
             adminData.msg || adminData.error || 'Create user failed',
             adminRes.status,
           );
+
+        const createdUser = adminData.user || adminData;
+        const targetRole = body.role || 'user';
+        const fullName = body.full_name || body.fullName || '';
+
+        if (createdUser?.id) {
+          await sbAdminPatch(
+            'profiles',
+            `id=eq.${createdUser.id}`,
+            { role: targetRole, full_name: fullName },
+            env,
+            token,
+          ).catch(() => null);
+        }
+
         return json({ data: adminData });
       }
 

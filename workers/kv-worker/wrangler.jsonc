@@ -12,8 +12,8 @@
     }
   ],
   "vars": {
-    "SUPABASE_URL": "https://xgtlrztskoomimvfpdoy.supabase.co",
-    "SUPABASE_JWKS_URL": "https://xgtlrztskoomimvfpdoy.supabase.co/auth/v1/.well-known/jwks.json"
+    "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
   },
   "kv_namespaces": [
     {

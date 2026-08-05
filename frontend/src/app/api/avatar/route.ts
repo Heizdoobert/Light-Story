@@ -1,31 +1,17 @@
 import { NextResponse } from 'next/server';
 
-const ALLOWED_PREFIX = '/storage/v1/object/public/avatars/';
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const raw = searchParams.get('url');
-
-  let url: URL;
-  try {
-    url = new URL(raw ?? '');
-  } catch {
-    return new NextResponse('Invalid URL', { status: 400 });
-  }
-
-  const isAllowed =
-    url.protocol === 'https:' &&
-    url.hostname.endsWith('.supabase.co') &&
-    url.pathname.startsWith(ALLOWED_PREFIX);
-
-  if (!isAllowed) {
+  const url = searchParams.get('url');
+  
+  if (!url || !url.includes('.supabase.co/storage/v1/object/public/avatars/')) {
     return new NextResponse('Invalid URL', { status: 400 });
   }
 
   try {
-    const response = await fetch(url, { redirect: 'error' });
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch image');
-
+    
     const buffer = await response.arrayBuffer();
     return new NextResponse(buffer, {
       headers: {

@@ -93,8 +93,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // CMS Stats & Headers
     cms_header_title: "Quản Lý Truyện Tranh",
-    cms_header_desc:
-      "Quản lý thông tin truyện, chương, tài nguyên ảnh, nhóm dịch và kiểm duyệt nội dung trên một bảng điều khiển thống nhất.",
+    cms_header_desc: "Quản lý thông tin truyện, chương, tài nguyên ảnh, nhóm dịch và kiểm duyệt nội dung trên một bảng điều khiển thống nhất.",
     total_comics: "Tổng số truyện",
     drafts: "Bản nháp",
     published: "Đã xuất bản",
@@ -103,8 +102,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // Analytics Dashboard
     analytics_title: "Bảng Điều Khiển Tương Tác, Nội Dung & Hạ Tầng",
-    analytics_desc:
-      "Tổng hợp dữ liệu độc giả Supabase và các thông số Cloudflare giúp theo dõi tăng trưởng, yêu thích, lưu trữ và hạ tầng tại một nơi.",
+    analytics_desc: "Tổng hợp dữ liệu độc giả Supabase và các thông số Cloudflare giúp theo dõi tăng trưởng, yêu thích, lưu trữ và hạ tầng tại một nơi.",
     time_24h: "24 giờ qua",
     time_7d: "7 ngày qua",
     time_30d: "30 ngày qua",
@@ -137,14 +135,12 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // System Settings
     restricted_access: "Truy cập bị hạn chế",
-    restricted_access_desc:
-      "Chỉ admin và superadmin mới có thể chỉnh sửa cài đặt hệ thống.",
+    restricted_access_desc: "Chỉ admin và superadmin mới có thể chỉnh sửa cài đặt hệ thống.",
     settings_desc: "Cấu hình hành vi giao diện và hiển thị tab theo vai trò.",
     loading_settings: "Đang tải cài đặt...",
     select_language_desc: "Chọn ngôn ngữ giao diện ứng dụng.",
     compact_layout_desc: "Thu nhỏ khoảng cách trong thẻ dashboard.",
-    sync_badge_desc:
-      "Hiển thị trạng thái polling trực tiếp trong header dashboard.",
+    sync_badge_desc: "Hiển thị trạng thái polling trực tiếp trong header dashboard.",
     saving: "Đang lưu...",
     tab_visibility_title: "Hiển Thị Tab Cho Vai Trò Thấp Hơn",
     sidebar_menu_title: "Hiển Thị Menu Bên",
@@ -153,10 +149,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     copy_snapshot: "Sao chép Snapshot",
     download_snapshot: "Tải Snapshot",
     restore_from_json: "Khôi phục từ JSON",
-    settings_backup_desc:
-      "Bản sao lưu này ghi lại cài đặt hệ thống. Lưu thay đổi sau khi khôi phục để đồng bộ lên Supabase.",
-    no_system_logs:
-      "Chưa có nhật ký hệ thống. Nhật ký sẽ xuất hiện sau các thao tác lưu/sao lưu.",
+    settings_backup_desc: "Bản sao lưu này ghi lại cài đặt hệ thống. Lưu thay đổi sau khi khôi phục để đồng bộ lên Supabase.",
+    no_system_logs: "Chưa có nhật ký hệ thống. Nhật ký sẽ xuất hiện sau các thao tác lưu/sao lưu.",
 
     // Analytics Dashboard
     analytics_overview: "Tổng Quan Phân Tích",
@@ -177,10 +171,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     supabase_content: "Hiệu Suất Nội Dung Supabase",
     supabase_content_desc: "Xếp hạng chương và động lực đọc từ Supabase.",
     cloudflare_infra: "Hạ Tầng Cloudflare",
-    cloudflare_infra_desc:
-      "Dữ liệu phân phối, cache, thiết bị và vùng từ Cloudflare.",
-    cloudflare_infra_restricted:
-      "Chế độ xem hạn chế về tình trạng phân phối công khai.",
+    cloudflare_infra_desc: "Dữ liệu phân phối, cache, thiết bị và vùng từ Cloudflare.",
+    cloudflare_infra_restricted: "Chế độ xem hạn chế về tình trạng phân phối công khai.",
 
     // Trends
     trends_insights: "Xu Hướng & Phân Tích",
@@ -324,8 +316,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // CMS Stats & Headers
     cms_header_title: "Comic Management CMS",
-    cms_header_desc:
-      "Manage comic metadata, chapters, assets, moderation, and audit trails from one unified control surface.",
+    cms_header_desc: "Manage comic metadata, chapters, assets, moderation, and audit trails from one unified control surface.",
     total_comics: "Total Comics",
     drafts: "Drafts",
     published: "Published",
@@ -333,10 +324,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     create_new_comic: "Create New Comic",
 
     // Analytics Dashboard
-    analytics_title:
-      "Readership, Content & Infrastructure Operational Dashboard",
-    analytics_desc:
-      "Unifies Supabase engagement data with Cloudflare metrics to monitor growth, favorites, storage, and delivery health in one place.",
+    analytics_title: "Readership, Content & Infrastructure Operational Dashboard",
+    analytics_desc: "Unifies Supabase engagement data with Cloudflare metrics to monitor growth, favorites, storage, and delivery health in one place.",
     time_24h: "Last 24h",
     time_7d: "7 days",
     time_30d: "30 days",
@@ -369,10 +358,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // System Settings
     restricted_access: "Restricted Access",
-    restricted_access_desc:
-      "Only admin and superadmin can edit system settings.",
-    settings_desc:
-      "Configure interface behavior and role-based dashboard tab visibility.",
+    restricted_access_desc: "Only admin and superadmin can edit system settings.",
+    settings_desc: "Configure interface behavior and role-based dashboard tab visibility.",
     loading_settings: "Loading settings...",
     select_language_desc: "Select application interface language.",
     compact_layout_desc: "Reduces spacing in dashboard cards.",
@@ -385,10 +372,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     copy_snapshot: "Copy Snapshot",
     download_snapshot: "Download Snapshot",
     restore_from_json: "Restore From JSON",
-    settings_backup_desc:
-      "This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.",
-    no_system_logs:
-      "No system logs yet. Logs will appear after save/backup actions.",
+    settings_backup_desc: "This backup captures the system settings managed in the UI. Save changes after restore to persist them in Supabase.",
+    no_system_logs: "No system logs yet. Logs will appear after save/backup actions.",
 
     // Analytics Dashboard
     analytics_overview: "Analytics Overview",
@@ -405,14 +390,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     unable_to_load_analytics: "Unable to load analytics dashboard.",
     unknown_error: "Unknown analytics error",
     supabase_engagement: "Supabase Engagement",
-    supabase_engagement_desc:
-      "Supabase-derived readership and retention signals.",
+    supabase_engagement_desc: "Supabase-derived readership and retention signals.",
     supabase_content: "Supabase Content Performance",
-    supabase_content_desc:
-      "Chapter rankings and reading momentum from Supabase.",
+    supabase_content_desc: "Chapter rankings and reading momentum from Supabase.",
     cloudflare_infra: "Cloudflare Infrastructure",
-    cloudflare_infra_desc:
-      "Cloudflare delivery, caching, device, and zone telemetry.",
+    cloudflare_infra_desc: "Cloudflare delivery, caching, device, and zone telemetry.",
     cloudflare_infra_restricted: "Restricted view of public delivery health.",
 
     // Trends

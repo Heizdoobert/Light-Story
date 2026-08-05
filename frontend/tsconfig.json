@@ -9,10 +9,6 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "types": [
-      "react",
-      "react-dom"
-    ],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
@@ -33,19 +29,6 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@core/*": [
-        "./src/@core/*"
-      ],
-      "@layouts/*": [
-        "./src/@layouts/*"
-      ],
-      "@menu/*": [
-        "./src/@menu/*"
-      ],
-      "@menu": [
-        "./src/@menu",
-        "./src/@menu/index.ts"
       ],
       "@light-story/api-types": [
         "../packages/api-types"

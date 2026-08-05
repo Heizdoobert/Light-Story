@@ -170,10 +170,11 @@ async function sbAdmin(
   env: Env,
   _token?: string | null,
 ): Promise<Response> {
+  const serviceKey = env.SUPABASE_SERVICE_KEY || (env as any).SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
   const h = new Headers();
-  h.set('apikey', env.SUPABASE_SERVICE_KEY);
+  h.set('apikey', serviceKey);
   h.set('Accept', 'application/json');
-  h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
+  h.set('Authorization', `Bearer ${serviceKey}`);
   if (opts.body) h.set('Content-Type', 'application/json');
   if (opts.headers) {
     const pref = (opts.headers as Record<string, string>).Prefer;

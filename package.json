@@ -24,9 +24,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260625.1",
-    "@supabase/supabase-js": "^2.112.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.4",
+    "@supabase/supabase-js": "^2.106.1",
     "concurrently": "^9.2.4",
     "husky": "^9.1.7",
     "wrangler": "4.105.0"
@@ -40,21 +38,19 @@
   "overrides": {
     "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
-    "fast-uri": "4.1.1",
+    "fast-uri": "4.1.2",
     "body-parser": "2.3.0",
-    "postcss": "8.5.22",
+    "postcss": "8.5.25",
+    "hono": "4.12.34",
+    "undici": "7.29.0",
     "sharp": "0.35.3",
     "@hono/node-server": "2.0.11",
     "next": {
-      "postcss": "8.5.22",
+      "postcss": "8.5.25",
       "sharp": "0.35.3"
     },
     "@modelcontextprotocol/sdk": {
       "@hono/node-server": "2.0.11"
     }
-  },
-  "dependencies": {
-    "@supabase/ssr": "^0.12.4",
-    "next-auth": "^5.0.0-beta.32"
   }
 }

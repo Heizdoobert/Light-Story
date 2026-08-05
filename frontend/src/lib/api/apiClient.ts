@@ -1,0 +1,203 @@
+import type { ApiResponse } from '@light-story/api-types';
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+    public correlationId?: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+import { supabase } from '@/infrastructure/supabase/client';
+
+const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
+
+const getBaseUrl = (): string => {
+  if (IS_MOCK) return 'http://localhost:4010';
+  let rawUrl = '';
+  if (process.env.NODE_ENV === 'production') {
+    rawUrl =
+      process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
+      process.env.NEXT_PUBLIC_GATEWAY_URL ||
+      'https://kv-worker.hhhuygiau.workers.dev';
+  } else {
+    rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  }
+  return rawUrl.replace(/\/+$/, '');
+};
+
+const BASE_URL = getBaseUrl();
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const now = Math.floor(Date.now() / 1000);
+    return payload.exp ? now >= payload.exp - 10 : true;
+  } catch {
+    return true;
+  }
+}
+
+function getAccessToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const sbKeys = Object.keys(localStorage).filter((k) =>
+      k.startsWith('sb-') && k.endsWith('-auth-token'),
+    );
+    if (sbKeys.length > 0) {
+      const raw = localStorage.getItem(sbKeys[0]);
+      if (raw) {
+        const session = JSON.parse(raw);
+        if (session?.access_token && !isTokenExpired(session.access_token)) {
+          return session.access_token;
+        }
+      }
+    }
+  } catch {
+  }
+  return null;
+}
+
+let _pendingToken: Promise<string | null> | null = null;
+async function getAccessTokenAsync(): Promise<string | null> {
+  if (_pendingToken) return _pendingToken;
+  _pendingToken = (async () => {
+    const sync = getAccessToken();
+    if (sync) return sync;
+    if (!supabase) return null;
+    try {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  try {
+    return await _pendingToken;
+  } finally {
+    _pendingToken = null;
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = await getAccessTokenAsync();
+  const headers = new Headers(options.headers);
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
+  const signal = options.signal || controller.signal;
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      headers,
+      signal,
+    });
+  } catch (err) {
+    throw new ApiError(
+      0,
+      'NETWORK_ERROR',
+      err instanceof TypeError && err.message === 'Failed to fetch'
+        ? 'Unable to connect to server. Please check your internet connection and try again.'
+        : (err as Error)?.name === 'AbortError'
+        ? 'Request timed out'
+        : (err as Error)?.message || 'Network request failed',
+    );
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  const bodyText = await res.text();
+  let body: ApiResponse<T>;
+  
+  try {
+    body = JSON.parse(bodyText) as ApiResponse<T>;
+  } catch {
+    // Fallback for non-JSON responses (legacy or errors)
+    throw new ApiError(
+      res.status,
+      'PARSE_ERROR',
+      'Failed to parse API response',
+    );
+  }
+
+  // Check HTTP status first
+  if (!res.ok) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      (body as any)?.error_description ??
+      (res.statusText || `HTTP Error ${res.status}`);
+
+    throw new ApiError(
+      res.status,
+      body?.error?.code ?? (body as any)?.code ?? 'HTTP_ERROR',
+      errorMsg,
+      body?.correlationId,
+    );
+  }
+
+  // Check API response status
+  if (body && (body as any).success === false) {
+    const errorMsg =
+      (typeof body?.error === 'string' ? body.error : undefined) ??
+      body?.error?.message ??
+      (body as any)?.message ??
+      'API request failed';
+
+    throw new ApiError(
+      res.status,
+      body.error?.code ?? 'API_ERROR',
+      errorMsg,
+      body.correlationId,
+    );
+  }
+
+  // Unwrap and return data
+  if (body && typeof body === 'object' && 'data' in body && body.data !== undefined) {
+    return body.data as T;
+  }
+
+  return body as unknown as T;
+}
+
+export const apiClient = {
+  get: <T>(path: string) => request<T>(path),
+
+  post: <T>(path: string, body?: unknown) =>
+    request<T>(path, {
+      method: 'POST',
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    }),
+
+  put: <T>(path: string, body?: unknown) =>
+    request<T>(path, {
+      method: 'PUT',
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    }),
+
+  patch: <T>(path: string, body?: unknown) =>
+    request<T>(path, {
+      method: 'PATCH',
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    }),
+
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+};

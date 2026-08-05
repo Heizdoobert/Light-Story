@@ -30,7 +30,6 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@light-story/api-types": "file:../packages/api-types",
     "@modelcontextprotocol/sdk": "^1.24.3",
-    "@sentry/nextjs": "^10.69.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.105.4",
     "@tanstack/react-query": "^5.101.3",
@@ -81,13 +80,15 @@
   "overrides": {
     "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
-    "fast-uri": "4.1.1",
+    "fast-uri": "4.1.2",
     "body-parser": "2.3.0",
-    "postcss": "8.5.22",
+    "postcss": "8.5.25",
+    "hono": "4.12.34",
+    "undici": "7.29.0",
     "sharp": "0.35.3",
     "@hono/node-server": "2.0.11",
     "next": {
-      "postcss": "8.5.22",
+      "postcss": "8.5.25",
       "sharp": "0.35.3"
     },
     "@modelcontextprotocol/sdk": {
