@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, RotateCcw, Home } from "lucide-react";
+import { AlertTriangle, RotateCcw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function RootError({
+export default function ComicDetailError({
   error,
   reset,
 }: {
@@ -13,7 +13,7 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Root Error]", error);
+    console.error("[ComicDetail Error]", error);
   }, [error]);
 
   return (
@@ -25,10 +25,10 @@ export default function RootError({
 
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-            Đã Xảy Ra Lỗi Hệ Thống
+            Không Thể Tải Truyện
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            {error.message || "Vui lòng thử lại sau."}
+            {error.message || "Truyện không tồn tại hoặc đã xảy ra lỗi khi tải dữ liệu."}
           </p>
           {error.digest && (
             <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
@@ -41,9 +41,9 @@ export default function RootError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/">
+          <Link href="/comics">
             <Button variant="outline" className="gap-2 font-bold">
-              <Home size={16} /> Trang Chủ
+              <ArrowLeft size={16} /> Danh Sách Truyện
             </Button>
           </Link>
         </div>

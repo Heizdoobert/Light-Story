@@ -5,7 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function RootError({
+export default function GenreError({
   error,
   reset,
 }: {
@@ -13,7 +13,7 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Root Error]", error);
+    console.error("[Genre Error]", error);
   }, [error]);
 
   return (
@@ -25,16 +25,11 @@ export default function RootError({
 
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-            Đã Xảy Ra Lỗi Hệ Thống
+            Lỗi Tải Thể Loại
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            {error.message || "Vui lòng thử lại sau."}
+            {error.message || "Không thể tải thể loại truyện. Vui lòng thử lại."}
           </p>
-          {error.digest && (
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-              Mã lỗi: {error.digest}
-            </p>
-          )}
         </div>
 
         <div className="flex items-center justify-center gap-3 pt-2">

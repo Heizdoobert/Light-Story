@@ -2,10 +2,10 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, RotateCcw, Home } from "lucide-react";
+import { AlertTriangle, RotateCcw, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function RootError({
+export default function UserError({
   error,
   reset,
 }: {
@@ -13,7 +13,7 @@ export default function RootError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Root Error]", error);
+    console.error("[User Error]", error);
   }, [error]);
 
   return (
@@ -25,10 +25,10 @@ export default function RootError({
 
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-slate-900 dark:text-white">
-            Đã Xảy Ra Lỗi Hệ Thống
+            Lỗi Trang Người Dùng
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            {error.message || "Vui lòng thử lại sau."}
+            {error.message || "Đã xảy ra lỗi khi tải trang cá nhân. Vui lòng thử lại."}
           </p>
           {error.digest && (
             <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
@@ -41,9 +41,9 @@ export default function RootError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/">
+          <Link href="/user/profile">
             <Button variant="outline" className="gap-2 font-bold">
-              <Home size={16} /> Trang Chủ
+              <User size={16} /> Hồ Sơ
             </Button>
           </Link>
         </div>
