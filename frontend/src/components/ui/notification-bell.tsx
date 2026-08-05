@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, CheckCheck, Trash2, Info, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useLanguage } from '@/providers/language-provider';
+import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/lib/hooks/use-user';
 import { apiClient } from '@/lib/api/apiClient';
 

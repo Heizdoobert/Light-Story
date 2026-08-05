@@ -124,10 +124,3 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
 
   return { items: [], total: 0 };
 }
-
-export default {
-  fetchStories,
-  fetchStoryById,
-  incrementViews,
-  fetchStoriesPage,
-};

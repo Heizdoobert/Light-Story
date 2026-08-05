@@ -223,36 +223,6 @@ describe('sortFilesByFilename', () => {
   });
 });
 
-describe('loadComicCatalogFiltered', () => {
-  const catalog = [
-    { ...MOCK_RECORD, title: 'Alpha', author: 'Alice', status: 'published' as const },
-    { ...MOCK_RECORD, id: '2', title: 'Beta', author: 'Bob', status: 'draft' as const },
-    { ...MOCK_RECORD, id: '3', title: 'Gamma', author: 'Alice', status: 'completed' as const },
-  ];
-
-  it('filters by search term', () => {
-    const result = service.loadComicCatalogFiltered(catalog, { search: 'alpha', status: 'all', author: '' });
-    expect(result.data).toHaveLength(1);
-    expect(result.data[0].title).toBe('Alpha');
-  });
-
-  it('filters by status', () => {
-    const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'draft', author: '' });
-    expect(result.data).toHaveLength(1);
-    expect(result.data[0].status).toBe('draft');
-  });
-
-  it('filters by author', () => {
-    const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'all', author: 'Alice' });
-    expect(result.data).toHaveLength(2);
-  });
-
-  it('returns all when no filters active', () => {
-    const result = service.loadComicCatalogFiltered(catalog, { search: '', status: 'all', author: '' });
-    expect(result.data).toHaveLength(3);
-  });
-});
-
 describe('loadComicRecord', () => {
   it('finds comic by ID in catalog', () => {
     localStorage.setItem('comic-cms:catalog', JSON.stringify([MOCK_RECORD]));
@@ -281,11 +251,6 @@ describe('draft persistence', () => {
     service.saveComicDraft('test-key', draft);
     const raw = localStorage.getItem('comic-cms:draft:test-key');
     expect(JSON.parse(raw!)).toEqual(draft);
-  });
-
-  it('loadComicDraft retrieves saved draft', () => {
-    localStorage.setItem('comic-cms:draft:test-key', JSON.stringify(draft));
-    expect(service.loadComicDraft('test-key')).toEqual(draft);
   });
 
   it('clearComicDraft removes draft from localStorage', () => {

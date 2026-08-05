@@ -1,9 +1,4 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { fetchSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
-
-export async function getUiSettings() {
-  return fetchSystemSettingsSnapshot();
-}
 
 export async function getStoriesFieldValues(field: 'category' | 'author_id') {
   return apiClient.get<Array<Record<string, string | null>>>(`/api/admin/stories/field-values?field=${encodeURIComponent(field)}`);
@@ -45,8 +40,6 @@ export async function getRoleDistribution() {
   }
 }
 
-export default {};
-
 export async function fetchProfiles() {
   return apiClient.get<Array<any>>('/api/admin/profiles?page=1&pageSize=500');
 }
@@ -58,15 +51,4 @@ export async function getAuditLogs(limit = 200) {
 export async function getProfilesByIds(ids: string[]) {
   if (ids.length === 0) return [] as Array<any>;
   return apiClient.get<Array<any>>(`/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids.join(','))}`);
-}
-
-export async function getSystemNotifications(limit = 20) {
-  try {
-    const res = await apiClient.get<{ notifications: any[] }>(
-      `/api/admin/notifications?limit=${limit}`
-    );
-    return res.notifications || [];
-  } catch {
-    return [];
-  }
 }

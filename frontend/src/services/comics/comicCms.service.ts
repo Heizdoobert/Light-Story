@@ -70,92 +70,6 @@ export function loadComicCatalog(): ComicCmsRecord[] {
   return readCatalog();
 }
 
-export function loadComicCatalogFiltered(
-  catalog: any[],
-  filters: ComicCatalogFilters,
-) {
-  // 1. THỰC HIỆN LỌC DỮ LIỆU (Giữ nguyên như cũ)
-  const filteredCatalog = catalog.filter((record) => {
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
-      if (
-        !record.title?.toLowerCase().includes(q) &&
-        !record.author?.toLowerCase().includes(q)
-      )
-        return false;
-    }
-    if (
-      filters.status &&
-      filters.status !== "all" &&
-      record.status !== filters.status
-    )
-      return false;
-    if (filters.author && record.author !== filters.author) return false;
-
-    if (filters.category && filters.category !== "all") {
-      let recordCategories: string[] = [];
-      if (record.category) {
-        if (Array.isArray(record.category)) {
-          recordCategories = record.category;
-        } else if (typeof record.category === "string") {
-          try {
-            recordCategories = JSON.parse(record.category);
-          } catch {
-            recordCategories = record.category
-              .split(",")
-              .map((c: string) => c.trim());
-          }
-        }
-      }
-      const hasCategory = recordCategories.some(
-        (c) => c.toLowerCase() === filters.category!.toLowerCase(),
-      );
-      if (!hasCategory) return false;
-    }
-    return true;
-  });
-
-  const sortType = filters.sort || "newest";
-  filteredCatalog.sort((a, b) => {
-    const dateA = new Date(
-      a.lastUpdatedAt || a.updatedAt || a.createdAt || a.created_at || 0,
-    ).getTime();
-    const dateB = new Date(
-      b.lastUpdatedAt || b.updatedAt || b.createdAt || b.created_at || 0,
-    ).getTime();
-    const viewsA = a.viewCount || a.view_count || a.views || 0;
-    const viewsB = b.viewCount || b.view_count || b.views || 0;
-
-    if (sortType === "oldest") return dateA - dateB;
-    if (sortType === "most_viewed") return viewsB - viewsA;
-    return dateB - dateA;
-  });
-
-  // 3. THỰC HIỆN PHÂN TRANG (PAGINATION) - 👉 PHẦN MỚI THÊM VÀO
-  const page = filters.page || 1;
-  const limit = filters.limit || 10; // Mặc định là 10 truyện 1 trang
-
-  // Tính toán tổng số
-  const totalItems = filteredCatalog.length;
-  const totalPages = Math.ceil(totalItems / limit);
-
-  // Cắt mảng lấy đúng số lượng cho trang hiện tại
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedData = filteredCatalog.slice(startIndex, endIndex);
-
-  // Trả về Object chứa cả dữ liệu và thông tin trang
-  return {
-    data: paginatedData,
-    meta: {
-      currentPage: page,
-      limit: limit,
-      totalItems: totalItems,
-      totalPages: totalPages,
-    },
-  };
-}
-
 export function loadComicRecord(id: string): ComicCmsRecord | null {
   return readCatalog().find((r) => r.id === id) ?? null;
 }
@@ -237,17 +151,6 @@ export function saveComicDraft(key: string, data: ComicCmsFormValues): void {
     localStorage.setItem(`comic-cms:draft:${key}`, JSON.stringify(data));
   } catch (err) {
     console.error("[comicCms] Failed to save draft", err);
-  }
-}
-
-export function loadComicDraft(key: string): ComicCmsFormValues | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(`comic-cms:draft:${key}`);
-    return raw ? (JSON.parse(raw) as ComicCmsFormValues) : null;
-  } catch (err) {
-    console.error("[comicCms] Failed to parse draft", err);
-    return null;
   }
 }
 
@@ -427,14 +330,6 @@ export async function recordComicAudit(
   }
 }
 
-export async function requestComicCachePurge(_params: {
-  comicId: string;
-  chapterId?: string;
-  assetKeys: string[];
-}): Promise<void> {
-  // Cloudflare Cache Purge integration
-}
-
 export async function createChapter(data: {
   story_id: string;
   title: string;
@@ -479,7 +374,7 @@ export async function updateChapterImages(
   await apiClient.put(`/api/admin/chapters/${chapterId}/images`, { content });
 }
 
-export async function createChapterWithPresignedUpload(
+export async function createComicChapterFromFiles(
   storyIdOrRecord: string | ComicCmsRecord,
   chapterData: { title: string; chapterNumber: number },
   files: File[],
@@ -502,50 +397,4 @@ export async function createChapterWithPresignedUpload(
     })),
     updatedAt: new Date().toISOString(),
   };
-}
-
-export const createComicChapterFromFiles = createChapterWithPresignedUpload;
-
-export async function uploadFilesToR2(
-  files: File[],
-  folder: "covers" | "chapters" | "avatars" | "uploads" = "uploads",
-  metadata?: { comicId?: string; chapterNumber?: string | number; userId?: string }
-): Promise<string[]> {
-  const formData = new FormData();
-  files.forEach((file) => formData.append("file", file));
-  formData.append("folder", folder);
-  if (metadata?.comicId) formData.append("comicId", metadata.comicId);
-  if (metadata?.chapterNumber !== undefined && metadata?.chapterNumber !== null) {
-    formData.append("chapterNumber", String(metadata.chapterNumber));
-  }
-  if (metadata?.userId) formData.append("userId", metadata.userId);
-
-  const response = await apiClient.post<{ urls: string[] }>(
-    "/api/admin/upload-to-r2",
-    formData
-  );
-  return response.urls || [];
-}
-
-export async function getR2SignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
-  const response = await apiClient.post<{ signedUrl: string }>(
-    "/api/admin/r2/signed-url",
-    { key, expiresInSeconds }
-  );
-  return response.signedUrl || "";
-}
-
-export async function listR2Objects(prefix = ""): Promise<{ key: string; size: number; uploaded: string }[]> {
-  const response = await apiClient.get<{ objects: any[] }>(
-    `/api/admin/r2/list?prefix=${encodeURIComponent(prefix)}`
-  );
-  return response.objects || [];
-}
-
-export async function cleanupR2Prefix(prefix: string): Promise<number> {
-  const response = await apiClient.post<{ deletedCount: number }>(
-    "/api/admin/r2/cleanup",
-    { prefix }
-  );
-  return response.deletedCount || 0;
 }

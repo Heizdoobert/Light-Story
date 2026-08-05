@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api/apiClient';
 import { getR2ImageUrl } from '@/lib/utils/image-url';
-import { getReadingHistory } from '@/lib/hooks/reader-hub';
-import { useLanguage } from '@/providers/language-provider';
+import { getReadingHistory } from '@/services/reader/readerHub.service';
+import { useLanguage } from '@/context/LanguageContext';
 import AdRenderer from '@/components/ads/ad-renderer';
 
 type Comic = {

@@ -23,8 +23,8 @@ import {
   X,
 } from 'lucide-react';
 import { useUser } from '@/lib/hooks/use-user';
-import { useLanguage } from '@/providers/language-provider';
-import { useTheme } from '@/providers/theme-provider';
+import { useLanguage } from '@/context/LanguageContext';
+import { useTheme } from '@/context/ThemeContext';
 import { NotificationBell } from '@/components/ui/notification-bell';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/apiClient';
