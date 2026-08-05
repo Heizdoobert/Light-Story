@@ -1,5 +1,6 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { getAccessToken } from '../comics/comic.service';
+import { BookmarkListSchema, HistoryItemListSchema } from '@/types/readerHub.dto';
 
 const BOOKMARKS_KEY = 'reader:bookmarks';
 const HISTORY_KEY = 'reader:history';
@@ -45,10 +46,18 @@ export async function getBookmarks(): Promise<string[]> {
   try {
     const token = await getAccessToken();
     if (token) {
-      const res = await apiClient.get<any[]>('/api/user/bookmarks').catch(() => null);
-      if (Array.isArray(res)) return res.map((item) => item.comic_id || item.comicId);
+      const res = await apiClient.get<unknown[]>('/api/user/bookmarks');
+      const parsed = BookmarkListSchema.safeParse(Array.isArray(res) ? res : []);
+      if (parsed.success) {
+        return parsed.data.map((item) => item.comic_id || item.comicId || '');
+      }
+      // Contract violation: the worker returned data that fails boundary validation.
+      // Don't silently serve stale local data as if nothing went wrong.
+      console.error('[readerHub] bookmarks response failed validation', parsed.error);
     }
-  } catch {}
+  } catch {
+    // Network/auth failure → offline path, fall back to local cache (intentional).
+  }
   return getLocalBookmarks();
 }
 
@@ -59,7 +68,7 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
   try {
     const token = await getAccessToken();
     if (token) {
-      await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
+      await apiClient.post<unknown>('/api/user/bookmarks/toggle', { comicId });
     }
   } catch {}
 
@@ -72,17 +81,22 @@ export async function getReadingHistory(): Promise<HistoryItem[]> {
   try {
     const token = await getAccessToken();
     if (token) {
-      const res = await apiClient.get<any[]>('/api/user/history').catch(() => null);
-      if (Array.isArray(res)) {
-        return res.map((item) => ({
-          comicId: item.comic_id || item.comicId,
-          chapterId: item.chapter_id || item.chapterId,
-          chapterNumber: item.chapter_number || item.chapterNumber || 1,
+      const res = await apiClient.get<unknown[]>('/api/user/history');
+      const parsed = HistoryItemListSchema.safeParse(Array.isArray(res) ? res : []);
+      if (parsed.success) {
+        return parsed.data.map((item) => ({
+          comicId: item.comic_id || item.comicId || '',
+          chapterId: item.chapter_id || item.chapterId || '',
+          chapterNumber: item.chapter_number ?? item.chapterNumber ?? 1,
           updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
         }));
       }
+      // Contract violation: worker returned data that fails boundary validation.
+      console.error('[readerHub] history response failed validation', parsed.error);
     }
-  } catch {}
+  } catch {
+    // Network/auth failure → offline path, fall back to local cache (intentional).
+  }
   return getLocalHistory();
 }
 

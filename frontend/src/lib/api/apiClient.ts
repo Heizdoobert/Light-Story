@@ -32,6 +32,34 @@ const getBaseUrl = (): string => {
 
 const BASE_URL = getBaseUrl();
 
+// Tolerated error-envelope shapes across gateway/workers (superset of ApiResponse:
+// some workers return plain {message} or {error_description} instead of the envelope).
+type ErrorBody = {
+  success?: boolean;
+  error?:
+    | string
+    | { code?: string; message?: string; details?: Record<string, unknown> };
+  message?: string;
+  error_description?: string;
+  code?: string;
+  correlationId?: string;
+};
+
+function parseErrorMessage(body: ErrorBody, fallback: string): string {
+  if (typeof body.error === 'string') return body.error;
+  return body.error?.message ?? body.message ?? body.error_description ?? fallback;
+}
+
+function parseErrorCode(body: ErrorBody): string | undefined {
+  return typeof body.error === 'object' && body.error ? body.error.code : body.code;
+}
+
+function serializeBody(body: unknown): BodyInit | undefined {
+  if (body == null) return undefined;
+  if (body instanceof FormData) return body;
+  return JSON.stringify(body);
+}
+
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
@@ -125,12 +153,33 @@ async function request<T>(
   }
 
   const bodyText = await res.text();
+
+  // Check HTTP status first (before JSON parsing so empty error bodies
+  // and non-JSON responses are reported as their actual status, not PARSE_ERROR)
+  if (!res.ok) {
+    let parsed: ErrorBody = {};
+    try {
+      parsed = bodyText ? (JSON.parse(bodyText) as ErrorBody) : {};
+    } catch {
+      parsed = {};
+    }
+    throw new ApiError(
+      res.status,
+      parseErrorCode(parsed) ?? 'HTTP_ERROR',
+      parseErrorMessage(parsed, res.statusText || `HTTP Error ${res.status}`),
+      parsed.correlationId,
+    );
+  }
+
+  // Empty successful body (e.g. 204 No Content or 200 with no payload) → return void
+  if (!bodyText) {
+    return undefined as T;
+  }
+
   let body: ApiResponse<T>;
-  
   try {
     body = JSON.parse(bodyText) as ApiResponse<T>;
   } catch {
-    // Fallback for non-JSON responses (legacy or errors)
     throw new ApiError(
       res.status,
       'PARSE_ERROR',
@@ -138,35 +187,12 @@ async function request<T>(
     );
   }
 
-  // Check HTTP status first
-  if (!res.ok) {
-    const errorMsg =
-      (typeof body?.error === 'string' ? body.error : undefined) ??
-      body?.error?.message ??
-      (body as any)?.message ??
-      (body as any)?.error_description ??
-      (res.statusText || `HTTP Error ${res.status}`);
-
-    throw new ApiError(
-      res.status,
-      body?.error?.code ?? (body as any)?.code ?? 'HTTP_ERROR',
-      errorMsg,
-      body?.correlationId,
-    );
-  }
-
   // Check API response status
-  if (body && (body as any).success === false) {
-    const errorMsg =
-      (typeof body?.error === 'string' ? body.error : undefined) ??
-      body?.error?.message ??
-      (body as any)?.message ??
-      'API request failed';
-
+  if (body && (body as ErrorBody).success === false) {
     throw new ApiError(
       res.status,
       body.error?.code ?? 'API_ERROR',
-      errorMsg,
+      parseErrorMessage(body as ErrorBody, 'API request failed'),
       body.correlationId,
     );
   }
@@ -180,25 +206,28 @@ async function request<T>(
 }
 
 export const apiClient = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, options?: RequestInit) => request<T>(path, options),
 
-  post: <T>(path: string, body?: unknown) =>
+  post: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'POST',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body: serializeBody(body),
+      ...options,
     }),
 
-  put: <T>(path: string, body?: unknown) =>
+  put: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'PUT',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body: serializeBody(body),
+      ...options,
     }),
 
-  patch: <T>(path: string, body?: unknown) =>
+  patch: <T>(path: string, body?: unknown, options?: RequestInit) =>
     request<T>(path, {
       method: 'PATCH',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body: serializeBody(body),
+      ...options,
     }),
 
-  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  delete: <T>(path: string, options?: RequestInit) => request<T>(path, { method: 'DELETE', ...options }),
 };
