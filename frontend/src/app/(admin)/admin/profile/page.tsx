@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { useAdminProfile } from "@/lib/hooks/use-admin-profile";
+import { toast } from "sonner";
 
 export default function AdminProfilePage() {
   const {
@@ -43,7 +44,10 @@ export default function AdminProfilePage() {
           </p>
         </div>
         <Button
-          onClick={signOut}
+          onClick={async () => {
+            toast.success("Đăng xuất thành công! Đang chuyển hướng về trang chủ trong 2 giây...");
+            await signOut();
+          }}
           variant="danger"
           className="gap-2 shrink-0 font-bold"
         >

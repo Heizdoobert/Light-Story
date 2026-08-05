@@ -92,7 +92,10 @@ export default function UserProfilePage() {
           </p>
         </div>
         <Button
-          onClick={signOut}
+          onClick={async () => {
+            toast.success("Đăng xuất thành công! Đang chuyển hướng về trang chủ trong 2 giây...");
+            await signOut();
+          }}
           variant="danger"
           className="gap-2 shrink-0 font-bold"
         >

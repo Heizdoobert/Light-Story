@@ -63,11 +63,23 @@ export function useUser() {
   }, [loadSession]);
 
   const signOut = async () => {
-    const supabase = getSupabaseBrowserClient();
-    await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setRole(null);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("SignOut error:", err);
+    } finally {
+      setUser(null);
+      setProfile(null);
+      setRole(null);
+      
+      // Wait for 2s and auto-redirect to home page '/'
+      if (typeof window !== "undefined") {
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 2000);
+      }
+    }
   };
 
   const signIn = async () => {
