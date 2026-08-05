@@ -412,8 +412,8 @@ export const Header: React.FC<HeaderProps> = ({
                         <button
                           onClick={async () => {
                             setIsUserMenuOpen(false);
+                            toast.success('Đăng xuất thành công! Đang chuyển hướng về trang chủ trong 2 giây...');
                             await signOut();
-                            toast.success(t("logout_success"));
                           }}
                           className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
                         >
