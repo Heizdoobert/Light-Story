@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/apiClient';
 import { getR2ImageUrl } from '@/lib/utils/image-url';
 import { getReadingHistory } from '@/lib/hooks/reader-hub';
 import { useLanguage } from '@/providers/language-provider';

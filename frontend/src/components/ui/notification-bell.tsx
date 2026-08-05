@@ -5,7 +5,7 @@ import { Bell, CheckCheck, Trash2, Info, CheckCircle2, AlertTriangle } from 'luc
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/providers/language-provider';
 import { useUser } from '@/lib/hooks/use-user';
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/apiClient';
 
 export type NotificationItem = {
   id: string;

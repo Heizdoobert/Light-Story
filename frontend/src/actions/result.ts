@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { getErrorMessage } from '@/lib/utils/errorUtils';
+import { getErrorMessage } from '@/lib/utils/error-utils';
 
 export type ActionResult<T = unknown> = {
   success: boolean;

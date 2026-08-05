@@ -9,7 +9,7 @@ import { Chapter, Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
 

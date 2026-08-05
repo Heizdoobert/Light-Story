@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ActionResult } from '@/actions/result';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
 
 export function useCrudMutation<TVars = void>(opts: {
   mutationFn: (vars: TVars) => Promise<ActionResult>;

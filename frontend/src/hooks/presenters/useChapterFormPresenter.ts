@@ -5,7 +5,7 @@ import { fetchStories } from '@/services/comics/story.service';
 import { createChapter } from '@/actions/chapter-form.actions';
 import type { CreateChapterInput } from '@/actions/chapter-form.actions';
 import { Chapter } from '@/types/entities';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
 
 export function useChapterFormPresenter() {
   const queryClient = useQueryClient();

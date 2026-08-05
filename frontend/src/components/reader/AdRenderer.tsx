@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/adPolicy';
+import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/ad-policy';
 import { apiClient } from '@/lib/api/apiClient';
 
 type SiteSettingItem = { key: string; value: unknown };

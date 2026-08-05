@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/api/apiClient";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import type {
   ComicCmsFormValues,
   ComicStatus,
-} from "@/lib/validation/comicCmsSchemas";
+} from "@/lib/validation/comic-cms-schemas";
 import { uploadComicCover } from "./comic.service";
 
 const COMIC_CMS_CATALOG_KEY = "comic-cms:catalog";

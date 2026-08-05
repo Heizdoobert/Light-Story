@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { supabase } from '@/infrastructure/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export default function useChapterSubscription(storyId: string, onUpdate: (chapter: any) => void) {
   useEffect(() => {

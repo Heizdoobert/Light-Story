@@ -1,4 +1,4 @@
-import { ALLOWED_AD_SETTING_KEYS, buildDefaultAdRows, isAllowedAdSettingKey } from '@/lib/admin/adPolicy';
+import { ALLOWED_AD_SETTING_KEYS, buildDefaultAdRows, isAllowedAdSettingKey } from '@/lib/admin/ad-policy';
 import { apiClient } from '@/lib/api/apiClient';
 
 export type SiteSettingRow = { key: string; value: unknown };

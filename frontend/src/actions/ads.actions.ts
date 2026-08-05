@@ -5,7 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-import { AD_CONTROL_KEYS } from '@/lib/admin/adPolicy';
+import { AD_CONTROL_KEYS } from '@/lib/admin/ad-policy';
 
 export const updateAdConfigSchema = z.object({
   key: z.string().min(1),

@@ -7,7 +7,7 @@ import {
   SITE_SETTING_KEYS,
   type DashboardTabVisibility,
   type SidebarMenuVisibility,
-} from '@/lib/admin/systemSettings';
+} from '@/lib/admin/system-settings';
 import { SiteSettingDto } from '@/types/dto';
 import { apiClient } from '@/lib/api/apiClient';
 

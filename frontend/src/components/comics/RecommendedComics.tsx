@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Eye } from 'lucide-react';
 import { useRecommendations } from '@/hooks/features/useRecommendations';
-import { getStatusStyles } from '@/lib/utils/statusStyles';
+import { getStatusStyles } from '@/lib/utils/status-styles';
 import { proxiedR2ImageUrl } from '@/services/comics/comicCms.service';
 
 type RecommendedComicsProps = {

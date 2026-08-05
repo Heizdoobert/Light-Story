@@ -42,7 +42,7 @@ vi.mock('@/lib/api/apiClient', () => ({ apiClient: state.apiClient }));
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-vi.mock('@/infrastructure/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(async () => ({ data: { session: null }, error: null })),

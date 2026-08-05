@@ -8,7 +8,7 @@ import {
   type AdSlotKey,
   validateAdMarkup,
 } from "@/lib/admin/ad-policy";
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/apiClient";
 
 type SiteSettingItem = { key: string; value: unknown };
 

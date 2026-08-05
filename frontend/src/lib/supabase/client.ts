@@ -25,8 +25,4 @@ export function getSupabaseBrowserClient(): SupabaseClient {
   return createClient();
 }
 
-export function createSupabaseBrowserClient(): SupabaseClient {
-  return createClient();
-}
-
 export const supabase = typeof window !== "undefined" ? createClient() : null as unknown as SupabaseClient;

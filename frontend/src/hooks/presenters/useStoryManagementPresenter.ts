@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchStoriesPage } from '@/services/comics/story.service';
 import * as adminStoriesActions from '@/actions/admin-stories.actions';
 import { Story } from '@/types/entities';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'ongoing' | 'completed';
 type SortMode = 'newest' | 'oldest' | 'most_viewed';

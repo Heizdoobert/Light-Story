@@ -4,9 +4,9 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/utils/errorUtils";
+import { getErrorMessage } from "@/lib/utils/error-utils";
 import { type AdminProfileDto } from '@/types/dto';
 
 export type UserRole = "superadmin" | "admin" | "employee" | "user";

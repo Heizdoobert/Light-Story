@@ -1,4 +1,4 @@
-import type { ComicCmsFormValues, ComicChapterFormValues, ComicStatus } from "@/lib/validation/comicCmsSchemas";
+import type { ComicCmsFormValues, ComicChapterFormValues, ComicStatus } from "@/lib/validation/comic-cms-schemas";
 
 export type TabKey = "catalog" | "editor" | "chapters" | "translators" | "feedback" | "trash" | "moderation";
 

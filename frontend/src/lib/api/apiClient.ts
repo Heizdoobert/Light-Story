@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-import { supabase } from '@/infrastructure/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
 
@@ -105,6 +105,7 @@ async function request<T>(
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
+      cache: 'no-store',
       ...options,
       headers,
       signal,

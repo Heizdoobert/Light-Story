@@ -8,13 +8,13 @@ import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeContext";
 import { saveReadingProgress } from "@/actions/reading-history.actions";
-import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbzReader";
+import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbz-reader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
 
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 const USE_MOCK_DATA = false;
 

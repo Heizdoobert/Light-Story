@@ -13,10 +13,10 @@ import { useAuth } from '@/context/AuthContext';
 import { ThemeToggleButton } from './ThemeToggleButton';
 import { NotificationBell } from "@/components/user/NotificationBell";
 import { toast } from "sonner";
-import { supabase } from '@/infrastructure/supabase/client';
-import { getAdminMenuItems } from '@/lib/admin/adminNavigation';
+import { supabase } from '@/lib/supabase/client';
+import { getAdminMenuItems } from '@/lib/admin/admin-navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/securityUtils';
+import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/security-utils';
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
@@ -25,7 +25,7 @@ import {
   parseDashboardTabVisibility,
   parseSidebarMenuVisibility,
   SITE_SETTING_KEYS,
-} from '@/lib/admin/systemSettings';
+} from '@/lib/admin/system-settings';
 
 interface AdminLayoutProps {
   children: React.ReactNode;

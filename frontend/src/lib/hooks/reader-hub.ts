@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/apiClient";
 
 const BOOKMARKS_KEY = "reader:bookmarks";
 const HISTORY_KEY = "reader:history";

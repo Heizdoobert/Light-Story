@@ -27,7 +27,7 @@ import { useLanguage } from '@/providers/language-provider';
 import { useTheme } from '@/providers/theme-provider';
 import { NotificationBell } from '@/components/ui/notification-bell';
 import { toast } from 'sonner';
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/apiClient';
 import { getR2ImageUrl } from '@/lib/utils/image-url';
 import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/security-utils';
 

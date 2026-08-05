@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/infrastructure/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/utils/errorUtils';
-import { sanitizeImageUrl } from '@/lib/auth/securityUtils';
+import { getErrorMessage } from '@/lib/utils/error-utils';
+import { sanitizeImageUrl } from '@/lib/auth/security-utils';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;

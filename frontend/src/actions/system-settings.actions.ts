@@ -5,7 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-import { SITE_SETTING_KEYS } from '@/lib/admin/systemSettings';
+import { SITE_SETTING_KEYS } from '@/lib/admin/system-settings';
 
 export const saveSystemSettingsSchema = z.object({
   compactMode: z.boolean(),

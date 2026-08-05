@@ -1,4 +1,4 @@
-import { supabase } from '@/infrastructure/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 export async function uploadStoryCoverImage(file: File): Promise<string> {
   if (!supabase) {

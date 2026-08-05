@@ -7,8 +7,8 @@ import { useAdConfigsQuery, useUpdateAdConfig } from '@/hooks/presenters/useAdMa
 import { useAuth } from '@/context/AuthContext';
 import { Save, Info, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
-import { AD_CONTROL_KEYS, parseAdManagerState } from '@/lib/admin/adPolicy';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
+import { AD_CONTROL_KEYS, parseAdManagerState } from '@/lib/admin/ad-policy';
 
 type AdConfigKey = 'ad_header' | 'ad_middle' | 'ad_sidebar' | 'ad_left_side' | 'ad_right_side';
 type AdConfigs = Record<AdConfigKey, string>;

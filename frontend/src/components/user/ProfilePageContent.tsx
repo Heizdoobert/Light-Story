@@ -4,7 +4,7 @@ import React from "react";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
-import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/securityUtils";
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
 import { Header } from "@/components/navigation/Header";
 import { LoginModal } from "@/components/auth/LoginModal";
 import { AdZone } from "@/components/shared/ads/AdZone";

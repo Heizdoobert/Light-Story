@@ -9,7 +9,7 @@ import {
   formatDateTime,
   statusTone,
 } from "@/lib/cms/comicCmsTypes";
-import type { ComicStatus } from "@/lib/validation/comicCmsSchemas";
+import type { ComicStatus } from "@/lib/validation/comic-cms-schemas";
 
 function StatusBadge({ status }: { status: ComicStatus }) {
   return (

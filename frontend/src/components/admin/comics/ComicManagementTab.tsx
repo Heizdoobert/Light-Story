@@ -13,7 +13,7 @@ import {
   type ComicChapterFormValues,
   type ComicModerationState,
   type ComicCmsFormValues,
-} from "@/lib/validation/comicCmsSchemas";
+} from "@/lib/validation/comic-cms-schemas";
 import {
   clearComicDraft,
   createComicChapterFromFiles,
@@ -35,7 +35,7 @@ import {
   type ComicCmsRecord,
 } from "@/services/comics/comicCms.service";
 import { uploadComicCover } from "@/services/comics/comic.service";
-import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
+import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbz-reader";
 import {
   DEFAULT_FORM,
   DEFAULT_CHAPTER_FORM,

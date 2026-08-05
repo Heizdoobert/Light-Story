@@ -1,6 +1,6 @@
 import { Story } from '@/types/entities';
 import { apiClient } from '@/lib/api/apiClient';
-import { supabase } from '@/infrastructure/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 
 type StoryStatus = Story['status'];
 

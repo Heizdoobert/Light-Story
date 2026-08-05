@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { getErrorMessage } from '@/lib/utils/errorUtils';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
-import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '@/lib/admin/adminNavigation';
+import { getErrorMessage } from '@/lib/utils/error-utils';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
+import { ADMIN_MENU_IDS, ADMIN_MENU_LABELS } from '@/lib/admin/admin-navigation';
 import {
   DASHBOARD_CONFIGURABLE_TABS,
   DashboardTabVisibility,
@@ -12,7 +12,7 @@ import {
   DEFAULT_SIDEBAR_MENU_VISIBILITY,
   SidebarMenuVisibility,
   getRoleVisibleTabs,
-} from '@/lib/admin/systemSettings';
+} from '@/lib/admin/system-settings';
 import * as systemSettingsActions from '@/actions/system-settings.actions';
 import { fetchSystemSettingsSnapshot } from '@/services/admin/systemSettings.service';
 import { SystemSettingsSnapshotDto } from '@/types/dto';

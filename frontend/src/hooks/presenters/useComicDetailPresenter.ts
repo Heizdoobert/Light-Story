@@ -11,7 +11,7 @@ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 
 export function useComicDetailPresenter() {
   const params = useParams();

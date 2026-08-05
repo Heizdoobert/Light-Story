@@ -7,7 +7,7 @@ import {
   GripVertical, Plus, Search, Trash2, Upload, X, Edit, Layers, FileImage
 } from "lucide-react";
 import { formatBytes, formatDateTime, type PageDraft } from "@/lib/cms/comicCmsTypes";
-import type { ComicChapterFormValues } from "@/lib/validation/comicCmsSchemas";
+import type { ComicChapterFormValues } from "@/lib/validation/comic-cms-schemas";
 import { proxiedR2ImageUrl, type ComicCmsRecord } from "@/services/comics/comicCms.service";
 
 type ComicChaptersTabProps = {

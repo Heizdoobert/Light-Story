@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, RefreshCw, BookOpenText, Pencil, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Story } from '@/types/entities';
-import { getErrorMessage } from '@/lib/utils/errorUtils';
+import { getErrorMessage } from '@/lib/utils/error-utils';
 import { useStoryManagementPresenter } from '@/hooks/presenters/useStoryManagementPresenter';
 
 type StatusFilter = 'all' | 'draft' | 'published' | 'ongoing' | 'completed';

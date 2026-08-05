@@ -6,7 +6,7 @@ import type { CreateStoryInput } from '@/actions/story-form.actions';
 import { fetchAuthors, fetchCategories } from '@/services/comics/taxonomy.service';
 import { uploadStoryCoverImage } from '@/services/comics/storyMedia.service';
 import { Story } from '@/types/entities';
-import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/dbChangeToast';
+import { rejectDbChangeToast, resolveDbChangeToast, startDbChangeToast } from '@/lib/utils/db-change-toast';
 
 type StoryCreatePayload = {
   story: Partial<Story>;

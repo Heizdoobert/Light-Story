@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { apiClient } from "@/lib/api/client";
+import { apiClient } from "@/lib/api/apiClient";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type InfraStats = {

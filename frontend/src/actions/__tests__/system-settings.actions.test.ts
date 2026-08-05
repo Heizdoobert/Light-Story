@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { saveSystemSettings, updateSystemSettings } from '../system-settings.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
-import { SITE_SETTING_KEYS } from '@/lib/admin/systemSettings';
+import { SITE_SETTING_KEYS } from '@/lib/admin/system-settings';
 
 vi.mock('@/lib/api/server', () => ({
   createClient: vi.fn(),

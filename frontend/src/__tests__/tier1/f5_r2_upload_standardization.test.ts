@@ -3,7 +3,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: {} }));
-vi.mock('@/infrastructure/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   supabase: { auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) } },
 }));
 

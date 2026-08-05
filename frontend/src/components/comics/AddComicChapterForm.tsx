@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createComicChapter, uploadChapterImages } from "@/services/comics/comic.service";
-import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbzReader";
+import { isCbzFile, extractCbzFileToImages } from "@/lib/cbz/cbz-reader";
 
 type ImageEntry = {
   id: string;

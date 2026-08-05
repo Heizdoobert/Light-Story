@@ -9,7 +9,7 @@ import { LoginModal } from "@/components/auth/LoginModal";
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
-import { getStatusStyles } from "@/lib/utils/statusStyles";
+import { getStatusStyles } from "@/lib/utils/status-styles";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
 
 export const SearchPageContent: React.FC = () => {
