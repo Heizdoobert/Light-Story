@@ -111,19 +111,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   } catch (err) {
     throw new ApiError(
       0,
-<<<<<<< HEAD:frontend/src/lib/api/client.ts
       "NETWORK_ERROR",
       err instanceof TypeError && err.message === "Failed to fetch"
         ? "Unable to connect to server. Please check your internet connection and try again."
+        : (err as Error)?.name === "AbortError"
+        ? "Request timed out"
         : (err as Error)?.message || "Network request failed",
-=======
-      'NETWORK_ERROR',
-      err instanceof TypeError && err.message === 'Failed to fetch'
-        ? 'Unable to connect to server. Please check your internet connection and try again.'
-        : (err as Error)?.name === 'AbortError'
-        ? 'Request timed out'
-        : (err as Error)?.message || 'Network request failed',
->>>>>>> fix/bug-fix:frontend/src/lib/api/apiClient.ts
     );
   } finally {
     clearTimeout(timeoutId);
