@@ -152,7 +152,7 @@ export default {
     const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS') {
-      return handleCorsPreflightRequest(origin);
+      return handleCorsPreflightRequest(request);
     }
 
     if (origin && !isOriginAllowed(origin)) {
@@ -164,35 +164,42 @@ export default {
 
     const authHeader = request.headers.get('Authorization') ?? '';
     let authCtx = null;
-    try {
-      if (authHeader)
+    if (authHeader) {
+      try {
         authCtx = await validateJWT(authHeader, env);
-    } catch (e) {
-      if (e instanceof UnauthorizedError) {
-        return new Response(
-          JSON.stringify({
-            status: 'error',
-            error: {
-              code: 'UNAUTHORIZED',
-              message: e.message,
-            },
-          }),
-          {
-            status: 401,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders(origin),
-            },
-          },
-        );
+      } catch (e) {
+        // If route is protected/admin or non-GET write operation, enforce 401
+        if (isAuthOrAdmin || (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS')) {
+          if (e instanceof UnauthorizedError) {
+            return new Response(
+              JSON.stringify({
+                status: 'error',
+                error: {
+                  code: 'UNAUTHORIZED',
+                  message: e.message,
+                },
+              }),
+              {
+                status: 401,
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...corsHeaders(origin),
+                },
+              },
+            );
+          }
+          return new Response(
+            JSON.stringify({
+              status: 'error',
+              error: { code: 'INTERNAL_ERROR' },
+            }),
+            { status: 500 },
+          );
+        }
+        // For public GET requests, log warning and allow unauthenticated fallback
+        console.warn('Ignored invalid/expired token on public GET request:', (e as Error).message);
+        authCtx = null;
       }
-      return new Response(
-        JSON.stringify({
-          status: 'error',
-          error: { code: 'INTERNAL_ERROR' },
-        }),
-        { status: 500 },
-      );
     }
 
     const userRole = authCtx?.role;
@@ -256,14 +263,14 @@ export default {
       crypto.randomUUID(),
     );
     downstreamHeaders.set('x-begin-timestamp', String(Date.now()));
-    if (authHeader) {
-      downstreamHeaders.set('Authorization', authHeader);
-    }
     if (authCtx) {
+      downstreamHeaders.set('Authorization', authHeader);
       downstreamHeaders.set('x-user-id', authCtx.userId);
       downstreamHeaders.set('x-user-role', authCtx.role);
       if (authCtx.email)
         downstreamHeaders.set('x-user-email', authCtx.email);
+    } else {
+      downstreamHeaders.delete('Authorization');
     }
     downstreamHeaders.set('x-forwarded-by', 'unified-gateway');
 
@@ -361,22 +368,24 @@ export default {
       if (!svcKey) {
         res = err('NOT_CONFIGURED', 'Service key not configured', 500);
       } else {
-        let q = 'select=key,value&key=like.public_%';
-        const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
-          headers: {
-            apikey: svcKey,
-            Authorization: `Bearer ${svcKey}`,
-          },
-        });
-        if (!supRes.ok) {
-          res = err('UPSTREAM', await supRes.text(), supRes.status);
-        } else {
-          const text = await supRes.text();
-          if (!text) {
+        try {
+          let q = 'select=key,value&key=like.public_%';
+          const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+            headers: {
+              apikey: svcKey,
+              Authorization: `Bearer ${svcKey}`,
+            },
+          });
+          if (!supRes.ok && supRes.status >= 500) {
             res = json({ success: true, data: [] });
+          } else if (!supRes.ok) {
+            res = err('UPSTREAM', await supRes.text(), supRes.status);
           } else {
-            res = json({ success: true, data: JSON.parse(text) });
+            const text = await supRes.text();
+            res = json({ success: true, data: text ? JSON.parse(text) : [] });
           }
+        } catch {
+          res = json({ success: true, data: [] });
         }
       }
     } else if (strippedPath.startsWith('/admin')) {

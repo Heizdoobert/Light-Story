@@ -125,7 +125,7 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
 
 function getGatewayUrl(): string {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://unified-gateway.truyen3new.workers.dev';
+    return process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://kv-worker.hhhuygiau.workers.dev';
   }
   return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
 }

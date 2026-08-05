@@ -249,7 +249,9 @@ export async function validateJWT(
         } catch {}
         jwks = await fetchJWKS(jwksUrl);
         key = kid ? jwks.keys.find((k: any) => k.kid === kid) : jwks.keys[0];
-        ok = await verifyJwtSignature(cleaned, key);
+        if (key) {
+          ok = await verifyJwtSignature(cleaned, key);
+        }
       } catch (e2) {
         console.warn("validateJWT: retry verify failed", {
           err: (e2 as Error).message,

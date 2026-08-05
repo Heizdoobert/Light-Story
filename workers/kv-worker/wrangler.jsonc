@@ -1,8 +1,9 @@
 {
-  "name": "unified-gateway",
+  "name": "kv-worker",
   "main": "src/index.ts",
-  "compatibility_date": "2026-05-16",
+  "compatibility_date": "2026-07-02",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
   "minify": true,
   "r2_buckets": [
     {
@@ -11,13 +12,17 @@
     }
   ],
   "vars": {
-    "SUPABASE_URL": "https://xgtlrztskoomimvfpdoy.supabase.co",
-    "SUPABASE_JWKS_URL": "https://xgtlrztskoomimvfpdoy.supabase.co/auth/v1/.well-known/jwks.json"
+    "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
   },
   "kv_namespaces": [
     {
       "binding": "APP_KV",
       "id": "bde008a5d4b54e53af699933f366dabe"
+    },
+    {
+      "binding": "COMIC_METADATA",
+      "id": "dcedc9ebb0d846838d4be79df5a2698c"
     }
   ],
   "queues": {
@@ -25,15 +30,6 @@
       {
         "binding": "LIGHTSTORY_QUEUE",
         "queue": "lightstory-queue"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "lightstory-queue",
-        "max_batch_size": 10,
-        "max_batch_timeout": 30,
-        "max_retries": 3,
-        "dead_letter_queue": "lightstory-queue-dlq"
       }
     ]
   },

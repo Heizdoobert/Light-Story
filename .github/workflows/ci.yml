@@ -45,12 +45,7 @@ jobs:
     strategy:
       matrix:
         worker:
-          - unified-gateway
-          - stories-worker
-          - comics-worker
-          - admin-worker
-          - analytics-worker
-          - r2-signed-url
+          - kv-worker
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -65,10 +60,8 @@ jobs:
 
       - name: Type-check worker
         run: |
-          if [ -f workers/${{ matrix.worker }}/tsconfig.json ]; then
-            npx tsc --noEmit -p workers/${{ matrix.worker }}/tsconfig.json
-          elif [ -f workers/${{ matrix.worker }}/index.ts ]; then
-            npx tsc --noEmit --target ESNext --moduleResolution Bundler --lib ESNext,WebWorker --skipLibCheck workers/${{ matrix.worker }}/index.ts || true
+          if [ -f workers/kv-worker/tsconfig.json ]; then
+            npx tsc --noEmit -p workers/kv-worker/tsconfig.json
           fi
 
   backend-supabase:
@@ -127,7 +120,7 @@ jobs:
         run: npm install -g wrangler
 
       - name: Deploy Unified Gateway (preview)
-        working-directory: workers/unified-gateway
+        working-directory: workers/kv-worker
         run: |
           wrangler deploy --env preview || echo "Preview deploy skipped (no preview env configured)"
         env:

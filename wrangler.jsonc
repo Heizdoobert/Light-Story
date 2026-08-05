@@ -1,7 +1,7 @@
 {
-  "name": "unified-gateway",
-  "main": "workers/unified-gateway/src/index.ts",
-  "compatibility_date": "2026-05-16",
+  "name": "kv-worker",
+  "main": "workers/kv-worker/src/index.ts",
+  "compatibility_date": "2026-07-02",
   "compatibility_flags": ["nodejs_compat"],
   "hyperdrive": [
     {
@@ -17,10 +17,18 @@
       "bucket_name": "lightstory-assets"
     }
   ],
+  "vars": {
+    "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
+  },
   "kv_namespaces": [
     {
       "binding": "APP_KV",
       "id": "bde008a5d4b54e53af699933f366dabe"
+    },
+    {
+      "binding": "COMIC_METADATA",
+      "id": "dcedc9ebb0d846838d4be79df5a2698c"
     }
   ],
   "queues": {

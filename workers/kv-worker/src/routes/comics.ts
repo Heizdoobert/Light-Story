@@ -54,7 +54,7 @@ export async function handleComicsRequest(
       };
       const order = sortMap[sort] || 'created_at.desc';
 
-      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
+      let q = `select=id,title,author,description,cover_url,category,status,views,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
       let countQ = 'stories?status=neq.archived';
       if (keyword) {
         const filter = `or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;

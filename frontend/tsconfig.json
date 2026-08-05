@@ -4,12 +4,16 @@
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
     "module": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
     "isolatedModules": true,
     "allowJs": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -18,10 +22,17 @@
         "name": "next"
       }
     ],
-    "typeRoots": ["./node_modules/@types", "../node_modules/@types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "../node_modules/@types"
+    ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@light-story/api-types": ["../packages/api-types"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@light-story/api-types": [
+        "../packages/api-types"
+      ]
     },
     "noEmit": true,
     "strict": true,
@@ -46,5 +57,9 @@
     ".next-dev/dev/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "tests/e2e", "src/specs"]
+  "exclude": [
+    "node_modules",
+    "tests/e2e",
+    "src/specs"
+  ]
 }
