@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { validateAdMarkup, type AdSlotKey } from "@/lib/admin/ad-policy";
 
@@ -19,17 +20,59 @@ const DEFAULT_RUNTIME = {
   blockedTerms: ["adult", "porn", "casino"],
 };
 
-const INITIAL_ADS: AdSetting[] = [
-  { key: "ad_header", label: "Quảng Cáo Đầu Trang (Header Banner)", markup: '<a href="https://example.com" target="_blank"><img src="https://placehold.co/970x90/001eff/ffffff?text=Header+Banner+Ad" alt="Ad" /></a>', active: true },
-  { key: "ad_middle", label: "Quảng Cáo Giữa Trang (Middle Content)", markup: '<a href="https://example.com" target="_blank"><img src="https://placehold.co/728x90/ff008d/ffffff?text=Middle+Ad+Banner" alt="Ad" /></a>', active: true },
-  { key: "ad_sidebar", label: "Quảng Cáo Cột Bên (Sidebar Sticky)", markup: '<a href="https://example.com" target="_blank"><img src="https://placehold.co/300x250/39ff14/000000?text=Sidebar+Ad" alt="Ad" /></a>', active: true },
-  { key: "ad_left_side", label: "Quảng Cáo Trôi Trái (Left Side Floating)", markup: '<div className="p-2 text-center text-xs text-white bg-slate-800">Left Floating Ad</div>', active: false },
-  { key: "ad_right_side", label: "Quảng Cáo Trôi Phải (Right Side Floating)", markup: '<div className="p-2 text-center text-xs text-white bg-slate-800">Right Floating Ad</div>', active: false },
+const AD_SLOTS_DEF: Array<{ key: AdSlotKey; label: string }> = [
+  { key: "ad_header", label: "Quảng Cáo Đầu Trang (Header Banner)" },
+  { key: "ad_middle", label: "Quảng Cáo Giữa Trang (Middle Content)" },
+  { key: "ad_sidebar", label: "Quảng Cáo Cột Bên (Sidebar Sticky)" },
+  { key: "ad_left_side", label: "Quảng Cáo Trôi Trái (Left Side Floating)" },
+  { key: "ad_right_side", label: "Quảng Cáo Trôi Phải (Right Side Floating)" },
 ];
 
 export function useAdminAds() {
-  const [ads, setAds] = useState<AdSetting[]>(INITIAL_ADS);
+  const [ads, setAds] = useState<AdSetting[]>(
+    AD_SLOTS_DEF.map((slot) => ({
+      key: slot.key,
+      label: slot.label,
+      markup: "",
+      active: false,
+    }))
+  );
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const loadAdSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { data } = await supabase.from("site_settings").select("key, value");
+
+      if (data && data.length > 0) {
+        const settingsMap = new Map<string, any>();
+        data.forEach((row) => settingsMap.set(row.key, row.value));
+
+        setAds(
+          AD_SLOTS_DEF.map((slot) => {
+            const rawVal = settingsMap.get(slot.key);
+            const markupStr = typeof rawVal === "string" ? rawVal : "";
+            return {
+              key: slot.key,
+              label: slot.label,
+              markup: markupStr,
+              active: markupStr.trim().length > 0,
+            };
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load ad settings from server", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAdSettings();
+  }, [loadAdSettings]);
 
   const handleMarkupChange = (key: AdSlotKey, value: string) => {
     setAds((prev) =>
@@ -46,6 +89,8 @@ export function useAdminAds() {
   const handleSaveAds = async () => {
     setSaving(true);
     try {
+      const supabase = getSupabaseBrowserClient();
+
       for (const ad of ads) {
         if (ad.active && ad.markup.trim()) {
           const val = validateAdMarkup(ad.markup, DEFAULT_RUNTIME);
@@ -55,9 +100,14 @@ export function useAdminAds() {
             return;
           }
         }
+
+        const valueToSave = ad.active ? ad.markup : "";
+        await supabase
+          .from("site_settings")
+          .upsert({ key: ad.key, value: valueToSave, updated_at: new Date().toISOString() });
       }
 
-      toast.success("Lưu cấu hình quảng cáo thành công!");
+      toast.success("Lưu cấu hình quảng cáo lên server thành công!");
     } catch (err: any) {
       toast.error(err.message || "Lưu cấu hình thất bại");
     } finally {
@@ -67,6 +117,7 @@ export function useAdminAds() {
 
   return {
     ads,
+    loading,
     saving,
     DEFAULT_RUNTIME,
     handleMarkupChange,

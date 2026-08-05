@@ -13,6 +13,7 @@ import {
   Settings,
   ShieldAlert,
   Home,
+  UserCircle,
 } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
@@ -24,6 +25,7 @@ const ADMIN_NAV_ITEMS = [
   { label: "Người dùng", href: "/admin/users", icon: Users },
   { label: "Quảng cáo", href: "/admin/ads", icon: Megaphone },
   { label: "Cài đặt", href: "/admin/settings", icon: Settings },
+  { label: "Hồ sơ cá nhân", href: "/admin/profile", icon: UserCircle },
   { label: "Audit Log", href: "/admin/audit", icon: ShieldAlert },
 ];
 
