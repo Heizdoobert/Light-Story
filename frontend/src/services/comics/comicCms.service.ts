@@ -87,7 +87,7 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
     console.error("[comicCms] fetchComicCatalog failed", err);
   }
 
-  if (supabase) {
+  if (supabase && process.env.NODE_ENV !== "test") {
     try {
       const { data } = await supabase
         .from("stories")

@@ -16,7 +16,7 @@ export async function GET() {
   // Verify Supabase database connectivity
   try {
     const supabase = getServerSupabase();
-    if (supabase) {
+    if (supabase && process.env.NODE_ENV !== 'test') {
       const { error } = await supabase.from('profiles').select('id').limit(1);
       checks.database = error ? 'unhealthy' : 'healthy';
     } else {

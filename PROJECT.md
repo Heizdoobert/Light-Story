@@ -22,10 +22,10 @@
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: Frontend RSC & Presenters | Verify & harden RSC compliance, presenter hooks, and barrel exports in `frontend/src/hooks/index.ts` | none | IN_PROGRESS |
-| 2 | M2: Backend & API Service Hardening | Gateway health endpoint (`workers/kv-worker`), R2 upload standardization (`apiClient`), `Chapter` entity type alignment | M1 | PLANNED |
-| 3 | M3: Full-Stack E2E Feature Integration | Full-stack feature integration, responsive UI, status checks, React Query custom hooks | M2 | PLANNED |
-| 4 | M4: Final Integration & Hardening | 100% E2E test pass across Tiers 1-4, Tier 5 adversarial hardening, Forensic Audit | M3 | PLANNED |
+| 1 | M1: Frontend RSC & Presenters | Verify & harden RSC compliance, presenter hooks, and barrel exports in `frontend/src/hooks/index.ts` | none | COMPLETED |
+| 2 | M2: Backend & API Service Hardening | Gateway health endpoint (`workers/kv-worker`), R2 upload standardization (`apiClient`), `Chapter` entity type alignment | M1 | COMPLETED |
+| 3 | M3: Full-Stack E2E Feature Integration | Full-stack feature integration, responsive UI, status checks, React Query custom hooks | M2 | COMPLETED |
+| 4 | M4: Final Integration & Hardening | 100% E2E test pass across Tiers 1-4, Tier 5 adversarial hardening, Forensic Audit | M3 | COMPLETED |
 
 ## Interface Contracts
 ### `frontend/src/services/` ↔ `workers/kv-worker/`

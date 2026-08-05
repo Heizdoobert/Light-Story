@@ -48,6 +48,9 @@ export const ChapterReaderPageContent: React.FC = () => {
     progress,
     theme,
     toggleTheme,
+    brightness,
+    autoScrollSpeed,
+    setAutoScrollSpeed,
     handleTouchStart,
     handleTouchEnd,
     handleSelectChapter,
@@ -105,6 +108,7 @@ export const ChapterReaderPageContent: React.FC = () => {
 
       <div
         className={`w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y ${fitScreen ? "max-w-full" : "max-w-[800px]"}`}
+        style={{ filter: `brightness(${brightness}%)` }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={() => setShowToolbar(!showToolbar)}
@@ -312,6 +316,18 @@ export const ChapterReaderPageContent: React.FC = () => {
               title={autoAdvance ? "Tắt tự động" : "Tự động chuyển chương"}
             >
               {autoAdvance ? <Play size={18} /> : <Square size={18} />}
+            </button>
+
+            <button
+              onClick={() => setAutoScrollSpeed((prev) => (prev >= 3 ? 0 : prev + 1))}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 font-bold text-xs ${
+                autoScrollSpeed > 0
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={autoScrollSpeed > 0 ? `Tốc độ cuộn: ${autoScrollSpeed}x` : "Cuộn tự động"}
+            >
+              {autoScrollSpeed > 0 ? `${autoScrollSpeed}x` : "Cuộn"}
             </button>
 
             <button

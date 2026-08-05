@@ -80,7 +80,50 @@ export function useReadChapterPresenter() {
   const [showThumbnails, setShowThumbnails] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [readingMode, setReadingMode] = useState<'webtoon' | 'single' | 'double'>('webtoon');
+  const [brightness, setBrightness] = useState(100);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [autoScrollSpeed, setAutoScrollSpeed] = useState<number>(0);
+  const autoScrollSpeedRef = useRef<number>(0);
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    autoScrollSpeedRef.current = autoScrollSpeed;
+  }, [autoScrollSpeed]);
+
+  useEffect(() => {
+    let animId: number;
+    const scrollStep = () => {
+      if (autoScrollSpeedRef.current > 0) {
+        window.scrollBy(0, autoScrollSpeedRef.current * 0.75);
+      }
+      animId = requestAnimationFrame(scrollStep);
+    };
+    if (autoScrollSpeed > 0) {
+      animId = requestAnimationFrame(scrollStep);
+    }
+    return () => cancelAnimationFrame(animId);
+  }, [autoScrollSpeed]);
+
+  useEffect(() => {
+    try {
+      const mode = localStorage.getItem('reader:readingMode');
+      if (mode && ['webtoon', 'single', 'double'].includes(mode)) setReadingMode(mode as any);
+      const b = localStorage.getItem('reader:brightness');
+      if (b && !isNaN(Number(b))) setBrightness(Number(b));
+    } catch {}
+  }, []);
+
+  const changeReadingMode = (mode: 'webtoon' | 'single' | 'double') => {
+    setReadingMode(mode);
+    try { localStorage.setItem('reader:readingMode', mode); } catch {}
+  };
+
+  const changeBrightness = (val: number) => {
+    const clamped = Math.max(40, Math.min(100, val));
+    setBrightness(clamped);
+    try { localStorage.setItem('reader:brightness', String(clamped)); } catch {}
+  };
 
   const restoreDoneRef = useRef(false);
   const autoAdvanceRef = useRef(false);
@@ -285,6 +328,7 @@ export function useReadChapterPresenter() {
   };
 
   const scrollToPage = (idx: number) => {
+    setCurrentPageIndex(idx);
     setShowThumbnails(false);
     document.getElementById(`page-${idx}`)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -352,6 +396,13 @@ export function useReadChapterPresenter() {
     scrollToTop,
     scrollToPage,
     handleDownload,
+    readingMode,
+    changeReadingMode,
+    brightness,
+    changeBrightness,
+    currentPageIndex,
+    autoScrollSpeed,
+    setAutoScrollSpeed,
     prevChapter,
     nextChapter,
   };

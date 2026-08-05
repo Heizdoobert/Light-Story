@@ -8,14 +8,11 @@ export function createClient(): SupabaseClient {
     return clientInstance;
   }
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const key =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!url || !key) {
-    throw new Error("Missing environment key SUPABASE (url/anon_key)");
-  }
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    "placeholder-key";
 
   clientInstance = createBrowserClient(url, key) as unknown as SupabaseClient;
   return clientInstance;

@@ -23,7 +23,12 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace: routerReplace }),
+  useRouter: () => ({ replace: routerReplace, push: routerReplace }),
+  useParams: () => ({ comicId: 'c1', chapterId: 'ch1' }),
+}));
+
+vi.mock('@/context/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'dark', toggleTheme: vi.fn() }),
 }));
 
 type HooksModule = typeof import('@/hooks');
