@@ -33,6 +33,13 @@
       }
     ]
   },
+  "workflows": [
+    {
+      "name": "lightstory-workflow",
+      "binding": "LIGHTSTORY_WORKFLOW",
+      "class_name": "LightStoryWorkflow"
+    }
+  ],
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",

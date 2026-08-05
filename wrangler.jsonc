@@ -39,6 +39,13 @@
       }
     ]
   },
+  "workflows": [
+    {
+      "name": "lightstory-workflow",
+      "binding": "LIGHTSTORY_WORKFLOW",
+      "class_name": "LightStoryWorkflow"
+    }
+  ],
   "observability": {
     "enabled": false,
     "head_sampling_rate": 1,

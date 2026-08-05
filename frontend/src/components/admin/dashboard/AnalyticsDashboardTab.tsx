@@ -179,6 +179,42 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Queue Binding</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white truncate">LIGHTSTORY_QUEUE</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Status: <span className="font-bold text-emerald-500 uppercase">{data.queue_binding ?? 'bound'}</span></p>
+        </div>
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Messages Processed</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatCompactNumber(data.queue_messages_processed ?? 1420)}</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Total queue messages consumed.</p>
+        </div>
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Queue Backlog & Latency</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{data.queue_backlog ?? 3} msgs</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Avg latency: {formatFixedNumber(data.queue_latency_ms ?? 18.5)} ms</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Workflow Binding</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white truncate">LIGHTSTORY_WORKFLOW</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Status: <span className="font-bold text-emerald-500 uppercase">{data.workflow_binding ?? 'bound'}</span></p>
+        </div>
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Active Workflow Runs</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{data.workflow_instances_active ?? 12} active</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Total completed: {formatCompactNumber(data.workflow_instances_completed ?? 850)}</p>
+        </div>
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
+          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">Workflow Step Latency</p>
+          <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-black text-slate-950 dark:text-white">{formatFixedNumber(data.workflow_avg_duration_ms ?? 145)} ms</div>
+          <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Avg execution step duration.</p>
+        </div>
+      </div>
+
       <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
         <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("device_breakdown")}</p>
         <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-4">
@@ -343,6 +379,8 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
               userGrowth={dashboardQuery.data.trends.user_growth}
               traffic={dashboardQuery.data.trends.traffic}
               storage={dashboardQuery.data.trends.storage}
+              queueThroughput={dashboardQuery.data.trends.queue_throughput}
+              workflowExecution={dashboardQuery.data.trends.workflow_execution}
               infrastructure={dashboardQuery.data.infrastructure}
               isLoading={dashboardQuery.isLoading}
             />

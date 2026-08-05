@@ -592,7 +592,7 @@ export async function handleAdminRequest(
         const fullName = body.full_name || body.fullName || '';
 
         if (createdUser?.id) {
-          await sbAdminPatch(
+          await sbPatch(
             'profiles',
             `id=eq.${createdUser.id}`,
             { role: targetRole, full_name: fullName },

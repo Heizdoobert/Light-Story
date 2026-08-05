@@ -10,6 +10,8 @@ type TrendsSectionProps = {
   userGrowth: AnalyticsTrendPoint[];
   traffic: AnalyticsTrendPoint[];
   storage: AnalyticsTrendPoint[];
+  queueThroughput?: AnalyticsTrendPoint[];
+  workflowExecution?: AnalyticsTrendPoint[];
   infrastructure: InfrastructureMetrics;
   isLoading?: boolean;
 };
@@ -18,6 +20,8 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
   userGrowth,
   traffic,
   storage,
+  queueThroughput = [],
+  workflowExecution = [],
   infrastructure,
   isLoading = false,
 }) => {
@@ -80,6 +84,34 @@ export const TrendsSection: React.FC<TrendsSectionProps> = ({
             height={240}
             fillColor="#f59e0b"
             strokeColor="#d97706"
+          />
+        </ChartContainer>
+
+        {/* Cloudflare Queue Throughput */}
+        <ChartContainer
+          title="Cloudflare Queue Throughput"
+          description="LIGHTSTORY_QUEUE message processing velocity & backlog"
+          isLoading={isLoading}
+        >
+          <TrafficChart
+            data={queueThroughput}
+            height={240}
+            fillColor="#8b5cf6"
+            strokeColor="#6d28d9"
+          />
+        </ChartContainer>
+
+        {/* Cloudflare Workflows Execution */}
+        <ChartContainer
+          title="Cloudflare Workflows Execution"
+          description="LIGHTSTORY_WORKFLOW durable execution runs & latency"
+          isLoading={isLoading}
+        >
+          <TrafficChart
+            data={workflowExecution}
+            height={240}
+            fillColor="#ec4899"
+            strokeColor="#be185d"
           />
         </ChartContainer>
 

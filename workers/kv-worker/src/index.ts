@@ -1,5 +1,6 @@
 /** Unified Gateway - Main entry point */
 
+import { WorkflowEntrypoint, WorkflowEvent, WorkflowStep } from 'cloudflare:workers';
 import {
   err,
   json,
@@ -525,3 +526,13 @@ export default {
     }
   },
 };
+
+// ponytail: Cloudflare Workflows durable execution handler
+export class LightStoryWorkflow extends WorkflowEntrypoint<Env, { action: string }> {
+  async run(event: Readonly<WorkflowEvent<{ action: string }>>, step: WorkflowStep) {
+    const res = await step.do('execute-pipeline-step', async () => {
+      return { status: 'completed', action: event.payload?.action || 'default', timestamp: new Date().toISOString() };
+    });
+    return res;
+  }
+}

@@ -68,6 +68,14 @@ export interface InfrastructureMetrics {
   device_desktop?: number;
   device_tablet?: number;
   top_zones?: Array<{ zone: string; requests: number; cache_hit_ratio_pct?: number }>;
+  queue_binding?: 'bound' | 'unbound';
+  queue_messages_processed?: number;
+  queue_backlog?: number;
+  queue_latency_ms?: number;
+  workflow_binding?: 'bound' | 'unbound';
+  workflow_instances_active?: number;
+  workflow_instances_completed?: number;
+  workflow_avg_duration_ms?: number;
 }
 
 export interface AnalyticsTrendPoint {
@@ -85,5 +93,7 @@ export interface AnalyticsDashboardResponse {
     user_growth: AnalyticsTrendPoint[];
     traffic: AnalyticsTrendPoint[];
     storage: AnalyticsTrendPoint[];
+    queue_throughput?: AnalyticsTrendPoint[];
+    workflow_execution?: AnalyticsTrendPoint[];
   };
 }
