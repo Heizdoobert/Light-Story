@@ -128,7 +128,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
     return () => {
       isMounted = false;
     };
-  }, [initialComics]);
+  }, []);
 
   const getComicCover = useCallback((comic: any): string => {
     const raw = comic.coverUrl || comic.cover_url || "";
