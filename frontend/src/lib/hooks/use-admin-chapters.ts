@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { createChapter, updateChapter, deleteChapter } from "@/lib/actions/chapter.actions";
 import { toast } from "sonner";
 
 export interface ChapterItem {
@@ -103,79 +104,45 @@ export function useAdminChapters(initialComicId: string = "all") {
   const handleSaveChapter = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetComicId) {
-      toast.error("Vui lòng chọn bộ truyện");
+      toast.error("Vui lòng chọn truyện");
       return;
     }
+    if (submitting) return;
 
     setSubmitting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      let targetChapterId = editingChapter?.id;
-
-      if (editingChapter) {
-        const { error } = await supabase
-          .from("chapters")
-          .update({
-            chapter_number: Number(chapterNumber),
-            title,
-            images,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingChapter.id);
-
-        if (error) throw error;
-      } else {
-        const { data: inserted, error } = await supabase
-          .from("chapters")
-          .insert([
-            {
-              story_id: targetComicId,
-              chapter_number: Number(chapterNumber),
-              title,
-              images,
-            },
-          ])
-          .select("id")
-          .single();
-
-        if (error) throw error;
-        if (inserted) targetChapterId = inserted.id;
+      const payload = { chapter_number: Number(chapterNumber), title, images };
+      const res = editingChapter
+        ? await updateChapter(editingChapter.id, targetComicId, payload)
+        : await createChapter({ story_id: targetComicId, ...payload });
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
       }
-
-      // Sync to chapter_images table for public reader compatibility
-      if (targetChapterId && images.length > 0) {
-        await supabase.from("chapter_images").delete().eq("chapter_id", targetChapterId);
-        const chapterImageRows = images.map((imgUrl, index) => ({
-          chapter_id: targetChapterId,
-          image_url: imgUrl,
-          page_number: index + 1,
-        }));
-        await supabase.from("chapter_images").insert(chapterImageRows);
-      }
-
-      toast.success(editingChapter ? "Cập nhật chương thành công!" : "Tạo chương mới thành công!");
+      toast.success("Lưu chương thành công");
+      await loadInitialData();
+      setEditingChapter(null);
       setIsModalOpen(false);
-      loadInitialData();
-    } catch (err: any) {
-      toast.error(err.message || "Lưu chương thất bại");
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể lưu chương");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteChapter = async (id: string, chNum: number) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa Chương ${chNum}?`)) return;
+    if (!window.confirm(`Xóa chương #${chNum}?`)) return;
 
     try {
-      const supabase = getSupabaseBrowserClient();
-      await supabase.from("chapter_images").delete().eq("chapter_id", id);
-      const { error } = await supabase.from("chapters").delete().eq("id", id);
-      if (error) throw error;
-
-      toast.success(`Đã xóa Chương ${chNum}`);
-      setChapters((prev) => prev.filter((c) => c.id !== id));
-    } catch (err: any) {
-      toast.error(err.message || "Xóa chương thất bại");
+      const res = await deleteChapter(id, targetComicId);
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Đã xóa chương");
+      await loadInitialData();
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể xóa chương");
     }
   };
 
