@@ -20,13 +20,13 @@ export async function createChapter(data: CreateChapterInput) {
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = createChapterSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.comic_id));
-    return { ok: true, data: { id: `chapter_${Date.now()}`, ...parsed.data } };
+    revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.comic_id), "max");
+    return { ok: true, success: true, data: { id: `chapter_${Date.now()}`, ...parsed.data } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
 
@@ -39,13 +39,13 @@ export async function updateChapter(
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = updateChapterSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.CHAPTERS(comicId));
-    return { ok: true, data: { id, ...parsed.data } };
+    revalidateTag(CACHE_TAGS.CHAPTERS(comicId), "max");
+    return { ok: true, success: true, data: { id, ...parsed.data } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
 
@@ -53,9 +53,9 @@ export async function deleteChapter(id: string, comicId: string) {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
 
-    revalidateTag(CACHE_TAGS.CHAPTERS(comicId));
-    return { ok: true, data: { id } };
+    revalidateTag(CACHE_TAGS.CHAPTERS(comicId), "max");
+    return { ok: true, success: true, data: { id } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }

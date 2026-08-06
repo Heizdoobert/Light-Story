@@ -19,8 +19,8 @@ const updateUserRoleSchema = z.object({
 });
 
 export type ActionResult<T = unknown> =
-  | { ok: true; data?: T }
-  | { ok: false; error: string };
+  | { ok: true; success: true; data?: T; error?: undefined }
+  | { ok: false; success: false; error: string; data?: undefined };
 
 export async function updateUserProfile(
   userId: string,
@@ -34,18 +34,18 @@ export async function updateUserProfile(
       "employee",
     ]);
     if (currentUserId !== "internal" && currentUserId !== userId) {
-      return { ok: false, error: "Bạn chỉ có thể cập nhật hồ sơ của chính mình" };
+      return { ok: false, success: false, error: "Bạn chỉ có thể cập nhật hồ sơ của chính mình" };
     }
 
     const parsed = updateUserProfileSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.USERS);
-    return { ok: true, data: { userId, ...parsed.data } };
+    revalidateTag(CACHE_TAGS.USERS, "max");
+    return { ok: true, success: true, data: { userId, ...parsed.data } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
 
@@ -58,12 +58,12 @@ export async function updateUserRole(
 
     const parsed = updateUserRoleSchema.safeParse({ userId, role });
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.USERS);
-    return { ok: true, data: { userId, role: parsed.data.role } };
+    revalidateTag(CACHE_TAGS.USERS, "max");
+    return { ok: true, success: true, data: { userId, role: parsed.data.role } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }

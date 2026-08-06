@@ -16,9 +16,9 @@ export async function logAdminActivity(
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
 
-    revalidateTag(CACHE_TAGS.AUDIT_LOGS);
-    return { ok: true, data: { timestamp: new Date().toISOString() } };
+    revalidateTag(CACHE_TAGS.AUDIT_LOGS, "max");
+    return { ok: true, success: true, data: { timestamp: new Date().toISOString() } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }

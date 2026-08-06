@@ -14,13 +14,13 @@ export async function createComic(data: CreateComicInput) {
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = createComicSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.COMICS);
-    return { ok: true, data: { id: `comic_${Date.now()}`, ...parsed.data } };
+    revalidateTag(CACHE_TAGS.COMICS, "max");
+    return { ok: true, success: true, data: { id: `comic_${Date.now()}`, ...parsed.data } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
 
@@ -29,14 +29,14 @@ export async function updateComic(id: string, data: UpdateComicInput) {
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = updateComicSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.COMICS);
-    revalidateTag(CACHE_TAGS.COMIC_DETAIL(id));
-    return { ok: true, data: { id, ...parsed.data } };
+    revalidateTag(CACHE_TAGS.COMICS, "max");
+    revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), "max");
+    return { ok: true, success: true, data: { id, ...parsed.data } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
 
@@ -44,10 +44,10 @@ export async function deleteComic(id: string) {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
 
-    revalidateTag(CACHE_TAGS.COMICS);
-    revalidateTag(CACHE_TAGS.COMIC_DETAIL(id));
-    return { ok: true, data: { id } };
+    revalidateTag(CACHE_TAGS.COMICS, "max");
+    revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), "max");
+    return { ok: true, success: true, data: { id } };
   } catch (error) {
-    return { ok: false, error: (error as Error).message };
+    return { ok: false, success: false, error: (error as Error).message };
   }
 }
