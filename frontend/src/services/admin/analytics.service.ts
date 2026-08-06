@@ -17,6 +17,29 @@ type WorkerAnalyticsPayload = {
   source_health?: Partial<AnalyticsDashboardResponse['meta']['source_health']>;
 };
 
+type EngagementSummaryPayload = {
+  mau?: number;
+  new_signups?: number;
+  dau?: number;
+  dau_change?: number;
+  churn_rate_pct?: number;
+};
+
+type SignupTrendRow = {
+  signup_date: string;
+  new_users: number;
+};
+
+type TopChapterRow = {
+  chapter_id: string;
+  story_id: string;
+  story_title?: string;
+  chapter_title?: string;
+  chapter_number?: number;
+  read_count?: number;
+  favorite_count?: number;
+};
+
 const DEFAULT_INFRASTRUCTURE: InfrastructureMetrics = {
   r2_usage_gb: 0,
   r2_allocated_gb: 0,
@@ -126,7 +149,7 @@ function computeEfficiency(usedGb: number, allocatedGb: number): number {
 
 async function fetchWorkerAnalytics(_range: AnalyticsTimeRange, _role: AnalyticsRole): Promise<WorkerAnalyticsPayload | null> {
   try {
-    const inf = await apiClient.get<any>('/api/analytics/infrastructure');
+    const inf = await apiClient.get<WorkerInfrastructurePayload>('/api/analytics/infrastructure');
     if (!inf) return null;
     return { infrastructure: inf, source_health: { cloudflare: 'ready' } };
   } catch {
@@ -147,10 +170,10 @@ function normalizeInfrastructure(metrics: Partial<InfrastructureMetrics> | null 
     bandwidth_gb: round(toNumber(metrics.bandwidth_gb)),
     cache_hit_ratio_pct: round(toNumber(metrics.cache_hit_ratio_pct)),
     storage_efficiency_pct: round(toNumber(metrics.storage_efficiency_pct)),
-    device_mobile: Math.max(0, Math.trunc(toNumber((metrics as any).device_mobile))),
-    device_desktop: Math.max(0, Math.trunc(toNumber((metrics as any).device_desktop))),
-    device_tablet: Math.max(0, Math.trunc(toNumber((metrics as any).device_tablet))),
-    top_zones: Array.isArray((metrics as any).top_zones) ? ((metrics as any).top_zones as any[]) : [],
+    device_mobile: Math.max(0, Math.trunc(toNumber(metrics.device_mobile))),
+    device_desktop: Math.max(0, Math.trunc(toNumber(metrics.device_desktop))),
+    device_tablet: Math.max(0, Math.trunc(toNumber(metrics.device_tablet))),
+    top_zones: Array.isArray(metrics.top_zones) ? metrics.top_zones : [],
     queue_binding: metrics.queue_binding ?? 'bound',
     queue_messages_processed: Math.max(0, Math.trunc(toNumber(metrics.queue_messages_processed, 1420))),
     queue_backlog: Math.max(0, Math.trunc(toNumber(metrics.queue_backlog, 3))),
@@ -189,11 +212,11 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
   const daysBack = TIME_RANGE_DAYS[range] ?? 7;
   try {
     const [engagementData, signupTrendData, topChaptersData, totalViewsData, totalFavoritesData] = await Promise.all([
-      callRpc<any>('get_user_engagement_summary', { p_time_range: timeRangeStr }),
-      callRpc<any>('get_signup_trend', { p_days_back: daysBack }),
-      callRpc<any>('get_top_chapters_by_reads', { p_limit: 5, p_time_range: timeRangeStr }),
-      callRpc<any>('get_total_views', { p_time_range: timeRangeStr }),
-      callRpc<any>('get_total_favorites', {}),
+      callRpc<EngagementSummaryPayload>('get_user_engagement_summary', { p_time_range: timeRangeStr }),
+      callRpc<SignupTrendRow[]>('get_signup_trend', { p_days_back: daysBack }),
+      callRpc<TopChapterRow[]>('get_top_chapters_by_reads', { p_limit: 5, p_time_range: timeRangeStr }),
+      callRpc<number>('get_total_views', { p_time_range: timeRangeStr }),
+      callRpc<number>('get_total_favorites', {}),
     ]);
 
     const supabaseOk = [engagementData, signupTrendData, topChaptersData, totalViewsData, totalFavoritesData].some(
@@ -215,7 +238,7 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
     };
 
     const rawChapters = Array.isArray(topChaptersData) ? topChaptersData : [];
-    const topChapters = rawChapters.map((ch: any) => ({
+    const topChapters = rawChapters.map((ch) => ({
       chapter_id: ch.chapter_id || '',
       story_id: ch.story_id || '',
       title: ch.story_title || ch.chapter_title || '',
@@ -238,7 +261,7 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
     };
 
     const trendData = {
-      user_growth: (signupTrendData || []).map((row: any) => ({
+      user_growth: (signupTrendData || []).map((row) => ({
         timestamp: row.signup_date,
         value: toNumber(row.new_users),
         label: `${toNumber(row.new_users)} signups`,
@@ -246,7 +269,7 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
       traffic: [],
       storage: [],
       queue_throughput: (signupTrendData && signupTrendData.length > 0)
-        ? signupTrendData.map((row: any, i: number) => ({
+        ? signupTrendData.map((row, i) => ({
             timestamp: row.signup_date,
             value: 120 + ((i * 37) % 80),
             label: `${120 + ((i * 37) % 80)} msgs/min`,
@@ -260,7 +283,7 @@ async function fetchReadOnlySupabaseMetrics(range: AnalyticsTimeRange): Promise<
             };
           }),
       workflow_execution: (signupTrendData && signupTrendData.length > 0)
-        ? signupTrendData.map((row: any, i: number) => ({
+        ? signupTrendData.map((row, i) => ({
             timestamp: row.signup_date,
             value: 45 + ((i * 19) % 35),
             label: `${45 + ((i * 19) % 35)} runs/day`,

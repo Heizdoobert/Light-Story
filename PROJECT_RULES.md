@@ -20,7 +20,7 @@ I. QUY TẮC CHUNG (ÁP DỤNG TOÀN DỰ ÁN)
 7. Sử dụng Zod schema từ `lib/schemas/` để validate mọi input từ client hoặc external API.
 8. Xác thực và phân quyền phải có ở mọi Server Action và API route nhạy cảm. 
    Role được lấy từ `app_metadata.role` (ưu tiên) hoặc `profiles.role`.
-9. Mọi thao tác thay đổi dữ liệu phải gọi `revalidateTag` (chỉ 1 tham số) hoặc `revalidatePath`.
+9. Mọi thao tác thay đổi dữ liệu phải gọi `revalidateTag(tag, "max")` (Next.js 16: bắt buộc 2 tham số — cacheLife profile) hoặc `revalidatePath`.
 10. Không export bất kỳ thứ gì không phải async function từ file có `'use server'`.
 
 II. QUY TẮC THEO THƯ MỤC
@@ -85,7 +85,7 @@ III. CÁC ĐIỀU CẤM (KHÔNG BAO GIỜ ĐƯỢC LÀM)
 - ❌ Truyền class, Date, Map qua Server Action (chỉ truyền plain object).
 - ❌ Đặt service key (SUPABASE_SERVICE_ROLE_KEY) vào NEXT_PUBLIC_.
 - ❌ Thiếu kiểm tra quyền trong Server Action.
-- ❌ Gọi revalidateTag với 2 tham số.
+- ❌ Gọi revalidateTag thiếu tham số thứ 2 (Next.js 16 yêu cầu `revalidateTag(tag, "max")` hoặc `{ expire }`).
 - ❌ Hardcode giá trị fallback cho biến môi trường.
 - ❌ Cho phép localhost:* trong CSP production.
 - ❌ Đặt component không phải layout vào thư mục components/layout/.

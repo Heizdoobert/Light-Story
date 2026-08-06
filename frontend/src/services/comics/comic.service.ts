@@ -82,7 +82,7 @@ async function convertToWebP(file: File): Promise<File> {
   }
 }
 
-async function uploadFilesToR2(bucket: string, files: File[], options: UploadOptions = {}): Promise<string[]> {
+async function uploadFilesToR2(bucket: string | undefined, files: File[], options: UploadOptions = {}): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === 'true';
 
   if (!bucket) {
@@ -126,9 +126,13 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
 
 function getGatewayUrl(): string {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://kv-worker.hhhuygiau.workers.dev';
+    const url = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL;
+    if (!url) throw new Error('Missing NEXT_PUBLIC_GATEWAY_URL');
+    return url;
   }
-  return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  const url = process.env.NEXT_PUBLIC_GATEWAY_URL;
+  if (!url) throw new Error('Missing NEXT_PUBLIC_GATEWAY_URL');
+  return url;
 }
 
 function isTokenExpired(token: string): boolean {
@@ -173,19 +177,19 @@ export async function getAccessToken(): Promise<string | null> {
 }
 
 export async function uploadComicCover(cover: File, comicId?: string): Promise<string> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS || 'covers';
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS;
   const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId });
   if (urls.length === 0) throw new Error('Unable to upload comic cover');
   return urls[0];
 }
 
 export async function uploadChapterImages(images: File[], comicId?: string, chapterNumber?: number): Promise<string[]> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS || 'chapters';
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
   return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber });
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {
-  const result = await apiClient.post<any>('/api/comics', {
+  const result = await apiClient.post<ComicContext[] | { comic?: ComicContext }>('/api/comics', {
     title: input.title,
     description: input.description,
     cover_url: input.coverUrl,
@@ -199,7 +203,7 @@ export async function createComic(input: CreateComicInput): Promise<ComicContext
 }
 
 export async function createComicChapter(input: ChapterCreateInput): Promise<ChapterCreateResponse['chapter']> {
-  const result = await apiClient.post<any>(`/api/comics/${input.comicId}/chapters`, {
+  const result = await apiClient.post<ChapterCreateResponse['chapter'][] | { chapter?: ChapterCreateResponse['chapter'] }>(`/api/comics/${input.comicId}/chapters`, {
     storyId: input.storyId,
     tenantKey: input.tenantKey,
     chapterNumber: input.chapterNumber,

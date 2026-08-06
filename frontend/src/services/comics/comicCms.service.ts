@@ -46,6 +46,32 @@ export type ComicCatalogFilters = {
   limit?: number;
 };
 
+type ComicDbChapterRow = {
+  id: string;
+  chapter_number?: number | null;
+  title?: string | null;
+  updated_at?: string | null;
+  content?: string | null;
+};
+
+type ComicDbRow = {
+  id: string;
+  title?: string | null;
+  author?: string | null;
+  description?: string | null;
+  status?: string | null;
+  cover_url?: string | null;
+  views?: number | null;
+  updated_at?: string | null;
+  category?: string[] | string | null;
+  chapters?: ComicDbChapterRow[];
+};
+
+export type ComicModerationState = {
+  keywords: string[];
+  reportedComments: unknown[];
+};
+
 function readCatalog(): ComicCmsRecord[] {
   if (typeof window === "undefined") return [];
   try {
@@ -76,7 +102,7 @@ export function loadComicRecord(id: string): ComicCmsRecord | null {
 
 export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   try {
-    const result = await apiClient.get<any>("/api/admin/comics?pageSize=100");
+    const result = await apiClient.get<ComicDbRow[] | { items?: ComicDbRow[]; comics?: ComicDbRow[] }>("/api/admin/comics?pageSize=100");
     const rawList = Array.isArray(result) ? result : result?.items || result?.comics || [];
     const catalog: ComicCmsRecord[] = rawList.map(mapDbRowToRecord);
     if (catalog.length > 0) {
@@ -95,7 +121,7 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
         .neq("status", "archived")
         .order("updated_at", { ascending: false });
       if (data && data.length > 0) {
-        const catalog = data.map(mapDbRowToRecord);
+        const catalog = data.map((row) => mapDbRowToRecord(row as unknown as ComicDbRow));
         writeCatalog(catalog);
         return catalog;
       }
@@ -104,11 +130,11 @@ export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   return readCatalog();
 }
 
-function mapDbRowToRecord(row: any): ComicCmsRecord {
+function mapDbRowToRecord(row: ComicDbRow): ComicCmsRecord {
   const mappedChapters: ComicCmsChapterRecord[] = Array.isArray(row.chapters)
     ? row.chapters
-        .sort((a: any, b: any) => (b.chapter_number ?? 0) - (a.chapter_number ?? 0))
-        .map((ch: any) => ({
+        .sort((a, b) => (b.chapter_number ?? 0) - (a.chapter_number ?? 0))
+        .map((ch) => ({
           id: ch.id,
           chapterNumber: ch.chapter_number ?? 1,
           title: ch.title || `Chapter ${ch.chapter_number ?? 1}`,
@@ -177,7 +203,7 @@ export function listComicModerationState() {
   }
 }
 
-export function saveComicModerationState(state: any): void {
+export function saveComicModerationState(state: ComicModerationState): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem("comic-cms:moderation", JSON.stringify(state));
@@ -205,8 +231,10 @@ export function proxiedR2ImageUrl(url: string): string {
 
   const gateway =
     process.env.NODE_ENV === "production"
-      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || "https://kv-worker.hhhuygiau.workers.dev"
-      : process.env.NEXT_PUBLIC_GATEWAY_URL || "http://localhost:8787";
+      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
+      : process.env.NEXT_PUBLIC_GATEWAY_URL;
+
+  if (!gateway) return url;
 
   if (url.startsWith("/api/admin/r2/file/")) {
     const key = url.replace("/api/admin/r2/file/", "");
@@ -236,9 +264,7 @@ export function proxiedR2ImageUrl(url: string): string {
     hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
 
   if (isR2Host || isCloudflareHost) {
-    if (gateway) {
-      return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
-    }
+    return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
   }
   return url;
 }
@@ -256,7 +282,7 @@ export async function createComicFromMetadata(
   if (input.coverFile) {
     coverUrl = await uploadComicCover(input.coverFile);
   }
-  const result = await apiClient.post<any>("/api/admin/comics", {
+  const result = await apiClient.post<ComicDbRow | ComicDbRow[]>("/api/admin/comics", {
     title: input.title,
     author: input.author || "Unknown",
     description: input.description || "",
@@ -274,7 +300,7 @@ export async function createComicFromMetadata(
 export async function updateComicRecord(
   record: ComicCmsRecord,
 ): Promise<ComicCmsRecord> {
-  const result = await apiClient.patch<any>(`/api/admin/comics/${record.id}`, {
+  const result = await apiClient.patch<ComicDbRow | ComicDbRow[]>(`/api/admin/comics/${record.id}`, {
     title: record.title,
     author: record.author,
     description: record.description,
@@ -336,7 +362,7 @@ export async function createChapter(data: {
   chapter_number?: number;
   cover_url?: string;
 }): Promise<{ id: string }> {
-  const result = await apiClient.post<any>("/api/admin/chapters", data);
+  const result = await apiClient.post<{ id: string } | { id: string }[]>("/api/admin/chapters", data);
   return Array.isArray(result) ? result[0] : result;
 }
 
@@ -344,7 +370,7 @@ export async function getPresignedPutUrls(
   chapterId: string,
   files: { name: string }[],
 ): Promise<{ key: string; uploadUrl: string; publicUrl: string }[]> {
-  const res = await apiClient.post<{ urls: any[] }>("/api/admin/r2/presigned-urls", {
+  const res = await apiClient.post<{ urls: { key: string; uploadUrl: string; publicUrl: string }[] }>("/api/admin/r2/presigned-urls", {
     chapterId,
     files,
   });

@@ -1,4 +1,4 @@
-import { Category, Translator } from '@/types/entities';
+import { Author, Category, Translator } from '@/types/entities';
 import { apiClient } from '@/lib/api/apiClient';
 
 export async function fetchCategories(): Promise<Category[]> {
@@ -10,8 +10,8 @@ export async function fetchCategoryById(id: string): Promise<Category | null> {
   return rows.find((row) => row.id === id) ?? null;
 }
 
-export async function fetchAuthors(): Promise<any[]> {
-  return apiClient.get<any[]>('/api/admin/taxonomy?entity=author');
+export async function fetchAuthors(): Promise<Author[]> {
+  return apiClient.get<Author[]>('/api/admin/taxonomy?entity=author');
 }
 
 export async function fetchTranslators(): Promise<Translator[]> {
