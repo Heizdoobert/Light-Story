@@ -1,3 +1,5 @@
+import { ROUTES } from "@/lib/constants/routes";
+
 export async function uploadToR2(
   file: File,
   folder = "chapters",
@@ -7,7 +9,7 @@ export async function uploadToR2(
     formData.append("file", file);
     formData.append("folder", folder);
 
-    const res = await fetch("/api/r2/upload", {
+    const res = await fetch(ROUTES.API.R2_UPLOAD, {
       method: "POST",
       body: formData,
     });

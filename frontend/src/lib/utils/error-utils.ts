@@ -7,10 +7,15 @@ export const getErrorMessage = (error: unknown, context?: string): string => {
 
     if (typeof error === "string") return error;
 
-    const errObj = error as Record<string, any>;
-    if (errObj.error && typeof errObj.error.message === "string")
-      return errObj.error.message;
-    if (errObj.error && typeof errObj.error === "string") return errObj.error;
+    const errObj = error as Record<string, unknown>;
+    const nested = errObj.error as unknown;
+    if (
+      nested &&
+      typeof nested === "object" &&
+      typeof (nested as { message?: unknown }).message === "string"
+    )
+      return (nested as { message: string }).message;
+    if (typeof nested === "string") return nested;
     if (typeof errObj.message === "string") return errObj.message;
     if (typeof errObj.error_description === "string")
       return errObj.error_description;

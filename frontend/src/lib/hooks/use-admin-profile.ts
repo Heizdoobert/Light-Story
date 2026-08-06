@@ -5,6 +5,7 @@ import { useUser } from "@/lib/hooks/use-user";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { updateUserProfile } from "@/lib/actions/user.actions";
+import { getErrorMessage } from "@/lib/utils/error-utils";
 
 export function useAdminProfile() {
   const { user, profile, role, isLoading, signOut } = useUser();
@@ -49,8 +50,8 @@ export function useAdminProfile() {
         }
 
         toast.success("Cập nhật thông tin tài khoản thành công!");
-      } catch (err: any) {
-        toast.error(err.message || "Cập nhật hồ sơ thất bại");
+      } catch (err) {
+        toast.error(getErrorMessage(err) || "Cập nhật hồ sơ thất bại");
       } finally {
         setSaving(false);
       }

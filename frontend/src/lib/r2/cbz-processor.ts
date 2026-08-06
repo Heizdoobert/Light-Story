@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import { uploadToR2 } from "./upload";
+import { getErrorMessage } from "@/lib/utils/error-utils";
 
 export interface CbzProgressCallback {
   (current: number, total: number, message: string): void;
@@ -71,12 +72,12 @@ export async function processCbzFile(
       success: uploadedUrls.length > 0,
       urls: uploadedUrls,
     };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Failed to process .cbz file:", err);
     return {
       success: false,
       urls: [],
-      error: err.message || "Lỗi giải nén tệp .cbz",
+      error: getErrorMessage(err) || "Lỗi giải nén tệp .cbz",
     };
   }
 }

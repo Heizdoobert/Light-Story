@@ -5,12 +5,12 @@ import {
 } from "@aws-sdk/client-s3";
 
 export const R2_BUCKET_COVERS =
-  process.env.NEXT_PUBLIC_R2_BUCKET_COVERS ||
   process.env.R2_BUCKET_COVERS ||
+  process.env.NEXT_PUBLIC_R2_BUCKET_COVERS ||
   "";
 export const R2_BUCKET_CHAPTERS =
-  process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS ||
   process.env.R2_BUCKET_CHAPTERS ||
+  process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS ||
   "";
 
 export function getBucketForFolder(folder: string): string {

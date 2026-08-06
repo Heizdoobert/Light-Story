@@ -2,11 +2,18 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { ROUTES } from "@/lib/constants/routes";
 import type { User } from "@supabase/supabase-js";
+
+type ProfileRow = {
+  role: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+};
 
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [role, setRole] = useState<string | null>("user");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -91,7 +98,7 @@ export function useUser() {
         }
 
         setTimeout(() => {
-          window.location.href = "/";
+          window.location.href = ROUTES.HOME;
         }, 2000);
       }
     }

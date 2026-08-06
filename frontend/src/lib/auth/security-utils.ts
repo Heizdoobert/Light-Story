@@ -1,3 +1,5 @@
+import { ROUTES } from "@/lib/constants/routes";
+
 /**
  * Sanitizes image URLs to prevent DOM text reinterpretation as HTML (DOM XSS).
  * Allows: blob:, http:, https:, data:image/*, and root-relative paths (/...).
@@ -69,7 +71,7 @@ export function proxyAvatarUrl(url: string | null | undefined): string | null {
 
   // If it's a Supabase avatars bucket URL, proxy it!
   if (safeUrl.includes(".supabase.co/storage/v1/object/public/avatars/")) {
-    return `/api/avatar?url=${encodeURIComponent(safeUrl)}`;
+    return `${ROUTES.API.AVATAR}?url=${encodeURIComponent(safeUrl)}`;
   }
 
   return safeUrl;

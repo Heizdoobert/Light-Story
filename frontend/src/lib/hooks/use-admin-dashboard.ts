@@ -23,6 +23,11 @@ export type ComicSimple = {
   status: string;
 };
 
+type ComicsListRes = {
+  total?: number;
+  items?: ComicSimple[];
+};
+
 export function useAdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [totalComics, setTotalComics] = useState<number>(0);
@@ -35,7 +40,7 @@ export function useAdminDashboard() {
     setLoading(true);
     try {
       // 1. Fetch Comics & Total count
-      const comicsRes = await apiClient.get<any>("/api/comics?limit=5").catch(() => null);
+      const comicsRes = await apiClient.get<ComicsListRes>("/api/comics?limit=5").catch(() => null);
       if (comicsRes) {
         setTotalComics(comicsRes.total || (comicsRes.items ? comicsRes.items.length : 0));
         setRecentComics(comicsRes.items || []);

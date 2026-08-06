@@ -20,6 +20,13 @@ export type RequireRouteAuthorizationOptions = ResolveRouteRequesterOptions & {
 
 export const DEFAULT_ROUTE_ROLES = ["admin", "superadmin", "internal"] as const;
 
+type AuthUserData = {
+  user?: {
+    id?: string;
+    app_metadata?: Record<string, unknown> & { role?: string | null };
+  } | null;
+};
+
 function resolveRequesterRole(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
@@ -31,7 +38,7 @@ function createErrorResponse(message: string, status: number) {
 async function resolveRole(
   _request: NextRequest | { headers: { get(name: string): string | null } },
   _userId: string,
-  userData: any,
+  userData: AuthUserData,
 ): Promise<string | undefined> {
   // Role is synced to auth.users.raw_app_meta_data.role by the DB trigger
   // (app_private.sync_profile_role_to_auth) on profile insert/update, so no

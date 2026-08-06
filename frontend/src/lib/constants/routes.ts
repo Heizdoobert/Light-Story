@@ -8,6 +8,7 @@ export const ROUTES = {
   COMIC_DETAIL: (id: string) => `/comics/${id}`,
   CHAPTER_READER: (comicId: string, chapterId: string) =>
     `/comics/${comicId}/chapter/${chapterId}`,
+  PLACEHOLDER_COVER: "/placeholder-cover.jpg",
   USER: {
     ROOT: "/user",
     PROFILE: "/user/profile",
@@ -35,6 +36,7 @@ export const ROUTES = {
   API: {
     HEALTH: "/api/health",
     ANALYTICS: "/api/analytics",
+    AVATAR: "/api/avatar",
     CATEGORIES: "/api/categories",
     R2_PROXY: "/api/r2/proxy",
     R2_UPLOAD: "/api/r2/upload",

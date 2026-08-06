@@ -48,7 +48,7 @@ export function useAdminAds() {
       const { data } = await supabase.from("site_settings").select("key, value");
 
       if (data && data.length > 0) {
-        const settingsMap = new Map<string, any>();
+        const settingsMap = new Map<string, string>();
         data.forEach((row) => settingsMap.set(row.key, row.value));
 
         setAds(

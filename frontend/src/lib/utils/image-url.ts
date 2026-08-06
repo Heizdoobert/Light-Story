@@ -1,3 +1,5 @@
+import { ROUTES } from "@/lib/constants/routes";
+
 export function resolveR2Url(keyOrUrl: string): string {
   if (
     keyOrUrl.startsWith("http://") ||
@@ -12,12 +14,12 @@ export function resolveR2Url(keyOrUrl: string): string {
     const cleanPath = keyOrUrl.replace(/^\/+/, "");
     return `${cleanDomain}/${cleanPath}`;
   }
-  return `/api/r2/proxy?key=${encodeURIComponent(keyOrUrl)}`;
+  return `${ROUTES.API.R2_PROXY}?key=${encodeURIComponent(keyOrUrl)}`;
 }
 
 export function getR2ImageUrl(
   url?: string | null,
-  fallback = "/placeholder-cover.jpg",
+  fallback = ROUTES.PLACEHOLDER_COVER,
 ): string {
   if (!url || url.trim() === "") return fallback;
   return resolveR2Url(url);
