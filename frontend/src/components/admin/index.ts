@@ -5,3 +5,4 @@ export * from "./stat-card";
 export * from "./dashboard/AdminDashboard";
 export * from "./dashboard/AnalyticsDashboardTab";
 export * from "./dashboard/TrendsSection";
+export * from "./comics";
