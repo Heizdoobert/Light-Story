@@ -18,16 +18,14 @@ const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
 
 const getBaseUrl = (): string => {
   if (IS_MOCK) return 'http://localhost:4010';
-  let rawUrl = '';
-  if (process.env.NODE_ENV === 'production') {
-    rawUrl =
-      process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
-      process.env.NEXT_PUBLIC_GATEWAY_URL ||
-      'https://kv-worker.hhhuygiau.workers.dev';
-  } else {
-    rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  const url =
+    process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
+      : process.env.NEXT_PUBLIC_GATEWAY_URL;
+  if (!url) {
+    throw new Error('NEXT_PUBLIC_GATEWAY_URL is not configured');
   }
-  return rawUrl.replace(/\/+$/, '');
+  return url.replace(/\/+$/, '');
 };
 
 const BASE_URL = getBaseUrl();
