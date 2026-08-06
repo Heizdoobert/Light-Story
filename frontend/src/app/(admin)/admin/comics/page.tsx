@@ -4,7 +4,10 @@ import Link from "next/link";
 import { Plus, Edit, Trash2, Search, BookOpen, Layers, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageUploader } from "@/components/admin/image-uploader";
+import dynamic from "next/dynamic";
+const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
+  ssr: false,
+});
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { useAdminComics } from "@/lib/hooks/use-admin-comics";
 

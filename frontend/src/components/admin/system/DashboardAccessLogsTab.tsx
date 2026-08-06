@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
+import { ROUTES } from '@/lib/constants/routes';
 
 type AccessLog = {
   id: string;
@@ -142,7 +143,7 @@ export const DashboardAccessLogsTab: React.FC = () => {
                 {(logsQuery.data ?? []).map((log) => {
                   const actor = log.actor_user_id ? actorMap.get(log.actor_user_id) : null;
                   const actorDisplay = actor?.full_name?.trim() || actor?.email || log.actor_user_id || 'Unknown';
-                  const page = typeof log.metadata?.page === 'string' ? log.metadata.page : '/admin';
+                  const page = typeof log.metadata?.page === 'string' ? log.metadata.page : ROUTES.ADMIN.ROOT;
 
                   return (
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">

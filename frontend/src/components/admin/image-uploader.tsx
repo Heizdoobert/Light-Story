@@ -114,7 +114,7 @@ export function ImageUploader({ onImagesUploaded, folder = "chapters" }: ImageUp
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-80 overflow-y-auto p-2 bg-slate-950/40 rounded-xl border border-slate-800">
             {previews.map((src, i) => (
               <div key={i} className="relative aspect-[3/4] rounded-xl overflow-hidden border border-slate-700 bg-slate-900 group">
-                <img src={getR2ImageUrl(src)} alt={`Trang ${i + 1}`} className="w-full h-full object-cover" />
+                <img src={getR2ImageUrl(src)} alt={`Trang ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
                 <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/80 text-[10px] font-bold text-white rounded">
                   P.{i + 1}
                 </span>

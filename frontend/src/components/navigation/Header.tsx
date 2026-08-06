@@ -30,6 +30,7 @@ import { Category } from "@/types/entities";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
+import { ROUTES } from "@/lib/constants/routes";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 
@@ -71,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile, signOut, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [categories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Comic[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -153,24 +154,6 @@ export const Header: React.FC<HeaderProps> = ({
       document.body.style.overflow = "unset";
     };
   }, [showMobileMenu]);
-
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const res = await apiClient.get<any>("/api/categories").catch(() => []);
-        if (Array.isArray(res)) {
-          setCategories(res);
-        } else if (res?.items) {
-          setCategories(res.items);
-        } else if (res?.data) {
-          setCategories(res.data);
-        }
-      } catch {
-        // quiet fallback
-      }
-    };
-    void loadCategories();
-  }, []);
 
   const bounceClick = {
     whileTap: { scale: 0.92 },
@@ -339,7 +322,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center gap-3 sm:gap-4">
               {isStaffRole(role) && (
                 <Link
-                  href="/admin"
+                  href={ROUTES.ADMIN.ROOT}
                   className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-orange-500 dark:bg-[#001eff] hover:bg-orange-600 dark:hover:bg-[#8900ff] text-white rounded-full text-sm font-bold shadow-md transition-all hover:scale-105 active:scale-95"
                 >
                   <LayoutDashboard size={16} />
@@ -392,7 +375,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                         {isStaffRole(role) && (
                           <Link
-                            href="/admin"
+                            href={ROUTES.ADMIN.ROOT}
                             onClick={() => setIsUserMenuOpen(false)}
                             className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2 sm:hidden"
                           >

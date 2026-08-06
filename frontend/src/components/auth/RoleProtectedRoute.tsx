@@ -3,6 +3,7 @@ import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, UserRole } from '@/context/AuthContext';
 import { LoadingScreen } from '@/components/shared/ui/LoadingScreen';
+import { ROUTES } from '@/lib/constants/routes';
 
 interface RoleProtectedRouteProps {
   children: React.ReactNode;
@@ -19,12 +20,12 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({ children
 
     const from = encodeURIComponent(pathname || '/');
     if (!user) {
-      router.replace(`/handle-exception/401?from=${from}`);
+      router.replace(`${ROUTES.ERROR.UNAUTHORIZED}?from=${from}`);
       return;
     }
 
     if (!role || !allowedRoles.includes(role)) {
-      router.replace(`/handle-exception/403?from=${from}`);
+      router.replace(`${ROUTES.ERROR.FORBIDDEN}?from=${from}`);
     }
   }, [allowedRoles, loading, pathname, role, router, user]);
 

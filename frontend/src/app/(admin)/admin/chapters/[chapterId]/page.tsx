@@ -1,10 +1,14 @@
 "use client";
 
 import { use, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { FormEditor } from '@/components/admin/form-editor';
-import { ImageUploader } from '@/components/admin/image-uploader';
 import { Input } from '@/components/ui/input';
 import { updateChapter } from '@/lib/actions/chapter.actions';
+
+const ImageUploader = dynamic(() => import('@/components/admin/image-uploader'), {
+  ssr: false,
+});
 
 export default function AdminEditChapterPage({ params }: { params: Promise<{ chapterId: string }> }) {
   const { chapterId } = use(params);

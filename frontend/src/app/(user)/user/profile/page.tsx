@@ -7,7 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ImageUploader } from "@/components/admin/image-uploader";
+import dynamic from "next/dynamic";
+const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
+  ssr: false,
+});
 import { useUser } from "@/lib/hooks/use-user";
 import { updateUserProfile } from "@/lib/actions/user.actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";

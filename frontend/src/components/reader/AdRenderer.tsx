@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/ad-policy';
-import { apiClient } from '@/lib/api/apiClient';
 
 type SiteSettingItem = { key: string; value: unknown };
 
@@ -28,9 +27,7 @@ const slotKeyByPosition: Record<AdRendererProps['position'], AdSlotKey> = {
   right_side: 'ad_right_side',
 };
 
-const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => {
-  return apiClient.get<SiteSettingItem[]>('/api/admin/site-settings?scope=public');
-};
+const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => [] as SiteSettingItem[];
 
 const injectMarkup = (container: HTMLDivElement, markup: string): void => {
   container.innerHTML = '';

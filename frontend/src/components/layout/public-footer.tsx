@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function PublicFooter() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) return null;
+  if (pathname?.startsWith(ROUTES.ADMIN.ROOT)) return null;
 
   return (
     <footer className="w-full bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/5 py-4 mt-auto transition-colors">

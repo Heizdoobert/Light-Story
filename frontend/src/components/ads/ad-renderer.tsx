@@ -8,7 +8,6 @@ import {
   type AdSlotKey,
   validateAdMarkup,
 } from "@/lib/admin/ad-policy";
-import { apiClient } from "@/lib/api/apiClient";
 
 type SiteSettingItem = { key: string; value: unknown };
 
@@ -30,8 +29,7 @@ const SLOT_KEY_BY_POSITION: Record<AdPosition, AdSlotKey> = {
   right_side: "ad_right_side",
 };
 
-const fetchAdRuntime = () =>
-  apiClient.get<SiteSettingItem[]>("/api/admin/site-settings?scope=public");
+const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => [] as SiteSettingItem[];
 
 export default function AdRenderer({ position }: { position: AdPosition }) {
   const pathname = usePathname();

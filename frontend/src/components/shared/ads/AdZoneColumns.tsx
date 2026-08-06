@@ -2,10 +2,11 @@
 
 import { usePathname } from "next/navigation";
 import { AdZone } from "@/components/shared/ads/AdZone";
+import { ROUTES } from "@/lib/constants/routes";
 
 export function AdZoneColumns() {
   const pathname = usePathname();
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith(ROUTES.ADMIN.ROOT)) return null;
 
   return (
     <>

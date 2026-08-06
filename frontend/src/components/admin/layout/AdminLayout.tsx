@@ -14,6 +14,7 @@ import { ThemeToggleButton } from './ThemeToggleButton';
 import { NotificationBell } from "@/components/ui/notification-bell";
 import { toast } from "sonner";
 import { supabase } from '@/lib/supabase/client';
+import { ROUTES } from '@/lib/constants/routes';
 import { getAdminMenuItems } from '@/lib/admin/admin-navigation';
 import { useLanguage } from '@/context/LanguageContext';
 import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/security-utils';
@@ -66,7 +67,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       .rpc('log_dashboard_access', {
         p_actor_user_id: profile.id,
         p_metadata: {
-          path: typeof window !== 'undefined' ? window.location.pathname : '/admin',
+          path: typeof window !== 'undefined' ? window.location.pathname : ROUTES.ADMIN.ROOT,
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
         },
       })

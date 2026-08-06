@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
-import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -28,7 +27,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const [sort, setSort] = useState<"newest" | "most_viewed" | "oldest">(
     "newest",
   );
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories] = useState<Category[]>([]);
 
   // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -40,24 +39,6 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   // Refs để xử lý click ra ngoài thì tự đóng Dropdown
   const categoryRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await apiClient.get<any>("/api/categories");
-        if (Array.isArray(res)) {
-          setCategories(res);
-        } else if (res && res.items) {
-          setCategories(res.items);
-        } else if (res && res.data) {
-          setCategories(res.data);
-        }
-      } catch (error) {
-        console.error("Lỗi tải danh sách thể loại trong FilterMenu:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   // Xử lý Click Outside để đóng menu
   useEffect(() => {
