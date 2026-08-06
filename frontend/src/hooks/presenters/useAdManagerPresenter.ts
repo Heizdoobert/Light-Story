@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api/apiClient';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import * as adActions from '@/actions/ads.actions';
 
 export type AdSettingItem = { key: string; value: unknown };
 
 async function fetchAdConfigs() {
-  return apiClient.get<AdSettingItem[]>('/api/admin/site-settings?scope=admin');
+  const supabase = getSupabaseBrowserClient();
+  const { data } = await supabase.from('site_settings').select('key, value');
+  return (data ?? []) as AdSettingItem[];
 }
 
 export function useAdConfigsQuery() {

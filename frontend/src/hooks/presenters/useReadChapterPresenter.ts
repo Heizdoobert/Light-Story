@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { ROUTES } from "@/lib/constants/routes";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { Chapter } from "@/types/entities";
@@ -284,9 +285,7 @@ export function useReadChapterPresenter() {
         const docHeight = document.documentElement.scrollHeight;
         const windowHeight = window.innerHeight;
         if (docHeight - (currentScrollY + windowHeight) < 400) {
-          router.push(
-            `/comics/${comicId}/chapter/${nextChapterRef.current.id}`,
-          );
+          router.push(ROUTES.CHAPTER_READER(comicId, nextChapterRef.current.id));
         }
       }
     };
@@ -320,7 +319,7 @@ export function useReadChapterPresenter() {
 
   const handleSelectChapter = (selectedId: string) => {
     setShowChapterMenu(false);
-    if (selectedId) router.push(`/comics/${comicId}/chapter/${selectedId}`);
+    if (selectedId) router.push(ROUTES.CHAPTER_READER(comicId, selectedId));
   };
 
   const scrollToTop = () => {

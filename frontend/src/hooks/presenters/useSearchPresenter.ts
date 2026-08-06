@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiClient } from "@/lib/api/apiClient";
 import { fetchStoriesPage } from "@/services/comics/story.service";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import { Category } from "@/types/entities";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -23,7 +21,6 @@ export function useSearchPresenter() {
   const currentPage = parseInt(pageParam, 10) || 1;
 
   const [comics, setComics] = useState<Comic[]>([]);
-  const [_categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [totalPages, setTotalPages] = useState(1);
@@ -31,15 +28,6 @@ export function useSearchPresenter() {
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
-
-  useEffect(() => {
-    apiClient
-      .get<any>("/api/categories")
-      .then((res) => {
-        if (Array.isArray(res)) setCategories(res);
-      })
-      .catch((err) => console.error("Lỗi tải thể loại:", err));
-  }, []);
 
   useEffect(() => {
     const fetchAndFilterResults = async () => {

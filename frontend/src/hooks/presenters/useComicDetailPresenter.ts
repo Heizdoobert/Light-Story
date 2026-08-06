@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { getReadingHistory } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
@@ -29,10 +28,9 @@ export function useComicDetailPresenter() {
     const fetchComicDetail = async () => {
       setLoading(true);
       try {
-        const [comicData, chaptersData, catsRes] = await Promise.all([
+        const [comicData, chaptersData] = await Promise.all([
           fetchStoryById(comicId).catch(() => null),
           fetchChaptersByStoryId(comicId).catch(() => []),
-          apiClient.get<any>("/api/categories").catch(() => []),
         ]);
 
         if (comicData) {
@@ -46,9 +44,7 @@ export function useComicDetailPresenter() {
         );
         setChapters(sortedChapters);
 
-        if (Array.isArray(catsRes) && catsRes.length > 0) {
-          setCategories(catsRes);
-        } else if (supabase) {
+        if (supabase) {
           const { data } = await supabase.from("categories").select("*");
           if (data) setCategories(data as Category[]);
         }

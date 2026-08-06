@@ -28,14 +28,9 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
     const loadInitData = async () => {
       try {
         let cats: Category[] = [];
-        try {
-          const catsRes = await apiClient.get<any>("/api/categories");
-          if (Array.isArray(catsRes)) cats = catsRes;
-        } catch {
-          if (supabase) {
-            const { data } = await supabase.from("categories").select("*");
-            if (data) cats = data as Category[];
-          }
+        if (supabase) {
+          const { data } = await supabase.from("categories").select("*");
+          if (data) cats = data as Category[];
         }
         setCategories(cats);
 

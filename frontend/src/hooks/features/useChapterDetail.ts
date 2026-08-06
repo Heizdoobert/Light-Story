@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { apiClient } from '@/lib/api/apiClient';
+import { supabase } from "@/lib/supabase/client";
 
 type ChapterDetail = {
   id: string;
@@ -15,7 +15,13 @@ export const useChapterDetail = (chapterId: string) => {
     queryKey: ["chapter", chapterId],
     queryFn: async () => {
       if (!chapterId) return null;
-      return apiClient.get<ChapterDetail>(`/api/chapters?id=${chapterId}`);
+      if (!supabase) return null;
+      const { data } = await supabase
+        .from("chapters")
+        .select("*")
+        .eq("id", chapterId)
+        .maybeSingle();
+      return (data ?? null) as ChapterDetail | null;
     },
     enabled: !!chapterId,
     staleTime: 1000 * 60 * 60,
