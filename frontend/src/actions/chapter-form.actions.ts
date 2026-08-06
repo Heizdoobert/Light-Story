@@ -1,19 +1,11 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-
-export const createChapterSchema = z.object({
-  story_id: z.string().min(1),
-  chapter_number: z.number().int().positive(),
-  title: z.string().min(1),
-  content: z.string(),
-});
-
-export type CreateChapterInput = z.infer<typeof createChapterSchema>;
+import { createChapterSchema } from '@/lib/schemas/chapter-form';
+import type { CreateChapterInput } from '@/lib/schemas/chapter-form';
 
 export async function createChapter(input: CreateChapterInput): Promise<ActionResult> {
   return act(createChapterSchema, input, async (chapter) => {

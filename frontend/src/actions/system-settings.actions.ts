@@ -1,24 +1,17 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { SITE_SETTING_KEYS } from '@/lib/admin/system-settings';
+import {
+  saveSystemSettingsSchema,
+  updateSystemSettingsSchema,
+} from '@/lib/schemas/system-settings-form';
+import type { SaveSystemSettingsInput, UpdateSystemSettingsInput } from '@/lib/schemas/system-settings-form';
 
-export const saveSystemSettingsSchema = z.object({
-  compactMode: z.boolean(),
-  showSyncBadge: z.boolean(),
-  dashboardTabVisibility: z.record(z.string(), z.array(z.string())),
-  sidebarMenuVisibility: z.record(z.string(), z.array(z.string())),
-});
-
-export const updateSystemSettingsSchema = saveSystemSettingsSchema;
-
-export async function saveSystemSettings(
-  input: z.infer<typeof saveSystemSettingsSchema>,
-): Promise<ActionResult> {
+export async function saveSystemSettings(input: SaveSystemSettingsInput): Promise<ActionResult> {
   return act(saveSystemSettingsSchema, input, async (snapshot) => {
     const payload = [
       { key: SITE_SETTING_KEYS.uiCompactMode, value: snapshot.compactMode },
@@ -39,8 +32,6 @@ export async function saveSystemSettings(
   });
 }
 
-export async function updateSystemSettings(
-  input: z.infer<typeof updateSystemSettingsSchema>,
-): Promise<ActionResult> {
+export async function updateSystemSettings(input: UpdateSystemSettingsInput): Promise<ActionResult> {
   return saveSystemSettings(input);
 }

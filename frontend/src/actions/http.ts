@@ -3,14 +3,14 @@ import { createClient } from '@/lib/api/server';
 // ponytail: mirrors apiClient getBaseUrl (apiClient is browser-only); keep in sync when env sources change
 const getBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_MOCK === 'true') return 'http://localhost:4010';
-  let rawUrl = '';
-  if (process.env.NODE_ENV === 'production') {
-    rawUrl =
-      process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
-      process.env.NEXT_PUBLIC_GATEWAY_URL ||
-      'https://kv-worker.hhhuygiau.workers.dev';
-  } else {
-    rawUrl = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
+  const rawUrl =
+    process.env.NODE_ENV === 'production'
+      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
+      : process.env.NEXT_PUBLIC_GATEWAY_URL;
+  if (!rawUrl) {
+    throw new Error(
+      `Missing ${process.env.NODE_ENV === 'production' ? 'NEXT_PUBLIC_GATEWAY_URL_PRODUCTION or ' : ''}NEXT_PUBLIC_GATEWAY_URL`,
+    );
   }
   return rawUrl.replace(/\/+$/, '');
 };
@@ -31,11 +31,19 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
 // ponytail: mirrors apiClient's inline error chain; shared by all action modules
 export async function messageFromResponse(res: Response): Promise<string> {
   try {
-    const body: any = await res.json(); // ponytail: legacy/mock APIs send mixed shapes (string or {code,message}); mirrors apiClient's (body as any) pattern
+    const body: unknown = await res.json(); // ponytail: legacy/mock APIs send mixed shapes (string or {code,message}); mirrors apiClient's pattern
+    const errObj = body as { error?: unknown; message?: unknown };
+    const error =
+      typeof errObj.error === 'string'
+        ? errObj.error
+        : typeof errObj.error === 'object' &&
+            errObj.error !== null &&
+            typeof (errObj.error as { message?: unknown }).message === 'string'
+          ? ((errObj.error as { message: string }).message as string)
+          : undefined;
     return (
-      (typeof body?.error === 'string' ? body.error : undefined) ??
-      body?.error?.message ??
-      body?.message ??
+      error ??
+      (typeof errObj.message === 'string' ? errObj.message : undefined) ??
       (res.statusText || `HTTP Error ${res.status}`)
     );
   } catch {

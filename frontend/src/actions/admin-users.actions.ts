@@ -6,6 +6,7 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { createClient } from '@/lib/api/server';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 
 const updateProfileRoleSchema = z.object({
   id: z.string().min(1),
@@ -13,6 +14,12 @@ const updateProfileRoleSchema = z.object({
 });
 
 export async function updateProfileRole(input: { id: string; role: string }): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { ok: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
+
   return act(updateProfileRoleSchema, input, async ({ id, role }) => {
     const res = await fetchApi('/api/admin/profiles', {
       method: 'POST',
@@ -22,27 +29,6 @@ export async function updateProfileRole(input: { id: string; role: string }): Pr
     if (res && res.ok) {
       revalidateTag('profiles', 'max');
       return { ok: true };
-    }
-
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-    if (supabaseUrl && serviceRoleKey) {
-      const response = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: {
-          apikey: serviceRoleKey,
-          Authorization: `Bearer ${serviceRoleKey}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
-        body: JSON.stringify({ role }),
-      }).catch(() => null);
-
-      if (response && response.ok) {
-        revalidateTag('profiles', 'max');
-        return { ok: true };
-      }
     }
 
     const supabase = await createClient();

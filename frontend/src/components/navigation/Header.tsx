@@ -85,7 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const getComicCover = (comic: Comic) => {
-    const raw = comic.coverUrl || (comic as any).cover_url || "";
+    const raw = comic.coverUrl || "";
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   };
@@ -94,9 +94,9 @@ export const Header: React.FC<HeaderProps> = ({
     e.preventDefault();
     setShowResults(false);
     if (searchKeyword.trim()) {
-      router.push(`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+      router.push(`${ROUTES.SEARCH}?keyword=${encodeURIComponent(searchKeyword.trim())}`);
     } else {
-      router.push("/search");
+      router.push(ROUTES.SEARCH);
     }
   };
 
@@ -194,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Header Center Search Box with Live Dropdown */}
         {/* Mobile search icon */}
         <button
-          onClick={() => router.push("/search")}
+          onClick={() => router.push(ROUTES.SEARCH)}
           className="flex sm:hidden p-2.5 rounded-full bg-slate-100 dark:bg-[#1c1c1c] text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-all shrink-0"
           title={t("search")}
         >
@@ -384,7 +384,7 @@ export const Header: React.FC<HeaderProps> = ({
                           </Link>
                         )}
                         <Link
-                          href="/profile"
+                          href={ROUTES.USER.PROFILE}
                           onClick={() => setIsUserMenuOpen(false)}
                           className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
                         >
@@ -451,7 +451,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* XẾP HẠNG */}
           <Link
-            href="/search?sort=most_viewed"
+            href={`${ROUTES.SEARCH}?sort=most_viewed`}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <BarChart2 size={16} />
@@ -460,7 +460,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* TÌM TRUYỆN */}
           <Link
-            href="/search"
+            href={ROUTES.SEARCH}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <Search size={16} />
@@ -469,7 +469,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* THEO DÕI */}
           <Link
-            href="/bookmarks"
+            href={ROUTES.USER.FAVORITES}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <Bookmark size={16} />
@@ -478,7 +478,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* HỒ SƠ */}
           <Link
-            href="/profile"
+            href={ROUTES.USER.PROFILE}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <User size={16} />
@@ -486,26 +486,22 @@ export const Header: React.FC<HeaderProps> = ({
           </Link>
 
           {/* GROUP */}
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={ROUTES.HOME}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <Users size={16} />
             <span>{t("nav_group")}</span>
-          </a>
+          </Link>
 
           {/* FANPAGE */}
-          <a
-            href="https://facebook.com"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={ROUTES.HOME}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-[#001eff] hover:text-white transition-colors shrink-0"
           >
             <Globe size={16} />
             <span>{t("nav_fanpage")}</span>
-          </a>
+          </Link>
         </div>
 
         {/* Mobile Nav Drawer */}
@@ -546,19 +542,19 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="p-4 flex-1 overflow-y-auto space-y-6">
                   {/* Mobile Navigation Links */}
                   <div className="flex flex-col gap-2">
-                    <Link href="/" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.HOME} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Home size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_home")}
                     </Link>
-                    <Link href="/search?sort=most_viewed" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={`${ROUTES.SEARCH}?sort=most_viewed`} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <BarChart2 size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_rankings")}
                     </Link>
-                    <Link href="/search" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.SEARCH} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Search size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_search_comics")}
                     </Link>
-                    <Link href="/bookmarks" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.USER.FAVORITES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Bookmark size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_bookmarks")}
                     </Link>
-                    <Link href="/profile" onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.USER.PROFILE} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <User size={20} className="text-slate-400 dark:text-slate-500" /> {language === "VI" ? "Hồ Sơ" : "Profile"}
                     </Link>
                   </div>
@@ -605,11 +601,11 @@ export const Header: React.FC<HeaderProps> = ({
                     {t("category_list_title")}
                   </span>
                 </div>
-                <Link
-                  href="/search"
-                  onClick={() => setShowCategoryDropdown(false)}
-                  className="px-3 py-1 bg-orange-50 dark:bg-[#000b13] text-orange-600 dark:text-[#ff008d] rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-[#001eff] dark:hover:text-white transition-colors"
-                >
+          <Link
+            href="/"
+            onClick={() => setShowCategoryDropdown(false)}
+            className="px-3 py-1 bg-orange-50 dark:bg-[#000b13] text-orange-600 dark:text-[#ff008d] rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-[#001eff] dark:hover:text-white transition-colors"
+          >
                   {t("see_all")}
                 </Link>
               </div>
