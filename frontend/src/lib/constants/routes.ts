@@ -2,6 +2,7 @@ export const ROUTES = {
   HOME: "/",
   LOGIN: "/login",
   REGISTER: "/register",
+  RESET_PASSWORD: "/auth/reset-password",
   COMICS: "/comics",
   SEARCH: "/search",
   COMIC_DETAIL: (id: string) => `/comics/${id}`,

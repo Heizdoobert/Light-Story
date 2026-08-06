@@ -49,6 +49,21 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
     "profile",
     "create_comic",
   ],
+  internal: [
+    "dashboard",
+    "dashboard_access_logs",
+    "operations",
+    "operations_data",
+    "create_story",
+    "stories",
+    "create_chapter",
+    "categories",
+    "authors",
+    "ads",
+    "settings",
+    "profile",
+    "create_comic",
+  ],
   employee: [
     "dashboard",
     "operations",
@@ -67,6 +82,18 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
 export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
+    "dashboard",
+    "operations",
+    "create_story",
+    "stories",
+    "categories",
+    "authors",
+    "ads",
+    "settings",
+    "profile",
+    "create_comic",
+  ],
+  internal: [
     "dashboard",
     "operations",
     "create_story",
@@ -141,27 +168,30 @@ export const parseDashboardTabVisibility = (
   const next: DashboardTabVisibility = {
     superadmin: [...fallback.superadmin],
     admin: [...fallback.admin],
+    internal: [...fallback.internal],
     employee: [...fallback.employee],
     user: [...fallback.user],
   };
 
-  (["superadmin", "admin", "employee", "user"] as const).forEach((role) => {
-    if (role === "user") {
-      next[role] = [];
-      return;
-    }
+  (["superadmin", "admin", "internal", "employee", "user"] as const).forEach(
+    (role) => {
+      if (role === "user") {
+        next[role] = [];
+        return;
+      }
 
-    const incoming = source[role];
-    if (!Array.isArray(incoming)) return;
+      const incoming = source[role];
+      if (!Array.isArray(incoming)) return;
 
-    const filtered = incoming
-      .map((item) => String(item))
-      .filter(isDashboardTabId);
+      const filtered = incoming
+        .map((item) => String(item))
+        .filter(isDashboardTabId);
 
-    if (filtered.length > 0) {
-      next[role] = Array.from(new Set([...fallback[role], ...filtered]));
-    }
-  });
+      if (filtered.length > 0) {
+        next[role] = Array.from(new Set([...fallback[role], ...filtered]));
+      }
+    },
+  );
 
   return next;
 };
@@ -177,25 +207,28 @@ export const parseSidebarMenuVisibility = (
   const next: SidebarMenuVisibility = {
     superadmin: [...fallback.superadmin],
     admin: [...fallback.admin],
+    internal: [...fallback.internal],
     employee: [...fallback.employee],
     user: [...fallback.user],
   };
 
-  (["superadmin", "admin", "employee", "user"] as const).forEach((role) => {
-    if (role === "user") {
-      next[role] = [];
-      return;
-    }
+  (["superadmin", "admin", "internal", "employee", "user"] as const).forEach(
+    (role) => {
+      if (role === "user") {
+        next[role] = [];
+        return;
+      }
 
-    const incoming = source[role];
-    if (!Array.isArray(incoming)) return;
+      const incoming = source[role];
+      if (!Array.isArray(incoming)) return;
 
-    const filtered = incoming.map((item) => String(item)).filter(isAdminMenuId);
+      const filtered = incoming.map((item) => String(item)).filter(isAdminMenuId);
 
-    if (filtered.length > 0) {
-      next[role] = Array.from(new Set([...fallback[role], ...filtered]));
-    }
-  });
+      if (filtered.length > 0) {
+        next[role] = Array.from(new Set([...fallback[role], ...filtered]));
+      }
+    },
+  );
 
   return next;
 };

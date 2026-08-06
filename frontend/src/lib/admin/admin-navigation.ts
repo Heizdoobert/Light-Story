@@ -12,7 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-export type UserRole = "superadmin" | "admin" | "employee" | "user";
+export type UserRole = "superadmin" | "admin" | "employee" | "internal" | "user";
 
 export type AdminMenuId =
   | "dashboard"
@@ -132,6 +132,20 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> =
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
+    "dashboard",
+    "dashboard_access_logs",
+    "operations",
+    "create_story",
+    "create_chapter",
+    "stories",
+    "categories",
+    "authors",
+    "ads",
+    "settings",
+    "profile",
+    "create_comic",
+  ],
+  internal: [
     "dashboard",
     "dashboard_access_logs",
     "operations",

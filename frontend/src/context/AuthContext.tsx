@@ -8,10 +8,12 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils/error-utils";
 import { type AdminProfileDto } from '@/types/dto';
+import { updateUserProfile } from "@/lib/actions/user.actions";
+import { ROUTES } from "@/lib/constants/routes";
 
-export type UserRole = "superadmin" | "admin" | "employee" | "user";
+export type UserRole = "superadmin" | "admin" | "employee" | "internal" | "user";
 
-const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "user"];
+const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "internal", "user"];
 
 const isUserRole = (value: unknown): value is UserRole =>
   typeof value === "string" && USER_ROLES.includes(value as UserRole);
@@ -19,6 +21,7 @@ const isUserRole = (value: unknown): value is UserRole =>
 const normalizeRole = (value: unknown): UserRole | null => {
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
+  if (normalized === "super_admin") return "superadmin";
   return isUserRole(normalized) ? normalized : null;
 };
 
@@ -261,7 +264,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${window.location.origin}${ROUTES.RESET_PASSWORD}`,
     });
 
     if (error) {
@@ -337,28 +340,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     full_name?: string;
     avatar_url?: string | null;
   }) => {
-    if (!supabase || !user) return;
+    if (!user) return;
 
-    const updates: {
-      full_name?: string;
-      avatar_url?: string | null;
-    } = {};
+    const res = await updateUserProfile(user.id, payload);
 
-    if (payload.full_name !== undefined) {
-      updates.full_name = payload.full_name;
+    if (res.success === false) {
+      toast.error(res.error);
+      return;
     }
 
-    if (payload.avatar_url !== undefined) {
-      updates.avatar_url = payload.avatar_url;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id);
-
-    if (error) {
-      throw error;
+    if (!supabase) {
+      setProfile(
+        buildProfile(user, {
+          id: user.id,
+          email: user.email ?? "",
+          full_name:
+            payload.full_name ?? user.user_metadata?.full_name ?? user.email ?? "Admin",
+          avatar_url:
+            payload.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+          role: null,
+          created_at: null,
+        }),
+      );
+      return;
     }
 
     const { data: freshProfile, error: refreshError } = await supabase
@@ -368,13 +372,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .maybeSingle();
 
     if (refreshError) {
-      setProfile((prev: any) => ({
-        ...(prev || {}),
-        ...updates,
-        id: prev?.id ?? user.id,
-        email: prev?.email ?? user.email ?? "",
-        role: prev?.role ?? resolveRole(user, prev?.role),
-      }));
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...payload,
+            }
+          : buildProfile(user, {
+              id: user.id,
+              email: user.email ?? "",
+              full_name:
+                payload.full_name ??
+                user.user_metadata?.full_name ??
+                user.email ??
+                "Admin",
+              avatar_url:
+                payload.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+              role: null,
+              created_at: null,
+            }),
+      );
       return;
     }
 
