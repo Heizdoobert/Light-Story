@@ -6,3 +6,4 @@ export * from "./dashboard";
 export * from "./comics";
 export * from "./content";
 export * from "./forms";
+export * from "./layout";
