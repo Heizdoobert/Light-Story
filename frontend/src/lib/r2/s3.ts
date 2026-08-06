@@ -55,9 +55,14 @@ export async function putObject(
   body: Uint8Array,
   contentType: string,
 ): Promise<void> {
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("Missing R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY environment variables.");
+  }
   const client = getS3Client({
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId,
+    secretAccessKey,
   });
   await client.send(
     new PutObjectCommand({
@@ -73,9 +78,14 @@ export async function getObject(
   bucket: string,
   key: string,
 ): Promise<{ body: Uint8Array | undefined; contentType?: string }> {
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("Missing R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY environment variables.");
+  }
   const client = getS3Client({
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
+    accessKeyId,
+    secretAccessKey,
   });
   const command = new GetObjectCommand({ Bucket: bucket, Key: key });
   const response = await client.send(command);
