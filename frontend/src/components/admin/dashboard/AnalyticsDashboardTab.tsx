@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { AlertTriangle, ArrowUpRight, CalendarRange, Cloud, Loader2, RefreshCw, ShieldCheck, Sparkles, TrendingUp } from 'lucide-react';
-import { useAnalyticsDashboard } from '@/hooks/presenters/useAnalyticsDashboard';
+import { useAnalyticsDashboardTabPresenter } from '@/hooks/presenters/useAnalyticsDashboardTabPresenter';
 import { useLanguage } from '@/context/LanguageContext';
 import { TrendsSection } from './TrendsSection';
 import type { AnalyticsRole, AnalyticsTimeRange, ContentPerformanceMetrics, InfrastructureMetrics, UserEngagementMetrics } from '@/types/analytics';
@@ -220,11 +220,13 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
 
 export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ role, userId }) => {
   const { t } = useLanguage();
-  const [timeRange, setTimeRange] = useState<AnalyticsTimeRange>('7d');
-  const dashboardQuery = useAnalyticsDashboard(timeRange, role);
-
-  const isAdmin = role === 'superadmin' || role === 'admin';
-  const limitedView = role === 'employee';
+  const {
+    timeRange,
+    setTimeRange,
+    dashboardQuery,
+    isAdmin,
+    limitedView,
+  } = useAnalyticsDashboardTabPresenter(role);
 
   const timeRanges: Array<{ value: AnalyticsTimeRange; label: string }> = [
     { value: '24h', label: t('time_24h') },
