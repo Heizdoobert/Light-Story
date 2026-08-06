@@ -5,8 +5,6 @@ import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
-import { Header } from "@/components/navigation/Header";
-import LoginModal from "@/components/auth/login-modal";
 import { AdZone } from "@/components/shared/ads/AdZone";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
@@ -36,20 +34,13 @@ export const ProfilePageContent: React.FC = () => {
     profile,
     isEditModalOpen,
     setIsEditModalOpen,
-    isLoginModalOpen,
     setIsLoginModalOpen,
   } = useProfilePresenter();
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center max-w-md">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
+        <div className="text-center max-w-md">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
               <User size={28} className="text-slate-400" />
             </div>
@@ -63,7 +54,6 @@ export const ProfilePageContent: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
     );
   }
 
