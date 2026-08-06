@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { apiClient } from "@/lib/api/apiClient";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { createCategory, updateCategory, deleteCategory } from "@/lib/actions/categories.actions";
 
 export interface CategoryItem {
   id: string;
@@ -65,26 +66,22 @@ export function useAdminCategories() {
 
     setSubmitting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
       const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
-
-      if (editingCategory) {
-        const { error } = await supabase
-          .from("categories")
-          .update({ name: name.trim(), slug })
-          .eq("id", editingCategory.id);
-        if (error) throw error;
-        toast.success("Cập nhật thể loại thành công!");
-      } else {
-        const { error } = await supabase.from("categories").insert([{ name: name.trim(), slug }]);
-        if (error) throw error;
-        toast.success("Thêm thể loại mới thành công!");
+      const res = editingCategory
+        ? await updateCategory(editingCategory.id, { name: name.trim(), slug })
+        : await createCategory({ name: name.trim(), slug });
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
       }
 
+      toast.success("Đã lưu thể loại");
       setIsModalOpen(false);
+      setName("");
+      setEditingCategory(null);
       loadCategories();
-    } catch (err: any) {
-      toast.error(err.message || "Lưu thể loại thất bại");
+    } catch (err) {
+      toast.error((err as Error).message || "Lưu thể loại thất bại");
     } finally {
       setSubmitting(false);
     }
@@ -94,14 +91,16 @@ export function useAdminCategories() {
     if (!confirm(`Bạn có chắc chắn muốn xóa thể loại "${name}"?`)) return;
 
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) throw error;
+      const res = await deleteCategory(id);
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
+      }
 
       toast.success(`Đã xóa thể loại "${name}"`);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-    } catch (err: any) {
-      toast.error(err.message || "Xóa thể loại thất bại");
+      loadCategories();
+    } catch (err) {
+      toast.error((err as Error).message || "Xóa thể loại thất bại");
     }
   };
 
