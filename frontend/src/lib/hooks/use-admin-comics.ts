@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { createComic, updateComic, deleteComic } from "@/lib/actions/comic.actions";
+import type { CreateComicInput } from "@/lib/schemas/comic";
 import { toast } from "sonner";
 
 export interface ComicItem {
@@ -77,68 +79,48 @@ export function useAdminComics() {
     setIsModalOpen(true);
   };
 
-  const handleSaveComic = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveComic = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!title.trim()) {
       toast.error("Vui lòng nhập tên truyện");
       return;
     }
+    if (submitting) return;
 
     setSubmitting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-
-      if (editingComic) {
-        const { error } = await supabase
-          .from("stories")
-          .update({
-            title,
-            author,
-            category,
-            status,
-            cover_url: coverUrl,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", editingComic.id);
-
-        if (error) throw error;
-        toast.success("Cập nhật truyện thành công!");
-      } else {
-        const { error } = await supabase.from("stories").insert([
-          {
-            title,
-            author,
-            category,
-            status,
-            cover_url: coverUrl,
-          },
-        ]);
-
-        if (error) throw error;
-        toast.success("Tạo bộ truyện mới thành công!");
+      const payload: CreateComicInput = { title, author, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
+      const res = editingComic
+        ? await updateComic(editingComic.id, payload)
+        : await createComic(payload);
+      if (res.success === false) {
+        toast.error(res.error || "Không thể lưu truyện");
+        return;
       }
-
+      toast.success("Lưu truyện thành công");
       setIsModalOpen(false);
-      loadComics();
-    } catch (err: any) {
-      toast.error(err.message || "Lưu truyện thất bại");
+      setEditingComic(null);
+      await loadComics();
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể lưu truyện");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteComic = async (id: string, titleName: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa bộ truyện "${titleName}"?`)) return;
+    if (!window.confirm(`Xóa truyện "${titleName}"?`)) return;
 
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase.from("stories").delete().eq("id", id);
-      if (error) throw error;
-
-      toast.success(`Đã xóa truyện "${titleName}"`);
+      const res = await deleteComic(id);
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
+      }
+      toast.success("Đã xóa truyện");
       setComics((prev) => prev.filter((c) => c.id !== id));
-    } catch (err: any) {
-      toast.error(err.message || "Xóa truyện thất bại");
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể xóa truyện");
     }
   };
 
