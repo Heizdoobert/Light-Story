@@ -5,7 +5,7 @@ import { CACHE_TAGS } from "@/lib/constants/cache-tags";
 import {
   ACTION_ADMIN_ROLES,
   requireActionRole,
-} from "@/lib/actions/permission";
+} from "@/lib/security/permission";
 
 export async function logAdminActivity(
   _action: string,
@@ -16,9 +16,9 @@ export async function logAdminActivity(
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
 
-    revalidateTag(CACHE_TAGS.AUDIT_LOGS, "max");
-    return { success: true, timestamp: new Date().toISOString() };
+    revalidateTag(CACHE_TAGS.AUDIT_LOGS);
+    return { ok: true, data: { timestamp: new Date().toISOString() } };
   } catch (error) {
-    return { success: false, error: (error as Error).message };
+    return { ok: false, error: (error as Error).message };
   }
 }
