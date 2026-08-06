@@ -1,22 +1,26 @@
+export function resolveR2Url(keyOrUrl: string): string {
+  if (
+    keyOrUrl.startsWith("http://") ||
+    keyOrUrl.startsWith("https://") ||
+    keyOrUrl.startsWith("/")
+  ) {
+    return keyOrUrl;
+  }
+  const publicDomain = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "";
+  if (publicDomain) {
+    const cleanDomain = publicDomain.replace(/\/+$/, "");
+    const cleanPath = keyOrUrl.replace(/^\/+/, "");
+    return `${cleanDomain}/${cleanPath}`;
+  }
+  return `/api/r2/proxy?key=${encodeURIComponent(keyOrUrl)}`;
+}
+
 export function getR2ImageUrl(
   url?: string | null,
   fallback = "/placeholder-cover.jpg",
 ): string {
   if (!url || url.trim() === "") return fallback;
-  if (
-    url.startsWith("http://") ||
-    url.startsWith("https://") ||
-    url.startsWith("/")
-  ) {
-    return url;
-  }
-  const publicDomain = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "";
-  if (publicDomain) {
-    const cleanDomain = publicDomain.replace(/\/+$/, "");
-    const cleanPath = url.replace(/^\/+/, "");
-    return `${cleanDomain}/${cleanPath}`;
-  }
-  return `/api/r2/proxy?key=${encodeURIComponent(url)}`;
+  return resolveR2Url(url);
 }
 
 export function formatImageWithCacheBuster(
