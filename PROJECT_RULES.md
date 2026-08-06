@@ -1,83 +1,97 @@
-# QUY TẮC DỰ ÁN LIGHT-STORY (NEXT.JS APP ROUTER + SUPABASE + CLOUDFLARE R2)
+# BỘ QUY TẮC DỰ ÁN LIGHT-STORY (NEXT.JS APP ROUTER + SUPABASE + CLOUDFLARE R2)
 
-Các quy tắc bắt buộc áp dụng khi kiểm tra, review code và phát triển dự án này:
+CẤU TRÚC THƯ MỤC CHÍNH:
+- app/               # Routing, layouts, pages, api routes
+- component/ (components/) # UI components (dùng chung và chuyên biệt)
+- context/           # React Context providers (client-side)
+- hooks/             # Custom React hooks (chỉ client)
+- lib/               # Logic dùng chung, actions, schemas, clients, utils, constants
+- services/          # Business logic (backend services)
+- types/             # TypeScript type definitions
 
-## 1. CẤU TRÚC THƯ MỤC CHUẨN
-- `app/(public)/*`: Route không cần đăng nhập, layout có header/footer chung.
-- `app/(user)/*`: Yêu cầu đăng nhập, layout có sidebar/profile menu. URL bắt đầu bằng `/user` (ví dụ `/user/dashboard`).
-- `app/(admin)/*`: Yêu cầu quyền admin, layout có sidebar quản trị. URL bắt đầu bằng `/admin`.
-- `app/api/*`: Chỉ chứa route handlers (webhook, health...).
-- `components/ui/*`: Các thành phần cơ bản (button, input...), có barrel export `index.ts`.
-- `components/comic/`, `admin/`, `user/`, `layout/`: Các thành phần chuyên biệt.
-- `lib/actions/*`: CHỈ chứa async function có `'use server'`, không export bất kỳ thứ gì khác.
-- `lib/schemas/*`: Zod schemas (KHÔNG có `'use server'`), dùng chung cho client và server.
-- `lib/supabase/server.ts`: Server client, dùng `cookies()`, chỉ dùng ở backend.
-- `lib/supabase/client.ts`: Browser client, dùng `NEXT_PUBLIC_*`, chỉ dùng ở frontend.
-- `lib/constants/*`: Hằng số dùng chung, đặc biệt `routes.ts` tập trung tất cả đường dẫn.
-- `hooks/*`: Custom hooks, chỉ dùng trong Client Components.
-- `providers/*`: React providers (theme, supabase, query), là Client Components.
+I. QUY TẮC CHUNG (ÁP DỤNG TOÀN DỰ ÁN)
+1. Tất cả file `page.tsx`, `layout.tsx` mặc định là Server Component. 
+   Chỉ thêm `'use client'` khi cần state, effect, event, browser API.
+2. Phân biệt rõ frontend (components/, context/, hooks/) và backend (app/api/, lib/actions/, services/, lib/supabase/server.ts, middleware.ts).
+3. Frontend không được import trực tiếp server client, service role key, hoặc các module chỉ dành cho server.
+4. Backend không import từ components/, hooks/, context/.
+5. Dùng alias `@/` thay vì relative path dài.
+6. Tất cả đường dẫn trong app phải được định nghĩa tập trung trong `lib/constants/routes.ts`, không hardcode URL trong code.
+7. Sử dụng Zod schema từ `lib/schemas/` để validate mọi input từ client hoặc external API.
+8. Xác thực và phân quyền phải có ở mọi Server Action và API route nhạy cảm. 
+   Role được lấy từ `app_metadata.role` (ưu tiên) hoặc `profiles.role`.
+9. Mọi thao tác thay đổi dữ liệu phải gọi `revalidateTag` (chỉ 1 tham số) hoặc `revalidatePath`.
+10. Không export bất kỳ thứ gì không phải async function từ file có `'use server'`.
 
-## 2. SERVER ACTIONS ('use server')
-- File actions phải bắt đầu bằng `'use server'`.
-- CHỈ export async function.
-- Luôn validate input bằng zod schema (import từ `lib/schemas/`).
-- Luôn xác thực người dùng và kiểm tra quyền (auth + role) trước khi thực hiện logic.
-- Trả về `{ ok: true, data }` hoặc `{ ok: false, error: string }`, không throw lỗi.
-- Gọi `revalidateTag`/`revalidatePath` sau khi thay đổi dữ liệu, chỉ dùng 1 tham số cho `revalidateTag`.
-- KHÔNG gọi Server Action từ Server Component (nếu cần thì tách service).
-- KHÔNG export bất kỳ object, schema, hay hàm không async từ file `'use server'`.
+II. QUY TẮC THEO THƯ MỤC
 
-## 3. CLIENT COMPONENTS vs SERVER COMPONENTS
-- Mặc định là Server Component, chỉ thêm `'use client'` khi cần state, effect, event, browser API.
-- Client Component chỉ nhận dữ liệu qua props từ Server Component.
-- Form submit trong Client Component gọi Server Action (không fetch API nội bộ).
-- KHÔNG import Server Component vào Client Component.
+1. app/
+   - Chỉ chứa route, layout, page, loading, error, not-found, route handlers.
+   - Route Groups: (public) không cần auth; (user) yêu cầu đăng nhập, URL bắt đầu `/user`; (admin) yêu cầu quyền admin, URL bắt đầu `/admin`.
+   - Layout phải kiểm tra auth/role (song song với middleware) như một lớp phụ.
+   - Mỗi route group nên có file error.tsx và loading.tsx.
+   - API routes (app/api/) phải có xác thực và bảo vệ phù hợp (webhook phải kiểm tra chữ ký Supabase).
+   - Không đặt logic nghiệp vụ trực tiếp trong page hoặc layout; gọi service hoặc action.
+   - Sử dụng generateMetadata cho SEO.
 
-## 4. XÁC THỰC & PHÂN QUYỀN
-- Middleware phải refresh session cho MỌI request (trừ static files).
-- Middleware chặn route `/admin/*` nếu user không có role trong `ADMIN_ROLES`.
-- Middleware chặn route `/user/*` nếu chưa đăng nhập.
-- Role lấy từ `app_metadata.role` hoặc fallback `profiles.role` (nên đồng bộ vào `app_metadata` để tránh query DB trong middleware).
-- Mọi Server Action liên quan đến quản lý đều phải kiểm tra quyền admin.
-- Supabase RLS phải được bật trên tất cả các bảng.
+2. components/ (component/)
+   - Chứa các UI component tái sử dụng.
+   - Phân nhóm: ui/ (primitives: Button, Input), comic/ (ComicCard, ChapterReader), admin/ (DataTable), layout/ (Header, Footer, Sidebar), user/ (BookmarkButton).
+   - Mỗi nhóm phải có barrel export index.ts.
+   - Các component nặng (ChapterReader, ImageUploader) phải được dynamic import với next/dynamic.
+   - Client Components chỉ nhận dữ liệu qua props, không tự ý fetch dữ liệu nhạy cảm.
+   - Hình ảnh dùng next/image nếu có thể; ảnh từ R2 có thể dùng <img> với lazy loading.
 
-## 5. BIẾN MÔI TRƯỜNG
-- Biến public: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (thống nhất tên `ANON_KEY`).
-- Biến server: `SUPABASE_SERVICE_ROLE_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`... KHÔNG có `NEXT_PUBLIC_`.
-- KHÔNG hardcode giá trị fallback trong code production; nếu thiếu thì throw lỗi.
-- Kiểm tra biến môi trường tồn tại trước khi dùng.
+3. context/
+   - Chứa các React Context Provider (theme, supabase browser client, react-query).
+   - Tất cả file trong context/ đều là Client Components (`'use client'`).
+   - Mỗi provider nên export hook riêng (useTheme, useSupabase) để truy cập context.
+   - Provider được bọc trong root layout.
 
-## 6. BẢO MẬT
-- `Content-Security-Policy` header phải được set trong middleware, tách biệt dev/prod (không `localhost:*` trong production).
-- API webhook (Supabase) phải xác thực chữ ký.
-- KHÔNG expose service role key ra client.
-- KHÔNG để `'unsafe-eval'` trong CSP production trừ khi thực sự cần.
-- Ảnh từ R2 phải qua presigned URL nếu bucket private, hoặc CORS cấu hình chặt chẽ nếu public.
+4. hooks/
+   - Chỉ chứa custom React hooks chạy trên client.
+   - Có thể sử dụng supabase browser client, không được dùng server client.
+   - Tên file phản ánh mục đích: useUser, useChapterImages, useDebounce.
+   - Không chứa JSX.
 
-## 7. HIỆU NĂNG & TỐI ƯU
-- Dùng `next/image` cho ảnh bìa nếu có thể; với ảnh chapter từ R2 có thể dùng `<img>` lazy load.
-- Dynamic import (`next/dynamic`) cho component nặng như `chapter-reader`, `image-uploader`.
-- Fetch dữ liệu song song (`Promise.all`) để tránh waterfall.
-- Luôn phân trang khi lấy danh sách.
+5. lib/
+   - lib/actions/: CHỈ chứa Server Actions. Mỗi file bắt đầu bằng `'use server'`. 
+     Chỉ export async function. Luôn validate input, kiểm tra quyền, trả về { ok, data/error }.
+   - lib/schemas/: Zod schemas, KHÔNG có `'use server'`. Dùng cho cả client (form) và server (action).
+   - lib/supabase/server.ts: tạo server client dùng cookies(), chỉ dùng trong Server Components, Server Actions, API routes.
+   - lib/supabase/client.ts: tạo browser client, chỉ dùng trong Client Components, hooks, providers.
+   - lib/r2/: các hàm upload, presigned URL, chỉ chạy trên server.
+   - lib/constants/: cache tags, routes, enums... không chứa logic động.
+   - lib/utils/: các hàm thuần tuý (cn, formatDate) có thể dùng cả client và server.
 
-## 8. XỬ LÝ LỖI
-- Mỗi route group nên có `error.tsx` boundary.
-- Server Action phải bọc lỗi và trả về `{ ok: false, error }`.
-- Client hiển thị toast lỗi thân thiện, không dump raw error.
+6. services/
+   - Chứa business logic phía server (có thể gọi từ Server Actions hoặc Server Components).
+   - Không import từ components/, hooks/, context/.
+   - Sử dụng supabase server client (lib/supabase/server.ts).
+   - Mỗi service nên tập trung vào một domain (comic.service.ts, chapter.service.ts).
+   - Không throw lỗi trực tiếp; trả về kết quả hoặc throw lỗi có kiểm soát để action bắt.
 
-## 9. ĐẶT TÊN & TỔ CHỨC
-- Tên file/thư mục: kebab-case (`chapter-reader.tsx`).
-- Hàm/biến: camelCase.
-- Route động: `[id]`, `[slug]`, `[...catchAll]`.
-- Tập trung tất cả đường dẫn vào `lib/constants/routes.ts`, không hardcode URL trong code.
-- Mỗi thư mục components nên có `index.ts` barrel export.
+7. types/
+   - Định nghĩa các TypeScript interface, type, enum dùng chung toàn dự án.
+   - Không chứa logic, chỉ khai báo kiểu.
+   - Tổ chức theo domain: comic.types.ts, user.types.ts, api.types.ts.
+   - Export các type cần thiết; tránh any nếu không thực sự cần.
 
-## 10. NHỮNG ĐIỀU CẤM (KHÔNG BAO GIỜ ĐƯỢC LÀM)
-- KHÔNG import server client vào client component.
-- KHÔNG export schema từ file `'use server'`.
-- KHÔNG gọi database trực tiếp từ client (trừ browser client với RLS).
-- KHÔNG dùng fetch đến API route nội bộ từ client (dùng Server Action).
-- KHÔNG truyền class, Date, Map qua Server Action.
-- KHÔNG lưu service key vào `NEXT_PUBLIC_*`.
-- KHÔNG thiếu kiểm tra quyền trong Server Action.
-- KHÔNG gọi `revalidateTag` với 2 tham số.
+III. CÁC ĐIỀU CẤM (KHÔNG BAO GIỜ ĐƯỢC LÀM)
+- ❌ Import server client vào client component.
+- ❌ Export schema hoặc object từ file 'use server'.
+- ❌ Gọi database trực tiếp từ client (trừ supabase browser client với RLS đúng).
+- ❌ Sử dụng fetch đến API route nội bộ từ client (dùng Server Action).
+- ❌ Truyền class, Date, Map qua Server Action (chỉ truyền plain object).
+- ❌ Đặt service key (SUPABASE_SERVICE_ROLE_KEY) vào NEXT_PUBLIC_.
+- ❌ Thiếu kiểm tra quyền trong Server Action.
+- ❌ Gọi revalidateTag với 2 tham số.
+- ❌ Hardcode giá trị fallback cho biến môi trường.
+- ❌ Cho phép localhost:* trong CSP production.
+- ❌ Đặt component không phải layout vào thư mục components/layout/.
+
+IV. KIỂM TRA ĐẶC BIỆT
+- Middleware phải refresh session cho mọi request, áp dụng CSP tách biệt dev/prod.
+- Tất cả bảng Supabase phải bật RLS với policy phù hợp.
+- Webhook Supabase phải xác thực chữ ký.
+- Ảnh từ R2 phải được bảo vệ (presigned URL nếu bucket private).
