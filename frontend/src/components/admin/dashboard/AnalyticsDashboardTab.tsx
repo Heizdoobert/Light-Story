@@ -232,22 +232,6 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
           </div>
         </div>
       </div>
-      {data.top_zones && data.top_zones.length > 0 && (
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-          <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("top_geographic_zones")}</p>
-          <div className="mt-3 space-y-2 sm:space-y-3 max-h-72 overflow-y-auto">
-            {data.top_zones.slice(0, 5).map((zone) => (
-              <div key={zone.zone} className="flex items-center justify-between gap-3 pb-2 sm:pb-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                <div className="min-w-0">
-                  <p className="font-semibold text-slate-800 dark:text-white text-xs sm:text-sm truncate">{zone.zone}</p>
-                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Cache hit {formatFixedNumber(zone.cache_hit_ratio_pct || 0)}%</p>
-                </div>
-                <div className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-200 flex-shrink-0">{formatCompactNumber(zone.requests)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
