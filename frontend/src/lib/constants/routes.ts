@@ -1,17 +1,21 @@
 export const ROUTES = {
   HOME: "/",
+  LOGIN: "/login",
+  REGISTER: "/register",
   COMICS: "/comics",
   SEARCH: "/search",
   COMIC_DETAIL: (id: string) => `/comics/${id}`,
   CHAPTER_READER: (comicId: string, chapterId: string) =>
     `/comics/${comicId}/chapter/${chapterId}`,
   USER: {
+    ROOT: "/user",
     PROFILE: "/user/profile",
     DASHBOARD: "/user/dashboard",
     FAVORITES: "/user/favorites",
     HISTORY: "/user/history",
   },
   ADMIN: {
+    ROOT: "/admin",
     DASHBOARD: "/admin/dashboard",
     COMICS: "/admin/comics",
     CHAPTERS: "/admin/chapters",
@@ -23,9 +27,16 @@ export const ROUTES = {
     AUDIT: "/admin/audit",
     OPERATIONS: "/admin/operations",
   },
+  ERROR: {
+    UNAUTHORIZED: "/handle-exception/401",
+    FORBIDDEN: "/handle-exception/403",
+  },
   API: {
     HEALTH: "/api/health",
     ANALYTICS: "/api/analytics",
     CATEGORIES: "/api/categories",
+    R2_PROXY: "/api/r2/proxy",
+    R2_UPLOAD: "/api/r2/upload",
+    WEBHOOKS_SUPABASE: "/api/webhooks/supabase",
   },
 } as const;

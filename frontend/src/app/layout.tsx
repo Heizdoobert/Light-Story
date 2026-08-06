@@ -5,10 +5,10 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lightstory.org';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
   title: {
     default: "Light Story - Read Manga, Manhua & Light Novels Online",
     template: "%s | Light Story",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: siteUrl,
+    ...(siteUrl ? { url: siteUrl } : {}),
     siteName: "Light Story",
     title: "Light Story - Read Manga & Light Novels",
     description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online.",
@@ -28,6 +28,11 @@ export const metadata: Metadata = {
     description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online.",
   },
 };
+
+const gatewayUrl =
+  process.env.NODE_ENV === "production"
+    ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION
+    : process.env.NEXT_PUBLIC_GATEWAY_URL;
 
 export default function RootLayout({
   children,
@@ -59,7 +64,7 @@ export default function RootLayout({
             `,
           }}
         />
-        <link rel="preconnect" href={process.env.NODE_ENV === 'production' ? (process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://kv-worker.hhhuygiau.workers.dev') : (process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787')} />
+        {gatewayUrl ? <link rel="preconnect" href={gatewayUrl} /> : null}
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>

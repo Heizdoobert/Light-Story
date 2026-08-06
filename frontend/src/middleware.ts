@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { ROUTES } from "@/lib/constants/routes";
 
-const ADMIN_ROLES = ["superadmin", "admin", "employee"];
+const ADMIN_ROLES = ["superadmin", "admin", "employee", "internal"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -43,24 +44,29 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   // Rule 4: RBAC Check for /admin/*
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith(ROUTES.ADMIN.ROOT)) {
     const role =
       typeof user?.app_metadata?.role === "string"
         ? user.app_metadata.role
         : null;
 
-    if (!user || !role || !ADMIN_ROLES.includes(role)) {
+    if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = ROUTES.ERROR.UNAUTHORIZED;
+      return NextResponse.redirect(url);
+    }
+    if (!role || !ADMIN_ROLES.includes(role)) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ERROR.FORBIDDEN;
       return NextResponse.redirect(url);
     }
   }
 
   // Rule 4: Auth Check for /user/*
-  if (pathname.startsWith("/user")) {
+  if (pathname.startsWith(ROUTES.USER.ROOT)) {
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/";
+      url.pathname = ROUTES.LOGIN;
       return NextResponse.redirect(url);
     }
   }

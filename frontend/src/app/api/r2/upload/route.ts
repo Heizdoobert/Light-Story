@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireRouteAuthorization } from '@/lib/auth/route-auth';
+import { ACTION_ADMIN_ROLES } from '@/lib/security/permission';
 import { getBucketForFolder, putObject } from '@/lib/r2/s3';
 
-const ALLOWED_ROLES = ['admin', 'superadmin', 'employee'] as const;
+const ALLOWED_ROLES = ACTION_ADMIN_ROLES;
 const MAX_FILE_SIZE = 250 * 1024 * 1024; // Allow up to 250MB for comic archive .cbz/.zip uploads
 const ALLOWED_TYPES = new Set([
   'image/jpeg',

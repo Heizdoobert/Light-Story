@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next';
+import { ROUTES } from '@/lib/constants/routes';
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN || 'http://localhost:3001';
+const BASE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN;
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,9 +11,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin', '/user', '/dashboard', '/profile', '/api/'],
+        disallow: [ROUTES.ADMIN.ROOT, ROUTES.USER.ROOT, '/dashboard', '/profile', '/api/'],
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    ...(BASE_URL ? { sitemap: `${BASE_URL}/sitemap.xml` } : {}),
   };
 }

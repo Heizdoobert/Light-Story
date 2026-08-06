@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { supabaseWebhookSchema } from '@/lib/schemas/webhook';
 
 const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET || '';
 
@@ -51,20 +52,22 @@ export async function POST(request: Request) {
   }
 
   // Parse and validate payload
-  let payload: Record<string, unknown>;
+  let parsed: unknown;
   try {
-    payload = JSON.parse(rawBody);
+    parsed = JSON.parse(rawBody);
   } catch {
     return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
   }
 
-  if (!payload || typeof payload !== 'object') {
-    return NextResponse.json({ error: 'Payload must be a JSON object' }, { status: 400 });
+  const result = supabaseWebhookSchema.safeParse(parsed);
+  if (!result.success) {
+    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 });
   }
+  const payload = result.data;
 
   // Log received event
   const eventType = payload.type || payload.event || 'unknown';
-  const table = (payload.table as string) || (payload.record as Record<string, unknown>)?.id || 'unknown';
+  const table = payload.table || (payload.record as Record<string, unknown>)?.id || 'unknown';
   console.log(`[Supabase Webhook] Event: ${eventType}, Table: ${table}`);
 
   return NextResponse.json(
