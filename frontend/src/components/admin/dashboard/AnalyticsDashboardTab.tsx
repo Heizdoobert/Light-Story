@@ -214,24 +214,6 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
           <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-slate-500 dark:text-slate-400">Avg execution step duration.</p>
         </div>
       </div>
-
-      <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-950 p-3 sm:p-5">
-        <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] sm:tracking-[0.28em] text-slate-400">{t("device_breakdown")}</p>
-        <div className="mt-3 grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("mobile_device")}</p>
-            <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_mobile || 0)}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("desktop_device")}</p>
-            <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_desktop || 0)}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">{t("tablet_device")}</p>
-            <p className="text-lg sm:text-2xl font-bold text-slate-700 dark:text-slate-200">{formatCompactNumber(data.device_tablet || 0)}</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
