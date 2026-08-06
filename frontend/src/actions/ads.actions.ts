@@ -1,18 +1,15 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { AD_CONTROL_KEYS } from '@/lib/admin/ad-policy';
-
-export const updateAdConfigSchema = z.object({
-  key: z.string().min(1),
-  value: z.unknown(),
-});
-
-export const updateSiteSettingSchema = updateAdConfigSchema;
+import {
+  updateAdConfigSchema,
+  updateAdSlotSchema,
+  toggleAdSlotSchema,
+} from '@/lib/schemas/ads';
 
 export async function updateAdConfig(input: {
   key: string;
@@ -39,11 +36,6 @@ export async function updateSiteSetting(input: {
   return updateAdConfig(input);
 }
 
-export const updateAdSlotSchema = z.object({
-  slot: z.string().min(1),
-  code: z.string(),
-});
-
 export async function updateAdSlot(input: {
   slot: string;
   code: string;
@@ -61,11 +53,6 @@ export async function updateAdSlot(input: {
     return { ok: true };
   });
 }
-
-export const toggleAdSlotSchema = z.object({
-  slot: z.string().min(1).optional(),
-  enabled: z.boolean(),
-});
 
 export async function toggleAdSlot(input: {
   slot?: string;

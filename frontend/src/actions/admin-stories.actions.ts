@@ -1,46 +1,21 @@
 'use server';
 
-import { z } from 'zod';
+import type { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import {
+  updateStoryStatusSchema,
+  featureStorySchema,
+  deleteStoryAdminSchema,
+  updateStorySchema,
+  deleteStorySchema,
+  bulkUpdateStatusSchema,
+  bulkDeleteStoriesSchema,
+} from '@/lib/schemas/admin-stories';
 
-export const updateStoryStatusSchema = z.object({
-  id: z.string().min(1),
-  status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
-});
-
-export const featureStorySchema = z.object({
-  id: z.string().min(1),
-  isFeatured: z.boolean().optional(),
-});
-
-export const deleteStoryAdminSchema = z.object({
-  id: z.string().min(1),
-});
-
-export const updateStorySchema = z.object({
-  id: z.string().min(1),
-  title: z.string().min(1),
-  description: z.string(),
-  status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
-});
-
-export const deleteStorySchema = z.object({
-  id: z.string().min(1),
-});
-
-export const bulkUpdateStatusSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1),
-  status: z.enum(['draft', 'published', 'ongoing', 'completed', 'archived']),
-});
-
-export const bulkDeleteStoriesSchema = z.object({
-  ids: z.array(z.string().min(1)).min(1),
-});
-
-export async function updateStoryStatus(input: z.infer<typeof updateStoryStatusSchema>): Promise<ActionResult> {
+export async function updateStoryStatus(input: unknown): Promise<ActionResult> {
   return act(updateStoryStatusSchema, input, async ({ id, status }) => {
     const res = await fetchApi('/api/admin/manage-story', {
       method: 'POST',

@@ -1,25 +1,18 @@
 'use server';
 
-import { z } from 'zod';
+import type { z } from 'zod';
 import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-
-export const setMaintenanceModeSchema = z.object({
-  enabled: z.boolean(),
-});
-
-export const clearCacheSchema = z.object({
-  target: z.string().optional(),
-});
-
-export const triggerBackupSchema = z.object({
-  type: z.string().optional(),
-});
+import {
+  setMaintenanceModeSchema,
+  clearCacheSchema,
+  triggerBackupSchema,
+} from '@/lib/schemas/ops';
 
 export async function setMaintenanceMode(
-  input: z.infer<typeof setMaintenanceModeSchema>,
+  input: unknown,
 ): Promise<ActionResult> {
   return act(setMaintenanceModeSchema, input, async ({ enabled }) => {
     const res = await fetchApi('/api/admin/site-settings', {

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createStory } from '@/actions/story-form.actions';
-import type { CreateStoryInput } from '@/actions/story-form.actions';
+import type { CreateStoryInput } from '@/lib/schemas/story-form';
 import { fetchAuthors, fetchCategories } from '@/services/comics/taxonomy.service';
 import { uploadStoryCoverImage } from '@/services/comics/storyMedia.service';
 import { Story } from '@/types/entities';

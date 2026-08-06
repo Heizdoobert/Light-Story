@@ -39,7 +39,9 @@ export async function createTranslator(input: z.infer<typeof translatorSchema>):
   });
 }
 
-export const addTranslator = createTranslator;
+export async function addTranslator(input: any): Promise<ActionResult> {
+  return createTranslator(input);
+}
 
 export async function updateTranslator(input: z.infer<typeof translatorUpdateSchema>): Promise<ActionResult> {
   return act(translatorUpdateSchema, input, async ({ id, name, contact, notes, status }) => {
@@ -68,5 +70,7 @@ export async function deleteTranslator(input: z.infer<typeof translatorDeleteSch
   });
 }
 
-export const removeTranslator = deleteTranslator;
+export async function removeTranslator(input: any): Promise<ActionResult> {
+  return deleteTranslator(input);
+}
 
