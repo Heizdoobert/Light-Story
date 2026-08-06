@@ -23,7 +23,7 @@ export async function createChapter(data: CreateChapterInput) {
       return { ok: false, success: false, error: parsed.error.issues[0].message };
     }
 
-    revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.comic_id), "max");
+    revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.story_id), "max");
     return { ok: true, success: true, data: { id: `chapter_${Date.now()}`, ...parsed.data } };
   } catch (error) {
     return { ok: false, success: false, error: (error as Error).message };
