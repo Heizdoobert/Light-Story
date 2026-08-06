@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { validateAdMarkup, type AdSlotKey } from "@/lib/admin/ad-policy";
+import { saveSiteSettings } from "@/lib/actions/settings.actions";
 
 export type AdSetting = {
   key: AdSlotKey;
@@ -87,29 +88,27 @@ export function useAdminAds() {
   };
 
   const handleSaveAds = async () => {
+    for (const ad of ads) {
+      if (ad.active && ad.markup.trim()) {
+        const val = validateAdMarkup(ad.markup, DEFAULT_RUNTIME);
+        if (!val.ok) {
+          toast.error(`Lỗi mã HTML ở vị trí "${ad.label}": ${val.reason}`);
+          return;
+        }
+      }
+    }
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-
-      for (const ad of ads) {
-        if (ad.active && ad.markup.trim()) {
-          const val = validateAdMarkup(ad.markup, DEFAULT_RUNTIME);
-          if (!val.ok) {
-            toast.error(`Lỗi mã HTML ở vị trí "${ad.label}": ${val.reason}`);
-            setSaving(false);
-            return;
-          }
-        }
-
-        const valueToSave = ad.active ? ad.markup : "";
-        await supabase
-          .from("site_settings")
-          .upsert({ key: ad.key, value: valueToSave, updated_at: new Date().toISOString() });
+      const res = await saveSiteSettings({
+        entries: ads.map((ad) => ({ key: ad.key, value: ad.active ? ad.markup : "" })),
+      });
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
       }
-
-      toast.success("Lưu cấu hình quảng cáo lên server thành công!");
-    } catch (err: any) {
-      toast.error(err.message || "Lưu cấu hình thất bại");
+      toast.success("Đã lưu quảng cáo");
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể lưu quảng cáo");
     } finally {
       setSaving(false);
     }
