@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { ShieldAlert, RotateCcw, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminError({
   error,
@@ -41,7 +42,7 @@ export default function AdminError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/admin/dashboard">
+          <Link href={ROUTES.ADMIN.DASHBOARD}>
             <Button variant="outline" className="gap-2 font-bold">
               <LayoutDashboard size={16} /> Dashboard
             </Button>

@@ -16,6 +16,7 @@ import { updateUserProfile } from "@/lib/actions/user.actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { toast } from "sonner";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function UserProfilePage() {
   const { user, profile, role, isLoading, signOut } = useUser();
@@ -54,8 +55,8 @@ export default function UserProfilePage() {
       }
 
       toast.success("Cập nhật thông tin tài khoản thành công!");
-    } catch (err: any) {
-      toast.error(err.message || "Cập nhật tài khoản thất bại");
+    } catch (err) {
+      toast.error((err instanceof Error ? err.message : String(err)) || "Cập nhật tài khoản thất bại");
     } finally {
       setIsSaving(false);
     }
@@ -74,7 +75,7 @@ export default function UserProfilePage() {
       <div className="p-8 text-center max-w-xl mx-auto space-y-4">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Chưa Đăng Nhập</h1>
         <p className="text-sm text-slate-500">Vui lòng đăng nhập để xem thông tin cá nhân.</p>
-        <Link href="/auth/login">
+        <Link href={ROUTES.LOGIN}>
           <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold">Đăng Nhập Ngay</Button>
         </Link>
       </div>
@@ -139,14 +140,14 @@ export default function UserProfilePage() {
           {/* Quick Links */}
           <div className="border-t border-slate-200 dark:border-slate-800 pt-4 grid grid-cols-2 gap-2 text-xs">
             <Link
-              href="/user/bookmarks"
+              href={ROUTES.USER.FAVORITES}
               className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 font-bold transition-all flex flex-col items-center gap-1"
             >
               <Bookmark size={18} />
               <span>Tủ Sách</span>
             </Link>
             <Link
-              href="/user/history"
+              href={ROUTES.USER.HISTORY}
               className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 font-bold transition-all flex flex-col items-center gap-1"
             >
               <History size={18} />

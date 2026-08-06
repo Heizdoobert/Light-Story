@@ -1,3 +1,5 @@
+import { ROUTES } from "@/lib/constants/routes";
+
 export default function NotFound() {
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center px-6 py-10">
@@ -9,7 +11,7 @@ export default function NotFound() {
         </p>
         <div className="mt-8 flex items-center justify-center">
           <a
-            href="/"
+            href={ROUTES.HOME}
             className="px-6 py-3 rounded-xl bg-primary text-white font-bold hover:opacity-90 transition-opacity"
           >
             Return Home

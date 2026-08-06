@@ -9,6 +9,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
   ssr: false,
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
+import { ROUTES } from "@/lib/constants/routes";
 import { useAdminComics } from "@/lib/hooks/use-admin-comics";
 
 export default function AdminComicsPage() {
@@ -108,7 +109,7 @@ export default function AdminComicsPage() {
                         alt={comic.title}
                         className="w-12 h-16 rounded-lg object-cover border border-slate-800 bg-slate-950"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder-cover.jpg";
+                          (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;
                         }}
                       />
                     </td>
@@ -137,7 +138,7 @@ export default function AdminComicsPage() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/admin/chapters?comicId=${comic.id}`}>
+                        <Link href={`${ROUTES.ADMIN.CHAPTERS}?comicId=${comic.id}`}>
                           <Button size="sm" variant="outline" className="gap-1 text-xs" title="Quản lý chương">
                             <Layers size={14} /> Chương
                           </Button>

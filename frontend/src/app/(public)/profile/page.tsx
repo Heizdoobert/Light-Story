@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function ProfileRedirectPage() {
-  redirect('/user/profile');
+  redirect(ROUTES.USER.PROFILE);
 }

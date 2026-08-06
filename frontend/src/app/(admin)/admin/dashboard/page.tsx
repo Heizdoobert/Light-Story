@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { StatCard } from "@/components/admin/stat-card";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants/routes";
 import { useAdminDashboard } from "@/lib/hooks/use-admin-dashboard";
 
 export default function AdminDashboardPage() {
@@ -93,7 +94,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <Link
-              href="/admin/analytics"
+              href={ROUTES.ADMIN.ANALYTICS}
               className="flex items-center gap-1 text-xs font-bold text-orange-400 hover:text-orange-300 transition-colors"
             >
               <span>Xem chi tiết R2</span>
@@ -178,7 +179,7 @@ export default function AdminDashboardPage() {
 
           <div className="pt-2">
             <Link
-              href="/admin/comics"
+              href={ROUTES.ADMIN.COMICS}
               className="block w-full py-2.5 text-center bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md"
             >
               Quản lý danh sách Truyện »
@@ -192,7 +193,7 @@ export default function AdminDashboardPage() {
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-lg">Truyện Mới Cập Nhật Gần Đây</h3>
           <Link
-            href="/admin/comics"
+            href={ROUTES.ADMIN.COMICS}
             className="text-xs font-bold text-orange-400 hover:text-orange-300 transition-colors"
           >
             Xem tất cả »

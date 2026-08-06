@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function RootError({
   error,
@@ -41,7 +42,7 @@ export default function RootError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/">
+          <Link href={ROUTES.HOME}>
             <Button variant="outline" className="gap-2 font-bold">
               <Home size={16} /> Trang Chủ
             </Button>

@@ -1,7 +1,7 @@
 export const ROUTES = {
   HOME: "/",
-  LOGIN: "/login",
-  REGISTER: "/register",
+  LOGIN: "/auth/login",
+  REGISTER: "/auth/register",
   RESET_PASSWORD: "/auth/reset-password",
   COMICS: "/comics",
   SEARCH: "/search",
@@ -13,7 +13,7 @@ export const ROUTES = {
     ROOT: "/user",
     PROFILE: "/user/profile",
     DASHBOARD: "/user/dashboard",
-    FAVORITES: "/user/favorites",
+    FAVORITES: "/user/bookmarks",
     HISTORY: "/user/history",
   },
   ADMIN: {
@@ -28,6 +28,8 @@ export const ROUTES = {
     ADS: "/admin/ads",
     AUDIT: "/admin/audit",
     OPERATIONS: "/admin/operations",
+    ANALYTICS: "/admin/analytics",
+    PROFILE: "/admin/profile",
   },
   ERROR: {
     UNAUTHORIZED: "/handle-exception/401",

@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { FormEditor } from '@/components/admin/form-editor';
 import { Input } from '@/components/ui/input';
 import { updateChapter } from '@/lib/actions/chapter.actions';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 const ImageUploader = dynamic(() => import('@/components/admin/image-uploader'), {
   ssr: false,
@@ -19,11 +20,18 @@ export default function AdminEditChapterPage({ params }: { params: Promise<{ cha
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    await updateChapter(chapterId, '1', {
-      chapter_number: Number(chapterNumber),
-      title,
-    });
-    setIsSubmitting(false);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      let storyId = '1';
+      const { data: chapter } = await supabase.from('chapters').select('story_id').eq('id', chapterId).maybeSingle();
+      if (chapter?.story_id) storyId = chapter.story_id as string;
+      await updateChapter(chapterId, storyId, {
+        chapter_number: Number(chapterNumber),
+        title,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

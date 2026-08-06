@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusErrorPage } from '@/components/errors/StatusErrorPage';
+import { ROUTES } from '@/lib/constants/routes';
 
 export const UnauthorizedPage: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ export const UnauthorizedPage: React.FC = () => {
       title="Unauthorized"
       message="You need to sign in to access this page."
       actionLabel="Go To Home"
-      actionHref="/"
+      actionHref={ROUTES.HOME}
     />
   );
 };

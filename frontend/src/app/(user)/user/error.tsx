@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function UserError({
   error,
@@ -41,7 +42,7 @@ export default function UserError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/user/profile">
+          <Link href={ROUTES.USER.PROFILE}>
             <Button variant="outline" className="gap-2 font-bold">
               <User size={16} /> Hồ Sơ
             </Button>

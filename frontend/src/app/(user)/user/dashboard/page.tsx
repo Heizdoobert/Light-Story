@@ -6,6 +6,7 @@ import { ReadingProgress } from "@/components/user/reading-progress";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/lib/hooks/use-user";
+import { ROUTES } from "@/lib/constants/routes";
 
 interface RecommendedItem {
   id: string;
@@ -13,9 +14,17 @@ interface RecommendedItem {
   latestChapter?: number;
 }
 
+interface ReadingItem {
+  id: string;
+  title: string;
+  currentChapter: number;
+  totalChapters: number;
+  progressPct: number;
+}
+
 export default function UserDashboardPage() {
   const { user } = useUser();
-  const [readingList, setReadingList] = useState<any[]>([]);
+  const [readingList, setReadingList] = useState<ReadingItem[]>([]);
   const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -90,7 +99,7 @@ export default function UserDashboardPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {recommended.map((rec) => (
-              <Link key={rec.id} href={`/comics/${rec.id}`}>
+              <Link key={rec.id} href={ROUTES.COMIC_DETAIL(rec.id)}>
                 <Card className="p-4 hover:border-primary transition-all cursor-pointer">
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                     {rec.title}

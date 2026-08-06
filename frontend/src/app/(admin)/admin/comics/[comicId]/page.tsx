@@ -6,6 +6,7 @@ import { FormEditor } from '@/components/admin/form-editor';
 import { Input } from '@/components/ui/input';
 import { updateComic } from '@/lib/actions/comic.actions';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminEditComicPage({ params }: { params: Promise<{ comicId: string }> }) {
   const { comicId } = use(params);
@@ -33,7 +34,7 @@ export default function AdminEditComicPage({ params }: { params: Promise<{ comic
     setIsSubmitting(true);
     const res = await updateComic(comicId, { title, author });
     if (res.success) {
-      router.push('/admin/comics');
+      router.push(ROUTES.ADMIN.COMICS);
     }
     setIsSubmitting(false);
   };

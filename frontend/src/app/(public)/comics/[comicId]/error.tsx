@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RotateCcw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function ComicDetailError({
   error,
@@ -41,7 +42,7 @@ export default function ComicDetailError({
           <Button onClick={reset} className="gap-2 font-bold">
             <RotateCcw size={16} /> Thử Lại
           </Button>
-          <Link href="/comics">
+          <Link href={ROUTES.COMICS}>
             <Button variant="outline" className="gap-2 font-bold">
               <ArrowLeft size={16} /> Danh Sách Truyện
             </Button>

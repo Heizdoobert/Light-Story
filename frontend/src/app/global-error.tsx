@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function GlobalError({
   error,
@@ -51,7 +52,7 @@ export default function GlobalError({
               Tải Lại
             </button>
             <a
-              href="/"
+              href={ROUTES.HOME}
               className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-50 transition-colors inline-flex items-center gap-2"
             >
               Trang Chủ

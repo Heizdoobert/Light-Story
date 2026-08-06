@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusErrorPage } from '@/components/errors/StatusErrorPage';
+import { ROUTES } from '@/lib/constants/routes';
 
 export const BadRequestPage: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ export const BadRequestPage: React.FC = () => {
       title="Bad Request"
       message="The request is invalid. Please review the input and try again."
       actionLabel="Back To Home"
-      actionHref="/"
+      actionHref={ROUTES.HOME}
     />
   );
 };

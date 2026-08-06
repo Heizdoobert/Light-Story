@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FormEditor } from '@/components/admin/form-editor';
 import { Input } from '@/components/ui/input';
 import { createComic } from '@/lib/actions/comic.actions';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminNewComicPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function AdminNewComicPage() {
     setIsSubmitting(true);
     const res = await createComic({ title, author, status: 'ongoing' });
     if (res.success) {
-      router.push('/admin/comics');
+      router.push(ROUTES.ADMIN.COMICS);
     }
     setIsSubmitting(false);
   };
