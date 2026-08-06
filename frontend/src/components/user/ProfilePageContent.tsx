@@ -69,8 +69,6 @@ export const ProfilePageContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-
       <div className="flex-1 w-full px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <EditUserProfileModal

@@ -3,8 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import LoginModal from "@/components/auth/login-modal";
-import { Header } from "@/components/navigation/Header";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useHomePagePresenter } from "@/hooks/presenters/useHomePagePresenter";
 
@@ -20,24 +18,14 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     trendingComics,
     trendingLoaded,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     historyComics,
     getComicCover,
     applyComicCoverFallback,
   } = useHomePagePresenter(initialComics);
 
   return (
-    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500">
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-
-      <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
-        {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
+    <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
+      {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
         <AdRenderer position="header" />
 
         {/* 1. TRUYỆN PHỔ BIẾN / TRENDING SLIDER */}
@@ -267,6 +255,5 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
           </aside>
         </div>
       </div>
-    </div>
   );
 };

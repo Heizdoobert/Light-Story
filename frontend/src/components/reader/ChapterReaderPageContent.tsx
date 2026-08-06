@@ -17,8 +17,6 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { Header } from "@/components/navigation/Header";
-import LoginModal from "@/components/auth/login-modal";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
@@ -33,7 +31,6 @@ export const ChapterReaderPageContent: React.FC = () => {
     allChapters,
     images,
     loading,
-    isLoginModalOpen,
     setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
@@ -80,11 +77,6 @@ export const ChapterReaderPageContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
         <div className="h-1 bg-slate-200 dark:bg-slate-800">
           <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
         </div>

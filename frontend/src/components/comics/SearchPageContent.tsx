@@ -4,8 +4,6 @@ import React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { Image as ImageIcon, SearchX, X } from "lucide-react";
-import { Header } from "@/components/navigation/Header";
-import LoginModal from "@/components/auth/login-modal";
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
@@ -22,8 +20,6 @@ export const SearchPageContent: React.FC = () => {
     loading,
     totalPages,
     totalItems,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     showFilter,
     setShowFilter,
     applyComicCoverFallback,
@@ -72,12 +68,6 @@ export const SearchPageContent: React.FC = () => {
           </>
         )}
       </AnimatePresence>
-
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
 
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
         <div className="mb-8 pt-4 border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">

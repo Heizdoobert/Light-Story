@@ -14,8 +14,6 @@ import {
   ArrowLeft,
   Play,
 } from "lucide-react";
-import { Header } from "@/components/navigation/Header";
-import LoginModal from "@/components/auth/login-modal";
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/user/bookmark-button";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
@@ -27,8 +25,6 @@ export const ComicDetailPageContent: React.FC = () => {
     chapters,
     categories,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     readChapters,
     handleImageError,
     getVietnameseStatus,
@@ -61,13 +57,6 @@ export const ComicDetailPageContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-
       <div className="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-50 dark:opacity-30"
