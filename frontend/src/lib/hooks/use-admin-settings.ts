@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { saveSiteSettings } from "@/lib/actions/settings.actions";
 import { toast } from "sonner";
 
 export function useAdminSettings() {
@@ -37,25 +38,25 @@ export function useAdminSettings() {
     loadSettings();
   }, [loadSettings]);
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const updates = [
-        { key: "site_name", value: siteName, updated_at: new Date().toISOString() },
-        { key: "site_description", value: siteDescription, updated_at: new Date().toISOString() },
-        { key: "maintenance_mode", value: String(maintenanceMode), updated_at: new Date().toISOString() },
-        { key: "compact_mode", value: String(compactMode), updated_at: new Date().toISOString() },
-      ];
-
-      for (const item of updates) {
-        await supabase.from("site_settings").upsert(item);
+      const res = await saveSiteSettings({
+        entries: [
+          { key: "site_name", value: siteName },
+          { key: "site_description", value: siteDescription },
+          { key: "maintenance_mode", value: String(maintenanceMode) },
+          { key: "compact_mode", value: String(compactMode) },
+        ],
+      });
+      if (res.success === false) {
+        toast.error(res.error);
+        return;
       }
-
-      toast.success("Cập nhật cài đặt hệ thống lên server thành công!");
-    } catch (err: any) {
-      toast.error(err.message || "Cập nhật cài đặt thất bại");
+      toast.success("Đã lưu cài đặt");
+    } catch (err) {
+      toast.error((err as Error).message || "Không thể lưu cài đặt");
     } finally {
       setSaving(false);
     }
