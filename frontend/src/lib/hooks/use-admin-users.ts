@@ -59,22 +59,17 @@ export function useAdminUsers() {
 
     setIsSubmitting(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ role: newRole })
-        .eq("id", selectedUser.id);
-
-      if (error) {
-        const actionRes = await updateUserRole(selectedUser.id, newRole);
-        if (!actionRes.success) throw new Error(actionRes.error);
+      const actionRes = await updateUserRole(selectedUser.id, newRole);
+      if (actionRes.success === false) {
+        toast.error(actionRes.error || "Không thể cập nhật vai trò");
+        return;
       }
 
       toast.success(`Đã cập nhật vai trò người dùng thành "${newRole}"`);
       setSelectedUser(null);
       loadUsers();
-    } catch (err: any) {
-      toast.error(err.message || "Cập nhật vai trò thất bại");
+    } catch (err) {
+      toast.error((err as Error).message || "Cập nhật vai trò thất bại");
     } finally {
       setIsSubmitting(false);
     }
