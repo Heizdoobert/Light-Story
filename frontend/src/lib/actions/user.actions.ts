@@ -1,69 +1,72 @@
-"use server";
+'use server';
 
-import { revalidateTag } from "next/cache";
-import { CACHE_TAGS } from "@/lib/constants/cache-tags";
-import {
-  ACTION_ADMIN_ROLES,
-  requireActionRole,
-} from "@/lib/security/permission";
-import { z } from "zod";
+import { revalidateTag } from 'next/cache';
+import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { updateUserProfileSchema, updateUserRoleSchema } from '@/lib/schemas/user';
+import { getServerSupabase } from '@/lib/supabase/server';
+import type { UpdateUserProfileInput } from '@/lib/schemas/user';
 
-const updateUserProfileSchema = z.object({
-  full_name: z.string().optional(),
-  avatar_url: z.string().nullable().optional(),
-});
-
-const updateUserRoleSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  role: z.enum(["superadmin", "admin", "employee", "user", "translator", "author"]),
-});
-
-export type ActionResult<T = unknown> =
+type ActionResult<T = unknown> =
   | { ok: true; success: true; data?: T; error?: undefined }
   | { ok: false; success: false; error: string; data?: undefined };
 
 export async function updateUserProfile(
   userId: string,
-  data: { full_name?: string; avatar_url?: string | null },
-): Promise<ActionResult> {
+  data: UpdateUserProfileInput,
+): Promise<ActionResult<{ userId: string }>> {
   try {
     const { userId: currentUserId } = await requireActionRole([
-      "user",
-      "admin",
-      "superadmin",
-      "employee",
+      'user',
+      'admin',
+      'superadmin',
+      'super_admin',
+      'employee',
     ]);
-    if (currentUserId !== "internal" && currentUserId !== userId) {
-      return { ok: false, success: false, error: "Bạn chỉ có thể cập nhật hồ sơ của chính mình" };
+    if (currentUserId === 'internal') {
+      // internal system actor: allow
+    } else if (currentUserId !== userId) {
+      return {
+        ok: false,
+        success: false,
+        error: 'Bạn chỉ có thể cập nhật hồ sơ của chính mình',
+      };
     }
-
     const parsed = updateUserProfileSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
-
-    revalidateTag(CACHE_TAGS.USERS, "max");
-    return { ok: true, success: true, data: { userId, ...parsed.data } };
-  } catch (error) {
-    return { ok: false, success: false, error: (error as Error).message };
+    const db = await getServerSupabase();
+    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (parsed.data.full_name !== undefined) patch.full_name = parsed.data.full_name;
+    if (parsed.data.avatar_url !== undefined) patch.avatar_url = parsed.data.avatar_url;
+    const { error } = await db.from('profiles').update(patch).eq('id', currentUserId);
+    if (error) return { ok: false, success: false, error: error.message };
+    revalidateTag(CACHE_TAGS.USERS, 'max');
+    return { ok: true, success: true, data: { userId } };
+  } catch (err) {
+    return { ok: false, success: false, error: (err as Error).message };
   }
 }
 
-export async function updateUserRole(
-  userId: string,
-  role: string,
-): Promise<ActionResult> {
+export async function updateUserRole(userId: string, role: string): Promise<ActionResult<{ userId: string; role: string }>> {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
-
     const parsed = updateUserRoleSchema.safeParse({ userId, role });
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0].message };
+      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
-
-    revalidateTag(CACHE_TAGS.USERS, "max");
-    return { ok: true, success: true, data: { userId, role: parsed.data.role } };
-  } catch (error) {
-    return { ok: false, success: false, error: (error as Error).message };
+    const db = await getServerSupabase();
+    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    const { error } = await db
+      .from('profiles')
+      .update({ role: parsed.data.role, updated_at: new Date().toISOString() })
+      .eq('id', parsed.data.userId);
+    if (error) return { ok: false, success: false, error: error.message };
+    revalidateTag(CACHE_TAGS.USERS, 'max');
+    return { ok: true, success: true, data: { userId: parsed.data.userId, role: parsed.data.role } };
+  } catch (err) {
+    return { ok: false, success: false, error: (err as Error).message };
   }
 }
