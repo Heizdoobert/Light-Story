@@ -22,10 +22,10 @@ export async function updateUserProfile(
       'superadmin',
       'super_admin',
       'employee',
+      'internal',
     ]);
-    if (currentUserId === 'internal') {
-      // internal system actor: allow
-    } else if (currentUserId !== userId) {
+    const isInternal = currentUserId === 'internal';
+    if (!isInternal && currentUserId !== userId) {
       return {
         ok: false,
         success: false,
@@ -41,10 +41,11 @@ export async function updateUserProfile(
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (parsed.data.full_name !== undefined) patch.full_name = parsed.data.full_name;
     if (parsed.data.avatar_url !== undefined) patch.avatar_url = parsed.data.avatar_url;
-    const { error } = await db.from('profiles').update(patch).eq('id', currentUserId);
+    const targetId = isInternal ? userId : currentUserId;
+    const { error } = await db.from('profiles').update(patch).eq('id', targetId);
     if (error) return { ok: false, success: false, error: error.message };
     revalidateTag(CACHE_TAGS.USERS, 'max');
-    return { ok: true, success: true, data: { userId } };
+    return { ok: true, success: true, data: { userId: targetId } };
   } catch (err) {
     return { ok: false, success: false, error: (err as Error).message };
   }
@@ -52,10 +53,13 @@ export async function updateUserProfile(
 
 export async function updateUserRole(userId: string, role: string): Promise<ActionResult<{ userId: string; role: string }>> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    const { role: callerRole } = await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = updateUserRoleSchema.safeParse({ userId, role });
     if (!parsed.success) {
       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+    }
+    if (parsed.data.role === 'superadmin' && callerRole !== 'superadmin') {
+      return { ok: false, success: false, error: 'Chỉ superadmin mới có thể cấp vai trò superadmin' };
     }
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };

@@ -21,3 +21,12 @@ export const updateCategorySchema = createCategorySchema.partial();
 
 export type CreateCategoryInput = z.input<typeof createCategorySchema>;
 export type UpdateCategoryInput = z.input<typeof updateCategorySchema>;
+
+export const auditLogSchema = z.object({
+  action: z.string().min(1),
+  entityType: z.string().min(1),
+  entityId: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export type AuditLogInput = z.input<typeof auditLogSchema>;

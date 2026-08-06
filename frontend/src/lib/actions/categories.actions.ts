@@ -36,6 +36,7 @@ export async function createCategory(data: CreateCategoryInput): Promise<ActionR
 export async function updateCategory(id: string, data: UpdateCategoryInput): Promise<ActionResult<{ id: string }>> {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
+    if (!id || !id.trim()) return { ok: false, success: false, error: 'ID thể loại không hợp lệ' };
     const parsed = updateCategorySchema.safeParse(data);
     if (!parsed.success) {
       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
@@ -54,6 +55,7 @@ export async function updateCategory(id: string, data: UpdateCategoryInput): Pro
 export async function deleteCategory(id: string): Promise<ActionResult<{ id: string }>> {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
+    if (!id || !id.trim()) return { ok: false, success: false, error: 'ID thể loại không hợp lệ' };
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { error } = await db.from('categories').delete().eq('id', id);
