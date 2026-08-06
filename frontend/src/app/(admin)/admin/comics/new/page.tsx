@@ -16,7 +16,7 @@ export default function AdminNewComicPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const res = await createComic({ title, author, description, status: 'ongoing' });
+    const res = await createComic({ title, author, status: 'ongoing' });
     if (res.success) {
       router.push('/admin/comics');
     }

@@ -31,7 +31,7 @@ export default function AdminEditComicPage({ params }: { params: Promise<{ comic
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const res = await updateComic(comicId, { title, author, description });
+    const res = await updateComic(comicId, { title, author });
     if (res.success) {
       router.push('/admin/comics');
     }
