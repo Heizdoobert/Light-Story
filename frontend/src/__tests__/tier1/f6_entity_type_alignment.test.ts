@@ -58,9 +58,10 @@ describe('F6 entity type alignment (Chapter.status)', () => {
     expect(typeof bad).toBe('string');
   });
 
-  it('MOCK_CHAPTERS literals in useReadChapterPresenter include status', () => {
+  it('useReadChapterPresenter no longer contains mock chapter data', () => {
     const source = readRepoFile(READ_PRESENTER);
-    const matches = source.match(/status: "(uploading|draft|published)"/g) ?? [];
-    expect(matches.length).toBeGreaterThanOrEqual(2);
+    expect(source).not.toContain('MOCK_CHAPTERS');
+    expect(source).not.toContain('USE_MOCK_DATA');
+    expect(source).not.toContain('MOCK_IMAGES');
   });
 });

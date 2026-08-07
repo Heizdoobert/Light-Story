@@ -14,10 +14,7 @@ export class ApiError extends Error {
 
 import { supabase } from '@/lib/supabase/client';
 
-const IS_MOCK = process.env.NEXT_PUBLIC_API_MOCK === 'true';
-
 const getBaseUrl = (): string => {
-  if (IS_MOCK) return 'http://localhost:4010';
   const url =
     process.env.NODE_ENV === 'production'
       ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
