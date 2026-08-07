@@ -42,29 +42,6 @@ type HeaderProps = {
   onLoginClick: () => void;
 };
 
-const DEFAULT_CATEGORIES: Category[] = [
-  { id: "1", name: "Action", created_at: "", updated_at: "" },
-  { id: "2", name: "Adventure", created_at: "", updated_at: "" },
-  { id: "3", name: "Anime", created_at: "", updated_at: "" },
-  { id: "4", name: "Chuyển Sinh", created_at: "", updated_at: "" },
-  { id: "5", name: "Comedy", created_at: "", updated_at: "" },
-  { id: "6", name: "Comic", created_at: "", updated_at: "" },
-  { id: "7", name: "Drama", created_at: "", updated_at: "" },
-  { id: "8", name: "Fantasy", created_at: "", updated_at: "" },
-  { id: "9", name: "Horror", created_at: "", updated_at: "" },
-  { id: "10", name: "Isekai", created_at: "", updated_at: "" },
-  { id: "11", name: "Manhua", created_at: "", updated_at: "" },
-  { id: "12", name: "Manhwa", created_at: "", updated_at: "" },
-  { id: "13", name: "Martial Arts", created_at: "", updated_at: "" },
-  { id: "14", name: "Mystery", created_at: "", updated_at: "" },
-  { id: "15", name: "Romance", created_at: "", updated_at: "" },
-  { id: "16", name: "School Life", created_at: "", updated_at: "" },
-  { id: "17", name: "Sci-fi", created_at: "", updated_at: "" },
-  { id: "18", name: "Shounen", created_at: "", updated_at: "" },
-  { id: "19", name: "Slice of Life", created_at: "", updated_at: "" },
-  { id: "20", name: "Supernatural", created_at: "", updated_at: "" },
-];
-
 export const Header: React.FC<HeaderProps> = ({
   onLoginClick,
 }) => {
@@ -72,7 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, profile, signOut, role } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
-  const [categories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Comic[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -125,6 +102,23 @@ export const Header: React.FC<HeaderProps> = ({
 
     return () => clearTimeout(timer);
   }, [searchKeyword]);
+
+  // Category navigation: load genres from the API (gateway), not hardcoded list
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get<{ id: string; name: string }[]>(ROUTES.API.CATEGORIES)
+      .then((rows) => {
+        if (!active || !Array.isArray(rows)) return;
+        setCategories(rows.map((row) => ({ ...row, created_at: "", updated_at: "" })));
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Click outside to close dropdowns
   useEffect(() => {
