@@ -17,6 +17,7 @@ import {
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/user/bookmark-button";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
+import { ROUTES } from "@/lib/constants/routes";
 
 export const ComicDetailPageContent: React.FC = () => {
   const {
@@ -48,7 +49,7 @@ export const ComicDetailPageContent: React.FC = () => {
         <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
           Không tìm thấy truyện
         </h1>
-        <Link href="/" className="px-6 py-2 bg-primary text-white rounded-full">
+        <Link href={ROUTES.HOME} className="px-6 py-2 bg-primary text-white rounded-full">
           Quay lại trang chủ
         </Link>
       </div>
@@ -66,7 +67,7 @@ export const ComicDetailPageContent: React.FC = () => {
 
         <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-10">
           <Link
-            href="/"
+            href={ROUTES.HOME}
             className="flex items-center gap-2 px-4 py-2 bg-white/20 dark:bg-black/20 backdrop-blur-md rounded-full text-slate-800 dark:text-white font-semibold hover:bg-white/40 transition"
           >
             <ArrowLeft size={18} /> Trở về

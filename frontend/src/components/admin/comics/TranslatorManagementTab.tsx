@@ -17,6 +17,15 @@ export type TranslatorRecord = {
   createdAt: string;
 };
 
+type TranslatorApiRow = {
+  id: string;
+  name: string;
+  contact?: string | null;
+  notes?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+};
+
 const DEFAULT_TRANSLATORS: TranslatorRecord[] = [
   { id: "trans-1", name: "Dịch Giả Thập Nhất", contact: "thapnhat@lightstory.app", notes: "Chuyên dịch Manga Action", status: "active", createdAt: "2026-01-15" },
   { id: "trans-2", name: "Phong Vân Team", contact: "phongvan@lightstory.app", notes: "Nhóm dịch Manhua Tu Tiên", status: "active", createdAt: "2026-02-01" },
@@ -70,14 +79,14 @@ export const TranslatorManagementTab: React.FC<TranslatorManagementTabProps> = (
   const fetchTranslators = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get<any[]>("/admin/translators");
+      const res = await apiClient.get<TranslatorApiRow[]>("/api/admin/translators");
       if (Array.isArray(res)) {
         const mapped: TranslatorRecord[] = res.map((item) => ({
           id: item.id,
           name: item.name,
           contact: item.contact || "",
           notes: item.notes || "",
-          status: item.status || "active",
+          status: item.status === "inactive" ? "inactive" : "active",
           createdAt: item.created_at ? String(item.created_at).slice(0, 10) : new Date().toISOString().slice(0, 10),
         }));
         setTranslators(mapped);
@@ -100,7 +109,7 @@ export const TranslatorManagementTab: React.FC<TranslatorManagementTabProps> = (
   const translatorComicCountMap = useMemo(() => {
     const map: Record<string, number> = {};
     catalog.forEach((comic) => {
-      const trans = (comic as any).translator;
+      const trans = comic.translator;
       if (trans) {
         map[trans] = (map[trans] || 0) + 1;
       }

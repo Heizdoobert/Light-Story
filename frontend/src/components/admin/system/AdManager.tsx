@@ -77,7 +77,7 @@ export const AdManager: React.FC = () => {
       { key, value: configs[key] },
       {
         onSuccess: () => resolveDbChangeToast(toastId, `${key} saved successfully`),
-        onError: (error: any) => rejectDbChangeToast(toastId, error, 'update_settings'),
+        onError: (error: unknown) => rejectDbChangeToast(toastId, error, 'update_settings'),
       }
     );
   };

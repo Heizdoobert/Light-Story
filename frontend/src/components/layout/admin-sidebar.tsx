@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   LayoutDashboard,
   BarChart3,
@@ -17,16 +18,16 @@ import {
 } from "lucide-react";
 
 const ADMIN_NAV_ITEMS = [
-  { label: "Tổng quan", href: "/admin/dashboard", icon: LayoutDashboard },
-  { label: "Thống kê & R2", href: "/admin/analytics", icon: BarChart3 },
-  { label: "Quản lý Truyện", href: "/admin/comics", icon: BookOpen },
-  { label: "Quản lý Chương", href: "/admin/chapters", icon: Layers },
-  { label: "Thể loại", href: "/admin/categories", icon: Tags },
-  { label: "Người dùng", href: "/admin/users", icon: Users },
-  { label: "Quảng cáo", href: "/admin/ads", icon: Megaphone },
-  { label: "Cài đặt", href: "/admin/settings", icon: Settings },
-  { label: "Hồ sơ cá nhân", href: "/admin/profile", icon: UserCircle },
-  { label: "Audit Log", href: "/admin/audit", icon: ShieldAlert },
+  { label: "Tổng quan", href: ROUTES.ADMIN.DASHBOARD, icon: LayoutDashboard },
+  { label: "Thống kê & R2", href: ROUTES.ADMIN.ANALYTICS, icon: BarChart3 },
+  { label: "Quản lý Truyện", href: ROUTES.ADMIN.COMICS, icon: BookOpen },
+  { label: "Quản lý Chương", href: ROUTES.ADMIN.CHAPTERS, icon: Layers },
+  { label: "Thể loại", href: ROUTES.ADMIN.CATEGORIES, icon: Tags },
+  { label: "Người dùng", href: ROUTES.ADMIN.USERS, icon: Users },
+  { label: "Quảng cáo", href: ROUTES.ADMIN.ADS, icon: Megaphone },
+  { label: "Cài đặt", href: ROUTES.ADMIN.SETTINGS, icon: Settings },
+  { label: "Hồ sơ cá nhân", href: ROUTES.ADMIN.PROFILE, icon: UserCircle },
+  { label: "Audit Log", href: ROUTES.ADMIN.AUDIT, icon: ShieldAlert },
 ];
 
 export function AdminSidebar() {
@@ -35,7 +36,7 @@ export function AdminSidebar() {
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 text-white min-h-screen p-4 flex flex-col justify-between shrink-0">
       <div className="space-y-6">
-        <Link href="/" className="flex items-center justify-between px-3 py-2 group" title="Về trang chủ">
+        <Link href={ROUTES.HOME} className="flex items-center justify-between px-3 py-2 group" title="Về trang chủ">
           <div className="flex items-center space-x-2">
             <span className="font-black text-xl text-orange-500 tracking-tight">LIGHTSTORY</span>
             <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded font-bold uppercase">

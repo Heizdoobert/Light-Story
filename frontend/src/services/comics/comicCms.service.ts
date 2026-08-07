@@ -34,6 +34,9 @@ export type ComicCmsRecord = {
   lastUpdatedAt: string;
   chapters: ComicCmsChapterRecord[];
   category?: string[] | string;
+  translator?: string;
+  assignedTo?: string;
+  created_by?: string;
 };
 
 export type ComicCatalogFilters = {

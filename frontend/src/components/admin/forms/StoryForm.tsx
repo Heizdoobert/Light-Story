@@ -245,7 +245,7 @@ export const StoryForm: React.FC = () => {
               <select
                 value={formData.status}
                 onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value as any })
+                  setFormData({ ...formData, status: e.target.value as "draft" | "published" | "ongoing" | "completed" | "archived" })
                 }
                 className="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 px-6 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-primary/50 transition-all shadow-inner"
               >

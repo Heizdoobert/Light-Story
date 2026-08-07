@@ -5,6 +5,7 @@ import { History, Trash2 } from "lucide-react";
 import { useReadingHistory } from "@/hooks/features/useReadingHistory";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants/routes";
 
 export const UserReadingHistoryPageContent: React.FC = () => {
   const { history, isLoading, clearHistory } = useReadingHistory();
@@ -46,7 +47,7 @@ export const UserReadingHistoryPageContent: React.FC = () => {
             Các chương truyện bạn xem qua sẽ được lưu lại tự động tại đây để tiện theo dõi.
           </p>
           <Link
-            href="/comics"
+            href={ROUTES.COMICS}
             className="inline-block mt-5 px-6 py-2.5 bg-primary text-white font-bold text-sm rounded-xl shadow-md hover:bg-primary/90 transition-all"
           >
             Đọc ngay

@@ -5,6 +5,7 @@ import { Bookmark, Sparkles } from "lucide-react";
 import { useBookmarks } from "@/hooks/features/useBookmarks";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants/routes";
 
 export const UserBookmarksPageContent: React.FC = () => {
   const { bookmarks, isLoading, removeBookmark } = useBookmarks();
@@ -37,7 +38,7 @@ export const UserBookmarksPageContent: React.FC = () => {
             Hãy khám phá kho truyện phong phú và bấm nút Theo dõi để dễ dàng xem lại tại đây!
           </p>
           <Link
-            href="/comics"
+            href={ROUTES.COMICS}
             className="inline-block mt-5 px-6 py-2.5 bg-primary text-white font-bold text-sm rounded-xl shadow-md hover:bg-primary/90 transition-all"
           >
             Khám phá ngay

@@ -5,10 +5,7 @@ import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { SITE_SETTING_KEYS } from '@/lib/admin/system-settings';
-import {
-  saveSystemSettingsSchema,
-  updateSystemSettingsSchema,
-} from '@/lib/schemas/system-settings-form';
+import { saveSystemSettingsSchema } from '@/lib/schemas/system-settings-form';
 import type { SaveSystemSettingsInput, UpdateSystemSettingsInput } from '@/lib/schemas/system-settings-form';
 
 export async function saveSystemSettings(input: SaveSystemSettingsInput): Promise<ActionResult> {

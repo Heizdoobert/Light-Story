@@ -44,6 +44,7 @@ export type ComicCmsFormValues = z.infer<typeof ComicCmsFormSchema>;
 export const ComicChapterFormSchema = z.object({
   chapterNumber: z.number().min(1, "Chapter number must be at least 1"),
   title: z.string().optional().default(""),
+  scheduledAt: z.string().optional(),
 });
 export type ComicChapterFormValues = z.infer<typeof ComicChapterFormSchema>;
 

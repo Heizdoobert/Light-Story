@@ -91,8 +91,10 @@ export default function LoginModal({
         toast.success("Password reset email sent. Please check your inbox.");
         setMode("signin");
       }
-    } catch (err: any) {
-      toast.error(err?.message || "Authentication failed. Please check your credentials.");
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Authentication failed. Please check your credentials.";
+      toast.error(message || "Authentication failed. Please check your credentials.");
     } finally {
       setIsSubmitting(false);
     }

@@ -34,7 +34,7 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
     {
       id: "c1",
       userName: "Phan Hoài Nam",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Nam",
+      userAvatar: "",
       content: "Chương này thực sự bùng nổ! Nét vẽ càng ngày càng đẹp xuất sắc luôn ❤️",
       createdAt: "10 phút trước",
       likes: 18,
@@ -43,7 +43,7 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
     {
       id: "c2",
       userName: "Minh Anh",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=MinhAnh",
+      userAvatar: "",
       content: "Hóng chương tiếp theo quá ad ơi, cliffhanger đỉnh cao thực sự 🔥🔥",
       createdAt: "45 phút trước",
       likes: 9,
@@ -52,7 +52,7 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
     {
       id: "c3",
       userName: "Trần Bảo Long",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Long",
+      userAvatar: "",
       content: "Có ai nhận ra chi tiết ẩn ở trang 5 không? Đỉnh vãi!! 🤯",
       createdAt: "2 giờ trước",
       likes: 24,
@@ -87,7 +87,7 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
     const added: Comment = {
       id: `c-${Date.now()}`,
       userName: "Bạn (Bạn đọc)",
-      userAvatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser",
+      userAvatar: "",
       content: newComment.trim(),
       createdAt: "Vừa xong",
       likes: 0,
@@ -262,12 +262,18 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
             className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700"
           >
             <div className="flex items-start gap-3.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={comment.userAvatar}
-                alt={comment.userName}
-                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0"
-              />
+              {comment.userAvatar ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={comment.userAvatar}
+                  alt={comment.userName}
+                  className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#001eff] to-purple-600 dark:to-pink-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                  {comment.userName.trim().charAt(0).toUpperCase()}
+                </div>
+              )}
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">

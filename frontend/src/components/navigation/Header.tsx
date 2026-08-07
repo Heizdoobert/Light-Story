@@ -602,7 +602,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </div>
           <Link
-            href="/"
+            href={ROUTES.SEARCH}
             onClick={() => setShowCategoryDropdown(false)}
             className="px-3 py-1 bg-orange-50 dark:bg-[#000b13] text-orange-600 dark:text-[#ff008d] rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-[#001eff] dark:hover:text-white transition-colors"
           >

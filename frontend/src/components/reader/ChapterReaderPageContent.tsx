@@ -21,6 +21,7 @@ import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
 import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
+import { ROUTES } from "@/lib/constants/routes";
 
 export const ChapterReaderPageContent: React.FC = () => {
   const {
@@ -183,7 +184,7 @@ export const ChapterReaderPageContent: React.FC = () => {
         <div className="pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-3 py-2 sm:py-2.5 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-colors">
           <div className="max-w-[700px] mx-auto flex items-center justify-between gap-2">
             <Link
-              href="/"
+              href={ROUTES.HOME}
               className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
               title="Trang chủ"
             >

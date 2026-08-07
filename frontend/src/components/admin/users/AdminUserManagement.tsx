@@ -74,7 +74,7 @@ export const AdminUserManagement: React.FC = () => {
     try {
       await roleMutation.mutateAsync({ id: targetUser.id, role: newRole });
       resolveDbChangeToast(toastId, 'Role updated successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       rejectDbChangeToast(toastId, error);
     }
   };
@@ -101,7 +101,7 @@ export const AdminUserManagement: React.FC = () => {
       await nameMutation.mutateAsync({ id: targetUser.id, full_name: editingNameValue.trim() || null });
       resolveDbChangeToast(toastId, 'User profile updated successfully');
       cancelNameEdit();
-    } catch (error: any) {
+    } catch (error: unknown) {
       rejectDbChangeToast(toastId, error);
     } finally {
       setSavingNameId(null);
@@ -128,7 +128,7 @@ export const AdminUserManagement: React.FC = () => {
       const result = await deleteMutation.mutateAsync({ id: targetUser.id, email: targetUser.email });
       if (result?.error) throw result.error;
       resolveDbChangeToast(toastId, 'User deleted successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       rejectDbChangeToast(toastId, error);
     } finally {
       setDeletingUserId(null);
@@ -163,7 +163,7 @@ export const AdminUserManagement: React.FC = () => {
       setNewUserPassword('');
       setNewUserFullName('');
       setNewUserRole('user');
-    } catch (error: any) {
+    } catch (error: unknown) {
       rejectDbChangeToast(toastId, error);
     } finally {
       setCreatingUser(false);
@@ -260,7 +260,7 @@ export const AdminUserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {(profilesQuery.data ?? []).map((user: any) => (
+              {(profilesQuery.data ?? []).map((user: Profile) => (
                 <tr key={user.id} className="bg-white/40 dark:bg-slate-800/40 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors">
                   <td className="px-6 py-4 rounded-l-2xl">
                     {editingNameUserId === user.id ? (

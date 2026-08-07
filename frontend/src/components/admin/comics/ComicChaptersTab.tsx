@@ -436,8 +436,8 @@ export function ComicChaptersTab({
                   </div>
                   <input
                     type="datetime-local"
-                    value={(chapterValues as any).scheduledAt || ""}
-                    onChange={(event) => onChapterValuesChange({ ...chapterValues, scheduledAt: event.target.value } as any)}
+                    value={chapterValues.scheduledAt ?? ""}
+                    onChange={(event) => onChapterValuesChange({ ...chapterValues, scheduledAt: event.target.value })}
                     className="w-full rounded-2xl border border-cyan-300 dark:border-cyan-800 bg-cyan-50/40 dark:bg-cyan-950/20 px-4 py-3 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none"
                   />
                 </label>

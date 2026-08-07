@@ -41,7 +41,7 @@ export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId })
           >
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
               <img
-                src={proxiedR2ImageUrl((comic as any).coverUrl || (comic as any).cover_url || '') || 'https://placehold.co/300x400?text=No+Cover'}
+                src={proxiedR2ImageUrl(comic.coverUrl || '') || 'https://placehold.co/300x400?text=No+Cover'}
                 alt={comic.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />

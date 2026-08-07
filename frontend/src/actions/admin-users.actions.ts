@@ -17,7 +17,7 @@ export async function updateProfileRole(input: { id: string; role: string }): Pr
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
   } catch {
-    return { ok: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }
 
   return act(updateProfileRoleSchema, input, async ({ id, role }) => {

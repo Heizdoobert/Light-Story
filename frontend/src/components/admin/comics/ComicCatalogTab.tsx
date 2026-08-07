@@ -53,7 +53,7 @@ export function ComicCatalogTab({
       [...catalog]
         .filter((record) => {
           if (myComicsOnly && currentUserId) {
-            const isAssigned = (record as any).assignedTo === currentUserId || (record as any).created_by === currentUserId;
+            const isAssigned = record.assignedTo === currentUserId || record.created_by === currentUserId;
             if (!isAssigned) return false;
           }
           if (filters.search) {

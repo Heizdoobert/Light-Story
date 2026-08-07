@@ -6,12 +6,15 @@ import { motion, AnimatePresence } from "motion/react";
 import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
+import { ROUTES } from "@/lib/constants/routes";
+
+type SortOption = "newest" | "most_viewed" | "oldest";
 
 interface FilterMenuProps {
   onFilterChange?: (params: {
     keyword: string;
     category: string;
-    sort: "newest" | "most_viewed" | "oldest";
+    sort: SortOption;
   }) => void;
   onClose?: () => void;
 }
@@ -24,9 +27,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const { t } = useLanguage();
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
-  const [sort, setSort] = useState<"newest" | "most_viewed" | "oldest">(
-    "newest",
-  );
+  const [sort, setSort] = useState<SortOption>("newest");
   const [categories] = useState<Category[]>([]);
 
   // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
@@ -66,7 +67,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
       if (category !== "all") queryParams.append("category", category);
       queryParams.append("sort", sort);
 
-      router.push(`/search?${queryParams.toString()}`);
+      router.push(`${ROUTES.SEARCH}?${queryParams.toString()}`);
     }
     if (onClose) onClose();
   };
@@ -234,7 +235,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                   <div
                     key={option.value}
                     onClick={() => {
-                      setSort(option.value as any);
+                      setSort(option.value as SortOption);
                       setIsSortOpen(false);
                     }}
                     className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${sort === option.value ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}

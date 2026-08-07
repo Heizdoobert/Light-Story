@@ -60,7 +60,7 @@ export const ComicEditorTab: React.FC<ComicEditorTabProps> = ({
   }, [catalog, formValues.author]);
 
   const translatorOptions = React.useMemo(() => {
-    const fromCatalog = (catalog as any[]).map((c) => c.translator).filter(Boolean);
+    const fromCatalog = catalog.map((c) => c.translator).filter((c): c is string => Boolean(c));
     const fromSavedTranslators = loadTranslators().map((t) => t.name).filter(Boolean);
     const combined = Array.from(new Set([...fromCatalog, ...fromSavedTranslators]));
     if (formValues.translator && !combined.includes(formValues.translator)) {
