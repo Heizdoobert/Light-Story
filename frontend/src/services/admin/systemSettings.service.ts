@@ -9,6 +9,7 @@ import {
   type SidebarMenuVisibility,
 } from '@/lib/admin/system-settings';
 import { SiteSettingDto } from '@/types/dto';
+import { ROUTES } from '@/lib/constants/routes';
 import { apiClient } from '@/lib/api/apiClient';
 
 const SETTINGS_KEYS = [
@@ -42,7 +43,7 @@ export async function fetchSystemSettingsSnapshot(): Promise<{
   try {
     const keysParam = SETTINGS_KEYS.join(',');
     const rows = toRows(
-      await apiClient.get<SiteSettingDto[]>(`/api/admin/site-settings?keys=${encodeURIComponent(keysParam)}`).catch(() => null),
+      await apiClient.get<SiteSettingDto[]>(ROUTES.API.ADMIN.SITE_SETTINGS_KEYS(keysParam)).catch(() => null),
     );
     const map = new Map(rows.map((item) => [item.key, item.value]));
 

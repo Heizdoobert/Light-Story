@@ -202,15 +202,20 @@ describe('Phase P0 Edge Cases - http.ts (messageFromResponse & fetchApi)', () =>
       expect(headers.get('Content-Type')).toBeNull();
     });
 
-    it('uses localhost:4010 when NEXT_PUBLIC_API_MOCK is true', async () => {
-      process.env.NEXT_PUBLIC_API_MOCK = 'true';
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: { getSession: vi.fn().mockResolvedValue({ data: { session: null } }) },
-      } as any);
+    it('throws when no gateway URL is configured (mock fallback removed)', async () => {
+      const prev = process.env.NEXT_PUBLIC_GATEWAY_URL;
+      const prevProd = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
+      delete process.env.NEXT_PUBLIC_GATEWAY_URL;
+      delete process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
 
-      await fetchApi('/mock-route');
-      const [url] = vi.mocked(global.fetch).mock.calls[0];
-      expect(url).toBe('http://localhost:4010/mock-route');
+      try {
+        await expect(fetchApi('/route')).rejects.toThrow(
+          'NEXT_PUBLIC_GATEWAY_URL',
+        );
+      } finally {
+        if (prev !== undefined) process.env.NEXT_PUBLIC_GATEWAY_URL = prev;
+        if (prevProd !== undefined) process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION = prevProd;
+      }
     });
   });
 });

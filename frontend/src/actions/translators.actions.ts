@@ -5,6 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 
 const translatorSchema = z.object({
   name: z.string().min(1),
@@ -26,6 +27,11 @@ const translatorDeleteSchema = z.object({
 });
 
 export async function createTranslator(input: z.infer<typeof translatorSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(translatorSchema, input, async ({ name, contact, notes, status }) => {
     const res = await fetchApi('/api/admin/translators', {
       method: 'POST',
@@ -44,6 +50,11 @@ export async function addTranslator(input: z.infer<typeof translatorSchema>): Pr
 }
 
 export async function updateTranslator(input: z.infer<typeof translatorUpdateSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(translatorUpdateSchema, input, async ({ id, name, contact, notes, status }) => {
     const res = await fetchApi(`/api/admin/translators/${id}`, {
       method: 'PATCH',
@@ -58,6 +69,11 @@ export async function updateTranslator(input: z.infer<typeof translatorUpdateSch
 }
 
 export async function deleteTranslator(input: z.infer<typeof translatorDeleteSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(translatorDeleteSchema, input, async ({ id }) => {
     const res = await fetchApi(`/api/admin/translators/${id}`, {
       method: 'DELETE',

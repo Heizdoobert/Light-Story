@@ -5,6 +5,7 @@ import { Bell, CheckCheck, Trash2, Info, CheckCircle2, AlertTriangle } from 'luc
 import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useUser } from '@/lib/hooks/use-user';
+import { ROUTES } from '@/lib/constants/routes';
 import { apiClient } from '@/lib/api/apiClient';
 
 export type NotificationItem = {
@@ -40,7 +41,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({ role }) => {
 
       try {
         const res = await apiClient
-          .get<{ notifications?: NotificationItem[] }>(`/api/admin/notifications?limit=20`)
+          .get<{ notifications?: NotificationItem[] }>(ROUTES.API.ADMIN.NOTIFICATIONS)
           .catch(() => null);
         if (active && Array.isArray(res?.notifications)) {
           setNotifications(res.notifications);

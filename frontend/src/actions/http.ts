@@ -2,7 +2,6 @@ import { createClient } from '@/lib/api/server';
 
 // ponytail: mirrors apiClient getBaseUrl (apiClient is browser-only); keep in sync when env sources change
 const getBaseUrl = (): string => {
-  if (process.env.NEXT_PUBLIC_API_MOCK === 'true') return 'http://localhost:4010';
   const rawUrl =
     process.env.NODE_ENV === 'production'
       ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL

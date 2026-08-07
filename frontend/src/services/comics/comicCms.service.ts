@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api/apiClient";
+import { ROUTES } from "@/lib/constants/routes";
 import { supabase } from "@/lib/supabase/client";
 import type {
   ComicCmsFormValues,
@@ -105,7 +106,7 @@ export function loadComicRecord(id: string): ComicCmsRecord | null {
 
 export async function fetchComicCatalog(): Promise<ComicCmsRecord[]> {
   try {
-    const result = await apiClient.get<ComicDbRow[] | { items?: ComicDbRow[]; comics?: ComicDbRow[] }>("/api/admin/comics?pageSize=100");
+    const result = await apiClient.get<ComicDbRow[] | { items?: ComicDbRow[]; comics?: ComicDbRow[] }>(ROUTES.API.ADMIN.COMICS_PAGE(100));
     const rawList = Array.isArray(result) ? result : result?.items || result?.comics || [];
     const catalog: ComicCmsRecord[] = rawList.map(mapDbRowToRecord);
     if (catalog.length > 0) {
@@ -239,14 +240,14 @@ export function proxiedR2ImageUrl(url: string): string {
 
   if (!gateway) return url;
 
-  if (url.startsWith("/api/admin/r2/file/")) {
-    const key = url.replace("/api/admin/r2/file/", "");
-    return `${gateway}/api/media/${encodeURIComponent(key)}`;
+  if (url.startsWith(ROUTES.API.ADMIN.R2_FILE_PREFIX)) {
+    const key = url.slice(ROUTES.API.ADMIN.R2_FILE_PREFIX.length);
+    return `${gateway}${ROUTES.API.MEDIA_PREFIX}${encodeURIComponent(key)}`;
   }
 
-  if (url.startsWith("/api/media/")) {
-    const path = url.slice("/api/media/".length);
-    return `${gateway}/api/media/${encodeURIComponent(path)}`;
+  if (url.startsWith(ROUTES.API.MEDIA_PREFIX)) {
+    const path = url.slice(ROUTES.API.MEDIA_PREFIX.length);
+    return `${gateway}${ROUTES.API.MEDIA_PREFIX}${encodeURIComponent(path)}`;
   }
 
   let hostname = "";
@@ -254,10 +255,10 @@ export function proxiedR2ImageUrl(url: string): string {
     hostname = new URL(url).hostname.toLowerCase();
   } catch {
     if (url.startsWith("/")) {
-      return `${gateway}/api/media/${encodeURIComponent(url.slice(1))}`;
+      return `${gateway}${ROUTES.API.MEDIA_PREFIX}${encodeURIComponent(url.slice(1))}`;
     }
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      return `${gateway}/api/media/${encodeURIComponent(url)}`;
+      return `${gateway}${ROUTES.API.MEDIA_PREFIX}${encodeURIComponent(url)}`;
     }
     return url;
   }
@@ -267,7 +268,7 @@ export function proxiedR2ImageUrl(url: string): string {
     hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
 
   if (isR2Host || isCloudflareHost) {
-    return `${gateway}/api/admin/r2?url=${encodeURIComponent(url)}`;
+    return `${gateway}${ROUTES.API.ADMIN.R2_PROXY_QUERY(url)}`;
   }
   return url;
 }
@@ -285,7 +286,7 @@ export async function createComicFromMetadata(
   if (input.coverFile) {
     coverUrl = await uploadComicCover(input.coverFile);
   }
-  const result = await apiClient.post<ComicDbRow | ComicDbRow[]>("/api/admin/comics", {
+  const result = await apiClient.post<ComicDbRow | ComicDbRow[]>(ROUTES.API.ADMIN.COMICS, {
     title: input.title,
     author: input.author || "Unknown",
     description: input.description || "",
@@ -303,7 +304,7 @@ export async function createComicFromMetadata(
 export async function updateComicRecord(
   record: ComicCmsRecord,
 ): Promise<ComicCmsRecord> {
-  const result = await apiClient.patch<ComicDbRow | ComicDbRow[]>(`/api/admin/comics/${record.id}`, {
+  const result = await apiClient.patch<ComicDbRow | ComicDbRow[]>(ROUTES.API.ADMIN.COMIC(record.id), {
     title: record.title,
     author: record.author,
     description: record.description,
@@ -321,7 +322,7 @@ export async function updateComicRecord(
 }
 
 export async function deleteComic(id: string): Promise<void> {
-  await apiClient.delete(`/api/admin/comics/${id}`);
+  await apiClient.delete(ROUTES.API.ADMIN.COMIC(id));
   const catalog = readCatalog();
   writeCatalog(catalog.filter((r) => r.id !== id));
 }
@@ -330,7 +331,7 @@ export async function deleteComicChapter(
   comicId: string,
   chapterId: string,
 ): Promise<void> {
-  await apiClient.delete(`/api/admin/comics/${comicId}/chapters/${chapterId}`);
+  await apiClient.delete(ROUTES.API.ADMIN.COMIC_CHAPTER(comicId, chapterId));
   const catalog = readCatalog();
   const comicIndex = catalog.findIndex((r) => r.id === comicId);
   if (comicIndex !== -1) {
@@ -347,7 +348,7 @@ export async function recordComicAudit(
   entityId?: string,
 ): Promise<void> {
   try {
-    await apiClient.post("/api/admin/audit", {
+    await apiClient.post(ROUTES.API.ADMIN.AUDIT, {
       action,
       metadata,
       entity_type: entityType,
@@ -365,7 +366,7 @@ export async function createChapter(data: {
   chapter_number?: number;
   cover_url?: string;
 }): Promise<{ id: string }> {
-  const result = await apiClient.post<{ id: string } | { id: string }[]>("/api/admin/chapters", data);
+  const result = await apiClient.post<{ id: string } | { id: string }[]>(ROUTES.API.ADMIN.CHAPTERS, data);
   return Array.isArray(result) ? result[0] : result;
 }
 
@@ -373,7 +374,7 @@ export async function getPresignedPutUrls(
   chapterId: string,
   files: { name: string }[],
 ): Promise<{ key: string; uploadUrl: string; publicUrl: string }[]> {
-  const res = await apiClient.post<{ urls: { key: string; uploadUrl: string; publicUrl: string }[] }>("/api/admin/r2/presigned-urls", {
+  const res = await apiClient.post<{ urls: { key: string; uploadUrl: string; publicUrl: string }[] }>(ROUTES.API.ADMIN.R2_PRESIGNED_URLS, {
     chapterId,
     files,
   });
@@ -400,7 +401,7 @@ export async function updateChapterImages(
   chapterId: string,
   content: { src: string; alt?: string; caption?: string }[],
 ): Promise<void> {
-  await apiClient.put(`/api/admin/chapters/${chapterId}/images`, { content });
+  await apiClient.put(ROUTES.API.ADMIN.CHAPTER_IMAGES(chapterId), { content });
 }
 
 export async function createComicChapterFromFiles(

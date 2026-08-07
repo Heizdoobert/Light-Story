@@ -7,6 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/lib/hooks/use-user";
 import { ROUTES } from "@/lib/constants/routes";
+import { useReadingHistory } from "@/hooks/features/useReadingHistory";
+import { fetchStoryById, fetchStoriesPage } from "@/services/comics/story.service";
+import { Story } from "@/types/entities";
 
 interface RecommendedItem {
   id: string;
@@ -18,38 +21,73 @@ interface ReadingItem {
   id: string;
   title: string;
   currentChapter: number;
-  totalChapters: number;
   progressPct: number;
 }
 
 export default function UserDashboardPage() {
   const { user } = useUser();
+  const { history, isLoading: isHistoryLoading } = useReadingHistory();
   const [readingList, setReadingList] = useState<ReadingItem[]>([]);
   const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
 
   useEffect(() => {
-    setReadingList([
-      {
-        id: "1",
-        title: "Võ Luyện Đỉnh Phong",
-        currentChapter: 320,
-        totalChapters: 3500,
-        progressPct: 40,
-      },
-      {
-        id: "2",
-        title: "Đấu La Đại Lục",
-        currentChapter: 150,
-        totalChapters: 420,
-        progressPct: 75,
-      },
-    ]);
-    setRecommended([
-      { id: "3", title: "Toàn Trí Độc Giả", latestChapter: 180 },
-      { id: "4", title: "Thần Sùng Thế Giới", latestChapter: 95 },
-    ]);
-    setIsLoading(false);
+    let cancelled = false;
+    const load = async () => {
+      try {
+        if (!history?.length) {
+          if (!cancelled) setReadingList([]);
+          return;
+        }
+        const comicIds = [...new Set(history.map((h) => h.comicId))];
+        const details = await Promise.all(
+          comicIds.map((id) => fetchStoryById(id).catch(() => null)),
+        );
+        if (cancelled) return;
+        const merged = details
+          .filter((d): d is Story => Boolean(d))
+          .map((d) => {
+            const h = history.find((item) => item.comicId === d.id);
+            return {
+              id: d.id,
+              title: d.title,
+              currentChapter: h?.chapterNumber ?? 0,
+              progressPct: 0,
+            };
+          })
+          .slice(0, 8);
+        setReadingList(merged);
+      } catch {
+        /* silent */
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [history]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { items } = await fetchStoriesPage({ page: 1, pageSize: 6, sort: "most_viewed" });
+        if (cancelled) return;
+        const mapped: RecommendedItem[] = items.map((c) => ({
+          id: c.id,
+          title: c.title,
+        }));
+        setRecommended(mapped);
+      } catch {
+        /* silent */
+      } finally {
+        if (!cancelled) setRecommendedLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -68,7 +106,7 @@ export default function UserDashboardPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
           Truyện Đang Đọc Dở
         </h2>
-        {isLoading ? (
+        {isHistoryLoading ? (
           <Skeleton className="h-32 w-full rounded-2xl" />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -94,7 +132,7 @@ export default function UserDashboardPage() {
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
           Đề Xuất Cho Bạn
         </h2>
-        {isLoading ? (
+        {recommendedLoading ? (
           <Skeleton className="h-48 w-full rounded-2xl" />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

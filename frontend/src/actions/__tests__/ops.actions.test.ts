@@ -31,6 +31,10 @@ describe('ops.actions server actions', () => {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'token-123' } },
           }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
+          }),
         },
       } as any);
 
@@ -55,6 +59,10 @@ describe('ops.actions server actions', () => {
         auth: {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'token-123' } },
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
           }),
         },
       } as any);
@@ -84,6 +92,10 @@ describe('ops.actions server actions', () => {
           getSession: vi.fn().mockResolvedValue({
             data: { session: null },
           }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
+          }),
         },
       } as any);
 
@@ -106,6 +118,10 @@ describe('ops.actions server actions', () => {
         auth: {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'token-123' } },
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
           }),
         },
       } as any);
@@ -131,6 +147,10 @@ describe('ops.actions server actions', () => {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'token-123' } },
           }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
+          }),
         },
       } as any);
 
@@ -153,6 +173,10 @@ describe('ops.actions server actions', () => {
         auth: {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'token-123' } },
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
           }),
         },
       } as any);

@@ -26,25 +26,16 @@ type TranslatorApiRow = {
   created_at?: string | null;
 };
 
-const DEFAULT_TRANSLATORS: TranslatorRecord[] = [
-  { id: "trans-1", name: "Dịch Giả Thập Nhất", contact: "thapnhat@lightstory.app", notes: "Chuyên dịch Manga Action", status: "active", createdAt: "2026-01-15" },
-  { id: "trans-2", name: "Phong Vân Team", contact: "phongvan@lightstory.app", notes: "Nhóm dịch Manhua Tu Tiên", status: "active", createdAt: "2026-02-01" },
-  { id: "trans-3", name: "Solo Subber", contact: "solosub@lightstory.app", notes: "Chuyên dịch Manhwa Romance", status: "active", createdAt: "2026-03-10" },
-];
-
 const TRANSLATOR_STORAGE_KEY = "comic-cms:translators";
 
 export function loadTranslators(): TranslatorRecord[] {
-  if (typeof window === "undefined") return DEFAULT_TRANSLATORS;
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(TRANSLATOR_STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(TRANSLATOR_STORAGE_KEY, JSON.stringify(DEFAULT_TRANSLATORS));
-      return DEFAULT_TRANSLATORS;
-    }
+    if (!raw) return [];
     return JSON.parse(raw) as TranslatorRecord[];
   } catch {
-    return DEFAULT_TRANSLATORS;
+    return [];
   }
 }
 

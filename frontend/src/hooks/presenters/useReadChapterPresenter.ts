@@ -17,48 +17,6 @@ import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { supabase } from "@/lib/supabase/client";
 
-const USE_MOCK_DATA = false;
-
-const MOCK_COMIC: Comic = {
-  id: "comic-123",
-  tenantKey: "tenant-1",
-  storyId: "story-1",
-  slug: "solo-leveling",
-  description: "Mock description",
-  category: ["Hành động", "Fantasy"],
-  title: "Solo Leveling - Thăng Cấp Một Mình",
-  author: "Chu-Gong",
-  coverUrl: "https://placehold.co/400x600/png?text=Solo+Leveling",
-  status: "ongoing",
-  viewCount: 150000,
-};
-
-const MOCK_CHAPTERS: Chapter[] = [
-  {
-    id: "chap-1",
-    story_id: "comic-123",
-    chapter_number: 1,
-    title: "Sự khởi đầu",
-    content: "",
-    status: "published",
-    created_at: "2026-06-01T10:00:00Z",
-  },
-  {
-    id: "chap-2",
-    story_id: "comic-123",
-    chapter_number: 2,
-    title: "Hầm ngục kép",
-    content: "",
-    status: "published",
-    created_at: "2026-06-08T10:00:00Z",
-  },
-];
-
-const MOCK_IMAGES = [
-  "https://placehold.co/800x1200/222/FFF/png?text=Trang+Truyện+1",
-  "https://placehold.co/800x1200/333/FFF/png?text=Trang+Truyện+2",
-];
-
 export function useReadChapterPresenter() {
   const params = useParams();
   const router = useRouter();
@@ -149,17 +107,6 @@ export function useReadChapterPresenter() {
   useEffect(() => {
     const fetchReadingData = async () => {
       try {
-        if (USE_MOCK_DATA) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          setComic(MOCK_COMIC);
-          setAllChapters(MOCK_CHAPTERS);
-          const foundChap =
-            MOCK_CHAPTERS.find((c) => c.id === chapterId) || MOCK_CHAPTERS[0];
-          setCurrentChapter(foundChap);
-          setImages(MOCK_IMAGES);
-          return;
-        }
-
         const [comicData, chaptersData] = await Promise.all([
           fetchStoryById(comicId).catch(() => null),
           fetchChaptersByStoryId(comicId).catch(() => []),
@@ -354,7 +301,7 @@ export function useReadChapterPresenter() {
   };
 
   const foundIdx = allChapters.findIndex(
-    (c) => c.id === (USE_MOCK_DATA ? currentChapter?.id : chapterId),
+    (c) => c.id === chapterId,
   );
   const currentIndex = foundIdx >= 0 ? foundIdx : 0;
   const prevChapter = currentIndex > 0 ? allChapters[currentIndex - 1] : null;

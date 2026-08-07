@@ -38,10 +38,63 @@ export const ROUTES = {
   API: {
     HEALTH: "/api/health",
     ANALYTICS: "/api/analytics",
+    ANALYTICS_INFRASTRUCTURE: "/api/analytics/infrastructure",
     AVATAR: "/api/avatar",
     CATEGORIES: "/api/categories",
     R2_PROXY: "/api/r2/proxy",
     R2_UPLOAD: "/api/r2/upload",
     WEBHOOKS_SUPABASE: "/api/webhooks/supabase",
+    COMICS: "/api/comics",
+    COMIC: (id: string) => `/api/comics/${id}`,
+    COMIC_CHAPTERS: (comicId: string) => `/api/comics/${comicId}/chapters`,
+    COMICS_RECOMMENDATIONS: (comicId: string, limit: number) =>
+      `/api/comics/recommendations?comicId=${encodeURIComponent(comicId)}&limit=${limit}`,
+    COMICS_MOST_VIEWED: (limit: number) =>
+      `/api/comics?sort=most_viewed&limit=${limit}`,
+    STORIES: "/api/stories",
+    STORY: (id: string) => `/api/stories/${id}`,
+    STORIES_VIEWS: "/api/stories/views",
+    STORIES_PAGE: (queryString: string) => `/api/stories?${queryString}`,
+    CHAPTERS: "/api/chapters",
+    CHAPTER_BY_ID: (id: string) => `/api/chapters?id=${encodeURIComponent(id)}`,
+    CHAPTERS_BY_STORY: (storyId: string) =>
+      `/api/chapters?storyId=${encodeURIComponent(storyId)}`,
+    SUPABASE_RPC: (name: string) => `/api/supabase/rest/v1/rpc/${name}`,
+    MEDIA_PREFIX: "/api/media/",
+    USER: {
+      BOOKMARKS: "/api/user/bookmarks",
+      BOOKMARKS_TOGGLE: "/api/user/bookmarks/toggle",
+      HISTORY: "/api/user/history",
+    },
+    ADMIN: {
+      COMICS: "/api/admin/comics",
+      COMICS_PAGE: (pageSize: number) => `/api/admin/comics?pageSize=${pageSize}`,
+      COMIC: (id: string) => `/api/admin/comics/${id}`,
+      COMIC_CHAPTER: (comicId: string, chapterId: string) =>
+        `/api/admin/comics/${comicId}/chapters/${chapterId}`,
+      CHAPTERS: "/api/admin/chapters",
+      CHAPTER_IMAGES: (chapterId: string) =>
+        `/api/admin/chapters/${chapterId}/images`,
+      AUDIT: "/api/admin/audit",
+      AUDIT_LOGS: (limit: number) => `/api/admin/audit?limit=${limit}`,
+      TAXONOMY: (entity: string) => `/api/admin/taxonomy?entity=${entity}`,
+      TRANSLATORS: "/api/admin/translators",
+      SITE_SETTINGS: "/api/admin/site-settings",
+      SITE_SETTINGS_KEYS: (keys: string) =>
+        `/api/admin/site-settings?keys=${encodeURIComponent(keys)}`,
+      R2_PRESIGNED_URLS: "/api/admin/r2/presigned-urls",
+      R2_UPLOAD_GATEWAY: "/api/admin/r2/upload",
+      R2_FILE_PREFIX: "/api/admin/r2/file/",
+      R2_PROXY_QUERY: (url: string) =>
+        `/api/admin/r2?url=${encodeURIComponent(url)}`,
+      STORIES_FIELD_VALUES: (field: string) =>
+        `/api/admin/stories/field-values?field=${encodeURIComponent(field)}`,
+      SITE_METRICS: (type: string) => `/api/admin/site-metrics?type=${type}`,
+      ROLE_DISTRIBUTION: "/api/admin/role-distribution",
+      PROFILES: "/api/admin/profiles?page=1&pageSize=500",
+      PROFILES_BY_IDS: (ids: string) =>
+        `/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids)}`,
+      NOTIFICATIONS: "/api/admin/notifications?limit=20",
+    },
   },
 } as const;

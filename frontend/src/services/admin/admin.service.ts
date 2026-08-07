@@ -1,12 +1,13 @@
+import { ROUTES } from '@/lib/constants/routes';
 import { apiClient } from '@/lib/api/apiClient';
 
 export async function getStoriesFieldValues(field: 'category' | 'author_id') {
-  return apiClient.get<Array<Record<string, string | null>>>(`/api/admin/stories/field-values?field=${encodeURIComponent(field)}`);
+  return apiClient.get<Array<Record<string, string | null>>>(ROUTES.API.ADMIN.STORIES_FIELD_VALUES(field));
 }
 
 export async function getProfileCount() {
   try {
-    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=profiles');
+    const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('profiles'));
     return Number(res?.count ?? 0);
   } catch {
     return 0;
@@ -15,7 +16,7 @@ export async function getProfileCount() {
 
 export async function getChapterCount() {
   try {
-    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=chapters');
+    const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('chapters'));
     return Number(res?.count ?? 0);
   } catch {
     return 0;
@@ -24,7 +25,7 @@ export async function getChapterCount() {
 
 export async function getAdSettingsCount() {
   try {
-    const res = await apiClient.get<{ count?: number }>('/api/admin/site-metrics?type=site-settings');
+    const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('site-settings'));
     return Number(res?.count ?? 0);
   } catch {
     return 0;
@@ -33,7 +34,7 @@ export async function getAdSettingsCount() {
 
 export async function getRoleDistribution() {
   try {
-    const res = await apiClient.get<Array<{ role: string; total: number }>>('/api/admin/role-distribution');
+    const res = await apiClient.get<Array<{ role: string; total: number }>>(ROUTES.API.ADMIN.ROLE_DISTRIBUTION);
     return Array.isArray(res) ? res : [];
   } catch {
     return [];
@@ -41,14 +42,14 @@ export async function getRoleDistribution() {
 }
 
 export async function fetchProfiles() {
-  return apiClient.get<Array<any>>('/api/admin/profiles?page=1&pageSize=500');
+  return apiClient.get<Array<any>>(ROUTES.API.ADMIN.PROFILES);
 }
 
 export async function getAuditLogs(limit = 200) {
-  return apiClient.get<Array<any>>(`/api/admin/audit?limit=${limit}`);
+  return apiClient.get<Array<any>>(ROUTES.API.ADMIN.AUDIT_LOGS(limit));
 }
 
 export async function getProfilesByIds(ids: string[]) {
   if (ids.length === 0) return [] as Array<any>;
-  return apiClient.get<Array<any>>(`/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids.join(','))}`);
+  return apiClient.get<Array<any>>(ROUTES.API.ADMIN.PROFILES_BY_IDS(ids.join(',')));
 }

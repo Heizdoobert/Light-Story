@@ -1,5 +1,6 @@
 import { Story } from '@/types/entities';
 import { apiClient } from '@/lib/api/apiClient';
+import { ROUTES } from '@/lib/constants/routes';
 import { supabase } from '@/lib/supabase/client';
 
 type StoryStatus = Story['status'];
@@ -22,7 +23,7 @@ type StoryListResponse = Story[] | { items: Story[] };
 
 export async function fetchStories(): Promise<Story[]> {
   try {
-    const result = await apiClient.get<StoryListResponse>('/api/stories');
+    const result = await apiClient.get<StoryListResponse>(ROUTES.API.STORIES);
     if (result) {
       const list = Array.isArray(result) ? result : result.items;
       if (Array.isArray(list) && list.length > 0) return list;
@@ -46,7 +47,7 @@ export async function fetchStories(): Promise<Story[]> {
 
 export async function fetchStoryById(id: string): Promise<Story | null> {
   try {
-    const result = await apiClient.get<Story>(`/api/stories/${id}`);
+    const result = await apiClient.get<Story>(ROUTES.API.STORY(id));
     if (result) return result;
   } catch (err) {
     console.warn(`[story.service] fetchStoryById ${id} via apiClient failed, trying Supabase fallback`, err);
@@ -67,7 +68,7 @@ export async function fetchStoryById(id: string): Promise<Story | null> {
 
 export async function incrementViews(storyId: string): Promise<void> {
   try {
-    await apiClient.post('/api/stories/views', { storyId });
+    await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
   } catch (err) {
     if (supabase) {
       try {
@@ -87,7 +88,7 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
     if (params.status && params.status !== 'all') searchParams.set('status', params.status);
     if (params.sort) searchParams.set('sort', params.sort);
 
-    const result = await apiClient.get<any>(`/api/stories?${searchParams.toString()}`);
+    const result = await apiClient.get<any>(ROUTES.API.STORIES_PAGE(searchParams.toString()));
     if (result) {
       const items = Array.isArray(result) ? result : (result.items ?? []);
       const total = result.total ?? items.length;

@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { updateAdConfig, updateSiteSetting, updateAdSlot, toggleAdSlot } from '../ads.actions';
 import * as httpModule from '../http';
 import * as nextCache from 'next/cache';
+import * as serverApi from '@/lib/api/server';
+
+vi.mock('@/lib/api/server', () => ({
+  createClient: vi.fn(),
+}));
 
 vi.mock('../http', () => ({
   fetchApi: vi.fn(),
@@ -22,6 +27,14 @@ vi.mock('next/cache', () => ({
 describe('ads.actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(serverApi.createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+          error: null,
+        }),
+      },
+    } as any);
   });
 
   describe('updateAdConfig', () => {
@@ -37,6 +50,23 @@ describe('ads.actions', () => {
       });
       expect(nextCache.revalidateTag).toHaveBeenCalledWith('site_settings', 'max');
       expect(nextCache.revalidateTag).toHaveBeenCalledWith('ad_slots', 'max');
+    });
+
+    it('returns forbidden error when user lacks admin role', async () => {
+      vi.mocked(serverApi.createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'user' } } },
+            error: null,
+          }),
+        },
+      } as any);
+
+      const res = await updateAdConfig({ key: 'public_ads_enabled', value: true });
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('Bạn không có quyền thực hiện thao tác này');
+      expect(httpModule.fetchApi).not.toHaveBeenCalled();
+      expect(nextCache.revalidateTag).not.toHaveBeenCalled();
     });
 
     it('returns error when input key is empty', async () => {

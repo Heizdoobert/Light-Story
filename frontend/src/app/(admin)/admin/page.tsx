@@ -1,28 +1,10 @@
-'use client';
+import { redirect } from "next/navigation";
+import { ROUTES } from "@/lib/constants/routes";
 
-import dynamic from 'next/dynamic';
-import { Suspense } from 'react';
-import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
-import { LoadingScreen } from '@/components/shared/ui/LoadingScreen';
-
-// Lazy-load admin dashboard to prevent bloating client bundle
-// Non-admin users won't download this code
-const AdminDashboard = dynamic(
-  () => import('@/components/admin/dashboard/AdminDashboard'),
-  {
-    loading: () => <LoadingScreen />,
-    ssr: false, // Don't render on server; admin is client-only
-  }
-);
-
+// Redirect /admin → /admin/dashboard.
+// (admin)/layout.tsx already renders the AdminSidebar shell for every admin page,
+// so mounting the legacy tabbed AdminDashboard here would nest the old dashboard
+// inside the new shell (duplicate sidebar + topbar).
 export default function AdminPage() {
-  return (
-    <RoleProtectedRoute allowedRoles={['superadmin', 'admin', 'employee']}>
-      <Suspense
-        fallback={<LoadingScreen />}
-      >
-        <AdminDashboard />
-      </Suspense>
-    </RoleProtectedRoute>
-  );
+  redirect(ROUTES.ADMIN.DASHBOARD);
 }

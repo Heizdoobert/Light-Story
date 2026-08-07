@@ -5,6 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 
 const taxonomyItemSchema = z.object({
   name: z.string().min(1),
@@ -34,6 +35,11 @@ const authorUpdateSchema = z.object({
 
 // Category actions
 export async function createCategory(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyItemSchema, input, async ({ name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -48,6 +54,11 @@ export async function createCategory(input: z.infer<typeof taxonomyItemSchema>):
 }
 
 export async function updateCategory(input: z.infer<typeof taxonomyUpdateSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyUpdateSchema, input, async ({ id, name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -62,6 +73,11 @@ export async function updateCategory(input: z.infer<typeof taxonomyUpdateSchema>
 }
 
 export async function deleteCategory(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyDeleteSchema, input, async ({ id }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -77,6 +93,11 @@ export async function deleteCategory(input: z.infer<typeof taxonomyDeleteSchema>
 
 // Author actions
 export async function createAuthor(input: z.infer<typeof authorItemSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(authorItemSchema, input, async ({ name, bio }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -91,6 +112,11 @@ export async function createAuthor(input: z.infer<typeof authorItemSchema>): Pro
 }
 
 export async function updateAuthor(input: z.infer<typeof authorUpdateSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(authorUpdateSchema, input, async ({ id, name, bio }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -105,6 +131,11 @@ export async function updateAuthor(input: z.infer<typeof authorUpdateSchema>): P
 }
 
 export async function deleteAuthor(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyDeleteSchema, input, async ({ id }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -120,6 +151,11 @@ export async function deleteAuthor(input: z.infer<typeof taxonomyDeleteSchema>):
 
 // Genre actions
 export async function createGenre(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyItemSchema, input, async ({ name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -134,6 +170,11 @@ export async function createGenre(input: z.infer<typeof taxonomyItemSchema>): Pr
 }
 
 export async function updateGenre(input: z.infer<typeof taxonomyUpdateSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyUpdateSchema, input, async ({ id, name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -148,6 +189,11 @@ export async function updateGenre(input: z.infer<typeof taxonomyUpdateSchema>): 
 }
 
 export async function deleteGenre(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyDeleteSchema, input, async ({ id }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -163,6 +209,11 @@ export async function deleteGenre(input: z.infer<typeof taxonomyDeleteSchema>): 
 
 // Tag actions
 export async function createTag(input: z.infer<typeof taxonomyItemSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyItemSchema, input, async ({ name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -177,6 +228,11 @@ export async function createTag(input: z.infer<typeof taxonomyItemSchema>): Prom
 }
 
 export async function updateTag(input: z.infer<typeof taxonomyUpdateSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyUpdateSchema, input, async ({ id, name, description }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
@@ -191,6 +247,11 @@ export async function updateTag(input: z.infer<typeof taxonomyUpdateSchema>): Pr
 }
 
 export async function deleteTag(input: z.infer<typeof taxonomyDeleteSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(taxonomyDeleteSchema, input, async ({ id }) => {
     const res = await fetchApi('/api/admin/taxonomy', {
       method: 'POST',
