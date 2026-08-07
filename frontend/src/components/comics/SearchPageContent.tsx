@@ -8,6 +8,7 @@ import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
 import { getStatusStyles } from "@/lib/utils/status-styles";
+import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
 
 export const SearchPageContent: React.FC = () => {
@@ -134,7 +135,7 @@ export const SearchPageContent: React.FC = () => {
               Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.
             </p>
             <Link
-              href="/search"
+              href={ROUTES.SEARCH}
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 hover:opacity-90 transition-opacity"
             >
               Đặt lại bộ lọc

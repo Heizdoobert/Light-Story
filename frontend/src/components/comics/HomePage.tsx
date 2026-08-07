@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useHomePagePresenter } from "@/hooks/presenters/useHomePagePresenter";
+import { ROUTES } from "@/lib/constants/routes";
 
 type HomePageProps = {
   initialComics?: Comic[];
@@ -187,7 +188,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
 
             <div className="flex justify-center pt-2">
               <Link
-                href="/search"
+                href={ROUTES.SEARCH}
                 className="px-6 py-2.5 bg-[#001eff] hover:bg-[#8900ff] text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors shadow-sm"
               >
                 {t("view_all_comics")}
