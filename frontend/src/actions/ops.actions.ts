@@ -5,6 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import {
   setMaintenanceModeSchema,
   clearCacheSchema,
@@ -14,6 +15,11 @@ import {
 export async function setMaintenanceMode(
   input: unknown,
 ): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(setMaintenanceModeSchema, input, async ({ enabled }) => {
     const res = await fetchApi('/api/admin/site-settings', {
       method: 'POST',
@@ -36,6 +42,11 @@ export async function maintenanceMode(
 export async function clearCache(
   input: z.infer<typeof clearCacheSchema> = {},
 ): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(clearCacheSchema, input ?? {}, async (parsed) => {
     const target = parsed?.target ?? 'all';
     const res = await fetchApi('/api/admin/operations', {
@@ -53,6 +64,11 @@ export async function clearCache(
 export async function triggerBackup(
   input: z.infer<typeof triggerBackupSchema> = {},
 ): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(triggerBackupSchema, input ?? {}, async (parsed) => {
     const type = parsed?.type ?? 'full';
     const res = await fetchApi('/api/admin/operations', {

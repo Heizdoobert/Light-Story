@@ -4,9 +4,15 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { createStorySchema } from '@/lib/schemas/story-form';
 
 export async function createStory(input: unknown): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(createStorySchema, input, async (story) => {
     const res = await fetchApi('/api/admin/manage-story', {
       method: 'POST',

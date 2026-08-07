@@ -49,6 +49,10 @@ describe('system-settings.actions server actions', () => {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'valid-token' } },
           }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
+          }),
         },
       } as any);
 
@@ -93,6 +97,10 @@ describe('system-settings.actions server actions', () => {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'valid-token' } },
           }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
+          }),
         },
       } as any);
 
@@ -107,6 +115,25 @@ describe('system-settings.actions server actions', () => {
       expect(res.error).toBe('Permission denied');
       expect(revalidateTag).not.toHaveBeenCalled();
     });
+    it('returns forbidden error when user lacks admin role', async () => {
+      vi.mocked(serverApi.createClient).mockResolvedValue({
+        auth: {
+          getSession: vi.fn().mockResolvedValue({
+            data: { session: { access_token: 'valid-token' } },
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'user' } } },
+            error: null,
+          }),
+        },
+      } as any);
+
+      const res = await saveSystemSettings(validPayload);
+
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('Bạn không có quyền thực hiện thao tác này');
+      expect(revalidateTag).not.toHaveBeenCalled();
+    });
   });
 
   describe('updateSystemSettings', () => {
@@ -115,6 +142,10 @@ describe('system-settings.actions server actions', () => {
         auth: {
           getSession: vi.fn().mockResolvedValue({
             data: { session: { access_token: 'valid-token' } },
+          }),
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+            error: null,
           }),
         },
       } as any);

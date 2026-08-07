@@ -10,6 +10,11 @@ import {
 } from '../admin-stories.actions';
 import * as httpModule from '../http';
 import * as nextCache from 'next/cache';
+import * as serverApi from '@/lib/api/server';
+
+vi.mock('@/lib/api/server', () => ({
+  createClient: vi.fn(),
+}));
 
 vi.mock('../http', () => ({
   fetchApi: vi.fn(),
@@ -30,6 +35,14 @@ vi.mock('next/cache', () => ({
 describe('admin-stories.actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(serverApi.createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+          error: null,
+        }),
+      },
+    } as any);
   });
 
   describe('updateStoryStatus', () => {
@@ -177,6 +190,23 @@ describe('admin-stories.actions', () => {
   });
 
   describe('bulkDeleteStories', () => {
+    it('returns forbidden error when user lacks admin role', async () => {
+      vi.mocked(serverApi.createClient).mockResolvedValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({
+            data: { user: { id: 'user-1', app_metadata: { role: 'user' } } },
+            error: null,
+          }),
+        },
+      } as any);
+
+      const result = await updateStoryStatus({ id: 'story-1', status: 'published' });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Bạn không có quyền thực hiện thao tác này');
+      expect(httpModule.fetchApi).not.toHaveBeenCalled();
+      expect(nextCache.revalidateTag).not.toHaveBeenCalled();
+    });
+
     it('bulk deletes stories successfully', async () => {
       const mockRes = new Response(JSON.stringify({ success: true }), { status: 200 });
       vi.mocked(httpModule.fetchApi).mockResolvedValue(mockRes as any);

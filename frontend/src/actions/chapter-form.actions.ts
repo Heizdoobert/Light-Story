@@ -4,10 +4,16 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { createChapterSchema } from '@/lib/schemas/chapter-form';
 import type { CreateChapterInput } from '@/lib/schemas/chapter-form';
 
 export async function createChapter(input: CreateChapterInput): Promise<ActionResult> {
+  try {
+    await requireActionRole(ACTION_ADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(createChapterSchema, input, async (chapter) => {
     const res = await fetchApi('/api/admin/manage-chapter', {
       method: 'POST',

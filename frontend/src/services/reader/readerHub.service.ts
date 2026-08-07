@@ -1,3 +1,4 @@
+import { ROUTES } from '@/lib/constants/routes';
 import { apiClient } from '@/lib/api/apiClient';
 import { getAccessToken } from '../comics/comic.service';
 import { BookmarkListSchema, HistoryItemListSchema } from '@/types/readerHub.dto';
@@ -46,7 +47,7 @@ export async function getBookmarks(): Promise<string[]> {
   try {
     const token = await getAccessToken();
     if (token) {
-      const res = await apiClient.get<unknown[]>('/api/user/bookmarks');
+      const res = await apiClient.get<unknown[]>(ROUTES.API.USER.BOOKMARKS);
       const parsed = BookmarkListSchema.safeParse(Array.isArray(res) ? res : []);
       if (parsed.success) {
         return parsed.data.map((item) => item.comic_id || item.comicId || '');
@@ -68,7 +69,7 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
   try {
     const token = await getAccessToken();
     if (token) {
-      await apiClient.post<unknown>('/api/user/bookmarks/toggle', { comicId });
+      await apiClient.post<unknown>(ROUTES.API.USER.BOOKMARKS_TOGGLE, { comicId });
     }
   } catch {}
 
@@ -81,7 +82,7 @@ export async function getReadingHistory(): Promise<HistoryItem[]> {
   try {
     const token = await getAccessToken();
     if (token) {
-      const res = await apiClient.get<unknown[]>('/api/user/history');
+      const res = await apiClient.get<unknown[]>(ROUTES.API.USER.HISTORY);
       const parsed = HistoryItemListSchema.safeParse(Array.isArray(res) ? res : []);
       if (parsed.success) {
         return parsed.data.map((item) => ({
