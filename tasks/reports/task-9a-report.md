@@ -30,7 +30,7 @@ Wiring:
 - `npm run build` — passed (all routes compiled, output shown to end).
 - `npm run test:run` — 45 files / 385 tests passed.
 - `npm run lint` — "Lint ok" (no-op script).
-- Commit: `9a1a51f` (message: `fix(app): shared zod auth schema, drop duplicate comic metadata`)
+- Commit: `bf08310` (message: `fix(app): shared zod auth schema, drop duplicate comic metadata`)
 
 ## Concerns
 
