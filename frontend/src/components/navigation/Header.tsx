@@ -26,8 +26,8 @@ import { useTheme } from "@/context/ThemeContext";
 import { NotificationBell } from "@/components/ui/notification-bell";
 import { toast } from "sonner";
 import { apiClient } from "@/lib/api/apiClient";
-import { Category } from "@/types/entities";
-import { ComicContext as Comic } from "@/services/comics/comic.service";
+import { Category, Story } from "@/types/entities";
+import { fetchStoriesPage } from "@/services/comics/story.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { ROUTES } from "@/lib/constants/routes";
@@ -51,7 +51,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { theme, toggleTheme } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [searchResults, setSearchResults] = useState<Comic[]>([]);
+  const [searchResults, setSearchResults] = useState<Story[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -61,8 +61,8 @@ export const Header: React.FC<HeaderProps> = ({
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const getComicCover = (comic: Comic) => {
-    const raw = comic.coverUrl || "";
+  const getComicCover = (comic: Story) => {
+    const raw = comic.cover_url || "";
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   };
@@ -89,9 +89,8 @@ export const Header: React.FC<HeaderProps> = ({
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await apiClient.get<any>(`/api/comics?keyword=${encodeURIComponent(trimmed)}&limit=6`).catch(() => null);
-        const items = Array.isArray(res) ? res : res?.items || res?.comics || res?.data || [];
-        setSearchResults(items);
+        const res = await fetchStoriesPage({ keyword: trimmed, page: 1, pageSize: 6, sort: 'newest' }).catch(() => null);
+        setSearchResults(res?.items ?? []);
         setShowResults(true);
       } catch {
         setSearchResults([]);

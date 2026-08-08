@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getBucketForFolder, getObject } from '@/lib/r2/s3';
 
 const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
+// ponytail: 50MB in-memory ceiling on the buffered object; stream via GetObject/response.Body when larger objects are needed
+const MAX_OBJECT_SIZE = 50 * 1024 * 1024;
 
 function guessContentType(key: string): string {
   const ext = key.split('.').pop()?.toLowerCase() ?? '';
@@ -51,6 +53,9 @@ export async function GET(request: Request) {
     const { body, contentType } = await getObject(bucket, key);
     if (!body) {
       return NextResponse.json({ error: 'Object not found' }, { status: 404 });
+    }
+    if (body.byteLength > MAX_OBJECT_SIZE) {
+      return NextResponse.json({ error: 'Object exceeds size limit' }, { status: 413 });
     }
 
     return new NextResponse(Buffer.from(body), {
