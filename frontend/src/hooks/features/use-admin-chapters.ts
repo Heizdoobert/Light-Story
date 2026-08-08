@@ -130,11 +130,11 @@ export function useAdminChapters(initialComicId: string = "all") {
     }
   };
 
-  const handleDeleteChapter = async (id: string, chNum: number) => {
+  const handleDeleteChapter = async (id: string, chNum: number, storyId: string) => {
     if (!window.confirm(`Xóa chương #${chNum}?`)) return;
 
     try {
-      const res = await deleteChapter(id, targetComicId);
+      const res = await deleteChapter(id, storyId);
       if (res.success === false) {
         toast.error(res.error);
         return;

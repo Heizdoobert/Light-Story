@@ -23,8 +23,8 @@ export function useAdminSettings() {
         data.forEach((row) => {
           if (row.key === "site_name" && typeof row.value === "string") setSiteName(row.value);
           if (row.key === "site_description" && typeof row.value === "string") setSiteDescription(row.value);
-          if (row.key === "maintenance_mode") setMaintenanceMode(row.value === "true" || Boolean(row.value));
-          if (row.key === "compact_mode") setCompactMode(row.value === "true" || Boolean(row.value));
+          if (row.key === "maintenance_mode") setMaintenanceMode(row.value === "true");
+          if (row.key === "compact_mode") setCompactMode(row.value === "true");
         });
       }
     } catch (err) {

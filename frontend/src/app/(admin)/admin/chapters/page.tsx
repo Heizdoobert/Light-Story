@@ -128,7 +128,7 @@ export default function AdminChaptersPage() {
                         <Button
                           size="sm"
                           variant="danger"
-                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number)}
+                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number, ch.story_id)}
                           title="Xóa chương"
                         >
                           <Trash2 size={14} />
