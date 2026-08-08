@@ -13,7 +13,6 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 });
 import { useUser } from "@/hooks/features/use-user";
 import { updateUserProfile } from "@/lib/actions/user.actions";
-import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants/routes";
@@ -39,20 +38,11 @@ export default function UserProfilePage() {
     }
     setIsSaving(true);
     try {
-      const supabase = getSupabaseBrowserClient();
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: fullName,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", user.id);
-
-      if (error) {
-        const res = await updateUserProfile(user.id, { full_name: fullName, avatar_url: avatarUrl });
-        if (!res.success) throw new Error(res.error);
-      }
+      const res = await updateUserProfile(user.id, {
+        full_name: fullName,
+        avatar_url: avatarUrl,
+      });
+      if (!res.success) throw new Error(res.error);
 
       toast.success("Cập nhật thông tin tài khoản thành công!");
     } catch (err) {

@@ -11,7 +11,9 @@ import { getStatusStyles } from "@/lib/utils/status-styles";
 import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
 
-export const SearchPageContent: React.FC = () => {
+export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
+  initialCategory,
+}) => {
   const {
     t,
     keyword,
@@ -25,7 +27,7 @@ export const SearchPageContent: React.FC = () => {
     setShowFilter,
     applyComicCoverFallback,
     getVietnameseStatus,
-  } = useSearchPresenter();
+  } = useSearchPresenter(initialCategory);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500 pb-20">

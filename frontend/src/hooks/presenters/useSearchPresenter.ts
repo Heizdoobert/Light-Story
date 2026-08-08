@@ -7,12 +7,12 @@ import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
 
-export function useSearchPresenter() {
+export function useSearchPresenter(initialCategory?: string) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
 
-  const categoryParam = searchParams.get("category") || "all";
+  const categoryParam = searchParams.get("category") || initialCategory || "all";
   const category =
     categoryParam !== "all" ? decodeURIComponent(categoryParam) : "all";
 
