@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "happy-dom",
+    env: {
+      NEXT_PUBLIC_GATEWAY_URL: "http://localhost:8787",
+    },
     setupFiles: ["src/setupTests.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["node_modules", ".next", ".opencode", "dist", "**/__integration__/**"],

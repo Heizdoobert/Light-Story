@@ -1,6 +1,5 @@
-module.exports = {
+export default {
   plugins: {
-    // Tailwind CSS PostCSS plugin (new package)
     '@tailwindcss/postcss': {},
     autoprefixer: {},
   },

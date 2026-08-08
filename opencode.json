@@ -1,9 +1,32 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "context_optimization": {
+    "initialization": {
+      "loading_strategy": "lazy",
+      "core_only": true,
+      "auto_load": false
+    },
+    "execution": {
+      "stateless_tools": true,
+      "clear_tool_outputs": true
+    },
+    "memory_management": {
+      "auto": true,
+      "prune": true,
+      "prune_targets": ["tool_logs", "tool_calls"]
+    }
+  },
   "mcp": {
     "chrome-devtools": {
       "type": "local",
-      "command": ["npx", "-y", "chrome-devtools-mcp@latest", "--isolated", "--executablePath", "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"],
+      "command": [
+        "npx",
+        "-y",
+        "chrome-devtools-mcp@latest",
+        "--isolated",
+        "--executablePath",
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"
+      ],
       "enabled": true
     }
   }
