@@ -5,7 +5,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #6366f1;
   --color-glass-bg: rgba(255, 255, 255, 0.85);
   --color-glass-border: rgba(0, 0, 0, 0.1);
   --color-text-main: #0f172a;

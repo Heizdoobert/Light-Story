@@ -36,6 +36,10 @@ export async function GET(request: Request) {
     if (response.redirected || response.type === 'opaqueredirect') {
       return NextResponse.json({ error: 'Redirects not allowed' }, { status: 400 });
     }
+    if (response.status >= 300 && response.status < 400) {
+      console.error(`[Avatar Proxy] Upstream redirect ${response.status} for ${parsedUrl.pathname}`);
+      return NextResponse.json({ error: 'Upstream redirect not allowed' }, { status: 502 });
+    }
     if (!response.ok) {
       console.error(`[Avatar Proxy] Upstream returned ${response.status} for ${parsedUrl.pathname}`);
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: response.status });
