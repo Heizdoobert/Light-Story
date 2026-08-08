@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/lib/constants/routes';
+import { resetPasswordSchema } from '@/lib/schemas/auth';
 import { toast } from 'sonner';
 
 export const ResetPasswordPage: React.FC = () => {
@@ -37,13 +38,9 @@ export const ResetPasswordPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Password confirmation does not match');
+    const result = resetPasswordSchema.safeParse({ password, confirmPassword });
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
 

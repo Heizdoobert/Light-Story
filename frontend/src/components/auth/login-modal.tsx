@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/features/use-user";
+import { resetPasswordSchema, signInPasswordSchema } from "@/lib/schemas/auth";
 
 type AuthMode = "signin" | "register" | "forgot";
 
@@ -58,8 +59,9 @@ export default function LoginModal({
     setIsSubmitting(true);
     try {
       if (mode === "signin") {
-        if (!password) {
-          toast.error("Please enter your password");
+        const pw = signInPasswordSchema.safeParse(password);
+        if (!pw.success) {
+          toast.error(pw.error.issues[0].message);
           return;
         }
         await signInWithPassword(email, password);
@@ -71,12 +73,9 @@ export default function LoginModal({
           toast.error("Please enter your full name");
           return;
         }
-        if (password.length < 6) {
-          toast.error("Password must be at least 6 characters");
-          return;
-        }
-        if (password !== confirmPassword) {
-          toast.error("Password confirmation does not match");
+        const pw = resetPasswordSchema.safeParse({ password, confirmPassword });
+        if (!pw.success) {
+          toast.error(pw.error.issues[0].message);
           return;
         }
         await register(email, password, fullName.trim());
