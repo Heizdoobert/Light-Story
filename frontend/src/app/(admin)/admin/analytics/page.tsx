@@ -49,7 +49,7 @@ export default function AdminAnalyticsPage() {
             <HardDrive size={20} className="text-orange-400" />
           </div>
           <p className="text-3xl font-black text-white">{loading ? "..." : `${data?.r2_usage_gb ?? 0} GB`}</p>
-          <p className="text-xs text-slate-400">Trên tổng {data?.r2_allocated_gb ?? 10} GB dung lượng chuẩn</p>
+          <p className="text-xs text-slate-400">{data?.r2_allocated_gb != null ? `Trên tổng ${data.r2_allocated_gb} GB dung lượng chuẩn` : "—"}</p>
         </div>
 
         <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-2xl shadow-xl space-y-2">
@@ -95,7 +95,7 @@ export default function AdminAnalyticsPage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center text-sm font-semibold">
               <span className="text-slate-300">Dung lượng thực tế đã tải lên R2</span>
-              <span className="text-orange-400 font-bold">{data?.r2_usage_gb ?? 0} GB / {data?.r2_allocated_gb ?? 10} GB</span>
+              <span className="text-orange-400 font-bold">{data?.r2_usage_gb ?? 0} GB / {data?.r2_allocated_gb != null ? `${data.r2_allocated_gb} GB` : "—"}</span>
             </div>
 
             {/* Progress Bar */}

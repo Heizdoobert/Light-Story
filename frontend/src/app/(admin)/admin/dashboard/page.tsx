@@ -6,7 +6,6 @@ import {
   Users,
   HardDrive,
   Activity,
-  CheckCircle2,
   Database,
   Cloud,
   ArrowUpRight,
@@ -118,7 +117,7 @@ export default function AdminDashboardPage() {
             <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
               <p className="text-xs text-slate-400 font-medium">Cache Hit Ratio</p>
               <p className="text-xl font-black text-emerald-400 mt-1">
-                {infraStats?.cache_hit_ratio_pct ?? 99.5}%
+                {infraStats?.cache_hit_ratio_pct != null ? `${infraStats.cache_hit_ratio_pct}%` : "—"}
               </p>
             </div>
             <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800">
@@ -146,8 +145,8 @@ export default function AdminDashboardPage() {
                 <Database size={16} className="text-cyan-400" />
                 <span>Supabase PostgreSQL DB</span>
               </div>
-              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                <CheckCircle2 size={12} /> Live
+              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                Chưa kiểm tra
               </span>
             </div>
 
@@ -156,8 +155,8 @@ export default function AdminDashboardPage() {
                 <Cloud size={16} className="text-orange-400" />
                 <span>Cloudflare R2 Object Store</span>
               </div>
-              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                <CheckCircle2 size={12} /> Bound
+              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                Chưa kiểm tra
               </span>
             </div>
 
