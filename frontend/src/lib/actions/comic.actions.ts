@@ -26,6 +26,7 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
         title: parsed.data.title,
         author: parsed.data.author,
         category: parsed.data.category,
+        description: parsed.data.description,
         status: parsed.data.status,
         cover_url: parsed.data.cover_url,
       })

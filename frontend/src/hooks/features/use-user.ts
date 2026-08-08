@@ -11,6 +11,15 @@ type ProfileRow = {
   avatar_url: string | null;
 };
 
+const ADMIN_ROLES = ["superadmin", "admin", "employee", "internal"];
+
+function resolveRole(role: unknown): string | null {
+  if (typeof role === "string" && role.trim()) {
+    return role.trim().toLowerCase();
+  }
+  return null;
+}
+
 export function useUser() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -26,6 +35,11 @@ export function useUser() {
 
       if (currentUser) {
         setUser(currentUser);
+        // Role source mirrors middleware.ts: app_metadata.role preferred
+        // (synced by the DB trigger), user_metadata fallback, profiles last.
+        const resolvedRole =
+          resolveRole(currentUser.app_metadata?.role) ??
+          resolveRole(currentUser.user_metadata?.role);
         const { data: prof } = await supabase
           .from("profiles")
           .select("role, full_name, avatar_url")
@@ -34,7 +48,10 @@ export function useUser() {
 
         if (prof) {
           setProfile(prof);
-          setRole(prof.role || "user");
+          setRole(resolvedRole ?? resolveRole(prof.role) ?? "user");
+        } else {
+          setProfile(null);
+          setRole(resolvedRole ?? "user");
         }
       } else {
         setUser(null);
@@ -164,7 +181,7 @@ export function useUser() {
     isLoading,
     isAuthenticated: !!user,
     isAdmin: role === "superadmin" || role === "admin",
-    isStaff: role === "superadmin" || role === "admin" || role === "employee",
+    isStaff: !!role && ADMIN_ROLES.includes(role),
     signIn,
     signInWithEmail,
     signInWithPassword,
