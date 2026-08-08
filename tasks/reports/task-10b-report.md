@@ -47,4 +47,4 @@ Build ✅ · Tests ✅ (385 passed, 45 files) · Lint ✅
 ## Commit
 
 - `fix(admin): honest empty states, VI not-found, order-stable fetchStoriesByIds (task 10b)`
-- Hash: see `git rev-parse HEAD` (recorded below)
+- Hash: `727bc2b8d1b809037ab162c962acaf4438a3984b`
