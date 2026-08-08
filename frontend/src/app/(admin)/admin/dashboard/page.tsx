@@ -129,13 +129,8 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          <div className="p-4 bg-slate-950/40 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Trạng thái kết nối API Gateway Worker:</span>
-            <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              KẾT NỐI SẮC NÉT (Active)
-            </span>
-          </div>
+          {/* ponytail: connectivity to the API gateway is not derived from any data source —
+              banner removed rather than faking a live state. Wire a real health probe if needed. */}
         </div>
 
         {/* System Services Health Checklist */}
@@ -171,8 +166,8 @@ export default function AdminDashboardPage() {
                 <Activity size={16} className="text-purple-400" />
                 <span>Worker API Gateway</span>
               </div>
-              <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                <CheckCircle2 size={12} /> Port 8787
+              <span className="flex items-center gap-1 text-[11px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                Chưa kiểm tra
               </span>
             </div>
           </div>

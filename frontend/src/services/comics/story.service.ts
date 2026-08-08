@@ -74,9 +74,16 @@ export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
         .from('stories')
         .select('*')
         .in('id', ids);
-      if (data) return data as Story[];
+      if (data) {
+        const byId = new Map((data as Story[]).map((story) => [story.id, story]));
+        return ids
+          .map((id) => byId.get(id))
+          .filter((story): story is Story => story != null);
+      }
     } catch {}
   }
+  // ponytail: total failure returns [] silently — acceptable for current callers; add error
+  // propagation when a caller needs to distinguish "no rows" from "fetch failed".
   return [];
 }
 

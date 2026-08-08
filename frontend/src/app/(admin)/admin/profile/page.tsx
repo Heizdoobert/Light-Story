@@ -80,7 +80,7 @@ export default function AdminProfilePage() {
 
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-white">{fullName || "Admin User"}</h2>
-            <p className="text-xs text-slate-400 font-mono">{user?.email || "admin@lightstory.app"}</p>
+            <p className="text-xs text-slate-400 font-mono">{user?.email || "Chưa có email"}</p>
             <div className="pt-2">
               <Badge variant={role === "superadmin" ? "danger" : "warning"}>
                 {role ? role.toUpperCase() : "ADMIN"}
