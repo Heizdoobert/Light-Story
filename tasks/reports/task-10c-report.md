@@ -64,3 +64,31 @@ Commit: `6724069…` (fix round; see fix commit hash in final message)
 - `frontend/src/app/(admin)/admin/dashboard/page.tsx`
 - `frontend/src/app/(admin)/admin/analytics/page.tsx`
 - `tasks/reports/task-10c-report.md` (accuracy note + this section)
+
+---
+
+## Final-review fix round
+
+Status: DONE (fix subagent, task-12 brief)
+Commit: see final message hash
+
+### Items fixed
+
+1. **Plan compliance (F2/T2-MED)** - missing `(errors)/` group boundary files added, mirroring the `(auth)/` siblings:
+   - `frontend/src/app/(errors)/layout.tsx` (NEW) - server passthrough `<>{children}</>`, no chrome (`(public)/auth/layout.tsx` pattern).
+   - `frontend/src/app/(errors)/error.tsx` (NEW) - client error boundary copied from `(auth)/error.tsx` (dev-only error.message guard, reset button, same structure/classes). Console label + user-visible copy adjusted from auth-specific to group-generic ("Loi xu ly trang").
+   - `frontend/src/app/(errors)/loading.tsx` (NEW) - verbatim copy of `(auth)/loading.tsx` skeleton.
+2. **Pre-existing URL literals (M11 class)** - `src/components/navigation/Header.tsx`:
+   - :244 `href={\/comics/\\}` -> `ROUTES.COMIC_DETAIL(comic.id)`
+   - :268 `href={\/search?keyword=...\}` -> `\\?keyword=...\` (same-file :74 pattern; ROUTES.SEARCH is a plain constant, no helper needed).
+
+### Test command + output
+
+- `npm run build` (next build 16.3.0, Turbopack): **PASS** - compiled, typecheck clean, 42/42 routes.
+- `npm run test:run` (vitest 4.1.10): **PASS** - 45 files / 385 tests, Duration 26.97s.
+
+### Files changed (4)
+- `frontend/src/app/(errors)/layout.tsx` (NEW)
+- `frontend/src/app/(errors)/error.tsx` (NEW)
+- `frontend/src/app/(errors)/loading.tsx` (NEW)
+- `frontend/src/components/navigation/Header.tsx`

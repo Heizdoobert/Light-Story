@@ -241,7 +241,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {searchResults.map((comic) => (
                       <Link
                         key={`search-res-${comic.id}`}
-                        href={`/comics/${comic.id}`}
+                        href={ROUTES.COMIC_DETAIL(comic.id)}
                         onClick={() => setShowResults(false)}
                         className="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
                       >
@@ -265,7 +265,7 @@ export const Header: React.FC<HeaderProps> = ({
                       </Link>
                     ))}
                     <Link
-                      href={`/search?keyword=${encodeURIComponent(searchKeyword.trim())}`}
+                      href={`${ROUTES.SEARCH}?keyword=${encodeURIComponent(searchKeyword.trim())}`}
                       onClick={() => setShowResults(false)}
                       className="block p-2.5 text-center text-xs font-bold text-orange-500 dark:text-[#ff008d] bg-slate-50 dark:bg-[#000b13] hover:underline"
                     >
