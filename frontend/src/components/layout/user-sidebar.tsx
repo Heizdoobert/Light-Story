@@ -8,7 +8,7 @@ const USER_NAV_ITEMS = [
   { label: 'Trang cá nhân', href: ROUTES.USER.PROFILE, icon: User },
   { label: 'Truyện theo dõi', href: ROUTES.USER.FAVORITES, icon: Bookmark },
   { label: 'Lịch sử đọc', href: ROUTES.USER.HISTORY, icon: History },
-  { label: 'Cài đặt tài khoản', href: ROUTES.USER.DASHBOARD, icon: Settings },
+  { label: 'Bảng điều khiển', href: ROUTES.USER.DASHBOARD, icon: Settings },
 ];
 
 export function UserSidebar() {

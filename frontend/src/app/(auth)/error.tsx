@@ -14,6 +14,8 @@ export default function AuthErrorBoundary({
     console.error("Auth route group error:", error);
   }, [error]);
 
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
       <div className="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center mb-4">
@@ -23,7 +25,7 @@ export default function AuthErrorBoundary({
         Lỗi xác thực người dùng
       </h2>
       <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
-        {error.message || "Không thể tải trang đăng nhập/xác thực. Vui lòng thử lại."}
+        {isDevelopment && error.message ? error.message : "Không thể tải trang đăng nhập/xác thực. Vui lòng thử lại."}
       </p>
       <button
         onClick={() => reset()}

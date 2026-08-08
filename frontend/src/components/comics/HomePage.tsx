@@ -40,7 +40,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
               {trendingComics.map((comic) => (
                 <Link
                   key={`trending-${comic.id}`}
-                  href={`/comics/${comic.id}`}
+                  href={ROUTES.COMIC_DETAIL(comic.id)}
                   className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
                 >
                   <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
@@ -87,7 +87,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
               {historyComics.map((comic) => (
                 <Link
                   key={`history-${comic.id}`}
-                  href={`/comics/${comic.id}/chapter/${comic.chapterId}`}
+                  href={ROUTES.CHAPTER_READER(comic.id, comic.chapterId ?? "")}
                   className="group relative w-32 sm:w-40 lg:w-44 flex-shrink-0 outline-none block"
                 >
                   <div className="relative overflow-hidden rounded-lg aspect-[3/4] bg-slate-100 dark:bg-[#000b13] border border-slate-200 dark:border-white/10">
@@ -144,7 +144,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                       className="flex gap-3 p-2 border border-slate-100 dark:border-white/10 rounded-lg hover:border-[#001eff] dark:hover:border-[#39ff14] transition-colors dark:bg-[#000b13]/60"
                     >
                       <Link
-                        href={`/comics/${comic.id}`}
+                        href={ROUTES.COMIC_DETAIL(comic.id)}
                         className="relative w-24 h-32 flex-shrink-0 overflow-hidden rounded bg-slate-100 dark:bg-[#000000]"
                       >
                         <img
@@ -160,7 +160,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                       <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
                         <div>
                           <Link
-                            href={`/comics/${comic.id}`}
+                            href={ROUTES.COMIC_DETAIL(comic.id)}
                             className="font-bold text-sm text-slate-800 dark:text-white hover:text-[#ff008d] dark:hover:text-[#39ff14] transition-colors line-clamp-1"
                           >
                             {comic.title}
@@ -207,7 +207,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 {(comics.length > 0 ? (trendingComics.length > 0 ? trendingComics : comics) : []).slice(0, 10).map((comic, idx) => (
                   <Link
                     key={`top-${comic.id}`}
-                    href={`/comics/${comic.id}`}
+                    href={ROUTES.COMIC_DETAIL(comic.id)}
                     className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
                   >
                     <span

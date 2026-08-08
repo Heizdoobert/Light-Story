@@ -17,6 +17,8 @@ export default function UserError({
     console.error("[User Error]", error);
   }, [error]);
 
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-lg rounded-3xl border border-red-200 dark:border-red-900/40 bg-white dark:bg-slate-900 shadow-lg p-8 sm:p-10 text-center space-y-5">
@@ -29,7 +31,7 @@ export default function UserError({
             Lỗi Trang Người Dùng
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
-            {error.message || "Đã xảy ra lỗi khi tải trang cá nhân. Vui lòng thử lại."}
+            {isDevelopment && error.message ? error.message : "Đã xảy ra lỗi khi tải trang cá nhân. Vui lòng thử lại."}
           </p>
           {error.digest && (
             <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
