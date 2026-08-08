@@ -4,8 +4,10 @@ import { Users, Search, ShieldCheck, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAdminUsers } from "@/hooks/features/use-admin-users";
+import { useUser } from "@/hooks/features/use-user";
 
 export default function AdminUsersPage() {
+  const { role } = useUser();
   const {
     users,
     loading,
@@ -118,7 +120,7 @@ export default function AdminUsersPage() {
       {/* Change Role Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <ShieldCheck size={20} className="text-orange-500" />
@@ -145,7 +147,7 @@ export default function AdminUsersPage() {
                   <option value="user">Người dùng (User)</option>
                   <option value="employee">Nhân viên (Employee)</option>
                   <option value="admin">Quản trị viên (Admin)</option>
-                  <option value="superadmin">Super Admin</option>
+                  {role === "superadmin" && <option value="superadmin">Super Admin</option>}
                 </select>
               </div>
 

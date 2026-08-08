@@ -6,6 +6,7 @@ import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission
 import { getServerSupabase } from '@/lib/supabase/server';
 import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
+import { AD_SLOT_KEYS, parseSiteSettingsRows, validateAdMarkup } from '@/lib/admin/ad-policy';
 
 type ActionResult<T = unknown> =
   | { ok: true; success: true; data?: T; error?: undefined }
@@ -20,6 +21,13 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
     }
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    const { runtime, slotMarkup } = parseSiteSettingsRows(parsed.data.entries);
+    for (const key of AD_SLOT_KEYS) {
+      const validation = validateAdMarkup(slotMarkup[key], runtime);
+      if (!validation.ok) {
+        return { ok: false, success: false, error: `Ad markup policy violation (${key}): ${validation.reason}` };
+      }
+    }
     const rows = parsed.data.entries.map((e) => ({
       key: e.key,
       value: e.value,

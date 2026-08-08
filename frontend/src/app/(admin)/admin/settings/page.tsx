@@ -108,7 +108,9 @@ export default function AdminSettingsPage() {
               <Database className="text-cyan-400" size={24} />
               <div>
                 <p className="text-xs font-bold text-white">Supabase Endpoint</p>
-                <p className="text-[11px] font-mono text-slate-400 truncate">https://xgtlrztskoomimvfpdoy.supabase.co</p>
+                <p className="text-[11px] font-mono text-slate-400 truncate">
+                  {process.env.NEXT_PUBLIC_SUPABASE_URL || "Chưa cấu hình (NEXT_PUBLIC_SUPABASE_URL)"}
+                </p>
               </div>
             </div>
 
