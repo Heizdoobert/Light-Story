@@ -8,8 +8,26 @@ import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
+function resolveMetadataBase(): URL {
+  if (process.env.NODE_ENV !== "production") {
+    return new URL("http://localhost:3000");
+  }
+  if (siteUrl) {
+    return new URL(siteUrl);
+  }
+  const fallback =
+    process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
+    process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
+  if (fallback) {
+    return new URL(fallback.startsWith("http") ? fallback : `https://${fallback}`);
+  }
+  throw new Error(
+    "[layout] NEXT_PUBLIC_SITE_URL must be set in production (metadataBase / OG images)."
+  );
+}
+
 export const metadata: Metadata = {
-  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: "Light Story - Read Manga, Manhua & Light Novels Online",
     template: "%s | Light Story",
