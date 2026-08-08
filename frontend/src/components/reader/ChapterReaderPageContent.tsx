@@ -85,7 +85,7 @@ export const ChapterReaderPageContent: React.FC = () => {
 
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
         <Link
-          href={`/comics/${comicId}`}
+          href={ROUTES.COMIC_DETAIL(comicId)}
           className="inline-block text-xl sm:text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors mb-2"
         >
           {comic?.title || "Tên Truyện Đang Cập Nhật"}
@@ -137,7 +137,7 @@ export const ChapterReaderPageContent: React.FC = () => {
       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 py-6 sm:py-8 flex items-center justify-between gap-3 sm:gap-4 border-t border-slate-200 dark:border-white/5 mt-4">
         <Link
           href={
-            prevChapter ? `/comics/${comicId}/chapter/${prevChapter.id}` : "#"
+            prevChapter ? ROUTES.CHAPTER_READER(comicId, prevChapter.id) : "#"
           }
           className={chapterNavClass(prevChapter)}
         >
@@ -146,7 +146,7 @@ export const ChapterReaderPageContent: React.FC = () => {
         </Link>
         <Link
           href={
-            nextChapter ? `/comics/${comicId}/chapter/${nextChapter.id}` : "#"
+            nextChapter ? ROUTES.CHAPTER_READER(comicId, nextChapter.id) : "#"
           }
           className={chapterNavClass(nextChapter)}
         >
@@ -202,7 +202,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 prevChapter
-                  ? `/comics/${comicId}/chapter/${prevChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, prevChapter.id)
                   : "#"
               }
               className={
@@ -253,7 +253,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 nextChapter
-                  ? `/comics/${comicId}/chapter/${nextChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, nextChapter.id)
                   : "#"
               }
               className={

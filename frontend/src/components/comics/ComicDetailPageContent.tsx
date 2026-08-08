@@ -91,7 +91,7 @@ export const ComicDetailPageContent: React.FC = () => {
               <Link
                 href={
                   firstChapter
-                    ? `/comics/${comicId}/chapter/${firstChapter.id}`
+                    ? ROUTES.CHAPTER_READER(comicId, firstChapter.id)
                     : "#"
                 }
                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg ${firstChapter ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1" : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"}`}
@@ -102,7 +102,7 @@ export const ComicDetailPageContent: React.FC = () => {
               <Link
                 href={
                   latestChapter
-                    ? `/comics/${comicId}/chapter/${latestChapter.id}`
+                    ? ROUTES.CHAPTER_READER(comicId, latestChapter.id)
                     : "#"
                 }
                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2 ${latestChapter ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"}`}
@@ -201,7 +201,7 @@ export const ComicDetailPageContent: React.FC = () => {
               {chapters.map((chapter) => (
                 <Link
                   key={chapter.id}
-                  href={`/comics/${comicId}/chapter/${chapter.id}`}
+                  href={ROUTES.CHAPTER_READER(comicId, chapter.id)}
                   className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/50 transition-all hover:shadow-md"
                 >
                   <div className="flex-1 min-w-0">
