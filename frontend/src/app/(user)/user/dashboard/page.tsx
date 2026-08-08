@@ -2,26 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ReadingProgress } from "@/components/user/reading-progress";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@/hooks/features/use-user";
 import { ROUTES } from "@/lib/constants/routes";
 import { useReadingHistory } from "@/hooks/features/useReadingHistory";
-import { fetchStoryById, fetchStoriesPage } from "@/services/comics/story.service";
-import { Story } from "@/types/entities";
+import { fetchStoriesByIds, fetchStoriesPage } from "@/services/comics/story.service";
 
 interface RecommendedItem {
   id: string;
   title: string;
-  latestChapter?: number;
 }
 
 interface ReadingItem {
   id: string;
   title: string;
   currentChapter: number;
-  progressPct: number;
 }
 
 export default function UserDashboardPage() {
@@ -40,19 +36,15 @@ export default function UserDashboardPage() {
           return;
         }
         const comicIds = [...new Set(history.map((h) => h.comicId))];
-        const details = await Promise.all(
-          comicIds.map((id) => fetchStoryById(id).catch(() => null)),
-        );
+        const details = await fetchStoriesByIds(comicIds);
         if (cancelled) return;
         const merged = details
-          .filter((d): d is Story => Boolean(d))
           .map((d) => {
             const h = history.find((item) => item.comicId === d.id);
             return {
               id: d.id,
               title: d.title,
               currentChapter: h?.chapterNumber ?? 0,
-              progressPct: 0,
             };
           })
           .slice(0, 8);
@@ -102,6 +94,7 @@ export default function UserDashboardPage() {
       </div>
 
       {/* Reading Progress Section */}
+      {/* ponytail: progress bar removed — progress% needs total chapter count, which neither Story nor reading history provides; was hardcoded 0. */}
       <section className="space-y-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
           Truyện Đang Đọc Dở
@@ -120,7 +113,6 @@ export default function UserDashboardPage() {
                     Chap {item.currentChapter}
                   </span>
                 </div>
-                <ReadingProgress progressPct={item.progressPct} />
               </Card>
             ))}
           </div>
@@ -138,15 +130,11 @@ export default function UserDashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {recommended.map((rec) => (
               <Link key={rec.id} href={ROUTES.COMIC_DETAIL(rec.id)}>
+                {/* ponytail: latestChapter line removed — Story has no latest-chapter field; render path was dead. */}
                 <Card className="p-4 hover:border-primary transition-all cursor-pointer">
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                     {rec.title}
                   </h3>
-                  {rec.latestChapter && (
-                    <p className="text-xs text-slate-500 mt-1">
-                      Mới nhất: Chap {rec.latestChapter}
-                    </p>
-                  )}
                 </Card>
               </Link>
             ))}

@@ -44,6 +44,7 @@ const EXPECTED_SERVER_PAGES = [
   '(public)/search/page.tsx',
   '(user)/user/bookmarks/page.tsx',
   '(user)/user/history/page.tsx',
+  '(user)/user/page.tsx',
 ];
 
 const THIN_WRAPPERS: Record<string, string> = {

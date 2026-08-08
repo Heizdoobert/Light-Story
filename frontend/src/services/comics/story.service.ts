@@ -66,6 +66,20 @@ export async function fetchStoryById(id: string): Promise<Story | null> {
   return null;
 }
 
+export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
+  if (!ids.length) return [];
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .in('id', ids);
+      if (data) return data as Story[];
+    } catch {}
+  }
+  return [];
+}
+
 export async function incrementViews(storyId: string): Promise<void> {
   try {
     await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
