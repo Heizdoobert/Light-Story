@@ -14,22 +14,26 @@ export interface AuditLogRow {
 
 export default function AdminAuditPage() {
   const [logs, setLogs] = useState<AuditLogRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadAuditLogs() {
+      setIsLoading(true);
+      setError(null);
       try {
         const supabase = getSupabaseBrowserClient();
-        const { data } = await supabase.from('audit_logs').select('id, action, entity_type, created_at').order('created_at', { ascending: false });
-        if (data && data.length > 0) {
-          setLogs(data as AuditLogRow[]);
-        } else {
-          setLogs([
-            { id: '1', action: 'CREATE_STORY', entity_type: 'story', created_at: new Date().toISOString() },
-            { id: '2', action: 'UPDATE_CHAPTER', entity_type: 'chapter', created_at: new Date().toISOString() },
-          ]);
-        }
+        const { data, error: err } = await supabase
+          .from('audit_logs')
+          .select('id, action, entity_type, created_at')
+          .order('created_at', { ascending: false });
+        if (err) throw err;
+        setLogs((data ?? []) as AuditLogRow[]);
       } catch (err) {
         console.error('Failed to load audit logs:', err);
+        setError('Không thể tải nhật ký hoạt động');
+      } finally {
+        setIsLoading(false);
       }
     }
     loadAuditLogs();
@@ -48,7 +52,15 @@ export default function AdminAuditPage() {
         <p className="text-sm text-slate-500 mt-1">Lịch sử các thao tác thay đổi dữ liệu của ban quản trị</p>
       </div>
 
-      <DataTable columns={columns} data={logs} />
+      {isLoading ? (
+        <div className="p-8 text-center text-slate-500 text-sm">Đang tải nhật ký hoạt động...</div>
+      ) : error ? (
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 rounded-2xl text-sm text-rose-700 dark:text-rose-300">
+          {error}
+        </div>
+      ) : (
+        <DataTable columns={columns} data={logs} />
+      )}
     </div>
   );
 }
