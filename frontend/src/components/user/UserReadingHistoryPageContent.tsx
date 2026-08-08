@@ -62,7 +62,7 @@ export const UserReadingHistoryPageContent: React.FC = () => {
             >
               <div className="flex items-center gap-4 min-w-0">
                 <div className="min-w-0">
-                  <Link href={`/comics/${item.comicId}`}>
+                  <Link href={ROUTES.COMIC_DETAIL(item.comicId)}>
                     <h3 className="font-bold text-base text-slate-900 dark:text-white truncate hover:text-primary transition-colors">
                       Truyện {item.comicId.slice(0, 8)}
                     </h3>
@@ -74,7 +74,7 @@ export const UserReadingHistoryPageContent: React.FC = () => {
               </div>
 
               <Link
-                href={`/comics/${item.comicId}/chapter/${item.chapterId}`}
+                href={ROUTES.CHAPTER_READER(item.comicId, item.chapterId)}
                 className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl text-xs font-bold transition-all flex-shrink-0"
               >
                 Đọc tiếp

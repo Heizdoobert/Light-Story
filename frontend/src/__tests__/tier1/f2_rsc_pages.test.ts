@@ -45,6 +45,7 @@ const EXPECTED_SERVER_PAGES = [
   '(user)/user/bookmarks/page.tsx',
   '(user)/user/history/page.tsx',
   '(user)/user/page.tsx',
+  '(user)/user/profile/page.tsx',
 ];
 
 const THIN_WRAPPERS: Record<string, string> = {
@@ -54,6 +55,7 @@ const THIN_WRAPPERS: Record<string, string> = {
   '(errors)/handle-exception/403/page.tsx': 'ForbiddenPage',
   '(errors)/handle-exception/404/page.tsx': 'NotFoundPage',
   '(errors)/handle-exception/503/page.tsx': 'ServiceUnavailablePage',
+  '(user)/user/profile/page.tsx': 'ProfilePageContent',
 };
 
 describe('F2 RSC page files under src/app', () => {

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { History, X, BookOpen } from 'lucide-react';
 import { useReadingHistory } from '@/hooks/features/useReadingHistory';
+import { ROUTES } from '@/lib/constants/routes';
 
 type ReadingHistoryDrawerProps = {
   isOpen: boolean;
@@ -37,7 +38,7 @@ export const ReadingHistoryDrawer: React.FC<ReadingHistoryDrawerProps> = ({ isOp
             history.map((item) => (
               <Link
                 key={`${item.comicId}-${item.chapterId}`}
-                href={`/comics/${item.comicId}/chapter/${item.chapterId}`}
+                href={ROUTES.CHAPTER_READER(item.comicId, item.chapterId)}
                 onClick={onClose}
                 className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
               >

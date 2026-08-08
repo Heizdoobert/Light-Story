@@ -51,7 +51,7 @@ export const UserBookmarksPageContent: React.FC = () => {
               key={comicId}
               className="group relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 flex flex-col"
             >
-              <Link href={`/comics/${comicId}`} className="block relative aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 p-4">
+              <Link href={ROUTES.COMIC_DETAIL(comicId)} className="block relative aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 p-4">
                 <div className="flex items-center justify-center h-full">
                   <span className="font-bold text-xs text-slate-600 dark:text-slate-300 text-center line-clamp-3">
                     Truyện ID: {comicId}
@@ -59,7 +59,7 @@ export const UserBookmarksPageContent: React.FC = () => {
                 </div>
               </Link>
               <div className="p-3 flex flex-col flex-1 justify-between">
-                <Link href={`/comics/${comicId}`}>
+                <Link href={ROUTES.COMIC_DETAIL(comicId)}>
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
                     Truyện {comicId.slice(0, 8)}
                   </h3>
