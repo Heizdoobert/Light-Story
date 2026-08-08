@@ -29,7 +29,7 @@ import { apiClient } from "@/lib/api/apiClient";
 import { Category } from "@/types/entities";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
-import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
+import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { ROUTES } from "@/lib/constants/routes";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);

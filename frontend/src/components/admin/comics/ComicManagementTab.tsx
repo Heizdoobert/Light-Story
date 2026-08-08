@@ -13,7 +13,7 @@ import {
   type ComicChapterFormValues,
   type ComicModerationState,
   type ComicCmsFormValues,
-} from "@/lib/validation/comic-cms-schemas";
+} from "@/lib/schemas/comic-cms-schemas";
 import {
   clearComicDraft,
   createComicChapterFromFiles,
@@ -45,7 +45,7 @@ import {
   uniqueTokens,
   type PageDraft,
   type TabKey,
-} from "@/lib/cms/comicCmsTypes";
+} from "@/types/comicCmsTypes";
 import { ComicCatalogTab } from "./ComicCatalogTab";
 import { ComicEditorTab } from "./ComicEditorTab";
 import { ComicChaptersTab } from "./ComicChaptersTab";

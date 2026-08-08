@@ -71,11 +71,11 @@ const realFetcher = vi.fn();
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
-  delete process.env.NEXT_PUBLIC_GATEWAY_URL;
-  delete process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
-  delete process.env.NEXT_PUBLIC_R2_BUCKET_COVERS;
-  delete process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
-  delete process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK;
+    process.env.NEXT_PUBLIC_GATEWAY_URL = 'http://localhost:8787';
+    process.env.NEXT_PUBLIC_R2_BUCKET_COVERS = 'covers';
+    process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS = 'chapters';
+    delete process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
+    delete process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK;
   state.currentRole = 'admin';
   realFetcher.mockResolvedValue(okUploadResponse());
   vi.stubGlobal('fetch', realFetcher);
@@ -92,6 +92,7 @@ describe('F1 x F3 x F7: hooks barrel and admin-gated comic form', () => {
       'useAdminDashboardPresenter',
       'useAdminUserPresenter',
       'useAnalyticsDashboard',
+      'useAnalyticsDashboardTabPresenter',
       'useAuditLogsPresenter',
       'useAuthModalPresenter',
       'useAuthorPresenter',

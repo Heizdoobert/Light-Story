@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
@@ -46,15 +47,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Inject theme-setting script to prevent dark mode FOUC */}
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
                   const saved = localStorage.getItem('theme');
-                  const theme = (saved === 'light' || saved === 'dark') 
-                    ? saved 
+                  const theme = (saved === 'light' || saved === 'dark')
+                    ? saved
                     : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   document.documentElement.classList.add(theme);
                 } catch (e) {

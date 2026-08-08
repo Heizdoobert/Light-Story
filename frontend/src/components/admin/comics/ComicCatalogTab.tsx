@@ -8,8 +8,8 @@ import {
   type TabKey,
   formatDateTime,
   statusTone,
-} from "@/lib/cms/comicCmsTypes";
-import type { ComicStatus } from "@/lib/validation/comic-cms-schemas";
+} from "@/types/comicCmsTypes";
+import type { ComicStatus } from "@/lib/schemas/comic-cms-schemas";
 
 function StatusBadge({ status }: { status: ComicStatus }) {
   return (

@@ -23,14 +23,27 @@ const findPages = (): string[] => {
 };
 
 const SERVER_PAGES = [
-  '(public)/page.tsx',
+  '(admin)/admin/page.tsx',
   '(errors)/forbidden/page.tsx',
+  '(errors)/handle-exception/400/page.tsx',
+  '(errors)/handle-exception/401/page.tsx',
+  '(errors)/handle-exception/403/page.tsx',
+  '(errors)/handle-exception/404/page.tsx',
+  '(errors)/handle-exception/503/page.tsx',
   '(errors)/unauthorized/page.tsx',
   '(public)/auth/forgetPassword/page.tsx',
   '(public)/auth/login/page.tsx',
   '(public)/auth/register/page.tsx',
   '(public)/auth/reset-password/page.tsx',
+  '(public)/comics/[comicId]/chapter/[chapterId]/page.tsx',
+  '(public)/comics/[comicId]/page.tsx',
+  '(public)/comics/page.tsx',
+  '(public)/genres/[genreSlug]/page.tsx',
+  '(public)/page.tsx',
   '(public)/profile/page.tsx',
+  '(public)/search/page.tsx',
+  '(user)/user/bookmarks/page.tsx',
+  '(user)/user/history/page.tsx',
 ];
 
 const THIN_WRAPPERS: Record<string, string> = {

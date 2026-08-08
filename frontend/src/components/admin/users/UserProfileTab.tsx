@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext';
 import { EditUserProfileModal } from '@/components/user/EditUserProfileModal';
 import { Mail, User, Shield, Edit2 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/security-utils';
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from '@/lib/security/security-utils';
 
 export const UserProfileTab: React.FC = () => {
   const { user, profile } = useAuth();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/lib/hooks/use-user';
+import { useUser } from '@/hooks/features/use-user';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 
 export default function AdminRouteGroupLayout({ children }: { children: React.ReactNode }) {

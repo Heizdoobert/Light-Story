@@ -8,7 +8,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
   ssr: false,
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
-import { useAdminProfile } from "@/lib/hooks/use-admin-profile";
+import { useAdminProfile } from "@/hooks/features/use-admin-profile";
 import { toast } from "sonner";
 
 export default function AdminProfilePage() {

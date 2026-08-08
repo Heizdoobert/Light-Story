@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ReadingProgress } from "@/components/user/reading-progress";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser } from "@/hooks/features/use-user";
 import { ROUTES } from "@/lib/constants/routes";
 import { useReadingHistory } from "@/hooks/features/useReadingHistory";
 import { fetchStoryById, fetchStoriesPage } from "@/services/comics/story.service";

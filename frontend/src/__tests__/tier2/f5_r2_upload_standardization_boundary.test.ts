@@ -39,9 +39,10 @@ function makeFile(name: string): File {
 describe('F5 R2 upload standardization boundary', () => {
   beforeEach(() => {
     localStorage.clear();
+    process.env.NEXT_PUBLIC_GATEWAY_URL = 'http://localhost:8787';
+    process.env.NEXT_PUBLIC_R2_BUCKET_COVERS = 'covers';
+    process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS = 'chapters';
     delete process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK;
-    delete process.env.NEXT_PUBLIC_GATEWAY_URL;
-    delete process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
   });
 
   afterEach(() => {
@@ -81,27 +82,26 @@ describe('F5 R2 upload standardization boundary', () => {
     ).rejects.toThrow(TypeError);
   });
 
-  it('falls back to the local gateway default when NEXT_PUBLIC_GATEWAY_URL is empty', async () => {
-    process.env.NEXT_PUBLIC_GATEWAY_URL = '';
+  it('throws a clear error when NEXT_PUBLIC_GATEWAY_URL is missing (no dev fallback in test env)', async () => {
+    delete process.env.NEXT_PUBLIC_GATEWAY_URL;
     const fetchMock = vi.fn().mockResolvedValue(okResponse({ success: true, data: { urls: [] } }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await uploadChapterImages([makeFile('a.png')], 'comic-1');
-
-    const url = new URL(fetchMock.mock.calls[0][0] as string);
-    expect(url.origin).toBe('http://localhost:8787');
-    expect(url.pathname).toBe('/api/admin/r2/upload');
+    await expect(uploadChapterImages([makeFile('a.png')], 'comic-1')).rejects.toThrow(
+      'Missing NEXT_PUBLIC_GATEWAY_URL',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('DEVIATION: bucket env fallback makes the !bucket guard unreachable through the public API', async () => {
+  it('DEVIATION: a missing bucket env is rejected by the R2 bucket guard before any fetch', async () => {
     process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS = '';
     const fetchMock = vi.fn().mockResolvedValue(okResponse({ success: true, data: { urls: [] } }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await uploadChapterImages([makeFile('a.png')], 'comic-1');
-
-    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
-    expect(headers['x-r2-bucket']).toBe('chapters');
+    await expect(uploadChapterImages([makeFile('a.png')], 'comic-1')).rejects.toThrow(
+      'R2 bucket is not configured',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
 
     const source = readRepoFile(COMIC_SERVICE);
     expect(source).toContain("throw new Error('R2 bucket is not configured')");

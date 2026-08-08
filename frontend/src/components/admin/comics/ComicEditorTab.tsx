@@ -7,8 +7,8 @@ import {
   ShieldAlert, Trash2, Upload, Wand2
 } from "lucide-react";
 import { type ComicCmsRecord } from "@/services/comics/comicCms.service";
-import type { ComicCmsFormValues } from "@/lib/validation/comic-cms-schemas";
-import { slugify, statusTone as statusToneFn } from "@/lib/cms/comicCmsTypes";
+import type { ComicCmsFormValues } from "@/lib/schemas/comic-cms-schemas";
+import { slugify, statusTone as statusToneFn } from "@/types/comicCmsTypes";
 import { loadTranslators } from "./TranslatorManagementTab";
 
 type ComicEditorTabProps = {

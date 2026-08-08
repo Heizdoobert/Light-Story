@@ -346,7 +346,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const serviceSource = fs.readFileSync(path.join(repoRoot, 'frontend/src/services/comics/comic.service.ts'), 'utf-8');
     const adminSource = fs.readFileSync(path.join(repoRoot, 'workers/kv-worker/src/routes/admin.ts'), 'utf-8');
 
-    expect(serviceSource).toContain("`${getGatewayUrl()}/api/admin/r2/upload`");
+    expect(serviceSource).toContain('fetch(`${getGatewayUrl()}${ROUTES.API.ADMIN.R2_UPLOAD_GATEWAY}`');
     expect(serviceSource).toContain("headers['x-r2-bucket'] = bucket");
     expect(serviceSource).toContain("headers['Authorization'] = `Bearer ${token}`");
     expect(serviceSource).toContain("form.append('file', file)");

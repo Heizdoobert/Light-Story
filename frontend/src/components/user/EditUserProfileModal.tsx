@@ -5,7 +5,7 @@ import { X, Loader } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/utils/error-utils';
-import { sanitizeImageUrl } from '@/lib/auth/security-utils';
+import { sanitizeImageUrl } from '@/lib/security/security-utils';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;

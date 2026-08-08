@@ -46,6 +46,15 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     sort_oldest: "Cũ nhất",
     apply_filter: "Áp dụng & Tìm kiếm",
     quick_search_category: "Tìm thể loại nhanh...",
+    search_results_title: "Danh sách truyện",
+    search_keyword_label: "Từ khóa:",
+    search_category_label: "• Thể loại:",
+    results_count: "kết quả",
+    filter_button: "Bộ lọc",
+    empty_search_title: "Không tìm thấy kết quả",
+    empty_search_description: "Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.",
+    reset_filter: "Đặt lại bộ lọc",
+    read_now: "Đọc ngay",
 
     // Header & Sub Navigation
     nav_home: "TRANG CHỦ",
@@ -57,7 +66,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_fanpage: "FANPAGE",
     category_list_title: "DANH SÁCH THỂ LOẠI",
     all_categories: "Tất cả thể loại",
+    unnamed: "Không tên",
     see_all: "Xem tất cả »",
+    footer_about: "Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.",
 
     // Homepage Sections
     popular_comics: "TRUYỆN PHỔ BIẾN",
@@ -269,6 +280,15 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     sort_oldest: "Oldest",
     apply_filter: "Apply & Search",
     quick_search_category: "Quick category search...",
+    search_results_title: "Comic List",
+    search_keyword_label: "Keyword:",
+    search_category_label: "• Category:",
+    results_count: "results",
+    filter_button: "Filters",
+    empty_search_title: "No results found",
+    empty_search_description: "No comics match your filters. Try changing your keyword or category.",
+    reset_filter: "Reset filters",
+    read_now: "Read now",
 
     // Header & Sub Navigation
     nav_home: "HOME",
@@ -280,7 +300,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_fanpage: "FANPAGE",
     category_list_title: "CATEGORY LIST",
     all_categories: "All Categories",
+    unnamed: "Untitled",
     see_all: "See all »",
+    footer_about: "A licensed comic reading platform. Published and managed by Administrators.",
 
     // Homepage Sections
     popular_comics: "POPULAR COMICS",

@@ -10,7 +10,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
-import { useAdminComics } from "@/lib/hooks/use-admin-comics";
+import { useAdminComics } from "@/hooks/features/use-admin-comics";
 
 export default function AdminComicsPage() {
   const {

@@ -11,7 +11,7 @@ import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
 });
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser } from "@/hooks/features/use-user";
 import { updateUserProfile } from "@/lib/actions/user.actions";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { getR2ImageUrl } from "@/lib/utils/image-url";

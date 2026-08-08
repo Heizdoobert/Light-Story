@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser } from "@/hooks/features/use-user";
 
 type AuthMode = "signin" | "register" | "forgot";
 

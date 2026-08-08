@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireRouteAuthorization } from '@/lib/auth/route-auth';
+import { requireRouteAuthorization } from '@/lib/security/route-auth';
 import { ACTION_ADMIN_ROLES } from '@/lib/security/permission';
 import { getBucketForFolder, putObject } from '@/lib/r2/s3';
 

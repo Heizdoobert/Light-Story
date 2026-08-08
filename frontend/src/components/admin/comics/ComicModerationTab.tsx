@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Ban, CheckCircle2, RefreshCw, ShieldAlert, Sparkles, Trash2 } from "lucide-react";
-import { formatDateTime } from "@/lib/cms/comicCmsTypes";
-import type { ComicModerationState, ComicReportedComment } from "@/lib/validation/comic-cms-schemas";
+import { formatDateTime } from "@/types/comicCmsTypes";
+import type { ComicModerationState, ComicReportedComment } from "@/lib/schemas/comic-cms-schemas";
 
 type ComicModerationTabProps = {
   moderation: ComicModerationState;

@@ -2,7 +2,7 @@
 
 import { Settings, Save, Database, Cloud, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAdminSettings } from "@/lib/hooks/use-admin-settings";
+import { useAdminSettings } from "@/hooks/features/use-admin-settings";
 
 export default function AdminSettingsPage() {
   const {

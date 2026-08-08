@@ -73,10 +73,10 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
     const barrel = readFileSync(join(HOOKS_DIR, 'index.ts'), 'utf-8').replace(/^\uFEFF/, '');
     const lines = barrel.split(/\r?\n/);
     const exportStars = lines.filter((l) => l.trim().startsWith('export * from'));
-    expect(exportStars).toHaveLength(33);
-    expect(exportStars.filter((l) => l.includes('presenters/'))).toHaveLength(22);
-    expect(exportStars.filter((l) => l.includes('features/'))).toHaveLength(8);
-    expect(exportStars.filter((l) => l.includes('common/'))).toHaveLength(3);
+    expect(exportStars).toHaveLength(3);
+    expect(exportStars.filter((l) => l.includes('common'))).toHaveLength(1);
+    expect(exportStars.filter((l) => l.includes('features'))).toHaveLength(1);
+    expect(exportStars.filter((l) => l.includes('presenters'))).toHaveLength(1);
   });
 
   it('resolves every export * target to a real file on disk', () => {
@@ -85,7 +85,10 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
       const m = line.match(/export \* from ['"](\.[^'"]+)['"]/);
       if (!m) continue;
       const rel = m[1].replace(/^\.\//, '');
-      expect(existsSync(join(HOOKS_DIR, `${rel}.ts`)), `${rel} re-exported but missing on disk`).toBe(true);
+      expect(
+        existsSync(join(HOOKS_DIR, `${rel}.ts`)) || existsSync(join(HOOKS_DIR, rel, 'index.ts')),
+        `${rel} re-exported but missing on disk`,
+      ).toBe(true);
     }
   });
 

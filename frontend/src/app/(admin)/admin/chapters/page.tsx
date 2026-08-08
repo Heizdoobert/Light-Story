@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
 });
-import { useAdminChapters } from "@/lib/hooks/use-admin-chapters";
+import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
 
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();

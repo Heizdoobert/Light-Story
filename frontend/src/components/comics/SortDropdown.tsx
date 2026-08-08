@@ -4,18 +4,20 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ArrowUpDown, ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useLanguage } from "@/context/LanguageContext";
 
 // Danh sách các tùy chọn để dễ quản lý
 const SORT_OPTIONS = [
-  { value: "newest", label: "Mới cập nhật" },
-  { value: "most_viewed", label: "Lượt xem cao nhất" },
-  { value: "oldest", label: "Cũ nhất" },
+  { value: "newest", key: "sort_newest" },
+  { value: "most_viewed", key: "sort_most_viewed" },
+  { value: "oldest", key: "sort_oldest" },
 ];
 
 export const SortDropdown = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
 
   // State quản lý việc đóng/mở menu
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +25,7 @@ export const SortDropdown = () => {
 
   const currentSort = searchParams.get("sort") || "newest";
   const currentLabel =
-    SORT_OPTIONS.find((o) => o.value === currentSort)?.label || "Mới cập nhật";
+    t(SORT_OPTIONS.find((o) => o.value === currentSort)?.key || "sort_newest");
 
   // Hiệu ứng: Tự động đóng menu khi người dùng click ra ngoài vùng dropdown
   useEffect(() => {
@@ -50,7 +52,7 @@ export const SortDropdown = () => {
     <div className="flex items-center gap-2 w-fit">
       <ArrowUpDown size={16} className="text-slate-500 dark:text-slate-400" />
       <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
-        Sắp xếp:
+        {t("sort_by_label")}
       </span>
 
       {/* Khu vực Dropdown Custom */}
@@ -94,7 +96,7 @@ export const SortDropdown = () => {
                           : "text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
                       }`}
                     >
-                      {option.label}
+                      {t(option.key)}
                       {/* Dấu tích V cho item đang được chọn */}
                       {isSelected && (
                         <Check size={16} className="text-primary" />

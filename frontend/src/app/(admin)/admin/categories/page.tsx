@@ -2,7 +2,7 @@
 
 import { Tags, Plus, Edit, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAdminCategories } from "@/lib/hooks/use-admin-categories";
+import { useAdminCategories } from "@/hooks/features/use-admin-categories";
 
 export default function AdminCategoriesPage() {
   const {

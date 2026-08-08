@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import * as comicService from './comic.service';
 import * as service from './comicCms.service';
 import { apiClient } from '@/lib/api/apiClient';
-import type { ComicCmsFormValues } from '@/lib/validation/comic-cms-schemas';
+import type { ComicCmsFormValues } from '@/lib/schemas/comic-cms-schemas';
 
 vi.mock('./comic.service', () => ({
   uploadComicCover: vi.fn(),

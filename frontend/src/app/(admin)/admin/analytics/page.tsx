@@ -13,7 +13,7 @@ import {
   Zap,
   Globe,
 } from "lucide-react";
-import { useAdminAnalytics } from "@/lib/hooks/use-admin-analytics";
+import { useAdminAnalytics } from "@/hooks/features/use-admin-analytics";
 
 export default function AdminAnalyticsPage() {
   const { loading, data, usagePct, refresh } = useAdminAnalytics();

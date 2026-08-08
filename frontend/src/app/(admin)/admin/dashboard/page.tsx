@@ -15,7 +15,7 @@ import {
 import { StatCard } from "@/components/admin/stat-card";
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants/routes";
-import { useAdminDashboard } from "@/lib/hooks/use-admin-dashboard";
+import { useAdminDashboard } from "@/hooks/features/use-admin-dashboard";
 
 export default function AdminDashboardPage() {
   const {

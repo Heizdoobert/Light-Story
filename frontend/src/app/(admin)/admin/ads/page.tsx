@@ -3,7 +3,7 @@
 import { Megaphone, Save, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { validateAdMarkup } from "@/lib/admin/ad-policy";
-import { useAdminAds } from "@/lib/hooks/use-admin-ads";
+import { useAdminAds } from "@/hooks/features/use-admin-ads";
 
 export default function AdminAdsPage() {
   const {

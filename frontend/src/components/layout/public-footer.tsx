@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ROUTES } from '@/lib/constants/routes';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function PublicFooter() {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   if (pathname?.startsWith(ROUTES.ADMIN.ROOT)) return null;
 
@@ -19,7 +21,7 @@ export default function PublicFooter() {
             </h3>
           </Link>
           <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm leading-relaxed">
-            Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.
+            {t("footer_about")}
           </p>
         </div>
         <p className="text-xs text-slate-400 dark:text-zinc-600">© 2026 LightStory. All rights reserved.</p>

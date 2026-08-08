@@ -170,7 +170,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
 
                   {filteredCategories.length > 0 ? (
                     filteredCategories.map((cat, index) => {
-                      const catName = cat.name || cat.id || "Không tên";
+                      const catName = cat.name || cat.id || t("unnamed");
                       const isSelected = category === catName;
                       return (
                         <div

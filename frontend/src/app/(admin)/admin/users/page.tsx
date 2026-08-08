@@ -3,7 +3,7 @@
 import { Users, Search, ShieldCheck, UserCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAdminUsers } from "@/lib/hooks/use-admin-users";
+import { useAdminUsers } from "@/hooks/features/use-admin-users";
 
 export default function AdminUsersPage() {
   const {

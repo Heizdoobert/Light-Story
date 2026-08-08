@@ -36,8 +36,9 @@ type HooksModule = typeof import('@/hooks');
 const EPONYMOUS_PRESENTER_HOOKS = [
   'useAdminDashboardPresenter',
   'useAdminUserPresenter',
-  'useAnalyticsDashboard',
-  'useAuditLogsPresenter',
+      'useAnalyticsDashboard',
+      'useAnalyticsDashboardTabPresenter',
+      'useAuditLogsPresenter',
   'useAuthModalPresenter',
   'useAuthorPresenter',
   'useCategoryPresenter',
@@ -87,7 +88,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     hooks = await import('@/hooks');
   });
 
-  it('re-exports all 20 presenter hooks under their eponymous names', () => {
+  it('re-exports all 21 presenter hooks under their eponymous names', () => {
     for (const name of EPONYMOUS_PRESENTER_HOOKS) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -115,7 +116,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('exports exactly 35 runtime values, all functions', () => {
+  it('exports exactly 36 runtime values, all functions', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual([...ALL_RUNTIME_EXPORTS].sort());
     for (const key of keys) {

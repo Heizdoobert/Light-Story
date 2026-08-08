@@ -17,7 +17,7 @@ import { supabase } from '@/lib/supabase/client';
 import { ROUTES } from '@/lib/constants/routes';
 import { getAdminMenuItems } from '@/lib/admin/admin-navigation';
 import { useLanguage } from '@/context/LanguageContext';
-import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/auth/security-utils';
+import { getFallbackAvatar, proxyAvatarUrl } from '@/lib/security/security-utils';
 import {
   DEFAULT_DASHBOARD_TAB_VISIBILITY,
   DEFAULT_SIDEBAR_MENU_VISIBILITY,

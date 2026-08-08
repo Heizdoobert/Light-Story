@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser } from "@/hooks/features/use-user";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { updateUserProfile } from "@/lib/actions/user.actions";

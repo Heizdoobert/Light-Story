@@ -173,5 +173,3 @@ export function useUser() {
     signOut,
   };
 }
-
-export default useUser;
