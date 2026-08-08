@@ -112,4 +112,4 @@ Test Files  45 passed (45)
 
 ## Commit
 
-`<hash>` — see final message. Conventional: `fix(admin): ...` (pre-commit lint hook passed).
+`f3a877c` — `fix(admin): align admin role source with app_metadata, fix comic create/edit pages (task 9c)` (pre-commit lint hook passed).
