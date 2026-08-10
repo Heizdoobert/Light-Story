@@ -3,6 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { saveSiteSettings } from "@/lib/actions/settings.actions";
+import {
+  DEFAULT_SIDEBAR_CONTROL,
+  SIDEBAR_CONTROL_KEY,
+  parseSidebarControl,
+  type SidebarControl,
+} from "@/lib/admin/sidebar-settings";
 import { toast } from "sonner";
 
 export function useAdminSettings() {
@@ -10,6 +16,7 @@ export function useAdminSettings() {
   const [siteDescription, setSiteDescription] = useState("Website Đọc Truyện Tranh Trực Tuyến Tốc Độ Cao");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
+  const [sidebarControl, setSidebarControl] = useState<SidebarControl>(DEFAULT_SIDEBAR_CONTROL);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -25,6 +32,7 @@ export function useAdminSettings() {
           if (row.key === "site_description" && typeof row.value === "string") setSiteDescription(row.value);
           if (row.key === "maintenance_mode") setMaintenanceMode(row.value === "true");
           if (row.key === "compact_mode") setCompactMode(row.value === "true");
+          if (row.key === SIDEBAR_CONTROL_KEY) setSidebarControl(parseSidebarControl(row.value));
         });
       }
     } catch (err) {
@@ -48,6 +56,7 @@ export function useAdminSettings() {
           { key: "site_description", value: siteDescription },
           { key: "maintenance_mode", value: String(maintenanceMode) },
           { key: "compact_mode", value: String(compactMode) },
+          { key: SIDEBAR_CONTROL_KEY, value: JSON.stringify(sidebarControl) },
         ],
       });
       if (res.success === false) {
@@ -71,6 +80,8 @@ export function useAdminSettings() {
     setMaintenanceMode,
     compactMode,
     setCompactMode,
+    sidebarControl,
+    setSidebarControl,
     loading,
     saving,
     handleSaveSettings,

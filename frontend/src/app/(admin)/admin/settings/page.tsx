@@ -1,8 +1,9 @@
 "use client";
 
-import { Settings, Save, Database, Cloud, ShieldAlert } from "lucide-react";
+import { Settings, Save, Database, Cloud, ShieldAlert, Sidebar, Tags } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminSettings } from "@/hooks/features/use-admin-settings";
+import { CONFIGURABLE_ROLES, type ConfigurableRole } from "@/lib/admin/sidebar-settings";
 
 export default function AdminSettingsPage() {
   const {
@@ -14,9 +15,23 @@ export default function AdminSettingsPage() {
     setMaintenanceMode,
     compactMode,
     setCompactMode,
+    sidebarControl,
+    setSidebarControl,
     saving,
     handleSaveSettings,
   } = useAdminSettings();
+
+  const toggleSidebar = (role: ConfigurableRole) =>
+    setSidebarControl((prev) => ({
+      ...prev,
+      sidebarEnabled: { ...prev.sidebarEnabled, [role]: !prev.sidebarEnabled[role] },
+    }));
+
+  const toggleCategories = (role: ConfigurableRole) =>
+    setSidebarControl((prev) => ({
+      ...prev,
+      categoriesVisible: { ...prev.categoriesVisible, [role]: !prev.categoriesVisible[role] },
+    }));
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -97,6 +112,58 @@ export default function AdminSettingsPage() {
               <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
             </label>
           </div>
+        </div>
+
+        {/* Sidebar Control & Per-Role Visibility */}
+        <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 className="font-bold text-lg border-b border-slate-800 pb-3">
+            Điều Khiển Sidebar & Quyền Hiển Thị
+          </h3>
+          <p className="text-xs text-slate-400">
+            Superadmin luôn thấy sidebar và tất cả menu. Cấu hình cho từng cấp quyền bên dưới.
+          </p>
+
+          {CONFIGURABLE_ROLES.map((role) => (
+            <div key={role} className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-orange-400">{role}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                    <Sidebar size={16} className="text-cyan-400" />
+                    Hiển Thị Sidebar
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">Bật/tắt thanh điều hướng bên trái cho vai trò này.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sidebarControl.sidebarEnabled[role]}
+                    onChange={() => toggleSidebar(role)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-white flex items-center gap-2">
+                    <Tags size={16} className="text-emerald-400" />
+                    Menu "Thể Loại Truyện"
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">Hiển thị mục thể loại trên sidebar cho vai trò này.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={sidebarControl.categoriesVisible[role]}
+                    onChange={() => toggleCategories(role)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Infrastructure Status */}
