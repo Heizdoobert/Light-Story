@@ -96,65 +96,34 @@ export async function handleAnalyticsRequest(
         } while (cursor);
       }
 
-      const r2UsageGb = Number((r2SizeBytes / (1024 * 1024 * 1024)).toFixed(4));
-      const r2AllocatedGb = 10; // Default 10GB tier benchmark
-
-      // Check if cached in KV Namespace
-      let kvCachedStats: Record<string, any> = {};
-      if (env.APP_KV) {
+      let queueBacklog = 0;
+      if (env.LIGHTSTORY_QUEUE) {
         try {
-          const rawKv = await env.APP_KV.get('analytics_infrastructure');
-          if (rawKv) kvCachedStats = JSON.parse(rawKv);
+          const qm = await env.LIGHTSTORY_QUEUE.metrics();
+          queueBacklog = Number(qm.backlogCount ?? 0);
         } catch (_) {}
       }
 
-      const responsePayload = {
+      const r2UsageGb = Number((r2SizeBytes / (1024 * 1024 * 1024)).toFixed(4));
+      // ponytail: R2 free tier cap (10 GB) is the real plan constant, not telemetry.
+      const r2AllocatedGb = 10;
+      const storageEfficiencyPct =
+        r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0;
+
+      // Real data only: R2 live listing, queue metrics() and binding presence.
+      // Analytics Engine (page views, device split, cache hit, zones) is not enabled
+      // on this account — those fields were hardcoded fakes and are now removed.
+      return json({
         r2_usage_gb: r2UsageGb,
         r2_allocated_gb: r2AllocatedGb,
         r2_object_count: r2ObjectCount,
-        r2_egress_gb: kvCachedStats.r2_egress_gb ?? 0.05,
-        d1_queries_count: kvCachedStats.d1_queries_count ?? 125,
-        d1_avg_latency_ms: kvCachedStats.d1_avg_latency_ms ?? 4.2,
-        page_views: kvCachedStats.page_views ?? 1250,
-        bandwidth_gb: Number((r2UsageGb * 1.5).toFixed(4)),
-        cache_hit_ratio_pct: 98.5,
-        storage_efficiency_pct: Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)),
-        device_mobile: 65,
-        device_desktop: 30,
-        device_tablet: 5,
-        top_zones: [
-          { zone: 'api.lightstory.app', requests: 12500, cache_hit_ratio_pct: 99.1 },
-          { zone: 'lightstory.app', requests: 8400, cache_hit_ratio_pct: 97.8 },
-        ],
-        // ponytail: include queue & workflow status telemetry metrics
+        storage_efficiency_pct: storageEfficiencyPct,
         queue_binding: env.LIGHTSTORY_QUEUE ? 'bound' : 'unbound',
-        queue_messages_processed: kvCachedStats.queue_messages_processed ?? 1420,
-        queue_backlog: kvCachedStats.queue_backlog ?? 3,
-        queue_latency_ms: kvCachedStats.queue_latency_ms ?? 18.5,
+        queue_backlog: queueBacklog,
         workflow_binding: env.LIGHTSTORY_WORKFLOW ? 'bound' : 'unbound',
-        workflow_instances_active: kvCachedStats.workflow_instances_active ?? 12,
-        workflow_instances_completed: kvCachedStats.workflow_instances_completed ?? 850,
-        workflow_avg_duration_ms: kvCachedStats.workflow_avg_duration_ms ?? 145,
-        analytics_engine: env.ANALYTICS_DATA ? 'bound' : 'unbound',
         kv_binding: env.APP_KV ? 'bound' : 'unbound',
         recorded_at: new Date().toISOString(),
-      };
-
-      // Persist latest infrastructure snapshot in KV Namespace
-      if (env.APP_KV) {
-        try {
-          await env.APP_KV.put('analytics_infrastructure', JSON.stringify(responsePayload), { expirationTtl: 86400 });
-        } catch (_) {}
-      }
-
-      // Record telemetry data point to Cloudflare Analytics Engine
-      recordAnalyticsEngineEvent(env, {
-        indexes: ['infrastructure_check'],
-        blobs: ['unified-gateway', env.ANALYTICS_DATA ? 'engine_active' : 'engine_idle'],
-        doubles: [r2ObjectCount, r2SizeBytes, Date.now()],
       });
-
-      return json(responsePayload);
     }
 
     if (
