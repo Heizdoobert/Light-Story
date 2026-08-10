@@ -20,6 +20,17 @@ export const ROUTES = {
   ADMIN: {
     ROOT: "/admin",
     DASHBOARD: "/admin/dashboard",
+    COMICS: "/admin/comics",
+    CHAPTERS: "/admin/chapters",
+    USERS: "/admin/users",
+    CATEGORIES: "/admin/categories",
+    AUTHORS: "/admin/authors",
+    SETTINGS: "/admin/settings",
+    ADS: "/admin/ads",
+    AUDIT: "/admin/audit",
+    OPERATIONS: "/admin/operations",
+    ANALYTICS: "/admin/analytics",
+    PROFILE: "/admin/profile",
   },
   ERROR: {
     UNAUTHORIZED: "/handle-exception/401",
