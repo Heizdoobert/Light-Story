@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/features/use-user';
+import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminRouteGroupLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +35,15 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
     );
   }
 
-  // Every admin route now lands on the tabbed AdminDashboard, which renders
-  // its own sidebar + topbar — the old route-based AdminSidebar shell is gone.
-  return <>{children}</>;
+  // The tabbed AdminDashboard renders its own sidebar + topbar — skip the route sidebar shell.
+  if (pathname === ROUTES.ADMIN.DASHBOARD) {
+    return <>{children}</>;
+  }
+
+  return (
+    <div className="min-h-screen flex bg-slate-950 text-slate-100">
+      <AdminSidebar />
+      <main id="main-content" className="flex-1 p-8 overflow-y-auto">{children}</main>
+    </div>
+  );
 }
