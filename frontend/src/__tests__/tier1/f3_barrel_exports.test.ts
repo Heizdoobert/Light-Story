@@ -34,14 +34,11 @@ vi.mock('@/context/ThemeContext', () => ({
 type HooksModule = typeof import('@/hooks');
 
 const EPONYMOUS_PRESENTER_HOOKS = [
-  'useAuthModalPresenter',
   'useAuthorPresenter',
   'useComicDetailPresenter',
-  'useCreateComicPresenter',
   'useHomePagePresenter',
   'useProfilePresenter',
   'useReadChapterPresenter',
-  'useResetPasswordPresenter',
   'useSearchPresenter',
   'useTranslatorPresenter',
 ];

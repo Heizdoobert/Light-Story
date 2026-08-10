@@ -1,5 +1,4 @@
 export * from "./ComicDetailPageContent";
-export * from "./CreateComicForm";
 export * from "./FilterMenu";
 export * from "./HomePage";
 export * from "./RecommendedComics";
