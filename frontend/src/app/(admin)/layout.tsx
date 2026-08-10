@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useUser } from '@/hooks/features/use-user';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminRouteGroupLayout({ children }: { children: React.ReactNode }) {
   const { isStaff, isLoading } = useUser();
+  const pathname = usePathname();
 
   if (isLoading) {
     return (
@@ -31,6 +33,11 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
         </Link>
       </div>
     );
+  }
+
+  // The tabbed AdminDashboard renders its own sidebar + topbar — skip the route sidebar shell.
+  if (pathname === ROUTES.ADMIN.DASHBOARD) {
+    return <>{children}</>;
   }
 
   return (
