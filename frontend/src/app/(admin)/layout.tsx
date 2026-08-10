@@ -6,7 +6,6 @@ import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminRouteGroupLayout({ children }: { children: React.ReactNode }) {
   const { isStaff, isLoading } = useUser();
-  const pathname = usePathname();
 
   if (isLoading) {
     return (
