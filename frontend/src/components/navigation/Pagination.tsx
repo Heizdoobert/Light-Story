@@ -56,6 +56,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(1)}
         disabled={currentPage === 1}
+        aria-label="Go to first page"
         className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronsLeft size={18} />
@@ -65,6 +66,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
+        aria-label="Previous page"
         className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronLeft size={18} />
@@ -77,6 +79,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             key={page}
             onClick={() => handlePageChange(page)}
+            aria-label={`Go to page ${page}`}
             className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
               isActive
                 ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30 scale-110" // Màu cam giống ảnh của bạn
@@ -92,6 +95,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
+        aria-label="Next page"
         className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronRight size={18} />
@@ -101,6 +105,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => handlePageChange(totalPages)}
         disabled={currentPage === totalPages}
+        aria-label="Last page"
         className="w-11 h-11 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
       >
         <ChevronsRight size={18} />

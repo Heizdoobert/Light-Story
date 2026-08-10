@@ -120,6 +120,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           {searchInput && (
             <button
               onClick={() => setSearchInput("")}
+              aria-label="Clear search"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
             >
               <XCircle size={16} />
