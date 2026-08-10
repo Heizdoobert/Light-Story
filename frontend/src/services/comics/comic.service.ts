@@ -2,6 +2,7 @@ import { apiClient } from '@/lib/api/apiClient';
 import { ROUTES } from '@/lib/constants/routes';
 import { supabase } from '@/lib/supabase/client';
 import { getGatewayUrl } from '@/lib/utils/gateway-url';
+import { decodeJwtPayload } from '@/lib/utils/jwt';
 
 export type ComicContext = {
   id: string;
@@ -127,15 +128,10 @@ async function uploadFilesToR2(bucket: string | undefined, files: File[], option
 }
 
 function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp ? now >= payload.exp - 10 : true;
-  } catch {
-    return true;
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp ? now >= payload.exp - 10 : true;
 }
 
 export async function getAccessToken(): Promise<string | null> {

@@ -14,6 +14,7 @@ export class ApiError extends Error {
 
 import { supabase } from '@/lib/supabase/client';
 import { getGatewayUrl } from '@/lib/utils/gateway-url';
+import { decodeJwtPayload } from '@/lib/utils/jwt';
 
 const BASE_URL = getGatewayUrl();
 
@@ -48,15 +49,10 @@ function serializeBody(body: unknown): BodyInit | undefined {
 // ponytail: token comes from the supabase-js session (cookie-backed by
 // @supabase/ssr). No localStorage scanning: session storage is cookie-only.
 function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp ? now >= payload.exp - 10 : true;
-  } catch {
-    return true;
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp ? now >= payload.exp - 10 : true;
 }
 
 let _pendingToken: Promise<string | null> | null = null;
