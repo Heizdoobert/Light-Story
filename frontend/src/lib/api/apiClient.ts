@@ -96,7 +96,12 @@ async function getAccessTokenAsync(): Promise<string | null> {
     if (!supabase) return null;
     try {
       const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
+      const token = data?.session?.access_token ?? null;
+      if (token && isTokenExpired(token)) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        return refreshed?.session?.access_token ?? null;
+      }
+      return token;
     } catch {
       return null;
     }
