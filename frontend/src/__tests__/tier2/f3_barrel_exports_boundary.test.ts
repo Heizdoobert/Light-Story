@@ -69,7 +69,7 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
     hooks = await import('@/hooks');
   });
 
-  it('still re-exports exactly 33 modules via export * (22 presenters / 8 features / 3 common)', () => {
+  it('still re-exports exactly 3 barrel sections via export * (presenters / features / common)', () => {
     const barrel = readFileSync(join(HOOKS_DIR, 'index.ts'), 'utf-8').replace(/^\uFEFF/, '');
     const lines = barrel.split(/\r?\n/);
     const exportStars = lines.filter((l) => l.trim().startsWith('export * from'));
@@ -119,7 +119,7 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
 
   it('keeps every runtime export a function and no default export', () => {
     const keys = Object.keys(hooks);
-    expect(keys.length).toBeGreaterThanOrEqual(33);
+    expect(keys.length).toBeGreaterThanOrEqual(24);
     for (const key of keys) {
       expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
     }

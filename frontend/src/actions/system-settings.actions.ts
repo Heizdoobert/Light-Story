@@ -35,6 +35,6 @@ export async function saveSystemSettings(input: SaveAdminUiSettingsInput): Promi
   });
 }
 
-export async function updateSystemSettings(input: UpdateSystemSettingsInput): Promise<ActionResult> {
+export async function updateSystemSettings(input: UpdateAdminUiSettingsInput): Promise<ActionResult> {
   return saveSystemSettings(input);
 }

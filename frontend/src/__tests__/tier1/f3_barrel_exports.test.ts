@@ -34,30 +34,20 @@ vi.mock('@/context/ThemeContext', () => ({
 type HooksModule = typeof import('@/hooks');
 
 const EPONYMOUS_PRESENTER_HOOKS = [
-  'useAdminDashboardPresenter',
-  'useAdminUserPresenter',
-      'useAnalyticsDashboard',
-      'useAnalyticsDashboardTabPresenter',
-      'useAuditLogsPresenter',
   'useAuthModalPresenter',
   'useAuthorPresenter',
-  'useCategoryPresenter',
   'useChapterFormPresenter',
   'useComicDetailPresenter',
   'useCreateComicPresenter',
   'useHomePagePresenter',
-  'useOperationsPresenter',
   'useProfilePresenter',
   'useReadChapterPresenter',
   'useResetPasswordPresenter',
   'useSearchPresenter',
-  'useStoryFormPresenter',
-  'useStoryManagementPresenter',
-  'useSystemSettingsPresenter',
   'useTranslatorPresenter',
 ];
 
-const EXTRA_PRESENTER_EXPORTS = ['useAdConfigsQuery', 'useUpdateAdConfig', 'useCrudMutation'];
+const EXTRA_PRESENTER_EXPORTS = ['useCrudMutation'];
 
 const FEATURE_AND_COMMON_HOOKS = [
   'useBookmarks',
@@ -88,7 +78,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     hooks = await import('@/hooks');
   });
 
-  it('re-exports all 21 presenter hooks under their eponymous names', () => {
+  it('re-exports all 11 presenter hooks under their eponymous names', () => {
     for (const name of EPONYMOUS_PRESENTER_HOOKS) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -116,7 +106,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('exports exactly 36 runtime values, all functions', () => {
+  it('exports exactly 24 runtime values, all functions', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual([...ALL_RUNTIME_EXPORTS].sort());
     for (const key of keys) {
