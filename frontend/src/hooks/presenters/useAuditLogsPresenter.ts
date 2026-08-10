@@ -10,13 +10,15 @@ export function useAuditLogsPresenter() {
     queryFn: () => adminService.getAuditLogs(),
   });
 
+  const rows = logsQuery.data?.items ?? [];
+
   const actorIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const row of logsQuery.data ?? []) {
+    for (const row of rows) {
       if (row.user_id) ids.add(row.user_id);
     }
     return Array.from(ids);
-  }, [logsQuery.data]);
+  }, [rows]);
 
   const actorsQuery = useQuery({
     queryKey: ['admin_audit_log_actors', actorIds],

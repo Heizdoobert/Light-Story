@@ -45,8 +45,10 @@ export async function fetchProfiles() {
   return apiClient.get<Array<any>>(ROUTES.API.ADMIN.PROFILES);
 }
 
-export async function getAuditLogs(limit = 200) {
-  return apiClient.get<Array<any>>(ROUTES.API.ADMIN.AUDIT_LOGS(limit));
+export async function getAuditLogs(limit = 50, page = 1) {
+  return apiClient.get<{ items: Array<any>; total: number }>(
+    ROUTES.API.ADMIN.AUDIT_LOGS(page, limit),
+  );
 }
 
 export async function getProfilesByIds(ids: string[]) {

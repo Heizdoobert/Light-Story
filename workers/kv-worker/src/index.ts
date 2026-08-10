@@ -35,7 +35,7 @@ async function handleSupabaseProxy(
   if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
     return new Response(
       JSON.stringify({
-        status: 'error',
+        success: false,
         error: { code: 'SUPABASE_NOT_CONFIGURED' },
       }),
       {
@@ -52,7 +52,7 @@ async function handleSupabaseProxy(
   if (!sbPath) {
     return new Response(
       JSON.stringify({
-        status: 'error',
+        success: false,
         error: { code: 'INVALID_SUPABASE_PATH' },
       }),
       {
@@ -192,8 +192,8 @@ export default {
           if (e instanceof UnauthorizedError) {
             return new Response(
               JSON.stringify({
-                status: 'error',
-                error: {
+                success: false,
+        error: {
                   code: 'UNAUTHORIZED',
                   message: e.message,
                 },
@@ -209,8 +209,8 @@ export default {
           }
           return new Response(
             JSON.stringify({
-              status: 'error',
-              error: { code: 'INTERNAL_ERROR' },
+              success: false,
+        error: { code: 'INTERNAL_ERROR' },
             }),
             { status: 500 },
           );
@@ -235,8 +235,8 @@ export default {
       applySecurityHeaders(headers);
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+          success: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
         }),
         { status: 429, headers },
       );
@@ -248,8 +248,8 @@ export default {
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+          success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
         }),
         {
           status: 401,
@@ -463,7 +463,7 @@ export default {
         });
       }
       const obj = parsed as Record<string, unknown>;
-      if (obj && (typeof obj.success === 'boolean' || obj.status === 'error')) {
+      if (obj && typeof obj.success === 'boolean') {
         return new Response(bodyText, {
           status: res.status,
           headers: resHeaders,

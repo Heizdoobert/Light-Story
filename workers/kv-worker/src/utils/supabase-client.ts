@@ -26,7 +26,7 @@ function json(data: unknown, status = 200): Response {
 }
 
 function err(code: string, message: string, status: number): Response {
-  return Response.json({ status: 'error', error: { code, message } }, { status });
+  return Response.json({ success: false, error: { code, message } }, { status });
 }
 
 function authToken(h: Headers): string | null {

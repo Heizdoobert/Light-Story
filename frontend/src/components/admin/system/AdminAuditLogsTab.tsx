@@ -26,11 +26,11 @@ export const AdminAuditLogsTab: React.FC = () => {
 
         {isLoading && <div className="p-6 text-sm text-slate-500">Loading audit logs...</div>}
 
-        {!isLoading && (logsQuery.data?.length ?? 0) === 0 && (
+        {!isLoading && (logsQuery.data?.items?.length ?? 0) === 0 && (
           <div className="p-6 text-sm text-slate-500 dark:text-slate-400">No audit logs recorded yet.</div>
         )}
 
-        {!isLoading && (logsQuery.data?.length ?? 0) > 0 && (
+        {!isLoading && (logsQuery.data?.items?.length ?? 0) > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 dark:bg-slate-800/50">
@@ -43,7 +43,7 @@ export const AdminAuditLogsTab: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {(logsQuery.data ?? []).map((log) => {
+                {(logsQuery.data?.items ?? []).map((log) => {
                   const actor = log.user_id ? actorMap.get(log.user_id) : null;
                   const actorDisplay = actor?.full_name?.trim() || actor?.email || log.user_id || 'Unknown';
                   const metadataText = log.metadata && Object.keys(log.metadata).length > 0

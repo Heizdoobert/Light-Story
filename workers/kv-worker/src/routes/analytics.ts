@@ -161,11 +161,14 @@ export async function handleAnalyticsRequest(
       method === 'POST' &&
       pathname === '/analytics/record-view'
     ) {
-      const body = (await request.json()) as any;
+      const body = (await request.json()) as Record<string, unknown>;
+      if (typeof body.storyId !== 'string' || !body.storyId.trim()) {
+        return err('VALIDATION_ERROR', 'storyId is required', 422);
+      }
 
       recordAnalyticsEngineEvent(env, {
         indexes: ['story_view'],
-        blobs: [String(body.storyId || ''), request.headers.get('User-Agent') || ''],
+        blobs: [body.storyId, request.headers.get('User-Agent') || ''],
         doubles: [Date.now()],
       });
 

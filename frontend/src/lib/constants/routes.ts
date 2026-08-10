@@ -77,7 +77,7 @@ export const ROUTES = {
       CHAPTER_IMAGES: (chapterId: string) =>
         `/api/admin/chapters/${chapterId}/images`,
       AUDIT: "/api/admin/audit",
-      AUDIT_LOGS: (limit: number) => `/api/admin/audit?limit=${limit}`,
+      AUDIT_LOGS: (page: number, pageSize: number) => `/api/admin/audit?page=${page}&pageSize=${pageSize}`,
       TAXONOMY: (entity: string) => `/api/admin/taxonomy?entity=${entity}`,
       TRANSLATORS: "/api/admin/translators",
       SITE_SETTINGS: "/api/admin/site-settings",

@@ -234,15 +234,20 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path === '/admin/audit') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '200') || 200, 1, 500);
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
+      const page = clamp(parseInt(url.searchParams.get('page') || '1') || 1, 1, 100000);
+      const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50') || 50, 1, 200);
+      const offset = (page - 1) * pageSize;
+      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       const res = await sbGet('audit_logs', q, env, token);
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const items = await res.json();
+      const total = await sbGetCount('audit_logs', env, token);
+      return json({ items, total });
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '20') || 20, 1, 50);
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
+      const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '20') || 20, 1, 50);
+      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}`;
       const res = await sbGet('audit_logs', q, env, token);
       if (!res.ok) {
         return json({ success: true, data: { notifications: [] } });
