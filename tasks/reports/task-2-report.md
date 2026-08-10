@@ -2,7 +2,7 @@
 
 **Task**: Audit `frontend/src/app/` route structure against PROJECT_RULES.md II.1; create missing `(auth)/layout.tsx`.
 **Status**: DONE
-**Commit**: (see final line)
+**Commit**: b01f553
 
 ## 1. Audit table
 
@@ -100,4 +100,4 @@ No other files modified. `(public)/auth/layout.tsx` untouched. `opencode.json` u
 
 ## 5. Commit
 
-- Hash: `__COMMIT_HASH__` (filled after commit)
+- Hash: `b01f553` — `feat(frontend): add (auth) route group layout` (3 files: layout + brief + report)
