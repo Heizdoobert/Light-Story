@@ -91,7 +91,6 @@ describe('F1 x F3 x F7: hooks barrel and admin-gated comic form', () => {
     const expected = [
       'useAuthModalPresenter',
       'useAuthorPresenter',
-      'useChapterFormPresenter',
       'useComicDetailPresenter',
       'useCreateComicPresenter',
       'useHomePagePresenter',
@@ -102,15 +101,9 @@ describe('F1 x F3 x F7: hooks barrel and admin-gated comic form', () => {
       'useTranslatorPresenter',
       'useCrudMutation',
       'useBookmarks',
-      'useChapterDetail',
       'useReadingHistory',
       'useRecommendations',
-      'useStories',
-      'useStoryDetail',
-      'useStoryMutations',
-      'useAutoSave',
       'useGlobalErrorHandler',
-      'useOptimisticUpdate',
       'isSupabaseConnectionError',
       'getErrorMessage',
     ].sort();

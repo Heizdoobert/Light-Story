@@ -116,7 +116,7 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
 
   it('keeps every runtime export a function and no default export', () => {
     const keys = Object.keys(hooks);
-    expect(keys.length).toBeGreaterThanOrEqual(18);
+    expect(keys.length).toBeGreaterThanOrEqual(16);
     for (const key of keys) {
       expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
     }

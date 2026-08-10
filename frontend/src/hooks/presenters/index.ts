@@ -1,6 +1,5 @@
 export * from "./useAuthModalPresenter";
 export * from "./useAuthorPresenter";
-export * from "./useChapterFormPresenter";
 export * from "./useComicDetailPresenter";
 export * from "./useCreateComicPresenter";
 export * from "./useHomePagePresenter";

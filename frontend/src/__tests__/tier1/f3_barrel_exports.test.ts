@@ -36,7 +36,6 @@ type HooksModule = typeof import('@/hooks');
 const EPONYMOUS_PRESENTER_HOOKS = [
   'useAuthModalPresenter',
   'useAuthorPresenter',
-  'useChapterFormPresenter',
   'useComicDetailPresenter',
   'useCreateComicPresenter',
   'useHomePagePresenter',

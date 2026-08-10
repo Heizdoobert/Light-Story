@@ -3,4 +3,3 @@ export * from "./form-editor";
 export * from "./image-uploader";
 export * from "./stat-card";
 export * from "./content";
-export * from "./forms";

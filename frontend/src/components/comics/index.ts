@@ -1,4 +1,3 @@
-export * from "./AddComicChapterForm";
 export * from "./ComicDetailPageContent";
 export * from "./CreateComicForm";
 export * from "./FilterMenu";

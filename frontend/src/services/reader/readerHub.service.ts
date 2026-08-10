@@ -23,11 +23,6 @@ function getLocalBookmarks(): string[] {
   }
 }
 
-function setLocalBookmarks(list: string[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
-}
-
 function getLocalHistory(): HistoryItem[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -60,26 +55,6 @@ export async function getBookmarks(): Promise<string[]> {
     // Network/auth failure → offline path, fall back to local cache (intentional).
   }
   return getLocalBookmarks();
-}
-
-export async function toggleBookmark(comicId: string): Promise<boolean> {
-  const local = getLocalBookmarks();
-  const exists = local.includes(comicId);
-
-  try {
-    const token = await getAccessToken();
-    if (token) {
-      if (exists) {
-        await apiClient.delete<unknown>(ROUTES.API.USER.BOOKMARK(comicId));
-      } else {
-        await apiClient.post<unknown>(ROUTES.API.USER.BOOKMARK(comicId), {});
-      }
-    }
-  } catch {}
-
-  const updated = exists ? local.filter((id) => id !== comicId) : [...local, comicId];
-  setLocalBookmarks(updated);
-  return !exists;
 }
 
 export async function getReadingHistory(): Promise<HistoryItem[]> {
