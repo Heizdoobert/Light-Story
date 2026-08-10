@@ -351,7 +351,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
+        <main id="main-content" className="flex-1 min-w-0 p-4 sm:p-8 dark:text-slate-100 flex flex-col justify-between">
           <div className="flex-1">{children}</div>
           <footer className="mt-8 pt-4 border-t border-slate-200/60 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400 dark:text-slate-500">
             <div>© {new Date().getFullYear()} LightStory Admin Console. All rights reserved.</div>

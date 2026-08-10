@@ -6,6 +6,7 @@ export const ThemeToggleButton = () => {
   return (
     <button
       onClick={toggleTheme}
+      aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
       className='p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500'
     >
       {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}

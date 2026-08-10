@@ -148,6 +148,16 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [showMobileMenu]);
 
+  // Escape closes the mobile drawer
+  useEffect(() => {
+    if (!showMobileMenu) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowMobileMenu(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showMobileMenu]);
+
   const bounceClick = {
     whileTap: { scale: 0.92 },
     whileHover: { scale: 1.05 },
@@ -294,6 +304,7 @@ export const Header: React.FC<HeaderProps> = ({
           <motion.button
             {...bounceClick}
             onClick={toggleTheme}
+            aria-label={theme === "light" ? "Switch to dark mode" : "Chuyển sang chế độ sáng"}
             className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
             title={
               theme === "light"
@@ -513,6 +524,9 @@ export const Header: React.FC<HeaderProps> = ({
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Menu điều hướng"
                 className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-950 z-[90] shadow-lg flex flex-col"
               >
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/10">
@@ -526,6 +540,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                   <button
                     onClick={() => setShowMobileMenu(false)}
+                    aria-label="Đóng menu"
                     className="p-2 bg-slate-100 dark:bg-slate-900 text-slate-500 hover:text-red-500 rounded-full transition-colors"
                   >
                     <X size={20} />
