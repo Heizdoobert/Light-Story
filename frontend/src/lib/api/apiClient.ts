@@ -13,19 +13,9 @@ export class ApiError extends Error {
 }
 
 import { supabase } from '@/lib/supabase/client';
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
 
-const getBaseUrl = (): string => {
-  const url =
-    process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
-      : process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (!url) {
-    throw new Error('NEXT_PUBLIC_GATEWAY_URL is not configured');
-  }
-  return url.replace(/\/+$/, '');
-};
-
-const BASE_URL = getBaseUrl();
+const BASE_URL = getGatewayUrl();
 
 // Tolerated error-envelope shapes across gateway/workers (superset of ApiResponse:
 // some workers return plain {message} or {error_description} instead of the envelope).

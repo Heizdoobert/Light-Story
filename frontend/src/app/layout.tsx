@@ -5,6 +5,7 @@ import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
 import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
+import { getGatewayUrl } from "@/lib/utils/gateway-url";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -48,10 +49,12 @@ export const metadata: Metadata = {
   },
 };
 
-const gatewayUrl =
-  process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION
-    : process.env.NEXT_PUBLIC_GATEWAY_URL;
+let gatewayUrl: string | null = null;
+try {
+  gatewayUrl = getGatewayUrl();
+} catch {
+  // preconnect is optional; missing env must not crash the layout
+}
 
 export default function RootLayout({
   children,

@@ -1,6 +1,7 @@
 import { apiClient } from '@/lib/api/apiClient';
 import { ROUTES } from '@/lib/constants/routes';
 import { supabase } from '@/lib/supabase/client';
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
 
 export type ComicContext = {
   id: string;
@@ -123,17 +124,6 @@ async function uploadFilesToR2(bucket: string | undefined, files: File[], option
     if (allowDevFallback && process.env.NODE_ENV !== 'production') return makeDevUrls(files);
     throw error;
   }
-}
-
-function getGatewayUrl(): string {
-  if (process.env.NODE_ENV === 'production') {
-    const url = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL;
-    if (!url) throw new Error('Missing NEXT_PUBLIC_GATEWAY_URL');
-    return url;
-  }
-  const url = process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (!url) throw new Error('Missing NEXT_PUBLIC_GATEWAY_URL');
-  return url;
 }
 
 function isTokenExpired(token: string): boolean {
