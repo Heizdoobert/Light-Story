@@ -42,7 +42,8 @@ export function useAdminComics() {
       const { data } = await supabase
         .from("stories")
         .select("id, title, author, category, cover_url, status, created_at, views")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (data) {
         setComics(data as ComicItem[]);

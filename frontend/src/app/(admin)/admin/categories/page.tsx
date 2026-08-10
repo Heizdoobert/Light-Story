@@ -3,6 +3,7 @@
 import { Tags, Plus, Edit, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminCategories } from "@/hooks/features/use-admin-categories";
+import { useModalA11y } from "@/hooks/common/use-modal-a11y";
 
 export default function AdminCategoriesPage() {
   const {
@@ -19,6 +20,7 @@ export default function AdminCategoriesPage() {
     handleSaveCategory,
     handleDeleteCategory,
   } = useAdminCategories();
+  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
 
   return (
     <div className="space-y-6">
@@ -82,15 +84,16 @@ export default function AdminCategoriesPage() {
           <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h2 className="text-lg font-bold">{editingCategory ? "Sửa Thể Loại" : "Thêm Thể Loại Mới"}</h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveCategory} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Thể Loại *</label>
+                <label htmlFor="category-name" className="block text-xs font-semibold text-slate-300 mb-1">Tên Thể Loại *</label>
                 <input
+                  id="category-name"
                   type="text"
                   required
                   value={name}

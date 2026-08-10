@@ -45,7 +45,8 @@ export function useAdminChapters(initialComicId: string = "all") {
       const { data: comicsData } = await supabase
         .from("stories")
         .select("id, title")
-        .order("title");
+        .order("title")
+        .limit(500);
 
       if (comicsData) {
         setComics(comicsData);
@@ -57,7 +58,8 @@ export function useAdminChapters(initialComicId: string = "all") {
       let query = supabase
         .from("chapters")
         .select("id, story_id, chapter_number, title, created_at, images")
-        .order("chapter_number", { ascending: false });
+        .order("chapter_number", { ascending: false })
+        .limit(500);
 
       if (selectedComicId !== "all") {
         query = query.eq("story_id", selectedComicId);

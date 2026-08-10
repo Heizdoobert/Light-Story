@@ -11,6 +11,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
 import { useAdminComics } from "@/hooks/features/use-admin-comics";
+import { useModalA11y } from "@/hooks/common/use-modal-a11y";
 
 export default function AdminComicsPage() {
   const {
@@ -39,6 +40,7 @@ export default function AdminComicsPage() {
     handleSaveComic,
     handleDeleteComic,
   } = useAdminComics();
+  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
 
   return (
     <div className="space-y-6">
@@ -65,13 +67,16 @@ export default function AdminComicsPage() {
           <input
             type="text"
             placeholder="Tìm kiếm tên truyện, tác giả..."
+            aria-label="Tìm kiếm truyện"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
           />
         </div>
 
+        <label className="sr-only" htmlFor="comic-status-filter">Lọc theo trạng thái</label>
         <select
+          id="comic-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer shrink-0"
@@ -183,15 +188,16 @@ export default function AdminComicsPage() {
               <h2 className="text-lg font-bold">
                 {editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveComic} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
+                <label htmlFor="comic-title" className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
                 <input
+                  id="comic-title"
                   type="text"
                   required
                   value={title}
@@ -203,8 +209,9 @@ export default function AdminComicsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tác Giả</label>
+                  <label htmlFor="comic-author" className="block text-xs font-semibold text-slate-300 mb-1">Tác Giả</label>
                   <input
+                    id="comic-author"
                     type="text"
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
@@ -213,8 +220,9 @@ export default function AdminComicsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại</label>
+                  <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại</label>
                   <select
+                    id="comic-category"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
@@ -233,8 +241,9 @@ export default function AdminComicsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Trạng Thái</label>
+                <label htmlFor="comic-status" className="block text-xs font-semibold text-slate-300 mb-1">Trạng Thái</label>
                 <select
+                  id="comic-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"

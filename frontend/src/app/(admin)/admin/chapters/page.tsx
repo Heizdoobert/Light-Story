@@ -8,6 +8,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
   ssr: false,
 });
 import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
+import { useModalA11y } from "@/hooks/common/use-modal-a11y";
 
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();
@@ -38,6 +39,7 @@ export default function AdminChaptersPage() {
     handleSaveChapter,
     handleDeleteChapter,
   } = useAdminChapters(initialComicId);
+  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
 
   return (
     <div className="space-y-6">
@@ -62,7 +64,9 @@ export default function AdminChaptersPage() {
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           <BookOpen size={16} className="text-orange-500" />
           <span className="text-xs font-semibold text-slate-300">Chọn Truyện:</span>
+          <label className="sr-only" htmlFor="chapter-comic-select">Chọn bộ truyện</label>
           <select
+            id="chapter-comic-select"
             value={selectedComicId}
             onChange={(e) => setSelectedComicId(e.target.value)}
             className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer max-w-xs"
@@ -81,6 +85,7 @@ export default function AdminChaptersPage() {
           <input
             type="text"
             placeholder="Tìm kiếm số chương, tên chương..."
+            aria-label="Tìm kiếm chương"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
@@ -157,15 +162,16 @@ export default function AdminChaptersPage() {
               <h2 className="text-lg font-bold">
                 {editingChapter ? "Chỉnh Sửa Chương" : "Thêm Chương Mới"}
               </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
 
             <form onSubmit={handleSaveChapter} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Chọn Bộ Truyện *</label>
+                <label htmlFor="chapter-comic" className="block text-xs font-semibold text-slate-300 mb-1">Chọn Bộ Truyện *</label>
                 <select
+                  id="chapter-comic"
                   disabled={!!editingChapter}
                   value={targetComicId}
                   onChange={(e) => setTargetComicId(e.target.value)}
@@ -181,8 +187,9 @@ export default function AdminChaptersPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Số Chương *</label>
+                  <label htmlFor="chapter-number" className="block text-xs font-semibold text-slate-300 mb-1">Số Chương *</label>
                   <input
+                    id="chapter-number"
                     type="number"
                     required
                     min={1}
@@ -192,8 +199,9 @@ export default function AdminChaptersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Chương</label>
+                  <label htmlFor="chapter-title" className="block text-xs font-semibold text-slate-300 mb-1">Tên Chương</label>
                   <input
+                    id="chapter-title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}

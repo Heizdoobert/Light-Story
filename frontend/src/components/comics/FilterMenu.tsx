@@ -7,6 +7,7 @@ import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/lib/constants/routes";
+import { apiClient } from "@/lib/api/apiClient";
 
 type SortOption = "newest" | "most_viewed" | "oldest";
 
@@ -28,7 +29,24 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState<SortOption>("newest");
-  const [categories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load genres from the gateway API, not a hardcoded list
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get<{ id: string; name: string }[]>(ROUTES.API.CATEGORIES)
+      .then((rows) => {
+        if (!active || !Array.isArray(rows)) return;
+        setCategories(rows.map((row) => ({ ...row, created_at: "", updated_at: "" })));
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAdminUsers } from "@/hooks/features/use-admin-users";
 import { useUser } from "@/hooks/features/use-user";
+import { useModalA11y } from "@/hooks/common/use-modal-a11y";
 
 export default function AdminUsersPage() {
   const { role } = useUser();
@@ -21,6 +22,7 @@ export default function AdminUsersPage() {
     handleOpenRoleModal,
     handleSaveRole,
   } = useAdminUsers();
+  const closeModalRef = useModalA11y(!!selectedUser, () => setSelectedUser(null));
 
   return (
     <div className="space-y-6">
@@ -44,6 +46,7 @@ export default function AdminUsersPage() {
           <input
             type="text"
             placeholder="Tìm kiếm người dùng theo email, tên, vai trò..."
+            aria-label="Tìm kiếm người dùng"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
@@ -126,7 +129,7 @@ export default function AdminUsersPage() {
                 <ShieldCheck size={20} className="text-orange-500" />
                 Phân Quyền Cho Người Dùng
               </h2>
-              <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-white">
+              <button ref={closeModalRef} onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-white">
                 <X size={20} />
               </button>
             </div>
@@ -138,8 +141,9 @@ export default function AdminUsersPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Chọn Vai Trò Mới *</label>
+                <label htmlFor="user-role" className="block text-xs font-semibold text-slate-300 mb-1">Chọn Vai Trò Mới *</label>
                 <select
+                  id="user-role"
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"

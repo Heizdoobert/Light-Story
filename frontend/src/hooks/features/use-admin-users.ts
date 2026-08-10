@@ -31,7 +31,8 @@ export function useAdminUsers() {
       const { data } = await supabase
         .from("profiles")
         .select("id, email, full_name, avatar_url, role, created_at")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (data) {
         setUsers(data as UserRow[]);
