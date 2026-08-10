@@ -96,6 +96,7 @@ export default function AdminSettingsPage() {
                 type="checkbox"
                 checked={maintenanceMode}
                 onChange={(e) => setMaintenanceMode(e.target.checked)}
+                aria-label="Maintenance mode"
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -112,6 +113,7 @@ export default function AdminSettingsPage() {
                 type="checkbox"
                 checked={compactMode}
                 onChange={(e) => setCompactMode(e.target.checked)}
+                aria-label="Compact mode"
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -144,6 +146,7 @@ export default function AdminSettingsPage() {
                     type="checkbox"
                     checked={sidebarControl.sidebarEnabled[role]}
                     onChange={() => toggleSidebar(role)}
+                    aria-label={`Enable sidebar for ${role}`}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
@@ -162,6 +165,7 @@ export default function AdminSettingsPage() {
                     type="checkbox"
                     checked={sidebarControl.categoriesVisible[role]}
                     onChange={() => toggleCategories(role)}
+                    aria-label={`Show categories for ${role}`}
                     className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>

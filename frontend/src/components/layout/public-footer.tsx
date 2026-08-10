@@ -15,7 +15,7 @@ export default function PublicFooter() {
     <footer className="w-full bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 py-4 mt-auto transition-colors">
       <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 text-center md:text-left">
         <div>
-          <Link href="/">
+          <Link href={ROUTES.HOME}>
             <h3 className="font-black text-lg text-slate-900 dark:text-white">
               Light<span className="text-primary">Story</span>
             </h3>
