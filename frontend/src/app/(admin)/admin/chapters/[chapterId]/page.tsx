@@ -19,6 +19,16 @@ interface ChapterRow {
   images: string[] | null;
 }
 
+function parseChapterPages(content: string | null): string[] {
+  if (!content) return [];
+  try {
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return content.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+}
+
 export default function AdminEditChapterPage({ params }: { params: Promise<{ chapterId: string }> }) {
   const { chapterId } = use(params);
   const [chapterNumber, setChapterNumber] = useState('');
@@ -36,18 +46,18 @@ export default function AdminEditChapterPage({ params }: { params: Promise<{ cha
       const supabase = getSupabaseBrowserClient();
       const { data, error } = await supabase
         .from('chapters')
-        .select('story_id, chapter_number, title, images')
+        .select('story_id, chapter_number, title, content')
         .eq('id', chapterId)
         .maybeSingle();
       if (error || !data) {
         setLoadError(error?.message || 'Không tìm thấy chương');
         return;
       }
-      const chapter = data as ChapterRow;
+      const chapter = data as unknown as ChapterRow;
       setStoryId(chapter.story_id);
       setChapterNumber(String(chapter.chapter_number ?? 1));
       setTitle(chapter.title ?? '');
-      setImages(Array.isArray(chapter.images) ? chapter.images : []);
+      setImages(parseChapterPages((data as { content?: string | null }).content ?? null));
     } catch (err) {
       setLoadError((err as Error).message || 'Không thể tải chương');
     } finally {

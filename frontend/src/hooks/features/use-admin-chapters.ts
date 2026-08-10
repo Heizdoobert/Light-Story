@@ -19,6 +19,16 @@ export interface ComicSimple {
   title: string;
 }
 
+function parseChapterPages(content: string | null): string[] {
+  if (!content) return [];
+  try {
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return content.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+}
+
 export function useAdminChapters(initialComicId: string = "all") {
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [comics, setComics] = useState<ComicSimple[]>([]);
@@ -57,7 +67,7 @@ export function useAdminChapters(initialComicId: string = "all") {
 
       let query = supabase
         .from("chapters")
-        .select("id, story_id, chapter_number, title, created_at, images")
+        .select("id, story_id, chapter_number, title, created_at, content")
         .order("chapter_number", { ascending: false })
         .limit(500);
 
@@ -67,7 +77,12 @@ export function useAdminChapters(initialComicId: string = "all") {
 
       const { data: chaptersData } = await query;
       if (chaptersData) {
-        setChapters(chaptersData as ChapterItem[]);
+        setChapters(
+          chaptersData.map((row) => ({
+            ...row,
+            images: parseChapterPages((row as { content?: string | null }).content ?? null),
+          })) as ChapterItem[],
+        );
       }
     } catch (err) {
       console.error("Failed to load admin chapters:", err);
