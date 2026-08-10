@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Layers,
   Database,
-  Zap,
   Globe,
   Eye,
 } from "lucide-react";
@@ -89,17 +88,6 @@ export default function AdminAnalyticsPage() {
           </div>
           <p className="text-3xl font-black text-cyan-400">{loading ? "..." : (data?.page_views ?? 0).toLocaleString()}</p>
           <p className="text-xs text-slate-400">Từ Analytics Engine thực tế</p>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded-2xl shadow-xl space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-medium">Cache Hit Ratio</span>
-            <Zap size={20} className="text-emerald-400" />
-          </div>
-          <p className="text-3xl font-black text-emerald-400">
-            {loading ? "..." : data?.cache_hit_ratio_pct != null ? `${data.cache_hit_ratio_pct}%` : "—"}
-          </p>
-          <p className="text-xs text-slate-400">Phản hồi từ Edge Cache</p>
         </div>
       </div>
 

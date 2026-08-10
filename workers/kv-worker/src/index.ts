@@ -171,13 +171,16 @@ export default {
     const pathname = url.pathname;
 
     // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
-    // blobs: [hostname, device, cf-cache-status, path]; index: 'request'.
+    // blobs: [hostname, device, pathname]; index: 'request'.
+    // NOTE: blob ORDER is the read contract with /analytics/infrastructure —
+    // read via aliased SQL columns (blob1=host, blob2=device, blob3=pathname).
+    // cf-cache-status is a response header; edge hits bypass the worker, so
+    // a cache-hit ratio from request headers would be structurally wrong.
     recordAnalyticsEngineEvent(env, {
       indexes: ['request'],
       blobs: [
         url.hostname,
         detectDevice(request.headers.get('User-Agent') || ''),
-        request.headers.get('cf-cache-status') || 'NONE',
         pathname,
       ],
       doubles: [Date.now()],

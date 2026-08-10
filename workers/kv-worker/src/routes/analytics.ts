@@ -11,6 +11,10 @@ import {
 
 type SqlRow = Record<string, string | number>;
 
+// Single source of truth for the Analytics Engine dataset name used in SQL.
+// Must match the wrangler.jsonc analytics_engine_datasets entry.
+const ANALYTICS_DATASET = 'lightstory_analytics';
+
 async function queryAnalyticsSql(env: Env, sql: string): Promise<SqlRow[] | null> {
   const token = (env as any).CLOUDFLARE_API_TOKEN as string | undefined;
   const accountId = (env as any).CLOUDFLARE_ACCOUNT_ID as string | undefined;
@@ -24,10 +28,15 @@ async function queryAnalyticsSql(env: Env, sql: string): Promise<SqlRow[] | null
         body: sql,
       },
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Distinguish "no traffic" from "query broken" — never log the token.
+      console.error(`[AnalyticsSql] status ${res.status}: ${sql.slice(0, 120)}`);
+      return null;
+    }
     const payload: { data?: SqlRow[] } = await res.json();
     return Array.isArray(payload.data) ? payload.data : null;
-  } catch {
+  } catch (err) {
+    console.error('[AnalyticsSql] failed:', err);
     return null;
   }
 }
@@ -83,9 +92,10 @@ export async function handleAnalyticsRequest(
       const daysBack = parseInt(
         url.searchParams.get('days') || '30',
       );
+      const timeRange = daysBack <= 1 ? '24h' : daysBack <= 7 ? '7d' : '30d';
       const res = await sbRpc(
         'get_user_engagement_summary',
-        { p_days_back: daysBack },
+        { p_time_range: timeRange },
         env,
         token,
       );
@@ -140,37 +150,32 @@ export async function handleAnalyticsRequest(
         r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0;
 
       // Real traffic stats from Analytics Engine (dataset lightstory_analytics).
-      // Zero until traffic flows through the gateway — honest, no fallbacks.
+      // One aliased GROUP BY scan: named columns (host/device/cnt) — no positional
+      // blob coupling with the index.ts write. Zero until traffic flows — honest.
       const since = "timestamp > NOW() - INTERVAL '30' DAY";
-      const [viewsRows, deviceRows, cacheRows, zoneRows] = await Promise.all([
-        queryAnalyticsSql(env, `SELECT count() FROM lightstory_analytics WHERE ${since}`),
-        queryAnalyticsSql(env, `SELECT blob2, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob2`),
-        queryAnalyticsSql(env, `SELECT blob3, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob3`),
-        queryAnalyticsSql(env, `SELECT blob1, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob1 ORDER BY count() DESC LIMIT 5`),
-      ]);
+      const rows = await queryAnalyticsSql(
+        env,
+        `SELECT blob1 AS host, blob2 AS device, count() AS cnt FROM ${ANALYTICS_DATASET} WHERE ${since} GROUP BY blob1, blob2`,
+      );
 
-      const pageViews = rowNum(viewsRows?.[0], 'count()');
+      let pageViews = 0;
       const deviceCounts = new Map<string, number>();
-      for (const row of deviceRows ?? []) {
-        deviceCounts.set(String(row['blob2'] ?? 'unknown'), rowNum(row, 'count()'));
+      const zoneCounts = new Map<string, number>();
+      for (const row of rows ?? []) {
+        const count = rowNum(row, 'cnt');
+        pageViews += count;
+        const device = String(row['device'] ?? 'unknown');
+        deviceCounts.set(device, (deviceCounts.get(device) ?? 0) + count);
+        const host = String(row['host'] ?? '');
+        if (host) zoneCounts.set(host, (zoneCounts.get(host) ?? 0) + count);
       }
       const totalDevices = [...deviceCounts.values()].reduce((s, n) => s + n, 0) || 1;
       const devicePct = (key: string) => Math.round(((deviceCounts.get(key) ?? 0) / totalDevices) * 1000) / 10;
 
-      let cacheHits = 0;
-      let cacheTotal = 0;
-      for (const row of cacheRows ?? []) {
-        const count = rowNum(row, 'count()');
-        cacheTotal += count;
-        if (String(row['blob3']).toUpperCase() === 'HIT') cacheHits += count;
-      }
-      const cacheHitRatioPct = cacheTotal > 0 ? Number(((cacheHits / cacheTotal) * 100).toFixed(1)) : 0;
-
-      const topZones = (zoneRows ?? []).map((row) => ({
-        zone: String(row['blob1'] ?? ''),
-        requests: rowNum(row, 'count()'),
-        cache_hit_ratio_pct: 0,
-      }));
+      const topZones = [...zoneCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([zone, requests]) => ({ zone, requests }));
 
       return json({
         r2_usage_gb: r2UsageGb,
@@ -178,7 +183,6 @@ export async function handleAnalyticsRequest(
         r2_object_count: r2ObjectCount,
         storage_efficiency_pct: storageEfficiencyPct,
         page_views: pageViews,
-        cache_hit_ratio_pct: cacheHitRatioPct,
         device_mobile: devicePct('mobile'),
         device_desktop: devicePct('desktop'),
         device_tablet: devicePct('tablet'),
