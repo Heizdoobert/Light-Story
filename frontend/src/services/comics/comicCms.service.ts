@@ -1,4 +1,5 @@
 import { ROUTES } from "@/lib/constants/routes";
+import { getGatewayUrl } from "@/lib/utils/gateway-url";
 
 export function proxiedR2ImageUrl(url: string): string {
   if (!url) return "";
@@ -17,12 +18,7 @@ export function proxiedR2ImageUrl(url: string): string {
     return "";
   }
 
-  const gateway =
-    process.env.NODE_ENV === "production"
-      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
-      : process.env.NEXT_PUBLIC_GATEWAY_URL;
-
-  if (!gateway) return url;
+  const gateway = getGatewayUrl();
 
   if (url.startsWith(ROUTES.API.ADMIN.R2_FILE_PREFIX)) {
     const key = url.slice(ROUTES.API.ADMIN.R2_FILE_PREFIX.length);

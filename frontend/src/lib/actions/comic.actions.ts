@@ -7,9 +7,7 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { createComicSchema, updateComicSchema } from '@/lib/schemas/comic';
 import type { CreateComicInput, UpdateComicInput } from '@/lib/schemas/comic';
 
-type ActionResult<T = unknown> =
-  | { ok: true; success: true; data?: T; error?: undefined }
-  | { ok: false; success: false; error: string; data?: undefined };
+import type { ActionResult } from '@/actions/result';
 
 const slugify = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -30,10 +28,10 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = createComicSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
     const db = await getServerSupabase();
-    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const slug = await uniqueSlug(db, (parsed.data.slug || slugify(parsed.data.title)).trim());
     const { data: row, error } = await db
       .from('stories')
@@ -49,12 +47,12 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
       .select('id')
       .single();
     if (error || !row) {
-      return { ok: false, success: false, error: error?.message ?? 'Tạo truyện thất bại' };
+      return { success: false, error: error?.message ?? 'Tạo truyện thất bại' };
     }
     revalidateTag(CACHE_TAGS.COMICS, 'max');
-    return { ok: true, success: true, data: { id: row.id } };
+    return { success: true, data: { id: row.id } };
   } catch (err) {
-    return { ok: false, success: false, error: (err as Error).message };
+    return { success: false, error: (err as Error).message };
   }
 }
 
@@ -63,10 +61,10 @@ export async function updateComic(id: string, data: UpdateComicInput): Promise<A
     await requireActionRole(ACTION_ADMIN_ROLES);
     const parsed = updateComicSchema.safeParse(data);
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
     const db = await getServerSupabase();
-    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const updateFields: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
     if (typeof updateFields.slug === 'string' && updateFields.slug.trim()) {
       updateFields.slug = await uniqueSlug(db, slugify(updateFields.slug), id);
@@ -77,12 +75,12 @@ export async function updateComic(id: string, data: UpdateComicInput): Promise<A
       .from('stories')
       .update(updateFields)
       .eq('id', id);
-    if (error) return { ok: false, success: false, error: error.message };
+    if (error) return { success: false, error: error.message };
     revalidateTag(CACHE_TAGS.COMICS, 'max');
     revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), 'max');
-    return { ok: true, success: true, data: { id } };
+    return { success: true, data: { id } };
   } catch (err) {
-    return { ok: false, success: false, error: (err as Error).message };
+    return { success: false, error: (err as Error).message };
   }
 }
 
@@ -90,13 +88,13 @@ export async function deleteComic(id: string): Promise<ActionResult<{ id: string
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
     const db = await getServerSupabase();
-    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { error } = await db.from('stories').delete().eq('id', id);
-    if (error) return { ok: false, success: false, error: error.message };
+    if (error) return { success: false, error: error.message };
     revalidateTag(CACHE_TAGS.COMICS, 'max');
     revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), 'max');
-    return { ok: true, success: true, data: { id } };
+    return { success: true, data: { id } };
   } catch (err) {
-    return { ok: false, success: false, error: (err as Error).message };
+    return { success: false, error: (err as Error).message };
   }
 }

@@ -8,24 +8,22 @@ import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
 import { AD_SLOT_KEYS, parseSiteSettingsRows, validateAdMarkup } from '@/lib/admin/ad-policy';
 
-type ActionResult<T = unknown> =
-  | { ok: true; success: true; data?: T; error?: undefined }
-  | { ok: false; success: false; error: string; data?: undefined };
+import type { ActionResult } from '@/actions/result';
 
 export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<ActionResult<{ count: number }>> {
   try {
     await requireActionRole(SETTINGS_ADMIN_ROLES);
     const parsed = saveSiteSettingsSchema.safeParse(input);
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
     const db = await getServerSupabase();
-    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { runtime, slotMarkup } = parseSiteSettingsRows(parsed.data.entries);
     for (const key of AD_SLOT_KEYS) {
       const validation = validateAdMarkup(slotMarkup[key], runtime);
       if (!validation.ok) {
-        return { ok: false, success: false, error: `Ad markup policy violation (${key}): ${validation.reason}` };
+        return { success: false, error: `Ad markup policy violation (${key}): ${validation.reason}` };
       }
     }
     const rows = parsed.data.entries.map((e) => ({
@@ -34,10 +32,10 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
       updated_at: new Date().toISOString(),
     }));
     const { error } = await db.from('site_settings').upsert(rows);
-    if (error) return { ok: false, success: false, error: error.message };
+    if (error) return { success: false, error: error.message };
     revalidateTag(CACHE_TAGS.SETTINGS, 'max');
-    return { ok: true, success: true, data: { count: rows.length } };
+    return { success: true, data: { count: rows.length } };
   } catch (err) {
-    return { ok: false, success: false, error: (err as Error).message };
+    return { success: false, error: (err as Error).message };
   }
 }

@@ -7,19 +7,17 @@ import { getServerSupabase } from '@/lib/supabase/server';
 import { auditLogSchema } from '@/lib/schemas/admin';
 import type { AuditLogInput } from '@/lib/schemas/admin';
 
-type ActionResult<T = unknown> =
-  | { ok: true; success: true; data?: T; error?: undefined }
-  | { ok: false; success: false; error: string; data?: undefined };
+import type { ActionResult } from '@/actions/result';
 
 export async function logAdminActivity(input: AuditLogInput): Promise<ActionResult<{ id: number }>> {
   try {
     const { userId } = await requireActionRole(SUPERADMIN_ROLES);
     const parsed = auditLogSchema.safeParse(input);
     if (!parsed.success) {
-      return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
+      return { success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
     const db = await getServerSupabase();
-    if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { data: row, error } = await db
       .from('audit_logs')
       .insert({
@@ -32,10 +30,10 @@ export async function logAdminActivity(input: AuditLogInput): Promise<ActionResu
       })
       .select('id')
       .single();
-    if (error || !row) return { ok: false, success: false, error: error?.message ?? 'Ghi nhật ký thất bại' };
+    if (error || !row) return { success: false, error: error?.message ?? 'Ghi nhật ký thất bại' };
     revalidateTag(CACHE_TAGS.AUDIT_LOGS, 'max');
-    return { ok: true, success: true, data: { id: row.id } };
+    return { success: true, data: { id: row.id } };
   } catch (err) {
-    return { ok: false, success: false, error: (err as Error).message };
+    return { success: false, error: (err as Error).message };
   }
 }
