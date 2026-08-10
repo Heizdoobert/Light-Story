@@ -63,7 +63,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="vi"
       style={{ "--font-sans": '"Plus Jakarta Sans Variable"' } as React.CSSProperties}
       suppressHydrationWarning
     >
