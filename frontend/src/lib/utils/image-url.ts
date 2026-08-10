@@ -33,13 +33,3 @@ export function getR2ImageUrl(
   if (!url || url.trim() === "") return fallback;
   return resolveR2Url(url);
 }
-
-export function formatImageWithCacheBuster(
-  url: string,
-  version?: string | number,
-): string {
-  if (!url) return url;
-  const delimiter = url.includes("?") ? "&" : "?";
-  const v = version || Date.now();
-  return `${url}${delimiter}v=${v}`;
-}

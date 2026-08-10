@@ -1,12 +1,6 @@
 import { toast } from "sonner";
 import { getErrorMessage } from "./error-utils";
 
-type DbToastContext = {
-  loading: string;
-  success: string;
-  errorContext?: string;
-};
-
 export const startDbChangeToast = (message: string): string | number => {
   return toast.loading(message);
 };
@@ -31,9 +25,3 @@ export const rejectDbChangeToast = (
   }
   toast.error(getErrorMessage(error, context));
 };
-
-export const dbToastContext = (
-  loading: string,
-  success: string,
-  errorContext?: string,
-): DbToastContext => ({ loading, success, errorContext });
