@@ -7,7 +7,7 @@ import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { ROUTES } from '@/lib/constants/routes';
 import { createClient } from '@/lib/api/server';
-import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SUPERADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 
 const updateProfileRoleSchema = z.object({
   id: z.string().min(1),
@@ -16,7 +16,7 @@ const updateProfileRoleSchema = z.object({
 
 export async function updateProfileRole(input: { id: string; role: string }): Promise<ActionResult> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SUPERADMIN_ROLES);
   } catch {
     return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }
@@ -60,6 +60,11 @@ export async function updateProfileName(input: {
   id: string;
   full_name: string | null;
 }): Promise<ActionResult> {
+  try {
+    await requireActionRole(SUPERADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(updateProfileNameSchema, input, async ({ id, full_name }) => {
     const res = await fetchApi('/api/admin/profiles', {
       method: 'POST',
@@ -86,6 +91,11 @@ const updateUserStatusSchema = z.object({
 });
 
 export async function updateUserStatus(input: { id: string; status: string }): Promise<ActionResult> {
+  try {
+    await requireActionRole(SUPERADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(updateUserStatusSchema, input, async ({ id, status }) => {
     const res = await fetchApi('/api/admin/profiles', {
       method: 'POST',
@@ -111,6 +121,11 @@ const manageAdminUserSchema = z.discriminatedUnion('action', [
 ]);
 
 export async function manageAdminUser(input: z.infer<typeof manageAdminUserSchema>): Promise<ActionResult> {
+  try {
+    await requireActionRole(SUPERADMIN_ROLES);
+  } catch {
+    return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
+  }
   return act(manageAdminUserSchema, input, async (payload) => {
     const res = await fetchApi(ROUTES.API.ADMIN.MANAGE_USER, {
       method: 'POST',

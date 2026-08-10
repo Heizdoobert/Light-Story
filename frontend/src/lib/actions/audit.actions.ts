@@ -2,7 +2,7 @@
 
 import { revalidateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SUPERADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { auditLogSchema } from '@/lib/schemas/admin';
 import type { AuditLogInput } from '@/lib/schemas/admin';
@@ -13,7 +13,7 @@ type ActionResult<T = unknown> =
 
 export async function logAdminActivity(input: AuditLogInput): Promise<ActionResult<{ id: number }>> {
   try {
-    const { userId } = await requireActionRole(ACTION_ADMIN_ROLES);
+    const { userId } = await requireActionRole(SUPERADMIN_ROLES);
     const parsed = auditLogSchema.safeParse(input);
     if (!parsed.success) {
       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { ROUTES } from "@/lib/constants/routes";
 
-const ADMIN_ROLES = ["superadmin", "admin", "employee", "internal"];
+const ADMIN_ROLES = ["superadmin", "admin", "employee"];
 
 function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   const r2Domain = process.env.R2_CLOUDFLARE_STORAGE_DOMAIN || "*.r2.cloudflarestorage.com";
@@ -10,9 +10,9 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   
   const csp = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com;
+    script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob: https://${r2Domain} https://placehold.co;
+    img-src 'self' data: blob: https://${r2Domain} https://placehold.co https://*.googlesyndication.com;
     connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain} ${isDev ? "ws: wss:" : ""};
     font-src 'self' data:;
     object-src 'none';

@@ -4,8 +4,11 @@ import { Megaphone, Save, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { validateAdMarkup } from "@/lib/admin/ad-policy";
 import { useAdminAds } from "@/hooks/features/use-admin-ads";
+import { useRoleGuard } from "@/hooks/common/use-role-guard";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminAdsPage() {
+  useRoleGuard(["superadmin", "admin"], ROUTES.ADMIN.COMICS);
   const {
     ads,
     saving,

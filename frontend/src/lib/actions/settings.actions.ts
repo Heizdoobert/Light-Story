@@ -2,7 +2,7 @@
 
 import { revalidateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { getServerSupabase } from '@/lib/supabase/server';
 import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
@@ -14,7 +14,7 @@ type ActionResult<T = unknown> =
 
 export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<ActionResult<{ count: number }>> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SETTINGS_ADMIN_ROLES);
     const parsed = saveSiteSettingsSchema.safeParse(input);
     if (!parsed.success) {
       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };

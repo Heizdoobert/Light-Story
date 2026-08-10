@@ -5,6 +5,7 @@ import { DataTable, type Column } from '@/components/admin/data-table';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api/apiClient';
 import { ROUTES } from '@/lib/constants/routes';
+import { useRoleGuard } from '@/hooks/common/use-role-guard';
 
 export interface AuditLogRow {
   id: string;
@@ -16,6 +17,7 @@ export interface AuditLogRow {
 const PAGE_SIZE = 50;
 
 export default function AdminAuditPage() {
+  useRoleGuard(["superadmin"], ROUTES.ADMIN.DASHBOARD);
   const [logs, setLogs] = useState<AuditLogRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

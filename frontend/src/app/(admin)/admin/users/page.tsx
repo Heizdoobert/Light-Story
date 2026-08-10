@@ -6,9 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { useAdminUsers } from "@/hooks/features/use-admin-users";
 import { useUser } from "@/hooks/features/use-user";
 import { useModalA11y } from "@/hooks/common/use-modal-a11y";
+import { useRoleGuard } from "@/hooks/common/use-role-guard";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminUsersPage() {
   const { role } = useUser();
+  useRoleGuard(["superadmin"], ROUTES.ADMIN.DASHBOARD);
   const {
     users,
     loading,

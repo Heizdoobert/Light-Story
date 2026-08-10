@@ -4,8 +4,11 @@ import { Settings, Save, Database, Cloud, ShieldAlert, Sidebar, Tags } from "luc
 import { Button } from "@/components/ui/button";
 import { useAdminSettings } from "@/hooks/features/use-admin-settings";
 import { CONFIGURABLE_ROLES, type ConfigurableRole } from "@/lib/admin/sidebar-settings";
+import { useRoleGuard } from "@/hooks/common/use-role-guard";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminSettingsPage() {
+  useRoleGuard(["superadmin", "admin"], ROUTES.ADMIN.COMICS);
   const {
     siteName,
     setSiteName,

@@ -26,19 +26,18 @@ describe('F8 sidebar control', () => {
     it('merges partial role maps with defaults, non-boolean values fall back', () => {
       const control = parseSidebarControl({
         sidebarEnabled: { admin: false, employee: 'yes' },
-        categoriesVisible: { internal: false },
+        categoriesVisible: { admin: false },
       });
       expect(control.sidebarEnabled.admin).toBe(false);
       expect(control.sidebarEnabled.employee).toBe(true);
-      expect(control.sidebarEnabled.internal).toBe(true);
-      expect(control.categoriesVisible.internal).toBe(false);
-      expect(control.categoriesVisible.admin).toBe(true);
+      expect(control.categoriesVisible.admin).toBe(false);
+      expect(control.categoriesVisible.employee).toBe(true);
     });
 
     it('round-trips a full custom control', () => {
       const custom: SidebarControl = {
-        sidebarEnabled: { admin: false, employee: true, internal: false },
-        categoriesVisible: { admin: true, employee: false, internal: true },
+        sidebarEnabled: { admin: false, employee: true },
+        categoriesVisible: { admin: true, employee: false },
       };
       expect(parseSidebarControl(JSON.stringify(custom))).toEqual(custom);
     });
@@ -50,9 +49,10 @@ describe('F8 sidebar control', () => {
       expect(isSidebarEnabledForRole(control, 'superadmin')).toBe(true);
     });
 
-    it('null and user roles never see the sidebar', () => {
+    it('null, user and internal roles never see the sidebar', () => {
       expect(isSidebarEnabledForRole(DEFAULT_SIDEBAR_CONTROL, null)).toBe(false);
       expect(isSidebarEnabledForRole(DEFAULT_SIDEBAR_CONTROL, 'user')).toBe(false);
+      expect(isSidebarEnabledForRole(DEFAULT_SIDEBAR_CONTROL, 'internal')).toBe(false);
     });
 
     it('honors per-role toggle', () => {
@@ -68,14 +68,15 @@ describe('F8 sidebar control', () => {
       expect(isCategoryMenuVisibleForRole(control, 'superadmin')).toBe(true);
     });
 
-    it('null and user roles never see the categories menu', () => {
+    it('null, user and internal roles never see the categories menu', () => {
       expect(isCategoryMenuVisibleForRole(DEFAULT_SIDEBAR_CONTROL, null)).toBe(false);
       expect(isCategoryMenuVisibleForRole(DEFAULT_SIDEBAR_CONTROL, 'user')).toBe(false);
+      expect(isCategoryMenuVisibleForRole(DEFAULT_SIDEBAR_CONTROL, 'internal')).toBe(false);
     });
 
     it('honors per-role toggle', () => {
-      const control = parseSidebarControl({ categoriesVisible: { internal: false } });
-      expect(isCategoryMenuVisibleForRole(control, 'internal')).toBe(false);
+      const control = parseSidebarControl({ categoriesVisible: { employee: false } });
+      expect(isCategoryMenuVisibleForRole(control, 'employee')).toBe(false);
       expect(isCategoryMenuVisibleForRole(control, 'admin')).toBe(true);
     });
   });

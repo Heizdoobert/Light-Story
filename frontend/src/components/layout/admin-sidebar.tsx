@@ -14,36 +14,8 @@ import {
   parseSidebarControl,
   type SidebarControl,
 } from "@/lib/admin/sidebar-settings";
-import {
-  LayoutDashboard,
-  BarChart3,
-  BookOpen,
-  Layers,
-  Tags,
-  PenSquare,
-  Users,
-  Megaphone,
-  Settings,
-  ShieldAlert,
-  Home,
-  UserCircle,
-} from "lucide-react";
-
-const ADMIN_NAV_ITEMS = [
-  { label: "Tổng quan", href: ROUTES.ADMIN.DASHBOARD, icon: LayoutDashboard },
-  { label: "Thống kê & R2", href: ROUTES.ADMIN.ANALYTICS, icon: BarChart3 },
-  { label: "Quản lý Truyện", href: ROUTES.ADMIN.COMICS, icon: BookOpen },
-  { label: "Quản lý Chương", href: ROUTES.ADMIN.CHAPTERS, icon: Layers },
-  { label: "Thể loại", href: ROUTES.ADMIN.CATEGORIES, icon: Tags, id: "categories" },
-  { label: "Tác giả & Nhóm dịch", href: ROUTES.ADMIN.AUTHORS, icon: PenSquare, id: "authors" },
-  { label: "Người dùng", href: ROUTES.ADMIN.USERS, icon: Users },
-  { label: "Quảng cáo", href: ROUTES.ADMIN.ADS, icon: Megaphone },
-  { label: "Cài đặt", href: ROUTES.ADMIN.SETTINGS, icon: Settings },
-  { label: "Hồ sơ cá nhân", href: ROUTES.ADMIN.PROFILE, icon: UserCircle },
-  { label: "Audit Log", href: ROUTES.ADMIN.AUDIT, icon: ShieldAlert },
-];
-
-const STAFF_ROLES = ["superadmin", "admin", "employee", "internal"];
+import { ADMIN_MENU_ITEMS } from "@/lib/admin/admin-navigation";
+import { Home } from "lucide-react";
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -67,9 +39,9 @@ export function AdminSidebar() {
 
   if (!isSidebarEnabledForRole(control, role)) return null;
 
-  const visibleItems = ADMIN_NAV_ITEMS.filter((item) => {
+  const visibleItems = ADMIN_MENU_ITEMS.filter((item) => {
+    if (!item.roles.includes(role as (typeof item.roles)[number])) return false;
     if (item.id === "categories") return isCategoryMenuVisibleForRole(control, role);
-    if (item.id === "authors") return !!role && STAFF_ROLES.includes(role);
     return true;
   });
 

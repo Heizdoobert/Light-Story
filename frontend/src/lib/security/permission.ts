@@ -4,8 +4,13 @@ export const ACTION_ADMIN_ROLES = [
   "superadmin",
   "admin",
   "employee",
-  "internal",
 ] as const;
+
+// Settings/ads write access — admin tier and up.
+export const SETTINGS_ADMIN_ROLES = ["superadmin", "admin"] as const;
+
+// User management + audit — superadmin only.
+export const SUPERADMIN_ROLES = ["superadmin"] as const;
 
 export class ActionUnauthorizedError extends Error {
   constructor(message = "unauthorized") {

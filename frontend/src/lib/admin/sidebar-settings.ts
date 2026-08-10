@@ -3,7 +3,7 @@ import { type UserRole } from "@/lib/admin/admin-navigation";
 
 export const SIDEBAR_CONTROL_KEY = "sidebar_control";
 
-export type ConfigurableRole = "admin" | "employee" | "internal";
+export type ConfigurableRole = "admin" | "employee";
 
 export type SidebarControl = {
   sidebarEnabled: Record<ConfigurableRole, boolean>;
@@ -11,11 +11,11 @@ export type SidebarControl = {
 };
 
 export const DEFAULT_SIDEBAR_CONTROL: SidebarControl = {
-  sidebarEnabled: { admin: true, employee: true, internal: true },
-  categoriesVisible: { admin: true, employee: true, internal: true },
+  sidebarEnabled: { admin: true, employee: true },
+  categoriesVisible: { admin: true, employee: true },
 };
 
-export const CONFIGURABLE_ROLES: ConfigurableRole[] = ["admin", "employee", "internal"];
+export const CONFIGURABLE_ROLES: ConfigurableRole[] = ["admin", "employee"];
 
 export const parseSidebarControl = (raw: unknown): SidebarControl => {
   let parsed: unknown = raw;
@@ -53,12 +53,12 @@ export const parseSidebarControl = (raw: unknown): SidebarControl => {
 
 export const isSidebarEnabledForRole = (control: SidebarControl, role: UserRole | null): boolean => {
   if (role === "superadmin") return true;
-  if (!role || role === "user") return false;
+  if (!role || role === "user" || role === "internal") return false;
   return control.sidebarEnabled[role as ConfigurableRole] ?? true;
 };
 
 export const isCategoryMenuVisibleForRole = (control: SidebarControl, role: UserRole | null): boolean => {
   if (role === "superadmin") return true;
-  if (!role || role === "user") return false;
+  if (!role || role === "user" || role === "internal") return false;
   return control.categoriesVisible[role as ConfigurableRole] ?? true;
 };

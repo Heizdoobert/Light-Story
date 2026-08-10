@@ -4,7 +4,7 @@
 // live auth implementation (divergent role semantics, double subscriptions).
 import { useAuth } from "@/context/AuthContext";
 
-const ADMIN_ROLES = ["superadmin", "admin", "employee", "internal"];
+const ADMIN_ROLES = ["superadmin", "admin", "employee"];
 
 export function useUser() {
   const {

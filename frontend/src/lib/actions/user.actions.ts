@@ -2,7 +2,7 @@
 
 import { revalidateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
-import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SUPERADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { updateUserProfileSchema, updateUserRoleSchema } from '@/lib/schemas/user';
 import { getServerSupabase } from '@/lib/supabase/server';
 import type { UpdateUserProfileInput } from '@/lib/schemas/user';
@@ -53,13 +53,10 @@ export async function updateUserProfile(
 
 export async function updateUserRole(userId: string, role: string): Promise<ActionResult<{ userId: string; role: string }>> {
   try {
-    const { role: callerRole } = await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SUPERADMIN_ROLES);
     const parsed = updateUserRoleSchema.safeParse({ userId, role });
     if (!parsed.success) {
       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
-    }
-    if (parsed.data.role === 'superadmin' && callerRole !== 'superadmin') {
-      return { ok: false, success: false, error: 'Chỉ superadmin mới có thể cấp vai trò superadmin' };
     }
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };

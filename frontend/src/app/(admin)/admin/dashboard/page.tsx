@@ -6,6 +6,7 @@ import { StatCard } from '@/components/admin/stat-card';
 import { apiClient } from '@/lib/api/apiClient';
 import { ROUTES } from '@/lib/constants/routes';
 import { formatCompactNumber, formatFixedNumber } from '@/services/admin/analytics.service';
+import { useRoleGuard } from '@/hooks/common/use-role-guard';
 
 type OverviewStats = {
   totalStories: number;
@@ -55,6 +56,7 @@ async function fetchOverview(): Promise<OverviewData> {
 }
 
 export default function AdminDashboardPage() {
+  useRoleGuard(["superadmin", "admin"], ROUTES.ADMIN.COMICS);
   const [data, setData] = useState<OverviewData>(empty);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);

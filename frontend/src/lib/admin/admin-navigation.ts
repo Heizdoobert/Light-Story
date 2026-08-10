@@ -1,38 +1,43 @@
 import {
+  BarChart3,
   BookOpen,
-  Database,
   DollarSign,
+  Layers,
   LayoutDashboard,
-  Library,
   PenSquare,
   Settings,
-  User,
+  ShieldAlert,
+  Tags,
+  UserCircle,
   Users,
-  Workflow,
   type LucideIcon,
 } from "lucide-react";
+import { ROUTES } from "@/lib/constants/routes";
 
 export type UserRole = "superadmin" | "admin" | "employee" | "internal" | "user";
 
 export type AdminMenuId =
   | "dashboard"
-  | "dashboard_access_logs"
-  | "audit_logs"
-  | "create_story"
-  | "create_chapter"
-  | "stories"
+  | "analytics"
+  | "comics"
+  | "chapters"
   | "categories"
   | "authors"
   | "users"
   | "ads"
   | "settings"
-  | "operations"
   | "profile"
+  | "audit_logs"
+  | "operations"
+  | "create_story"
+  | "stories"
+  | "create_chapter"
   | "create_comic";
 
 export type AdminMenuItem = {
   id: AdminMenuId;
   label: string;
+  href: string;
   icon: LucideIcon;
   roles: UserRole[];
 };
@@ -40,69 +45,80 @@ export type AdminMenuItem = {
 export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
   {
     id: "dashboard",
-    label: "Bảng điều khiển",
+    label: "Tổng quan",
+    href: ROUTES.ADMIN.DASHBOARD,
     icon: LayoutDashboard,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "dashboard_access_logs",
-    label: "Nhật ký truy cập Admin",
-    icon: Database,
     roles: ["superadmin", "admin"],
   },
   {
-    id: "audit_logs",
-    label: "Nhật ký kiểm toán System",
-    icon: Database,
-    roles: ["superadmin"],
+    id: "analytics",
+    label: "Thống kê & R2",
+    href: ROUTES.ADMIN.ANALYTICS,
+    icon: BarChart3,
+    roles: ["superadmin", "admin"],
   },
   {
-    id: "operations",
-    label: "Trung tâm vận hành",
-    icon: Workflow,
-    roles: ["superadmin", "admin", "employee"],
-  },
-  {
-    id: "create_comic",
-    label: "Quản lý Truyện & CMS",
+    id: "comics",
+    label: "Quản lý Truyện",
+    href: ROUTES.ADMIN.COMICS,
     icon: BookOpen,
     roles: ["superadmin", "admin", "employee"],
   },
   {
+    id: "chapters",
+    label: "Quản lý Chương",
+    href: ROUTES.ADMIN.CHAPTERS,
+    icon: Layers,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
     id: "categories",
-    label: "Thể loại truyện",
-    icon: Library,
+    label: "Thể loại",
+    href: ROUTES.ADMIN.CATEGORIES,
+    icon: Tags,
     roles: ["superadmin", "admin", "employee"],
   },
   {
     id: "authors",
     label: "Tác giả & Nhóm dịch",
+    href: ROUTES.ADMIN.AUTHORS,
     icon: PenSquare,
     roles: ["superadmin", "admin", "employee"],
   },
   {
     id: "users",
-    label: "Quản lý người dùng",
+    label: "Người dùng",
+    href: ROUTES.ADMIN.USERS,
     icon: Users,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
   {
     id: "ads",
-    label: "Quảng cáo & Doanh thu",
+    label: "Quảng cáo",
+    href: ROUTES.ADMIN.ADS,
     icon: DollarSign,
     roles: ["superadmin", "admin"],
   },
   {
     id: "settings",
-    label: "Cài đặt hệ thống",
+    label: "Cài đặt",
+    href: ROUTES.ADMIN.SETTINGS,
     icon: Settings,
     roles: ["superadmin", "admin"],
   },
   {
     id: "profile",
     label: "Hồ sơ cá nhân",
-    icon: User,
+    href: ROUTES.ADMIN.PROFILE,
+    icon: UserCircle,
     roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "audit_logs",
+    label: "Audit Log",
+    href: ROUTES.ADMIN.AUDIT,
+    icon: ShieldAlert,
+    roles: ["superadmin"],
   },
 ];
 
@@ -133,42 +149,25 @@ export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
     "dashboard",
-    "dashboard_access_logs",
-    "operations",
-    "create_story",
-    "create_chapter",
-    "stories",
+    "analytics",
+    "comics",
+    "chapters",
     "categories",
     "authors",
     "ads",
     "settings",
     "profile",
-    "create_comic",
   ],
-  internal: [
-    "dashboard",
-    "dashboard_access_logs",
-    "operations",
-    "create_story",
-    "create_chapter",
-    "stories",
-    "categories",
-    "authors",
-    "ads",
-    "settings",
-    "profile",
-    "create_comic",
-  ],
-  employee: [
-    "dashboard",
-    "operations",
-    "create_story",
-    "create_chapter",
-    "stories",
-    "categories",
-    "authors",
-    "profile",
-    "create_comic",
-  ],
+  employee: ["comics", "chapters", "categories", "authors", "profile"],
+  internal: [],
   user: [],
+};
+
+export const isMenuVisibleForRole = (
+  role: UserRole | null | undefined,
+  menuId: AdminMenuId,
+): boolean => {
+  if (!role) return false;
+  const item = ADMIN_MENU_ITEMS.find((i) => i.id === menuId);
+  return !!item && item.roles.includes(role);
 };
