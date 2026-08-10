@@ -64,6 +64,7 @@ export const ROUTES = {
     MEDIA_PREFIX: "/api/media/",
     USER: {
       BOOKMARKS: "/api/user/bookmarks",
+      BOOKMARK: (comicId: string) => `/api/user/bookmarks/${encodeURIComponent(comicId)}`,
       BOOKMARKS_TOGGLE: "/api/user/bookmarks/toggle",
       HISTORY: "/api/user/history",
     },
@@ -95,7 +96,10 @@ export const ROUTES = {
       PROFILES: "/api/admin/profiles?page=1&pageSize=500",
       PROFILES_BY_IDS: (ids: string) =>
         `/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids)}`,
-      NOTIFICATIONS: "/api/admin/notifications?limit=20",
+      NOTIFICATIONS: "/api/admin/notifications?pageSize=20",
+      MANAGE_STORY: "/api/admin/stories",
+      MANAGE_CHAPTER: "/api/admin/chapters",
+      MANAGE_USER: "/api/admin/users",
     },
   },
 } as const;

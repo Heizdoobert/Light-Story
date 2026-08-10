@@ -69,7 +69,11 @@ export async function toggleBookmark(comicId: string): Promise<boolean> {
   try {
     const token = await getAccessToken();
     if (token) {
-      await apiClient.post<unknown>(ROUTES.API.USER.BOOKMARKS_TOGGLE, { comicId });
+      if (exists) {
+        await apiClient.delete<unknown>(ROUTES.API.USER.BOOKMARK(comicId));
+      } else {
+        await apiClient.post<unknown>(ROUTES.API.USER.BOOKMARK(comicId), {});
+      }
     }
   } catch {}
 

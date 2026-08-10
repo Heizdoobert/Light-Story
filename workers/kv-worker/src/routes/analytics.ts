@@ -159,7 +159,7 @@ export async function handleAnalyticsRequest(
 
     if (
       method === 'POST' &&
-      pathname === '/analytics/record-view'
+      (pathname === '/analytics/record-view' || pathname === '/analytics/views')
     ) {
       const body = (await request.json()) as Record<string, unknown>;
       if (typeof body.storyId !== 'string' || !body.storyId.trim()) {

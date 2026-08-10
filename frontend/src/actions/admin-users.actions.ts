@@ -5,6 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
+import { ROUTES } from '@/lib/constants/routes';
 import { createClient } from '@/lib/api/server';
 import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 
@@ -111,7 +112,7 @@ const manageAdminUserSchema = z.discriminatedUnion('action', [
 
 export async function manageAdminUser(input: z.infer<typeof manageAdminUserSchema>): Promise<ActionResult> {
   return act(manageAdminUserSchema, input, async (payload) => {
-    const res = await fetchApi('/api/admin/manage-user', {
+    const res = await fetchApi(ROUTES.API.ADMIN.MANAGE_USER, {
       method: 'POST',
       body: JSON.stringify(payload),
     });

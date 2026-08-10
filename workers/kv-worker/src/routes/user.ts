@@ -50,6 +50,45 @@ export async function handleUserRequest(
       return json({ bookmarked: true });
     }
 
+    if (method === 'POST' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
+      const comicId = pathname.split('/')[3];
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (!Array.isArray(existing) || existing.length === 0) {
+        await sbPost('bookmarks', { user_id: userId, comic_id: comicId }, env, token);
+      }
+      return json({ bookmarked: true });
+    }
+
+    if (method === 'DELETE' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
+      const comicId = pathname.split('/')[3];
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        await sb(
+          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          { method: 'DELETE' },
+          env,
+          token,
+        );
+      }
+      return json({ bookmarked: false });
+    }
+
     if (method === 'POST' && pathname === '/user/bookmarks/remove') {
       const body = (await request.json()) as { comicId?: string };
       if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);

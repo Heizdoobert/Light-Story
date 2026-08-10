@@ -53,7 +53,7 @@ describe('admin-stories.actions', () => {
       const result = await updateStoryStatus({ id: 'story-1', status: 'published' });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'updateStatus', id: 'story-1', status: 'published' }),
       });
@@ -86,7 +86,7 @@ describe('admin-stories.actions', () => {
       const result = await featureStory({ id: 'story-1' });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'feature', id: 'story-1', isFeatured: true }),
       });
@@ -101,7 +101,7 @@ describe('admin-stories.actions', () => {
       const result = await featureStory({ id: 'story-1', isFeatured: false });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'feature', id: 'story-1', isFeatured: false }),
       });
@@ -116,7 +116,7 @@ describe('admin-stories.actions', () => {
       const result = await deleteStoryAdmin({ id: 'story-99' });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'delete', id: 'story-99' }),
       });
@@ -138,7 +138,7 @@ describe('admin-stories.actions', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({
           action: 'update',
@@ -159,7 +159,7 @@ describe('admin-stories.actions', () => {
       const result = await deleteStory({ id: 'story-1' });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'delete', id: 'story-1' }),
       });
@@ -174,7 +174,7 @@ describe('admin-stories.actions', () => {
       const result = await bulkUpdateStatus({ ids: ['s1', 's2'], status: 'ongoing' });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'bulkUpdateStatus', ids: ['s1', 's2'], status: 'ongoing' }),
       });
@@ -214,7 +214,7 @@ describe('admin-stories.actions', () => {
       const result = await bulkDeleteStories({ ids: ['s1', 's2'] });
 
       expect(result.success).toBe(true);
-      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/manage-story', {
+      expect(httpModule.fetchApi).toHaveBeenCalledWith('/api/admin/stories', {
         method: 'POST',
         body: JSON.stringify({ action: 'bulkDelete', ids: ['s1', 's2'] }),
       });

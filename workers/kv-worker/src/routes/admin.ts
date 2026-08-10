@@ -63,6 +63,16 @@ const COMIC_SCHEMA = [
   { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
 ] as const;
 
+// ponytail: legacy verb paths (/admin/manage-*) kept as aliases for old clients;
+// new REST-style noun paths are canonical. Drop aliases once all callers migrate.
+export function isAdminResourcePath(
+  path: string,
+  legacy: string,
+  canonical: string,
+): boolean {
+  return path === legacy || path === canonical;
+}
+
 export async function handleAdminRequest(
   request: Request,
   env: Env,
@@ -98,7 +108,7 @@ export async function handleAdminRequest(
   }
 
   try {
-    if (method === 'POST' && path === '/admin/manage-story') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-story', '/admin/stories')) {
       const body = (await request.json()) as any;
       const { action } = body;
 
@@ -175,7 +185,7 @@ export async function handleAdminRequest(
       );
     }
 
-    if (method === 'POST' && path === '/admin/manage-chapter') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-chapter', '/admin/chapters')) {
       const body = (await request.json()) as any;
       const { action } = body;
 
@@ -551,7 +561,7 @@ export async function handleAdminRequest(
       );
     }
 
-    if (method === 'POST' && path === '/admin/manage-user') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-user', '/admin/users')) {
       const body = (await request.json()) as any;
       const { action } = body;
       const svcKey = env.SUPABASE_SERVICE_KEY;
