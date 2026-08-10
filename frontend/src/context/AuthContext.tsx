@@ -300,19 +300,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
       setProfile(null);
       queryClient.clear();
-
-      if (typeof window !== "undefined") {
-        try {
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith("sb-") || key.includes("supabase"))) {
-              localStorage.removeItem(key);
-            }
-          }
-        } catch (e) {
-          console.error("Error clearing local storage auth tokens:", e);
-        }
-      }
     }
   };
 

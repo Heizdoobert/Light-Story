@@ -40,12 +40,18 @@ async function handleSupabaseProxy(
   origin: string | null,
   env: Env,
 ): Promise<Response> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+  const respond = (body: unknown, init: { status: number; headers?: HeadersInit }) => {
+    const headers = new Headers(init.headers);
+    applySecurityHeaders(headers);
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: { code: 'SUPABASE_NOT_CONFIGURED' },
-      }),
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { ...init, headers },
+    );
+  };
+
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    return respond(
+      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED' } },
       {
         status: 500,
         headers: {
@@ -58,11 +64,8 @@ async function handleSupabaseProxy(
 
   const sbPath = supabaseProxyPath(pathname);
   if (!sbPath) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        error: { code: 'INVALID_SUPABASE_PATH' },
-      }),
+    return respond(
+      { success: false, error: { code: 'INVALID_SUPABASE_PATH' } },
       {
         status: 400,
         headers: {
@@ -107,6 +110,7 @@ async function handleSupabaseProxy(
   const c = corsHeaders(origin);
   for (const [k, v] of Object.entries(c))
     responseHeaders.set(k, v as string);
+  applySecurityHeaders(responseHeaders);
 
   if (contentType.includes('application/json')) {
     const bodyText = await res.text();
@@ -165,7 +169,14 @@ export default {
     }
 
     if (origin && !isOriginAllowed(origin)) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', {
+        status: 403,
+        headers: (() => {
+          const h = new Headers();
+          applySecurityHeaders(h);
+          return h;
+        })(),
+      });
     }
 
     const pathname = url.pathname;
@@ -195,10 +206,14 @@ export default {
         }),
         {
           status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders(origin),
-          },
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }
@@ -224,10 +239,14 @@ export default {
               }),
               {
                 status: 401,
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...corsHeaders(origin),
-                },
+                headers: (() => {
+                  const h = new Headers({
+                    'Content-Type': 'application/json',
+                    ...corsHeaders(origin),
+                  });
+                  applySecurityHeaders(h);
+                  return h;
+                })(),
               },
             );
           }
@@ -236,7 +255,7 @@ export default {
               success: false,
         error: { code: 'INTERNAL_ERROR' },
             }),
-            { status: 500 },
+            { status: 500, headers: (() => { const h = new Headers(); applySecurityHeaders(h); return h; })() },
           );
         }
         // For public GET requests, log warning and allow unauthenticated fallback
@@ -277,10 +296,14 @@ export default {
         }),
         {
           status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders(origin),
-          },
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }

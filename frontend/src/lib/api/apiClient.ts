@@ -55,6 +55,8 @@ function serializeBody(body: unknown): BodyInit | undefined {
   return JSON.stringify(body);
 }
 
+// ponytail: token comes from the supabase-js session (cookie-backed by
+// @supabase/ssr). No localStorage scanning: session storage is cookie-only.
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
@@ -67,39 +69,17 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith('sb-') && k.endsWith('-auth-token'),
-    );
-    if (sbKeys.length > 0) {
-      const raw = localStorage.getItem(sbKeys[0]);
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.access_token && !isTokenExpired(session.access_token)) {
-          return session.access_token;
-        }
-      }
-    }
-  } catch {
-  }
-  return null;
-}
-
 let _pendingToken: Promise<string | null> | null = null;
-async function getAccessTokenAsync(): Promise<string | null> {
+async function getAccessToken(): Promise<string | null> {
   if (_pendingToken) return _pendingToken;
   _pendingToken = (async () => {
-    const sync = getAccessToken();
-    if (sync) return sync;
     if (!supabase) return null;
     try {
       const { data } = await supabase.auth.getSession();
-      const token = data?.session?.access_token ?? null;
+      let token = data?.session?.access_token ?? null;
       if (token && isTokenExpired(token)) {
         const { data: refreshed } = await supabase.auth.refreshSession();
-        return refreshed?.session?.access_token ?? null;
+        token = refreshed?.session?.access_token ?? null;
       }
       return token;
     } catch {
@@ -117,7 +97,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = await getAccessTokenAsync();
+  const token = await getAccessToken();
   const headers = new Headers(options.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

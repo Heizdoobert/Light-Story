@@ -18,7 +18,13 @@ export function createClient(): SupabaseClient {
     return null as unknown as SupabaseClient;
   }
 
-  clientInstance = createBrowserClient(url, key) as unknown as SupabaseClient;
+  clientInstance = createBrowserClient(url, key, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    },
+  }) as unknown as SupabaseClient;
   return clientInstance;
 }
 

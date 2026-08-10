@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/ad-policy';
+import { sanitizeAdMarkup } from '@/lib/admin/ad-sanitize';
 
 type SiteSettingItem = { key: string; value: unknown };
 
@@ -65,6 +66,11 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   const runtime = parsed.runtime;
   const markup = parsed.slotMarkup[slotKey].trim();
 
+  const safeMarkup = useMemo(
+    () => (markup ? sanitizeAdMarkup(markup, runtime.allowedHosts) : ''),
+    [markup, runtime.allowedHosts],
+  );
+
   const clearInjectionTask = () => {
     if (pendingTaskRef.current === null) return;
 
@@ -104,7 +110,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       setPolicyError(null);
       clearInjectionTask();
       clearRefreshTask();
-      previousMarkupRef.current = markup;
+      previousMarkupRef.current = safeMarkup;
 
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
@@ -113,7 +119,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       return;
     }
 
-    if (previousMarkupRef.current && previousMarkupRef.current !== markup) {
+    if (previousMarkupRef.current && previousMarkupRef.current !== safeMarkup) {
       hasInjectedRef.current = false;
       setIsVisible(false);
       setPolicyError(null);
@@ -125,8 +131,8 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       }
     }
 
-    previousMarkupRef.current = markup;
-  }, [markup, runtime.enabled]);
+    previousMarkupRef.current = safeMarkup;
+  }, [safeMarkup, runtime.enabled]);
 
   useEffect(() => {
     clearInjectionTask();
@@ -151,11 +157,16 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
   useEffect(() => {
     clearInjectionTask();
 
-    if (!runtime.enabled || !markup || !isVisible) return;
+    if (!runtime.enabled || !safeMarkup || !isVisible) return;
     const node = containerRef.current;
     if (!node || hasInjectedRef.current) return;
 
-    const validation = validateAdMarkup(markup, runtime);
+    if (markup && !safeMarkup) {
+      setPolicyError('Ad markup was blocked by content policy.');
+      return;
+    }
+
+    const validation = validateAdMarkup(safeMarkup, runtime);
     if (!validation.ok) {
       setPolicyError(validation.reason);
       return;
@@ -166,7 +177,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       if (!current || hasInjectedRef.current) return;
 
       try {
-        injectMarkup(current, markup);
+        injectMarkup(current, safeMarkup);
         hasInjectedRef.current = true;
         setRenderCycle((value) => value + 1);
       } catch {
@@ -190,12 +201,12 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
     return () => {
       clearInjectionTask();
     };
-  }, [isVisible, markup, renderCycle, runtime.enabled, runtime.allowedHosts, runtime.blockedTerms, runtime.minHeight, runtime.refreshSeconds]);
+  }, [isVisible, safeMarkup, renderCycle, runtime.enabled, runtime.allowedHosts, runtime.blockedTerms, runtime.minHeight, runtime.refreshSeconds]);
 
   useEffect(() => {
     clearRefreshTask();
 
-    if (!runtime.enabled || !markup || !isVisible || !hasInjectedRef.current) return;
+    if (!runtime.enabled || !safeMarkup || !isVisible || !hasInjectedRef.current) return;
 
     refreshTaskRef.current = window.setTimeout(() => {
       const current = containerRef.current;
@@ -210,7 +221,7 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
     return () => {
       clearRefreshTask();
     };
-  }, [isVisible, markup, renderCycle, runtime.enabled, runtime.refreshSeconds]);
+  }, [isVisible, safeMarkup, renderCycle, runtime.enabled, runtime.refreshSeconds]);
 
   useEffect(() => {
     if (!runtime.enabled) {
@@ -225,13 +236,13 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
       return;
     }
 
-    if (!markup) {
+    if (!safeMarkup) {
       hasInjectedRef.current = false;
       if (containerRef.current) {
         containerRef.current.innerHTML = '';
       }
     }
-  }, [markup, runtime.enabled]);
+  }, [safeMarkup, runtime.enabled]);
 
   if (!runtime.enabled || !markup) return null;
 
