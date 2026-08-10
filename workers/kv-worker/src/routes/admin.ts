@@ -85,8 +85,9 @@ export async function handleAdminRequest(
     return err('FORBIDDEN', 'Insufficient permissions to access admin routes', 403);
   }
 
-  // Granular check: audit routes are superadmin only
-  if (path.startsWith('/admin/audit') && !requireRole(userRole, ['superadmin'])) {
+  // Granular check: audit reads are superadmin only; writes stay open to
+  // staff roles so editors/admins can log their own actions
+  if (method === 'GET' && path.startsWith('/admin/audit') && !requireRole(userRole, ['superadmin'])) {
     return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
   }
 
@@ -233,21 +234,21 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path === '/admin/audit') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '200'), 1, 500);
+      const limit = clamp(parseInt(url.searchParams.get('limit') || '200') || 200, 1, 500);
       const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
       const res = await sbGet('audit_logs', q, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '20'), 1, 50);
+      const limit = clamp(parseInt(url.searchParams.get('limit') || '20') || 20, 1, 50);
       const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
       const res = await sbGet('audit_logs', q, env, token);
       if (!res.ok) {
         return json({ success: true, data: { notifications: [] } });
       }
       const rawLogs = (await res.json().catch(() => [])) as any[];
-      const notifications = rawLogs.map((log: any) => {
+      const notifications = (Array.isArray(rawLogs) ? rawLogs : []).map((log: any) => {
         const title = log.action ? log.action.replace(/_/g, ' ').toUpperCase() : 'SYSTEM NOTIFICATION';
         const entity = log.entity_type ? `${log.entity_type}: ` : '';
         const metaStr = log.metadata && typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : '';
