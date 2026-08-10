@@ -4,7 +4,6 @@ import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
 import { getGatewayUrl } from "@/lib/utils/gateway-url";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
@@ -91,7 +90,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
-          <AdZoneColumns />
           <main className="flex-grow">{children}</main>
           <Analytics />
         </Providers>
