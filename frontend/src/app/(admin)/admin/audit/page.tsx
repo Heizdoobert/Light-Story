@@ -8,7 +8,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 export interface AuditLogRow {
   id: string;
   action: string;
-  entity_type: string;
+  target_email: string | null;
   created_at: string;
 }
 
@@ -24,8 +24,8 @@ export default function AdminAuditPage() {
       try {
         const supabase = getSupabaseBrowserClient();
         const { data, error: err } = await supabase
-          .from('audit_logs')
-          .select('id, action, entity_type, created_at')
+          .from('admin_audit_logs')
+          .select('id, action, target_email, created_at')
           .order('created_at', { ascending: false });
         if (err) throw err;
         setLogs((data ?? []) as AuditLogRow[]);
@@ -41,7 +41,7 @@ export default function AdminAuditPage() {
 
   const columns: Column<AuditLogRow>[] = [
     { key: 'action', header: 'Hành Động', render: (item) => <Badge variant="info">{item.action}</Badge> },
-    { key: 'entity_type', header: 'Loại Thực Thể' },
+    { key: 'target_email', header: 'Email Mục Tiêu', render: (item) => item.target_email || '—' },
     { key: 'created_at', header: 'Thời Gian' },
   ];
 
