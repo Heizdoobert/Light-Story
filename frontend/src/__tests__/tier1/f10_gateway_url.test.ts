@@ -30,6 +30,7 @@ describe('getGatewayUrl', () => {
 
   it('throws when no URL is configured', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', '');
     expect(() => getGatewayUrl()).toThrow('Missing NEXT_PUBLIC_GATEWAY_URL');
   });
 });
