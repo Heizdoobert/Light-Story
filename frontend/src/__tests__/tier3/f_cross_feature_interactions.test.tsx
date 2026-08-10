@@ -309,7 +309,7 @@ describe('F1 x F7: CreateComicForm full journey through real services', () => {
 });
 
 describe('F4 x F6: worker R2 upload route and wrangler bindings', () => {
-  it('exposes the R2 upload route and the lightstory-assets bucket binding', () => {
+  it('exposes the R2 upload route and the comic bucket binding', () => {
     const adminRoutes = fs.readFileSync(
       path.join(process.cwd(), '..', 'workers', 'kv-worker', 'src', 'routes', 'admin.ts'),
       'utf8',
@@ -323,7 +323,7 @@ describe('F4 x F6: worker R2 upload route and wrangler bindings', () => {
       'utf8',
     );
     expect(wrangler).toContain('R2_BUCKET');
-    expect(wrangler).toContain('lightstory-assets');
+    expect(wrangler).toContain('"comic"');
     expect(wrangler).toContain('SUPABASE_JWKS_URL');
   });
 });
