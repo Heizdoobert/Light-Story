@@ -316,7 +316,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const res = await handleAdminRequest(request, testEnv(vi.fn()), 'token', '/admin/r2/upload');
     expect(res!.status).toBe(400);
     expect(await res!.json()).toEqual({
-      status: 'error',
+      success: false,
       error: { code: 'BAD_REQUEST', message: 'Expected multipart/form-data' },
     });
   });
@@ -326,7 +326,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const res = await handleAdminRequest(request, testEnv(vi.fn()), 'token', '/admin/r2/upload');
     expect(res!.status).toBe(400);
     expect(await res!.json()).toEqual({
-      status: 'error',
+      success: false,
       error: { code: 'BAD_REQUEST', message: 'No files provided' },
     });
   });

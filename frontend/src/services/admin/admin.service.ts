@@ -9,7 +9,8 @@ export async function getProfileCount() {
   try {
     const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('profiles'));
     return Number(res?.count ?? 0);
-  } catch {
+  } catch (err) {
+    console.warn('[admin.service] metrics fetch failed', err);
     return 0;
   }
 }
@@ -18,7 +19,8 @@ export async function getChapterCount() {
   try {
     const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('chapters'));
     return Number(res?.count ?? 0);
-  } catch {
+  } catch (err) {
+    console.warn('[admin.service] metrics fetch failed', err);
     return 0;
   }
 }
@@ -27,7 +29,8 @@ export async function getAdSettingsCount() {
   try {
     const res = await apiClient.get<{ count?: number }>(ROUTES.API.ADMIN.SITE_METRICS('site-settings'));
     return Number(res?.count ?? 0);
-  } catch {
+  } catch (err) {
+    console.warn('[admin.service] metrics fetch failed', err);
     return 0;
   }
 }
@@ -36,7 +39,8 @@ export async function getRoleDistribution() {
   try {
     const res = await apiClient.get<Array<{ role: string; total: number }>>(ROUTES.API.ADMIN.ROLE_DISTRIBUTION);
     return Array.isArray(res) ? res : [];
-  } catch {
+  } catch (err) {
+    console.warn('[admin.service] role distribution fetch failed', err);
     return [];
   }
 }
