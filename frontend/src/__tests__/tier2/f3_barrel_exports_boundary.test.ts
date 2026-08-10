@@ -52,15 +52,11 @@ const walk = (dir: string, ext: string): string[] => {
 
 const NAMED_FEATURE_EXPORTS = [
   'useBookmarks',
-  'useChapterDetail',
   'useReadingHistory',
   'useRecommendations',
-  'useStories',
-  'useStoryDetail',
-  'useStoryMutations',
 ];
 
-const NAMED_COMMON_EXPORTS = ['useAutoSave', 'useGlobalErrorHandler', 'useOptimisticUpdate', 'isSupabaseConnectionError', 'getErrorMessage'];
+const NAMED_COMMON_EXPORTS = ['useGlobalErrorHandler', 'isSupabaseConnectionError', 'getErrorMessage'];
 
 describe('F3 boundary: hooks barrel (@/hooks)', () => {
   let hooks: HooksModule;
@@ -99,18 +95,19 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('limits default exports to useChapterSubscription (default-only) and useStories (named + default)', () => {
+  it('keeps feature files free of default exports after dead-hook cleanup', () => {
     const defaults = walk(join(HOOKS_DIR, 'features'), '.ts')
       .filter((f) => readFileSync(f, 'utf-8').replace(/^\uFEFF/, '').includes('export default'))
       .map((f) => f.replace(/\\/g, '/').split('/').pop());
-    expect(defaults.sort()).toEqual(['useChapterSubscription.ts', 'useStories.ts']);
+    expect(defaults).toEqual([]);
   });
 
-  it('does NOT surface the default-only useChapterSubscription on the namespace', () => {
+  it('does NOT surface removed default-only hooks on the namespace', () => {
     expect(hooks as Record<string, unknown>).not.toHaveProperty('useChapterSubscription');
+    expect(hooks as Record<string, unknown>).not.toHaveProperty('useStories');
   });
 
-  it('surfaces all 7 named feature exports and all 5 named common exports', () => {
+  it('surfaces all 3 named feature exports and all 3 named common exports', () => {
     for (const name of [...NAMED_FEATURE_EXPORTS, ...NAMED_COMMON_EXPORTS]) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -119,7 +116,7 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
 
   it('keeps every runtime export a function and no default export', () => {
     const keys = Object.keys(hooks);
-    expect(keys.length).toBeGreaterThanOrEqual(24);
+    expect(keys.length).toBeGreaterThanOrEqual(18);
     for (const key of keys) {
       expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
     }

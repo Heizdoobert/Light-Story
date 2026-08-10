@@ -51,15 +51,9 @@ const EXTRA_PRESENTER_EXPORTS = ['useCrudMutation'];
 
 const FEATURE_AND_COMMON_HOOKS = [
   'useBookmarks',
-  'useChapterDetail',
   'useReadingHistory',
   'useRecommendations',
-  'useStories',
-  'useStoryDetail',
-  'useStoryMutations',
-  'useAutoSave',
   'useGlobalErrorHandler',
-  'useOptimisticUpdate',
 ];
 
 const EXTRA_COMMON_EXPORTS = ['isSupabaseConnectionError', 'getErrorMessage'];
@@ -92,7 +86,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('re-exports all 10 feature and common hooks', () => {
+  it('re-exports all 4 remaining feature and common hooks', () => {
     for (const name of FEATURE_AND_COMMON_HOOKS) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -106,7 +100,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('exports exactly 24 runtime values, all functions', () => {
+  it('exports exactly the expected runtime values, all functions', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual([...ALL_RUNTIME_EXPORTS].sort());
     for (const key of keys) {
