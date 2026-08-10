@@ -99,7 +99,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
           <div className="flex-shrink-0 mt-2 sm:mt-0 flex items-center gap-2">
             <button
               onClick={() => setShowFilter(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-orange-500 dark:hover:border-[#001eff] hover:text-orange-500 dark:hover:text-[#39ff14] transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-orange-500 dark:hover:border-primary hover:text-orange-500 dark:hover:text-accent transition-all shadow-sm"
             >
               <SlidersHorizontal size={16} />
               {t("filter_button")}

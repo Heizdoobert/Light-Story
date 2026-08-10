@@ -14,17 +14,26 @@ type ReadingHistoryDrawerProps = {
 export const ReadingHistoryDrawer: React.FC<ReadingHistoryDrawerProps> = ({ isOpen, onClose }) => {
   const { history, isLoading } = useReadingHistory();
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300">
+      <div role="dialog" aria-modal="true" aria-label="Lịch sử đọc truyện" className="w-full max-w-md bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right duration-300">
         <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-lg">
             <History className="w-5 h-5 text-primary" />
             <span>Lịch sử đọc truyện</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600">
+          <button onClick={onClose} aria-label="Đóng" className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600">
             <X className="w-5 h-5" />
           </button>
         </div>

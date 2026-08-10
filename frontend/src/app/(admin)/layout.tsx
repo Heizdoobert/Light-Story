@@ -43,7 +43,7 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen flex bg-slate-950 text-slate-100">
       <AdminSidebar />
-      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+      <main id="main-content" className="flex-1 p-8 overflow-y-auto">{children}</main>
     </div>
   );
 }

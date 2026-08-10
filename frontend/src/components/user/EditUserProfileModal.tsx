@@ -67,6 +67,15 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
     };
   }, [previewUrl]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user || !supabase) return;
@@ -157,7 +166,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
             <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full border border-slate-200 dark:border-slate-800 overflow-y-auto max-h-[90vh]">
               {/* Header */}
               <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800">
-                <h2 className="font-black text-slate-900 dark:text-white uppercase tracking-widest text-sm">Edit Profile</h2>
+                <h2 className="font-bold text-slate-900 dark:text-white uppercase tracking-wide text-sm">Edit Profile</h2>
                 <button
                   onClick={onClose}
                   className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
@@ -170,7 +179,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
               <form onSubmit={handleSubmit} className="p-6 space-y-6">
                 {/* Avatar Section */}
                 <div className="space-y-3">
-                  <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Profile Picture</label>
+                  <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Profile Picture</label>
                   <div className="flex items-center gap-4">
                     {safeAvatarUrl ? (
                       <img
@@ -180,7 +189,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                       />
                     ) : (
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-500 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
-                        <span className="text-xs font-black text-white">AVATAR</span>
+                        <span className="text-xs font-bold text-white">AVATAR</span>
                       </div>
                     )}
                     <label className="flex-1">
@@ -213,7 +222,7 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
 
                 {/* Full Name */}
                 <div className="space-y-2">
-                  <label htmlFor="fullName" className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  <label htmlFor="fullName" className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                     Full Name
                   </label>
                   <input
@@ -222,18 +231,20 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Enter your full name"
+                    aria-invalid={fullNameError ? true : undefined}
+                    aria-describedby={fullNameError ? "fullName-error" : undefined}
                     className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors ${
                       fullNameError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
                     }`}
                   />
                   {fullNameError && (
-                    <p className="text-xs font-semibold text-red-500">{fullNameError}</p>
+                    <p id="fullName-error" className="text-xs font-semibold text-red-500">{fullNameError}</p>
                   )}
                 </div>
 
                 {/* Avatar URL */}
                 <div className="space-y-2">
-                  <label htmlFor="avatarUrl" className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  <label htmlFor="avatarUrl" className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                     Avatar URL (Optional)
                   </label>
                   <input
@@ -242,18 +253,20 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                     value={avatarUrl}
                     onChange={(e) => setAvatarUrl(e.target.value)}
                     placeholder="https://example.com/avatar.jpg"
+                    aria-invalid={avatarUrlError ? true : undefined}
+                    aria-describedby={avatarUrlError ? "avatarUrl-error" : undefined}
                     className={`w-full px-4 py-3 border rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors ${
                       avatarUrlError ? 'border-red-400 dark:border-red-500' : 'border-slate-300 dark:border-slate-600'
                     }`}
                   />
                   {avatarUrlError && (
-                    <p className="text-xs font-semibold text-red-500">{avatarUrlError}</p>
+                    <p id="avatarUrl-error" className="text-xs font-semibold text-red-500">{avatarUrlError}</p>
                   )}
                 </div>
 
                 {/* Email (Read-only) */}
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                  <label htmlFor="email" className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">
                     Email Address (Cannot be changed)
                   </label>
                   <input

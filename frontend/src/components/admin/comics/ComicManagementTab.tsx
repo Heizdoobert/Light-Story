@@ -745,7 +745,9 @@ export const ComicManagementTab: React.FC = () => {
           <button
             key={key}
             role="tab"
+            id={`comic-tab-${key}`}
             aria-selected={activeTab === key}
+            aria-controls={`comic-panel-${key}`}
             onClick={() => setActiveTab(key as TabKey)}
             className={`rounded-full px-5 py-3 text-sm font-bold transition-all ${
               activeTab === key
@@ -768,94 +770,108 @@ export const ComicManagementTab: React.FC = () => {
       </div>
 
       {activeTab === "catalog" && (
-        <ComicCatalogTab
-          catalog={catalog}
-          selectedComic={selectedComic}
-          filters={filters}
-          refreshing={refreshing}
-          role={role}
-          onFiltersChange={setFilters}
-          onRefresh={refreshCatalog}
-          onNewDraft={loadNewComicDraft}
-          onOpenComic={openComic}
-        />
+        <div role="tabpanel" id="comic-panel-catalog" aria-labelledby="comic-tab-catalog">
+          <ComicCatalogTab
+            catalog={catalog}
+            selectedComic={selectedComic}
+            filters={filters}
+            refreshing={refreshing}
+            role={role}
+            onFiltersChange={setFilters}
+            onRefresh={refreshCatalog}
+            onNewDraft={loadNewComicDraft}
+            onOpenComic={openComic}
+          />
+        </div>
       )}
 
       {activeTab === "editor" && (
-        <ComicEditorTab
-          selectedComic={selectedComic}
-          canManageAll={canManageAll}
-          formValues={formValues}
-          formBusy={formBusy}
-          formError={formError}
-          coverPreview={coverPreview}
-          catalog={catalog}
-          onChangeForm={setFormValues}
-          onCoverFileChange={setCoverFile}
-          onSaveDraft={handleSaveDraft}
-          onPrimarySubmit={handlePrimarySubmit}
-          onPublish={handlePublish}
-          onDelete={handleDelete}
-          onNewDraft={loadNewComicDraft}
-          onGoToChapters={() => setActiveTab("chapters")}
-        />
+        <div role="tabpanel" id="comic-panel-editor" aria-labelledby="comic-tab-editor">
+          <ComicEditorTab
+            selectedComic={selectedComic}
+            canManageAll={canManageAll}
+            formValues={formValues}
+            formBusy={formBusy}
+            formError={formError}
+            coverPreview={coverPreview}
+            catalog={catalog}
+            onChangeForm={setFormValues}
+            onCoverFileChange={setCoverFile}
+            onSaveDraft={handleSaveDraft}
+            onPrimarySubmit={handlePrimarySubmit}
+            onPublish={handlePublish}
+            onDelete={handleDelete}
+            onNewDraft={loadNewComicDraft}
+            onGoToChapters={() => setActiveTab("chapters")}
+          />
+        </div>
       )}
 
       {activeTab === "chapters" && (
-        <ComicChaptersTab
-          catalog={catalog}
-          selectedComic={selectedComic}
-          selectedChapters={selectedChapters}
-          chapterValues={chapterValues}
-          chapterPages={chapterPages}
-          chapterBusy={chapterBusy}
-          chapterError={chapterError}
-          onChapterValuesChange={setChapterValues}
-          onAddFiles={handleChapterFiles}
-          onRemovePage={removeChapterPage}
-          onMovePage={moveChapterPage}
-          onMovePageByDirection={moveChapterPageByDirection}
-          onSave={handleChapterSave}
-          onResetPages={resetChapterPages}
-          onSelectComic={(comicId) => { setSelectedComicId(comicId); setChapterError(null); }}
-          onDeleteChapter={handleDeleteChapter}
-        />
+        <div role="tabpanel" id="comic-panel-chapters" aria-labelledby="comic-tab-chapters">
+          <ComicChaptersTab
+            catalog={catalog}
+            selectedComic={selectedComic}
+            selectedChapters={selectedChapters}
+            chapterValues={chapterValues}
+            chapterPages={chapterPages}
+            chapterBusy={chapterBusy}
+            chapterError={chapterError}
+            onChapterValuesChange={setChapterValues}
+            onAddFiles={handleChapterFiles}
+            onRemovePage={removeChapterPage}
+            onMovePage={moveChapterPage}
+            onMovePageByDirection={moveChapterPageByDirection}
+            onSave={handleChapterSave}
+            onResetPages={resetChapterPages}
+            onSelectComic={(comicId) => { setSelectedComicId(comicId); setChapterError(null); }}
+            onDeleteChapter={handleDeleteChapter}
+          />
+        </div>
       )}
 
       {activeTab === "translators" && (
-        <TranslatorManagementTab catalog={catalog} />
+        <div role="tabpanel" id="comic-panel-translators" aria-labelledby="comic-tab-translators">
+          <TranslatorManagementTab catalog={catalog} />
+        </div>
       )}
 
       {activeTab === "feedback" && (
-        <ComicFeedbackTab catalog={catalog} canManageAll={canManageAll} />
+        <div role="tabpanel" id="comic-panel-feedback" aria-labelledby="comic-tab-feedback">
+          <ComicFeedbackTab catalog={catalog} canManageAll={canManageAll} />
+        </div>
       )}
 
       {activeTab === "trash" && (
-        <ComicTrashTab
-          catalog={catalog}
-          role={role}
-          onRestoreComic={(id) => {
-            toast.success(t("restore_success").replace("{id}", id));
-            refreshCatalog(false);
-          }}
-          onHardDeleteComic={(id) => {
-            handleDelete();
-            toast.success(t("permanently_deleted").replace("{id}", id));
-          }}
-        />
+        <div role="tabpanel" id="comic-panel-trash" aria-labelledby="comic-tab-trash">
+          <ComicTrashTab
+            catalog={catalog}
+            role={role}
+            onRestoreComic={(id) => {
+              toast.success(t("restore_success").replace("{id}", id));
+              refreshCatalog(false);
+            }}
+            onHardDeleteComic={(id) => {
+              handleDelete();
+              toast.success(t("permanently_deleted").replace("{id}", id));
+            }}
+          />
+        </div>
       )}
 
       {activeTab === "moderation" && (
-        <ComicModerationTab
-          moderation={moderation}
-          canModerate={canModerate}
-          moderationBusy={moderationBusy}
-          onReload={() => setModeration(listComicModerationState())}
-          onSaveKeywords={handleKeywordSave}
-          onAddKeyword={handleAddKeyword}
-          onClearKeyword={handleClearKeyword}
-          onModerationAction={handleModerationAction}
-        />
+        <div role="tabpanel" id="comic-panel-moderation" aria-labelledby="comic-tab-moderation">
+          <ComicModerationTab
+            moderation={moderation}
+            canModerate={canModerate}
+            moderationBusy={moderationBusy}
+            onReload={() => setModeration(listComicModerationState())}
+            onSaveKeywords={handleKeywordSave}
+            onAddKeyword={handleAddKeyword}
+            onClearKeyword={handleClearKeyword}
+            onModerationAction={handleModerationAction}
+          />
+        </div>
       )}
     </div>
   );

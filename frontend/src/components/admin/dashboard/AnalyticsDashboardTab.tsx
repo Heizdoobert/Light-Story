@@ -53,8 +53,8 @@ function SectionShell({
 }) {
   const toneClasses = {
     neutral: 'bg-slate-950 text-white dark:bg-slate-900',
-    supabase: 'bg-gradient-to-br from-emerald-600 to-teal-500 text-white',
-    cloudflare: 'bg-gradient-to-br from-orange-500 to-amber-400 text-white',
+    supabase: 'bg-emerald-600 text-white',
+    cloudflare: 'bg-orange-500 text-white',
   } as const;
 
   return (
@@ -76,10 +76,10 @@ function UserEngagementCard({ data }: { data: UserEngagementMetrics }) {
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <MetricCard title={t("total_users")} value={formatCompactNumber(data.total_users)} detail="Registered accounts" accent="bg-gradient-to-br from-blue-500 to-cyan-400" />
-        <MetricCard title={t("new_users")} value={formatCompactNumber(data.new_users)} detail={`Growth ${formatFixedNumber(data.growth_rate_pct)}%`} accent="bg-gradient-to-br from-emerald-500 to-lime-400" />
-        <MetricCard title={t("active_users")} value={formatCompactNumber(data.active_users)} detail="Recent reading activity" accent="bg-gradient-to-br from-violet-500 to-fuchsia-400" />
-        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="Saved & favorited comics" accent="bg-gradient-to-br from-amber-500 to-orange-400" />
+        <MetricCard title={t("total_users")} value={formatCompactNumber(data.total_users)} detail="Registered accounts" accent="bg-primary" />
+        <MetricCard title={t("new_users")} value={formatCompactNumber(data.new_users)} detail={`Growth ${formatFixedNumber(data.growth_rate_pct)}%`} accent="bg-primary" />
+        <MetricCard title={t("active_users")} value={formatCompactNumber(data.active_users)} detail="Recent reading activity" accent="bg-primary" />
+        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="Saved & favorited comics" accent="bg-primary" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
@@ -111,9 +111,9 @@ function ContentPerformanceCard({ data }: { data: ContentPerformanceMetrics }) {
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-        <MetricCard title="Chapter Views" value={formatCompactNumber(data.total_views)} detail="Views per chapter" accent="bg-gradient-to-br from-indigo-500 to-blue-400" />
-        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="User favorited stories" accent="bg-gradient-to-br from-pink-500 to-rose-400" />
-        <MetricCard title="Engagement Score" value={formatFixedNumber(data.engagement_score)} detail="Normalized interaction score" accent="bg-gradient-to-br from-cyan-500 to-sky-400" />
+        <MetricCard title="Chapter Views" value={formatCompactNumber(data.total_views)} detail="Views per chapter" accent="bg-primary" />
+        <MetricCard title={t("total_favorites")} value={formatCompactNumber(data.total_favorites)} detail="User favorited stories" accent="bg-primary" />
+        <MetricCard title="Engagement Score" value={formatFixedNumber(data.engagement_score)} detail="Normalized interaction score" accent="bg-primary" />
       </div>
 
       <div className="rounded-2xl sm:rounded-3xl border border-slate-200/70 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 overflow-hidden">
@@ -155,10 +155,10 @@ function InfrastructureCard({ data }: { data: InfrastructureMetrics }) {
   return (
     <div className="space-y-3 sm:space-y-5">
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <MetricCard title={t("r2_usage")} value={`${formatFixedNumber(data.r2_usage_gb)} GB`} detail={`Allocated ${formatFixedNumber(data.r2_allocated_gb)} GB`} accent="bg-gradient-to-br from-slate-700 to-slate-500" />
-        <MetricCard title={t("r2_objects")} value={formatCompactNumber(data.r2_object_count)} detail="Media objects stored in R2" accent="bg-gradient-to-br from-teal-500 to-emerald-400" />
-        <MetricCard title={t("page_views")} value={formatCompactNumber(data.page_views)} detail="Cloudflare traffic volume" accent="bg-gradient-to-br from-amber-500 to-yellow-400" />
-        <MetricCard title={t("cache_hit_ratio")} value={`${formatFixedNumber(data.cache_hit_ratio_pct)}%`} detail="Cloudflare cache effectiveness" accent="bg-gradient-to-br from-fuchsia-500 to-pink-400" />
+        <MetricCard title={t("r2_usage")} value={`${formatFixedNumber(data.r2_usage_gb)} GB`} detail={`Allocated ${formatFixedNumber(data.r2_allocated_gb)} GB`} accent="bg-primary" />
+        <MetricCard title={t("r2_objects")} value={formatCompactNumber(data.r2_object_count)} detail="Media objects stored in R2" accent="bg-primary" />
+        <MetricCard title={t("page_views")} value={formatCompactNumber(data.page_views)} detail="Cloudflare traffic volume" accent="bg-primary" />
+        <MetricCard title={t("cache_hit_ratio")} value={`${formatFixedNumber(data.cache_hit_ratio_pct)}%`} detail="Cloudflare cache effectiveness" accent="bg-primary" />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
@@ -236,8 +236,7 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
 
   return (
     <div className="space-y-4 sm:space-y-8">
-      <header className="relative overflow-hidden rounded-xl sm:rounded-[2rem] border border-slate-200/80 dark:border-slate-800 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.15),_transparent_38%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(30,41,59,0.96))] px-3 sm:px-6 py-4 sm:py-7 text-white shadow-[0_24px_80px_rgba(15,23,42,0.25)]">
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-[radial-gradient(circle,_rgba(56,189,248,0.22),_transparent_70%)]" />
+      <header className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 dark:bg-slate-950 px-3 sm:px-6 py-4 sm:py-7 text-white shadow-sm">
         <div className="relative flex flex-col gap-3 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2 sm:space-y-3 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
@@ -359,19 +358,19 @@ export const AnalyticsDashboardTab: React.FC<AnalyticsDashboardTabProps> = ({ ro
               title="Supabase + Cloudflare Health"
               value={dashboardQuery.data.meta.source_health.cloudflare === 'ready' ? 'Healthy' : dashboardQuery.data.meta.source_health.cloudflare === 'degraded' ? 'Partial' : 'Offline'}
               detail={`Supabase ${dashboardQuery.data.meta.source_health.supabase}, Cloudflare ${dashboardQuery.data.meta.source_health.cloudflare}`}
-              accent="bg-gradient-to-br from-emerald-500 to-teal-400"
+              accent="bg-primary"
             />
             <MetricCard
               title="Selected Window"
               value={dashboardQuery.data.meta.range.toUpperCase()}
               detail={`${dashboardQuery.data.meta.time_window.start} → ${dashboardQuery.data.meta.time_window.end}`}
-              accent="bg-gradient-to-br from-slate-700 to-slate-500"
+              accent="bg-primary"
             />
             <MetricCard
               title="Restricted View"
               value={dashboardQuery.data.meta.restricted ? 'Yes' : 'No'}
               detail={dashboardQuery.data.meta.restricted ? 'Employee-safe summary only' : 'Full administrative telemetry'}
-              accent="bg-gradient-to-br from-fuchsia-500 to-purple-400"
+              accent="bg-primary"
             />
           </div>
         </>

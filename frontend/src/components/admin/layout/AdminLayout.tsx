@@ -175,7 +175,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="font-black text-xl text-primary tracking-tighter"
+                className="font-bold text-xl text-primary"
               >
                 LIGHTSTORY{" "}
                 <span className="text-slate-400 dark:text-slate-300">DUT</span>
@@ -270,7 +270,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <LayoutDashboard size={20} />
             </div>
             <div>
-              <h2 className="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider text-xs">
+              <h2 className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide text-xs">
                 {t("admin_panel")}
               </h2>
               <p className="text-[10px] font-bold text-slate-400 dark:text-slate-400">
@@ -285,7 +285,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <div className="h-8 w-[1px] bg-slate-200 dark:border-slate-800"></div>
             <div className="flex items-center gap-3">
               <div className="text-right hidden sm:block">
-                <div className="text-sm font-black text-slate-900 dark:text-slate-100">
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   {profile?.full_name}
                 </div>
                 <div className="text-[10px] font-bold text-primary uppercase tracking-widest">

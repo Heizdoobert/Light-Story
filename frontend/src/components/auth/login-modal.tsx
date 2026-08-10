@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -53,6 +53,16 @@ export default function LoginModal({
     resetLocalState();
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // ponytail: handleClose identity changes per render; isOpen gate keeps it fresh
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,7 +181,7 @@ export default function LoginModal({
             <div className="p-8">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                     {current.title}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
@@ -190,7 +200,7 @@ export default function LoginModal({
               <form onSubmit={handleSubmit} className="space-y-6">
                 {mode === "register" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
                       Full Name
                     </label>
                     <input
@@ -204,7 +214,7 @@ export default function LoginModal({
                 )}
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
                     Email Address
                   </label>
                   <div className="relative mt-2">
@@ -224,7 +234,7 @@ export default function LoginModal({
 
                 {mode !== "forgot" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
                       Password
                     </label>
                     <div className="relative mt-2">
@@ -245,7 +255,7 @@ export default function LoginModal({
 
                 {mode === "register" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
                       Confirm Password
                     </label>
                     <div className="relative mt-2">
@@ -267,7 +277,7 @@ export default function LoginModal({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmitting ? (
                     <Loader2 size={18} className="animate-spin" />

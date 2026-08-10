@@ -62,7 +62,7 @@ export const ChapterReaderPageContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#111] flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
       </div>
     );
@@ -76,7 +76,7 @@ export const ChapterReaderPageContent: React.FC = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors flex flex-col">
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="h-1 bg-slate-200 dark:bg-slate-800">
           <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />

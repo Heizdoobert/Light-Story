@@ -12,7 +12,7 @@ export default function PublicFooter() {
   if (pathname?.startsWith(ROUTES.ADMIN.ROOT)) return null;
 
   return (
-    <footer className="w-full bg-white dark:bg-[#0a0a0a] border-t border-slate-200 dark:border-white/5 py-4 mt-auto transition-colors">
+    <footer className="w-full bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-white/5 py-4 mt-auto transition-colors">
       <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-2 text-center md:text-left">
         <div>
           <Link href="/">

@@ -10,21 +10,24 @@ const inputClass =
 export function AuthField({
   label,
   icon: Icon,
+  id,
   ...props
 }: {
   label: string;
   icon?: LucideIcon;
+  id?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>) {
+  const fieldId = id ?? label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   return (
     <div>
-      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+      <label htmlFor={fieldId} className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
         {label}
       </label>
       <div className="relative mt-2">
         {Icon && (
           <Icon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
         )}
-        <input className={inputClass} {...props} />
+        <input id={fieldId} className={inputClass} {...props} />
       </div>
     </div>
   );
@@ -53,7 +56,7 @@ export function AuthFormShell({
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh] border border-white/20 p-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             {title}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
@@ -66,7 +69,7 @@ export function AuthFormShell({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:hover:scale-100"
           >
             {isSubmitting ? (
               <Loader2 size={18} className="animate-spin" />

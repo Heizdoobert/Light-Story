@@ -270,7 +270,7 @@ export const ChapterCommentsSection: React.FC<ChapterCommentsSectionProps> = ({
                   className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#001eff] to-purple-600 dark:to-pink-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary dark:bg-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
                   {comment.userName.trim().charAt(0).toUpperCase()}
                 </div>
               )}
