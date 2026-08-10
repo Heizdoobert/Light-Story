@@ -1,0 +1,10 @@
+﻿ frontend/.env.example                         |  2 ++
+ frontend/src/app/api/avatar/route.ts          | 12 +++++++++++-
+ frontend/src/app/api/r2/proxy/route.ts        |  5 +++++
+ frontend/src/app/api/r2/upload/route.ts       |  3 ++-
+ frontend/src/app/error.tsx                    |  4 +++-
+ frontend/src/app/global-error.tsx             |  1 +
+ frontend/src/app/layout.tsx                   | 20 +++++++++++++++++++-
+ frontend/src/app/sitemap.ts                   |  9 +++++++--
+ frontend/src/components/navigation/Header.tsx | 15 +++++++--------
+ 9 files changed, 57 insertions(+), 14 deletions(-)

@@ -1,0 +1,4 @@
+﻿bb4f355 fix(app): sidebar label, dev-only error messages, home URL literals, role precedence (task 10c)
+1f43604 docs: record task 10b report commit hash
+727bc2b fix(admin): honest empty states, VI not-found, order-stable fetchStoriesByIds (task 10b)
+fb1b5ee fix(app): root error/SEO lows - VI not-found + Link, robots cleanup, dead token, avatar 3xx (task 10a)

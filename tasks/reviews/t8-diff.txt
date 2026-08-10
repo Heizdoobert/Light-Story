@@ -1,0 +1,392 @@
+﻿diff --git a/frontend/.env.example b/frontend/.env.example
+index 14fb8ea..316d74a 100644
+--- a/frontend/.env.example
++++ b/frontend/.env.example
+@@ -2,20 +2,22 @@
+ NEXT_PUBLIC_SUPABASE_URL=
+ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+ SUPABASE_SERVICE_ROLE_KEY=
+ SUPABASE_JWKS_URL=
+ 
+ # API Gateway (local dev)
+ NEXT_PUBLIC_GATEWAY_URL=http://localhost:8787
+ NEXT_PUBLIC_GATEWAY_URL_PRODUCTION=https://kv-worker.hhhuygiau.workers.dev
+ # Custom domain for Cloudflare Worker gateway (if attached, e.g. api.lightstory.app)
+ NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN=
++# Canonical site URL (sitemap + OG metadataBase). e.g. https://lightstory.app
++NEXT_PUBLIC_SITE_URL=
+ 
+ # Analytics Dashboard Worker
+ CLOUDFLARE_ANALYTICS_WORKER_URL=
+ 
+ # CSP / Worker domains
+ CF_WORKER_DOMAIN=hhhuygiau.workers.dev
+ R2_CLOUDFLARE_STORAGE_DOMAIN=*.r2.cloudflarestorage.com
+ 
+ # Cloudflare R2 Storage
+ R2_ACCOUNT_ID=
+diff --git a/frontend/src/app/api/avatar/route.ts b/frontend/src/app/api/avatar/route.ts
+index 63a9e0e..f8f1e61 100644
+--- a/frontend/src/app/api/avatar/route.ts
++++ b/frontend/src/app/api/avatar/route.ts
+@@ -1,12 +1,14 @@
+ import { NextResponse } from 'next/server';
+ 
++const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5MB ceiling for avatar images
++
+ /**
+  * GET /api/avatar?url=...
+  * Proxies Supabase Storage avatar images with immutable cache headers.
+  * Validates URL origin strictly to prevent SSRF attacks.
+  */
+ export async function GET(request: Request) {
+   const { searchParams } = new URL(request.url);
+   const url = searchParams.get('url');
+ 
+   if (!url) {
+@@ -23,33 +25,41 @@ export async function GET(request: Request) {
+ 
+   const isValidSupabaseAvatar =
+     parsedUrl.hostname.endsWith('.supabase.co') &&
+     parsedUrl.pathname.startsWith('/storage/v1/object/public/avatars/');
+ 
+   if (!isValidSupabaseAvatar) {
+     return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
+   }
+ 
+   try {
+-    const response = await fetch(parsedUrl.toString());
++    const response = await fetch(parsedUrl.toString(), { redirect: 'manual' });
++    if (response.redirected || response.type === 'opaqueredirect') {
++      return NextResponse.json({ error: 'Redirects not allowed' }, { status: 400 });
++    }
+     if (!response.ok) {
+       console.error(`[Avatar Proxy] Upstream returned ${response.status} for ${parsedUrl.pathname}`);
+       return NextResponse.json({ error: 'Failed to fetch image' }, { status: response.status });
+     }
+ 
+     const contentType = response.headers.get('Content-Type') || 'image/jpeg';
+ 
+     // Validate that upstream returns an image
+     if (!contentType.startsWith('image/')) {
+       return NextResponse.json({ error: 'Upstream returned non-image content' }, { status: 502 });
+     }
+ 
++    const contentLength = Number(response.headers.get('content-length'));
++    if (Number.isFinite(contentLength) && contentLength > MAX_AVATAR_BYTES) {
++      return NextResponse.json({ error: 'Image exceeds size limit' }, { status: 503 });
++    }
++
+     const buffer = await response.arrayBuffer();
+     return new NextResponse(buffer, {
+       headers: {
+         'Content-Type': contentType,
+         'Cache-Control': 'public, max-age=31536000, immutable',
+         'X-Content-Type-Options': 'nosniff',
+       },
+     });
+   } catch (error) {
+     console.error('[Avatar Proxy] Error:', error);
+diff --git a/frontend/src/app/api/r2/proxy/route.ts b/frontend/src/app/api/r2/proxy/route.ts
+index ab00238..30711fa 100644
+--- a/frontend/src/app/api/r2/proxy/route.ts
++++ b/frontend/src/app/api/r2/proxy/route.ts
+@@ -1,14 +1,16 @@
+ import { NextResponse } from 'next/server';
+ import { getBucketForFolder, getObject } from '@/lib/r2/s3';
+ 
+ const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
++// ponytail: 50MB in-memory ceiling on the buffered object; stream via GetObject/response.Body when larger objects are needed
++const MAX_OBJECT_SIZE = 50 * 1024 * 1024;
+ 
+ function guessContentType(key: string): string {
+   const ext = key.split('.').pop()?.toLowerCase() ?? '';
+   const mimeMap: Record<string, string> = {
+     webp: 'image/webp',
+     png: 'image/png',
+     gif: 'image/gif',
+     avif: 'image/avif',
+     svg: 'image/svg+xml',
+     jpg: 'image/jpeg',
+@@ -45,20 +47,23 @@ export async function GET(request: Request) {
+   if (!bucket) {
+     console.error('[R2 Proxy] Storage not configured for folder:', folder);
+     return NextResponse.json({ error: 'Storage not configured' }, { status: 500 });
+   }
+ 
+   try {
+     const { body, contentType } = await getObject(bucket, key);
+     if (!body) {
+       return NextResponse.json({ error: 'Object not found' }, { status: 404 });
+     }
++    if (body.byteLength > MAX_OBJECT_SIZE) {
++      return NextResponse.json({ error: 'Object exceeds size limit' }, { status: 413 });
++    }
+ 
+     return new NextResponse(Buffer.from(body), {
+       headers: {
+         'Content-Type': contentType || guessContentType(key),
+         'Cache-Control': 'public, max-age=31536000, immutable',
+         'Cross-Origin-Resource-Policy': 'cross-origin',
+         'X-Content-Type-Options': 'nosniff',
+       },
+     });
+   } catch (error) {
+diff --git a/frontend/src/app/api/r2/upload/route.ts b/frontend/src/app/api/r2/upload/route.ts
+index 2939791..829459e 100644
+--- a/frontend/src/app/api/r2/upload/route.ts
++++ b/frontend/src/app/api/r2/upload/route.ts
+@@ -1,17 +1,18 @@
+ import { NextRequest, NextResponse } from 'next/server';
+ import { requireRouteAuthorization } from '@/lib/security/route-auth';
+ import { ACTION_ADMIN_ROLES } from '@/lib/security/permission';
+ import { getBucketForFolder, putObject } from '@/lib/r2/s3';
+ 
+ const ALLOWED_ROLES = ACTION_ADMIN_ROLES;
+-const MAX_FILE_SIZE = 250 * 1024 * 1024; // Allow up to 250MB for comic archive .cbz/.zip uploads
++// ponytail: 50MB in-memory ceiling (was 250MB) ΓÇö covers .cbz/.zip; upgrade to streaming multipart put when archives exceed it
++const MAX_FILE_SIZE = 50 * 1024 * 1024;
+ const ALLOWED_TYPES = new Set([
+   'image/jpeg',
+   'image/png',
+   'image/webp',
+   'image/avif',
+   'image/gif',
+   'application/x-cbz',
+   'application/zip',
+   'application/x-zip-compressed',
+   'application/octet-stream',
+diff --git a/frontend/src/app/error.tsx b/frontend/src/app/error.tsx
+index e713c57..026b971 100644
+--- a/frontend/src/app/error.tsx
++++ b/frontend/src/app/error.tsx
+@@ -10,33 +10,35 @@ export default function RootError({
+   error,
+   reset,
+ }: {
+   error: Error & { digest?: string };
+   reset: () => void;
+ }) {
+   useEffect(() => {
+     console.error("[Root Error]", error);
+   }, [error]);
+ 
++  const isDevelopment = process.env.NODE_ENV !== "production";
++
+   return (
+     <div className="min-h-[60vh] flex items-center justify-center px-4 py-10">
+       <div className="w-full max-w-lg rounded-3xl border border-red-200 dark:border-red-900/40 bg-white dark:bg-slate-900 shadow-lg p-8 sm:p-10 text-center space-y-5">
+         <div className="mx-auto w-16 h-16 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+           <AlertTriangle className="text-red-500" size={32} />
+         </div>
+ 
+         <div className="space-y-2">
+           <h2 className="text-2xl font-black text-slate-900 dark:text-white">
+             ─É├ú Xß║úy Ra Lß╗ùi Hß╗ç Thß╗æng
+           </h2>
+           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-sm mx-auto">
+-            {error.message || "Vui l├▓ng thß╗¡ lß║íi sau."}
++            {isDevelopment && error.message ? error.message : "Vui l├▓ng thß╗¡ lß║íi sau."}
+           </p>
+           {error.digest && (
+             <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+               M├ú lß╗ùi: {error.digest}
+             </p>
+           )}
+         </div>
+ 
+         <div className="flex items-center justify-center gap-3 pt-2">
+           <Button onClick={reset} className="gap-2 font-bold">
+diff --git a/frontend/src/app/global-error.tsx b/frontend/src/app/global-error.tsx
+index 96fe356..724fc48 100644
+--- a/frontend/src/app/global-error.tsx
++++ b/frontend/src/app/global-error.tsx
+@@ -1,14 +1,15 @@
+ "use client";
+ 
+ import { useEffect } from "react";
+ import { ROUTES } from "@/lib/constants/routes";
++import "./globals.css";
+ 
+ export default function GlobalError({
+   error,
+   reset,
+ }: {
+   error: Error & { digest?: string };
+   reset: () => void;
+ }) {
+   useEffect(() => {
+     console.error("[Global Error]", error);
+diff --git a/frontend/src/app/layout.tsx b/frontend/src/app/layout.tsx
+index ddb96b3..0fa86d1 100644
+--- a/frontend/src/app/layout.tsx
++++ b/frontend/src/app/layout.tsx
+@@ -1,22 +1,40 @@
+ import type { Metadata } from "next";
+ import Script from "next/script";
+ import { Analytics } from "@vercel/analytics/next";
+ import "@fontsource-variable/plus-jakarta-sans";
+ import "./globals.css";
+ import { Providers } from "./providers";
+ import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
+ 
+ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+ 
++function resolveMetadataBase(): URL {
++  if (process.env.NODE_ENV !== "production") {
++    return new URL("http://localhost:3000");
++  }
++  if (siteUrl) {
++    return new URL(siteUrl);
++  }
++  const fallback =
++    process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
++    process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
++  if (fallback) {
++    return new URL(fallback.startsWith("http") ? fallback : `https://${fallback}`);
++  }
++  throw new Error(
++    "[layout] NEXT_PUBLIC_SITE_URL must be set in production (metadataBase / OG images)."
++  );
++}
++
+ export const metadata: Metadata = {
+-  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
++  metadataBase: resolveMetadataBase(),
+   title: {
+     default: "Light Story - Read Manga, Manhua & Light Novels Online",
+     template: "%s | Light Story",
+   },
+   description: "Read high-quality Manga, Manhua, Manhwa, and Light Novels online on Light Story.",
+   openGraph: {
+     type: "website",
+     locale: "en_US",
+     ...(siteUrl ? { url: siteUrl } : {}),
+     siteName: "Light Story",
+diff --git a/frontend/src/app/sitemap.ts b/frontend/src/app/sitemap.ts
+index eebe960..5b30052 100644
+--- a/frontend/src/app/sitemap.ts
++++ b/frontend/src/app/sitemap.ts
+@@ -1,24 +1,29 @@
+ import type { MetadataRoute } from 'next';
+ import { getServerSupabase } from '@/lib/supabase/server';
+ import { ROUTES } from '@/lib/constants/routes';
+ 
+ const BASE_URL =
+   process.env.NEXT_PUBLIC_SITE_URL ||
+   process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN;
+ 
+ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
++  if (!BASE_URL) {
++    console.warn(
++      "[sitemap] NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN unset; returning empty sitemap."
++    );
++    return [];
++  }
++
+   const staticRoutes: MetadataRoute.Sitemap = [
+     { url: `${BASE_URL}`, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
+     { url: `${BASE_URL}${ROUTES.COMICS}`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
+-    { url: `${BASE_URL}${ROUTES.LOGIN}`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+-    { url: `${BASE_URL}${ROUTES.REGISTER}`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+   ];
+ 
+   let comicRoutes: MetadataRoute.Sitemap = [];
+   try {
+     const supabase = await getServerSupabase();
+     if (supabase) {
+       const { data: stories } = await supabase
+         .from('stories')
+         .select('id, title, updated_at')
+         .order('updated_at', { ascending: false })
+diff --git a/frontend/src/components/navigation/Header.tsx b/frontend/src/components/navigation/Header.tsx
+index cf47a74..a440619 100644
+--- a/frontend/src/components/navigation/Header.tsx
++++ b/frontend/src/components/navigation/Header.tsx
+@@ -19,22 +19,22 @@ import {
+   User,
+   ChevronDown,
+   X,
+ } from "lucide-react";
+ import { useAuth } from "@/context/AuthContext";
+ import { useLanguage } from "@/context/LanguageContext";
+ import { useTheme } from "@/context/ThemeContext";
+ import { NotificationBell } from "@/components/ui/notification-bell";
+ import { toast } from "sonner";
+ import { apiClient } from "@/lib/api/apiClient";
+-import { Category } from "@/types/entities";
+-import { ComicContext as Comic } from "@/services/comics/comic.service";
++import { Category, Story } from "@/types/entities";
++import { fetchStoriesPage } from "@/services/comics/story.service";
+ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
+ import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
+ import { ROUTES } from "@/lib/constants/routes";
+ 
+ const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
+ 
+ function isStaffRole(role: string | null | undefined): boolean {
+   return STAFF_ROLES.has(role ?? "");
+ }
+ 
+@@ -44,32 +44,32 @@ type HeaderProps = {
+ 
+ export const Header: React.FC<HeaderProps> = ({
+   onLoginClick,
+ }) => {
+   const router = useRouter();
+   const { user, profile, signOut, role } = useAuth();
+   const { language, setLanguage, t } = useLanguage();
+   const { theme, toggleTheme } = useTheme();
+   const [categories, setCategories] = useState<Category[]>([]);
+   const [searchKeyword, setSearchKeyword] = useState("");
+-  const [searchResults, setSearchResults] = useState<Comic[]>([]);
++  const [searchResults, setSearchResults] = useState<Story[]>([]);
+   const [isSearching, setIsSearching] = useState(false);
+   const [showResults, setShowResults] = useState(false);
+   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+   const [showMobileMenu, setShowMobileMenu] = useState(false);
+   const searchContainerRef = useRef<HTMLDivElement>(null);
+   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+   const userMenuRef = useRef<HTMLDivElement>(null);
+ 
+-  const getComicCover = (comic: Comic) => {
+-    const raw = comic.coverUrl || "";
++  const getComicCover = (comic: Story) => {
++    const raw = comic.cover_url || "";
+     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
+     return proxiedR2ImageUrl(raw);
+   };
+ 
+   const handleSearchSubmit = (e: React.FormEvent) => {
+     e.preventDefault();
+     setShowResults(false);
+     if (searchKeyword.trim()) {
+       router.push(`${ROUTES.SEARCH}?keyword=${encodeURIComponent(searchKeyword.trim())}`);
+     } else {
+@@ -82,23 +82,22 @@ export const Header: React.FC<HeaderProps> = ({
+     const trimmed = searchKeyword.trim();
+     if (!trimmed) {
+       setSearchResults([]);
+       setShowResults(false);
+       return;
+     }
+ 
+     const timer = setTimeout(async () => {
+       setIsSearching(true);
+       try {
+-        const res = await apiClient.get<any>(`/api/comics?keyword=${encodeURIComponent(trimmed)}&limit=6`).catch(() => null);
+-        const items = Array.isArray(res) ? res : res?.items || res?.comics || res?.data || [];
+-        setSearchResults(items);
++        const res = await fetchStoriesPage({ keyword: trimmed, page: 1, pageSize: 6, sort: 'newest' }).catch(() => null);
++        setSearchResults(res?.items ?? []);
+         setShowResults(true);
+       } catch {
+         setSearchResults([]);
+       } finally {
+         setIsSearching(false);
+       }
+     }, 200);
+ 
+     return () => clearTimeout(timer);
+   }, [searchKeyword]);

@@ -1,0 +1,4 @@
+﻿ frontend/src/app/(auth)/layout.tsx |  20 +++++++
+ tasks/briefs/task-2-brief.md       |  30 +++++++++++
+ tasks/reports/task-2-report.md     | 103 +++++++++++++++++++++++++++++++++++++
+ 3 files changed, 153 insertions(+)
