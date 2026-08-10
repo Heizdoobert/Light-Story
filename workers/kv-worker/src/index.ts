@@ -5,6 +5,7 @@ import {
   err,
   json,
   authToken,
+  recordAnalyticsEngineEvent,
 } from './utils/supabase-client';
 import {
   corsHeaders,
@@ -25,6 +26,13 @@ import { handleUserRequest } from './routes/user';
 import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
+
+function detectDevice(ua: string): string {
+  if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
+  if (/iPad|Tablet|PlayBook|Silk|Kindle/i.test(ua)) return 'tablet';
+  if (/Mobi|Android|iPhone|BlackBerry|Windows Phone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
 
 async function handleSupabaseProxy(
   pathname: string,
@@ -161,6 +169,19 @@ export default {
     }
 
     const pathname = url.pathname;
+
+    // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
+    // blobs: [hostname, device, cf-cache-status, path]; index: 'request'.
+    recordAnalyticsEngineEvent(env, {
+      indexes: ['request'],
+      blobs: [
+        url.hostname,
+        detectDevice(request.headers.get('User-Agent') || ''),
+        request.headers.get('cf-cache-status') || 'NONE',
+        pathname,
+      ],
+      doubles: [Date.now()],
+    });
 
     if (request.method === 'GET' && pathname === '/api/health') {
       return new Response(

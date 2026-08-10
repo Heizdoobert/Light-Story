@@ -9,6 +9,35 @@ import {
   recordAnalyticsEngineEvent,
 } from '../utils/supabase-client';
 
+type SqlRow = Record<string, string | number>;
+
+async function queryAnalyticsSql(env: Env, sql: string): Promise<SqlRow[] | null> {
+  const token = (env as any).CLOUDFLARE_API_TOKEN as string | undefined;
+  const accountId = (env as any).CLOUDFLARE_ACCOUNT_ID as string | undefined;
+  if (!token || !accountId) return null;
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'text/plain' },
+        body: sql,
+      },
+    );
+    if (!res.ok) return null;
+    const payload: { data?: SqlRow[] } = await res.json();
+    return Array.isArray(payload.data) ? payload.data : null;
+  } catch {
+    return null;
+  }
+}
+
+function rowNum(row: SqlRow | undefined, key: string): number {
+  if (!row) return 0;
+  const value = row[key];
+  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
+}
+
 export async function handleAnalyticsRequest(
   request: Request,
   env: Env,
@@ -110,14 +139,50 @@ export async function handleAnalyticsRequest(
       const storageEfficiencyPct =
         r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0;
 
-      // Real data only: R2 live listing, queue metrics() and binding presence.
-      // Analytics Engine (page views, device split, cache hit, zones) is not enabled
-      // on this account — those fields were hardcoded fakes and are now removed.
+      // Real traffic stats from Analytics Engine (dataset lightstory_analytics).
+      // Zero until traffic flows through the gateway — honest, no fallbacks.
+      const since = "timestamp > NOW() - INTERVAL '30' DAY";
+      const [viewsRows, deviceRows, cacheRows, zoneRows] = await Promise.all([
+        queryAnalyticsSql(env, `SELECT count() FROM lightstory_analytics WHERE ${since}`),
+        queryAnalyticsSql(env, `SELECT blob2, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob2`),
+        queryAnalyticsSql(env, `SELECT blob3, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob3`),
+        queryAnalyticsSql(env, `SELECT blob1, count() FROM lightstory_analytics WHERE ${since} GROUP BY blob1 ORDER BY count() DESC LIMIT 5`),
+      ]);
+
+      const pageViews = rowNum(viewsRows?.[0], 'count()');
+      const deviceCounts = new Map<string, number>();
+      for (const row of deviceRows ?? []) {
+        deviceCounts.set(String(row['blob2'] ?? 'unknown'), rowNum(row, 'count()'));
+      }
+      const totalDevices = [...deviceCounts.values()].reduce((s, n) => s + n, 0) || 1;
+      const devicePct = (key: string) => Math.round(((deviceCounts.get(key) ?? 0) / totalDevices) * 1000) / 10;
+
+      let cacheHits = 0;
+      let cacheTotal = 0;
+      for (const row of cacheRows ?? []) {
+        const count = rowNum(row, 'count()');
+        cacheTotal += count;
+        if (String(row['blob3']).toUpperCase() === 'HIT') cacheHits += count;
+      }
+      const cacheHitRatioPct = cacheTotal > 0 ? Number(((cacheHits / cacheTotal) * 100).toFixed(1)) : 0;
+
+      const topZones = (zoneRows ?? []).map((row) => ({
+        zone: String(row['blob1'] ?? ''),
+        requests: rowNum(row, 'count()'),
+        cache_hit_ratio_pct: 0,
+      }));
+
       return json({
         r2_usage_gb: r2UsageGb,
         r2_allocated_gb: r2AllocatedGb,
         r2_object_count: r2ObjectCount,
         storage_efficiency_pct: storageEfficiencyPct,
+        page_views: pageViews,
+        cache_hit_ratio_pct: cacheHitRatioPct,
+        device_mobile: devicePct('mobile'),
+        device_desktop: devicePct('desktop'),
+        device_tablet: devicePct('tablet'),
+        top_zones: topZones,
         queue_binding: env.LIGHTSTORY_QUEUE ? 'bound' : 'unbound',
         queue_backlog: queueBacklog,
         workflow_binding: env.LIGHTSTORY_WORKFLOW ? 'bound' : 'unbound',

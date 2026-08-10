@@ -8,6 +8,12 @@ export type AnalyticsData = {
   r2_allocated_gb: number;
   r2_object_count: number;
   storage_efficiency_pct: number;
+  page_views: number;
+  cache_hit_ratio_pct: number;
+  device_mobile: number;
+  device_desktop: number;
+  device_tablet: number;
+  top_zones: Array<{ zone: string; requests: number; cache_hit_ratio_pct: number }>;
   queue_binding: string;
   queue_backlog: number;
   workflow_binding: string;

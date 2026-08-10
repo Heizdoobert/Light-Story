@@ -14,7 +14,8 @@
   ],
   "vars": {
     "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
-    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json",
+    "CLOUDFLARE_ACCOUNT_ID": "8ee8907819b5859d9543d68380ab6c1a"
   },
   "kv_namespaces": [
     {
@@ -63,7 +64,12 @@
       "head_sampling_rate": 1
     }
   },
-  "analytics_engine_datasets": [],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_DATA",
+      "dataset": "lightstory_analytics"
+    }
+  ],
   "env": {
     "production": {
       "routes": [
