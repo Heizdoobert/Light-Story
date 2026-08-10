@@ -54,6 +54,30 @@ export const getErrorMessage = (error: unknown, context?: string): string => {
     return "You do not have permission to perform this action. Please verify your account permissions.";
   }
 
+  if (
+    typeof error !== 'number' &&
+    (lowercaseMessage.includes("401") ||
+      lowercaseMessage.includes("unauthorized"))
+  ) {
+    return "Your session has expired. Please sign in again.";
+  }
+
+  if (
+    typeof error !== 'number' &&
+    (lowercaseMessage.includes("403") ||
+      lowercaseMessage.includes("forbidden"))
+  ) {
+    return "You do not have permission to perform this action.";
+  }
+
+  if (
+    typeof error !== 'number' &&
+    (lowercaseMessage.includes("404") ||
+      lowercaseMessage.includes("not found"))
+  ) {
+    return "The requested resource was not found.";
+  }
+
   if (lowercaseMessage.includes("duplicate key")) {
     return "Data already exists in the system. Please review your input.";
   }
