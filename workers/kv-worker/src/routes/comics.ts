@@ -15,6 +15,7 @@ import {
   getAuthRole,
   requireRole,
   VALID_STATUSES,
+  isValidUuid,
 } from '../utils/validation';
 
 export async function handleComicsRequest(
@@ -70,6 +71,8 @@ export async function handleComicsRequest(
 
     if (method === 'GET' && pathname.match(/^\/comics\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
+      if (!isValidUuid(id))
+        return err('VALIDATION_ERROR', 'Invalid comic id', 400);
       const res = await sbGet(
         'stories',
         `id=eq.${id}&select=*`,
@@ -145,6 +148,8 @@ export async function handleComicsRequest(
       pathname.match(/^\/comics\/[^\/]+\/chapters$/)
     ) {
       const comicId = pathname.split('/')[2];
+      if (!isValidUuid(comicId))
+        return err('VALIDATION_ERROR', 'Invalid comic id', 400);
       const res = await sbGet(
         'chapters',
         `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,created_at,updated_at&order=chapter_number.asc`,
@@ -167,6 +172,8 @@ export async function handleComicsRequest(
     ) {
       const parts = pathname.split('/');
       const chapterId = parts[4];
+      if (!isValidUuid(chapterId))
+        return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
       const res = await sbGet(
         'chapters',
         `id=eq.${chapterId}&select=*`,
