@@ -25,6 +25,8 @@ export const ROUTES = {
     USERS: "/admin/users",
     CATEGORIES: "/admin/categories",
     AUTHORS: "/admin/authors",
+    GENRES: "/admin/genres",
+    TAGS: "/admin/tags",
     SETTINGS: "/admin/settings",
     ADS: "/admin/ads",
     AUDIT: "/admin/audit",

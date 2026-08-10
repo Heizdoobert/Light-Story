@@ -11,6 +11,20 @@ import {
 } from '../utils/supabase-client';
 import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
 
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(env: Env, token: string | null, base: string): Promise<string> {
+  let candidate = base || 'story';
+  for (let i = 2; ; i++) {
+    const res = await sbGet('stories', `select=id&slug=eq.${encodeURIComponent(candidate)}`, env, token);
+    if (!res.ok) return candidate;
+    const rows = (await res.json()) as Array<{ id: string }>;
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
+
 export async function handleStoriesRequest(
   request: Request,
   env: Env,
@@ -114,6 +128,7 @@ export async function handleStoriesRequest(
       if (payload.cover_url === '') payload.cover_url = null;
       if (payload.description === '') payload.description = null;
       if (!payload.status) payload.status = 'draft';
+      payload.slug = await uniqueSlug(env, token, slugify(String(payload.title)));
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }

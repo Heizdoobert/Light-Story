@@ -15,6 +15,7 @@ export const createComicSchema = z.object({
   description: z.string().optional().default(''),
   status: z.enum(COMIC_STATUSES).default('published'),
   cover_url: z.string().optional().default(''),
+  slug: z.string().optional().default(''),
 });
 
 export const updateComicSchema = createComicSchema.partial();

@@ -20,6 +20,21 @@ import {
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(env: Env, token: string | null, base: string, excludeId?: string): Promise<string> {
+  let candidate = base || 'comic';
+  for (let i = 2; ; i++) {
+    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${excludeId ? `&id=neq.${excludeId}` : ''}`;
+    const res = await sbGet('stories', q, env, token);
+    if (!res.ok) return candidate;
+    const rows = (await res.json()) as Array<{ id: string }>;
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
+
 async function okRes(res: Response): Promise<Response> {
   return res.ok ? json({ success: true }) : await handleRes(res);
 }
@@ -61,6 +76,7 @@ const COMIC_SCHEMA = [
   { field: 'description', type: 'optional-string', maxLength: 2000 },
   { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
   { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+  { field: 'slug', type: 'optional-string', maxLength: 200 },
 ] as const;
 
 // ponytail: legacy verb paths (/admin/manage-*) kept as aliases for old clients;
@@ -345,6 +361,8 @@ export async function handleAdminRequest(
     const TAXONOMY_ENTITIES: Record<string, { table: string; select: string }> = {
       category: { table: 'categories', select: 'id,name,description,created_at,updated_at' },
       author: { table: 'authors', select: 'id,name,bio,created_at,updated_at' },
+      genre: { table: 'genres', select: 'id,name,description,created_at,updated_at' },
+      tag: { table: 'tags', select: 'id,name,description,created_at,updated_at' },
     };
 
     if (method === 'GET' && path === '/admin/taxonomy') {
@@ -865,6 +883,7 @@ export async function handleAdminRequest(
         status: s.status || 'draft',
       };
       if (s.coverUrl) payload.cover_url = s.coverUrl;
+      payload.slug = await uniqueSlug(env, token, (s.slug as string) || slugify(String(s.title)));
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }
@@ -906,6 +925,9 @@ export async function handleAdminRequest(
       if (s.description !== undefined) payload.description = (s.description as string) || null;
       if (s.status !== undefined) payload.status = s.status as string;
       if (s.coverUrl !== undefined) payload.cover_url = s.coverUrl as string;
+      if (s.slug !== undefined && (s.slug as string)) {
+        payload.slug = await uniqueSlug(env, token, slugify(String(s.slug)), id);
+      }
       const res = await sbPatch('stories', `id=eq.${id}`, payload, env, token);
       return handleRes(res);
     }

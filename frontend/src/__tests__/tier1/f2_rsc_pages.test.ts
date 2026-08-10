@@ -24,6 +24,8 @@ const findPages = (): string[] => {
 
 const EXPECTED_SERVER_PAGES = [
   '(admin)/admin/page.tsx',
+  '(admin)/admin/genres/page.tsx',
+  '(admin)/admin/tags/page.tsx',
   '(errors)/forbidden/page.tsx',
   '(errors)/handle-exception/400/page.tsx',
   '(errors)/handle-exception/401/page.tsx',

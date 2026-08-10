@@ -1,59 +1,4 @@
-import { apiClient } from "@/lib/api/apiClient";
 import { ROUTES } from "@/lib/constants/routes";
-import type { ComicStatus } from "@/lib/schemas/comic-cms-schemas";
-
-const COMIC_CMS_CATALOG_KEY = "comic-cms:catalog";
-
-export type PageAsset = {
-  id: string;
-  assetUrl?: string;
-  previewUrl: string;
-  fileName: string;
-};
-
-export type ComicCmsChapterRecord = {
-  id: string;
-  chapterNumber: number;
-  title: string;
-  pages: PageAsset[];
-  updatedAt: string;
-};
-
-export type ComicCmsRecord = {
-  id: string;
-  title: string;
-  author: string;
-  description: string;
-  status: ComicStatus;
-  coverUrl: string;
-  viewCount: number;
-  lastUpdatedAt: string;
-  chapters: ComicCmsChapterRecord[];
-  category?: string[] | string;
-  translator?: string;
-  assignedTo?: string;
-  created_by?: string;
-};
-
-function readCatalog(): ComicCmsRecord[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(COMIC_CMS_CATALOG_KEY);
-    return raw ? (JSON.parse(raw) as ComicCmsRecord[]) : [];
-  } catch (err) {
-    console.error("[comicCms] Failed to parse catalog", err);
-    return [];
-  }
-}
-
-function writeCatalog(catalog: ComicCmsRecord[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(COMIC_CMS_CATALOG_KEY, JSON.stringify(catalog));
-  } catch (err) {
-    console.error("[comicCms] Failed to write catalog", err);
-  }
-}
 
 export function proxiedR2ImageUrl(url: string): string {
   if (!url) return "";
@@ -110,20 +55,4 @@ export function proxiedR2ImageUrl(url: string): string {
     return `${gateway}${ROUTES.API.ADMIN.R2_PROXY_QUERY(url)}`;
   }
   return url;
-}
-
-export async function deleteComic(id: string): Promise<void> {
-  await apiClient.delete(ROUTES.API.ADMIN.COMIC(id));
-  const catalog = readCatalog();
-  writeCatalog(catalog.filter((r) => r.id !== id));
-}
-
-export async function createChapter(data: {
-  story_id: string;
-  title: string;
-  chapter_number?: number;
-  cover_url?: string;
-}): Promise<{ id: string }> {
-  const result = await apiClient.post<{ id: string } | { id: string }[]>(ROUTES.API.ADMIN.CHAPTERS, data);
-  return Array.isArray(result) ? result[0] : result;
 }

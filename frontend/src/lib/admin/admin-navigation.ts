@@ -23,6 +23,8 @@ export type AdminMenuId =
   | "chapters"
   | "categories"
   | "authors"
+  | "genres"
+  | "tags"
   | "users"
   | "ads"
   | "settings"
@@ -83,6 +85,20 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Tác giả & Nhóm dịch",
     href: ROUTES.ADMIN.AUTHORS,
     icon: PenSquare,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "genres",
+    label: "Genres",
+    href: ROUTES.ADMIN.GENRES,
+    icon: Layers,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "tags",
+    label: "Thẻ Tag",
+    href: ROUTES.ADMIN.TAGS,
+    icon: Tags,
     roles: ["superadmin", "admin", "employee"],
   },
   {
@@ -154,11 +170,13 @@ export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
     "chapters",
     "categories",
     "authors",
+    "genres",
+    "tags",
     "ads",
     "settings",
     "profile",
   ],
-  employee: ["comics", "chapters", "categories", "authors", "profile"],
+  employee: ["comics", "chapters", "categories", "authors", "genres", "tags", "profile"],
   internal: [],
   user: [],
 };

@@ -18,6 +18,20 @@ import {
   isValidUuid,
 } from '../utils/validation';
 
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(env: Env, token: string | null, base: string): Promise<string> {
+  let candidate = base || 'comic';
+  for (let i = 2; ; i++) {
+    const res = await sbGet('stories', `select=id&slug=eq.${encodeURIComponent(candidate)}`, env, token);
+    if (!res.ok) return candidate;
+    const rows = (await res.json()) as Array<{ id: string }>;
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
+
 export async function handleComicsRequest(
   request: Request,
   env: Env,
@@ -120,6 +134,7 @@ export async function handleComicsRequest(
         cover_url: (s.cover_url as string) || null,
         status: s.status || 'draft',
       };
+      payload.slug = await uniqueSlug(env, token, slugify(String(s.title)));
       if (body.category)
         payload.category = Array.isArray(body.category)
           ? (body.category as string[]).join(', ')

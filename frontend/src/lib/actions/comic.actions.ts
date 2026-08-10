@@ -11,6 +11,20 @@ type ActionResult<T = unknown> =
   | { ok: true; success: true; data?: T; error?: undefined }
   | { ok: false; success: false; error: string; data?: undefined };
 
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(db: NonNullable<Awaited<ReturnType<typeof getServerSupabase>>>, base: string, excludeId?: string): Promise<string> {
+  let candidate = base || 'comic';
+  for (let i = 2; ; i++) {
+    let query = db.from('stories').select('id').eq('slug', candidate);
+    if (excludeId) query = query.neq('id', excludeId);
+    const { data } = await query.limit(1);
+    if (!data || data.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
+
 export async function createComic(data: CreateComicInput): Promise<ActionResult<{ id: string }>> {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
@@ -20,6 +34,7 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
     }
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    const slug = await uniqueSlug(db, (parsed.data.slug || slugify(parsed.data.title)).trim());
     const { data: row, error } = await db
       .from('stories')
       .insert({
@@ -29,6 +44,7 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
         description: parsed.data.description,
         status: parsed.data.status,
         cover_url: parsed.data.cover_url,
+        slug,
       })
       .select('id')
       .single();
@@ -51,9 +67,15 @@ export async function updateComic(id: string, data: UpdateComicInput): Promise<A
     }
     const db = await getServerSupabase();
     if (!db) return { ok: false, success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
+    const updateFields: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
+    if (typeof updateFields.slug === 'string' && updateFields.slug.trim()) {
+      updateFields.slug = await uniqueSlug(db, slugify(updateFields.slug), id);
+    } else {
+      delete updateFields.slug;
+    }
     const { error } = await db
       .from('stories')
-      .update({ ...parsed.data, updated_at: new Date().toISOString() })
+      .update(updateFields)
       .eq('id', id);
     if (error) return { ok: false, success: false, error: error.message };
     revalidateTag(CACHE_TAGS.COMICS, 'max');
