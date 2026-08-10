@@ -9,6 +9,7 @@ import { Chapter, Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
+import { applyComicCoverFallback } from "@/lib/utils/image-url";
 import { supabase } from "@/lib/supabase/client";
 
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
@@ -130,15 +131,6 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   }, []);
-
-  const applyComicCoverFallback = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>) => {
-      const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
-      if (event.currentTarget.src !== fallback)
-        event.currentTarget.src = fallback;
-    },
-    [],
-  );
 
   return {
     t,

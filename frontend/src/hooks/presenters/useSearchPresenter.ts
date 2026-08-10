@@ -6,6 +6,8 @@ import { fetchStoriesPage } from "@/services/comics/story.service";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { getVietnameseStatus } from "@/lib/utils/status-styles";
+import { applyComicCoverFallback } from "@/lib/utils/image-url";
 
 export function useSearchPresenter(initialCategory?: string) {
   const { t } = useLanguage();
@@ -61,22 +63,6 @@ export function useSearchPresenter(initialCategory?: string) {
       document.body.style.overflow = "unset";
     };
   }, [showFilter]);
-
-  const applyComicCoverFallback = (
-    event: React.SyntheticEvent<HTMLImageElement>,
-  ) => {
-    const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
-    if (event.currentTarget.src !== fallback)
-      event.currentTarget.src = fallback;
-  };
-
-  const getVietnameseStatus = (status: string) => {
-    if (status === "completed") return "Hoàn thành";
-    if (status === "ongoing") return "Đang cập nhật";
-    if (status === "published") return "Đã xuất bản";
-    if (status === "draft") return "Bản nháp";
-    return "Đang cập nhật";
-  };
 
   return {
     t,

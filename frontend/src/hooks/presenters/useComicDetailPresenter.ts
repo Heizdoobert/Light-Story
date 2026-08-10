@@ -11,6 +11,7 @@ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { supabase } from "@/lib/supabase/client";
+import { getVietnameseStatus } from "@/lib/utils/status-styles";
 
 export function useComicDetailPresenter() {
   const params = useParams();
@@ -72,14 +73,6 @@ export function useComicDetailPresenter() {
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
-  };
-
-  const getVietnameseStatus = (status: string) => {
-    if (status === "completed") return "Hoàn thành";
-    if (status === "ongoing") return "Đang cập nhật";
-    if (status === "published") return "Đã xuất bản";
-    if (status === "draft") return "Bản nháp";
-    return "Đang cập nhật";
   };
 
   const rawCover = (comic as any)?.coverUrl || (comic as any)?.cover_url || "";
