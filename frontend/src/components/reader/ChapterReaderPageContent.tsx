@@ -68,6 +68,19 @@ export const ChapterReaderPageContent: React.FC = () => {
     );
   }
 
+  if (!currentChapter) {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
+          Không tìm thấy chương truyện
+        </h1>
+        <Link href={ROUTES.HOME} className="px-6 py-2 bg-primary text-white rounded-full">
+          Quay lại trang chủ
+        </Link>
+      </div>
+    );
+  }
+
   const chapterNavClass = (chapter: typeof prevChapter) =>
     `flex items-center justify-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold text-xs sm:text-base transition-all flex-1 border ${
       chapter
@@ -88,7 +101,7 @@ export const ChapterReaderPageContent: React.FC = () => {
           href={ROUTES.COMIC_DETAIL(comicId)}
           className="inline-block text-xl sm:text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors mb-2"
         >
-          {comic?.title || "Tên Truyện Đang Cập Nhật"}
+          <h1 className="inline">{comic?.title || "Tên Truyện Đang Cập Nhật"}</h1>
         </Link>
         <div className="text-slate-500 dark:text-zinc-400 font-medium text-sm sm:text-base">
           {currentChapter?.chapter_number

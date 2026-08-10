@@ -107,12 +107,12 @@ export default function AdminEditChapterPage({ params }: { params: Promise<{ cha
       <FormEditor title="Chỉnh Sửa Chương & Tệp Ảnh" onSubmit={handleSubmit} isSubmitting={isSubmitting}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Số Chương</label>
-            <Input type="number" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} required />
+            <label htmlFor="chapter-edit-number" className="text-xs font-bold text-slate-700 dark:text-slate-300">Số Chương</label>
+            <Input id="chapter-edit-number" type="number" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} required />
           </div>
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Tên Chương</label>
-            <Input type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
+            <label htmlFor="chapter-edit-title" className="text-xs font-bold text-slate-700 dark:text-slate-300">Tên Chương</label>
+            <Input id="chapter-edit-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
         </div>
       </FormEditor>

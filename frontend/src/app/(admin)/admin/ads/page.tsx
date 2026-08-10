@@ -59,10 +59,11 @@ export default function AdminAdsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label htmlFor={`ad-markup-${ad.key}`} className="block text-xs font-semibold text-slate-400 mb-1.5">
                   Mã nhúng HTML / Banner Markup:
                 </label>
                 <textarea
+                  id={`ad-markup-${ad.key}`}
                   rows={3}
                   value={ad.markup}
                   onChange={(e) => handleMarkupChange(ad.key, e.target.value)}

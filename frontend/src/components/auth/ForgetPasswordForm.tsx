@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Mail, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/hooks/features/use-user";
+import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/lib/constants/routes";
 import {
   AuthField,
@@ -14,6 +15,7 @@ import {
 
 export function ForgetPasswordForm() {
   const { sendPasswordReset } = useUser();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -39,15 +41,15 @@ export function ForgetPasswordForm() {
   if (sent) {
     return (
       <AuthFormShell
-        title="Reset password"
-        subtitle="Enter your email to receive a password reset link."
-        submitLabel="Send Reset Link"
+        title={t("auth_reset_password_title")}
+        subtitle={t("auth_reset_password_subtitle")}
+        submitLabel={t("auth_send_reset_link")}
         submitIcon={KeyRound}
         isSubmitting={false}
         onSubmit={(e) => e.preventDefault()}
         footer={
           <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
-            Sign in
+            {t("auth_sign_in_link")}
           </Link>
         }
       >
@@ -60,20 +62,20 @@ export function ForgetPasswordForm() {
 
   return (
     <AuthFormShell
-      title="Reset password"
-      subtitle="Enter your email to receive a password reset link."
-      submitLabel="Send Reset Link"
+      title={t("auth_reset_password_title")}
+      subtitle={t("auth_reset_password_subtitle")}
+      submitLabel={t("auth_send_reset_link")}
       submitIcon={KeyRound}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       footer={
         <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
-          Sign in
+          {t("auth_sign_in_link")}
         </Link>
       }
     >
       <AuthField
-        label="Email Address"
+        label={t("auth_email_address")}
         icon={Mail}
         type="email"
         value={email}

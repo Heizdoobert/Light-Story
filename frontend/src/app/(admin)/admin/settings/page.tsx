@@ -51,8 +51,9 @@ export default function AdminSettingsPage() {
           <h3 className="font-bold text-lg border-b border-slate-800 pb-3">Thông Tin Website</h3>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Website *</label>
+            <label htmlFor="site-name" className="block text-xs font-semibold text-slate-300 mb-1">Tên Website *</label>
             <input
+              id="site-name"
               type="text"
               required
               value={siteName}
@@ -62,8 +63,9 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-300 mb-1">Mô Tả SEO Meta Website</label>
+            <label htmlFor="site-description" className="block text-xs font-semibold text-slate-300 mb-1">Mô Tả SEO Meta Website</label>
             <textarea
+              id="site-description"
               rows={3}
               value={siteDescription}
               onChange={(e) => setSiteDescription(e.target.value)}

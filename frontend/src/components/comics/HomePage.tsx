@@ -26,6 +26,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
 
   return (
     <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
+      <h1 className="sr-only">{t("nav_home")}</h1>
       {/* VÙNG QUẢNG CÁO TRANG CHỦ (Top) */}
         <AdRenderer position="header" />
 
@@ -73,7 +74,13 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                 </div>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="p-3 sm:p-4 flex items-center">
+              <div className="aspect-[3/4] w-32 sm:w-40 lg:w-44 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium text-sm text-center px-2">
+                {t("no_comics_yet")}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* CONTINUE READING */}
@@ -133,7 +140,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                   <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
                 </div>
               ) : comics.length === 0 ? (
-                <div className="text-center p-12 text-slate-500 dark:text-slate-400 font-medium text-sm">
+                <div className="text-center py-16 px-4 text-slate-500 dark:text-slate-400 font-medium text-sm">
                   {t("no_comics_yet")}
                 </div>
               ) : (

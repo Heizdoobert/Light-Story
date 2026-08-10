@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Mail, Lock, KeyRound, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/hooks/features/use-user";
+import { useLanguage } from "@/context/LanguageContext";
 import { resetPasswordSchema } from "@/lib/schemas/auth";
 import { ROUTES } from "@/lib/constants/routes";
 import {
@@ -15,6 +16,7 @@ import {
 
 export function RegisterForm() {
   const { register } = useUser();
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,15 +56,15 @@ export function RegisterForm() {
   if (registered) {
     return (
       <AuthFormShell
-        title="Create account"
-        subtitle="Register as a user account. Admin roles are assigned by superadmin."
-        submitLabel="Create Account"
+        title={t("auth_create_account")}
+        subtitle={t("auth_create_account_subtitle")}
+        submitLabel={t("auth_create_account")}
         submitIcon={UserPlus}
         isSubmitting={false}
         onSubmit={(e) => e.preventDefault()}
         footer={
           <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
-            Sign in
+            {t("auth_sign_in_link")}
           </Link>
         }
       >
@@ -76,27 +78,27 @@ export function RegisterForm() {
 
   return (
     <AuthFormShell
-      title="Create account"
-      subtitle="Register as a user account. Admin roles are assigned by superadmin."
-      submitLabel="Create Account"
+      title={t("auth_create_account")}
+      subtitle={t("auth_create_account_subtitle")}
+      submitLabel={t("auth_create_account")}
       submitIcon={UserPlus}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       footer={
         <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
-          Sign in
+          {t("auth_sign_in_link")}
         </Link>
       }
     >
       <AuthField
-        label="Full Name"
+        label={t("auth_full_name")}
         type="text"
         value={fullName}
         onChange={(e) => setFullName(e.target.value)}
         placeholder="Your name"
       />
       <AuthField
-        label="Email Address"
+        label={t("auth_email_address")}
         icon={Mail}
         type="email"
         value={email}
@@ -104,7 +106,7 @@ export function RegisterForm() {
         placeholder="you@example.com"
       />
       <AuthField
-        label="Password"
+        label={t("auth_password")}
         icon={Lock}
         type="password"
         value={password}
@@ -112,7 +114,7 @@ export function RegisterForm() {
         placeholder="••••••••"
       />
       <AuthField
-        label="Confirm Password"
+        label={t("auth_confirm_password")}
         icon={KeyRound}
         type="password"
         value={confirmPassword}

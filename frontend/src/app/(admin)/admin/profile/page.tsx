@@ -106,8 +106,9 @@ export default function AdminProfilePage() {
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên *</label>
+              <label htmlFor="profile-full-name" className="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên *</label>
               <input
+                id="profile-full-name"
                 type="text"
                 required
                 value={fullName}
@@ -133,8 +134,9 @@ export default function AdminProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
+              <label htmlFor="profile-email" className="block text-xs font-semibold text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
               <input
+                id="profile-email"
                 type="email"
                 disabled
                 value={user?.email || ""}
@@ -143,8 +145,9 @@ export default function AdminProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
+              <label htmlFor="profile-role" className="block text-xs font-semibold text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
               <input
+                id="profile-role"
                 type="text"
                 disabled
                 value={role || "user"}

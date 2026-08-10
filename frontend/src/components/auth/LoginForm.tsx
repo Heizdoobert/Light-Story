@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { LogIn, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useUser } from "@/hooks/features/use-user";
+import { useLanguage } from "@/context/LanguageContext";
 import { signInPasswordSchema } from "@/lib/schemas/auth";
 import { ROUTES } from "@/lib/constants/routes";
 import {
@@ -16,6 +17,7 @@ import {
 
 export function LoginForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const { signIn, signInWithEmail, signInWithPassword } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,25 +76,25 @@ export function LoginForm() {
 
   return (
     <AuthFormShell
-      title="Welcome back"
-      subtitle="Sign in to continue your experience."
-      submitLabel="Sign In"
+      title={t("auth_welcome_back")}
+      subtitle={t("auth_sign_in_subtitle")}
+      submitLabel={t("auth_sign_in")}
       submitIcon={LogIn}
       isSubmitting={isSubmitting}
       onSubmit={handleSubmit}
       footer={
         <>
           <Link href={ROUTES.REGISTER} className={authFooterLinkClass}>
-            Register
+            {t("auth_register")}
           </Link>
           <Link href={ROUTES.FORGET_PASSWORD} className={authFooterLinkClass}>
-            Forgot password
+            {t("auth_forgot_password")}
           </Link>
         </>
       }
     >
       <AuthField
-        label="Email Address"
+        label={t("auth_email_address")}
         icon={Mail}
         type="email"
         value={email}
@@ -100,7 +102,7 @@ export function LoginForm() {
         placeholder="you@example.com"
       />
       <AuthField
-        label="Password"
+        label={t("auth_password")}
         icon={Lock}
         type="password"
         value={password}
@@ -114,7 +116,7 @@ export function LoginForm() {
         </div>
         <div className="relative flex justify-center text-xs">
           <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-bold">
-            or
+            {t("auth_or")}
           </span>
         </div>
       </div>
@@ -124,7 +126,7 @@ export function LoginForm() {
         disabled={isSubmitting}
         className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
       >
-        Continue with Google
+        {t("auth_continue_google")}
       </button>
       <button
         type="button"
@@ -132,7 +134,7 @@ export function LoginForm() {
         disabled={isSubmitting}
         className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
       >
-        Send Magic Link
+        {t("auth_send_magic_link")}
       </button>
     </AuthFormShell>
   );
