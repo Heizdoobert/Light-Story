@@ -6,7 +6,8 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { getGatewayUrl } from "@/lib/utils/gateway-url";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
 function resolveMetadataBase(): URL {
   if (process.env.NODE_ENV !== "production") {
@@ -17,13 +18,9 @@ function resolveMetadataBase(): URL {
   }
   const fallback =
     process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
-    process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
-  if (fallback) {
-    return new URL(fallback.startsWith("http") ? fallback : `https://${fallback}`);
-  }
-  throw new Error(
-    "[layout] NEXT_PUBLIC_SITE_URL must be set in production (metadataBase / OG images)."
-  );
+    process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
+    "https://lightstory.app";
+  return new URL(fallback.startsWith("http") ? fallback : `https://${fallback}`);
 }
 
 export const metadata: Metadata = {
