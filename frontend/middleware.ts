@@ -12,7 +12,7 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
     default-src 'self';
     script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob: https://${r2Domain} https://placehold.co https://*.googlesyndication.com;
+    img-src 'self' data: blob: https://${r2Domain} https://placehold.co https://*.googlesyndication.com ${workerDomain};
     connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain} ${isDev ? "ws: wss:" : ""};
     font-src 'self' data:;
     object-src 'none';
