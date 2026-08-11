@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=22
 
-FROM node:${NODE_VERSION}-alpine AS build
+FROM node:${NODE_VERSION}-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -10,13 +10,15 @@ COPY workers/ workers/
 
 RUN --mount=type=cache,target=/root/.npm \
     rm -f package-lock.json && \
-    npm install --legacy-peer-deps --omit=dev || npm install --legacy-peer-deps
+    npm install --legacy-peer-deps
 
-FROM node:${NODE_VERSION}-alpine AS final
+FROM node:${NODE_VERSION}-slim AS final
 ENV NODE_ENV=production
 WORKDIR /app
 
 COPY --from=build /app ./
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8787
 
