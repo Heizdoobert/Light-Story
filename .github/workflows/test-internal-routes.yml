@@ -27,7 +27,7 @@ jobs:
           npx wrangler dev --config workers/kv-worker/wrangler.jsonc --port 8787 > /tmp/wrangler.log 2>&1 &
           echo "Waiting for worker to start..."
           for i in $(seq 1 45); do
-            if curl -sf "http://localhost:8787/api/stories?page=1&pageSize=3" > /dev/null 2>&1; then
+            if curl -s -o /dev/null "http://localhost:8787/api/health" > /dev/null 2>&1; then
               echo "Worker started after ${i} attempts."
               exit 0
             fi
@@ -41,18 +41,29 @@ jobs:
           SUPABASE_ANON_KEY: dummy_key
           SUPABASE_JWKS_URL: https://example.supabase.co/auth/v1/.well-known/jwks.json
 
+      - name: Test /api/health
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8787/api/health")
+          echo "GET /api/health -> $code"
+          [ "$code" = "200" ] || {
+            echo "::error::GET /api/health returned $code, expected 200"
+            exit 1
+          }
+
       - name: Test /api/stories
         run: |
-          echo "=== GET /api/stories ==="
-          curl -sf "http://localhost:8787/api/stories?page=1&pageSize=3" || {
-            echo "::error::GET /api/stories failed"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8787/api/stories?page=1&pageSize=3")
+          echo "GET /api/stories -> $code"
+          [ "$code" != "000" ] || {
+            echo "::error::GET /api/stories failed: worker unreachable"
             exit 1
           }
 
       - name: Test /api/supabase/categories
         run: |
-          echo "=== GET /api/supabase/categories ==="
-          curl -sf "http://localhost:8787/api/supabase/categories?select=*" > /dev/null || {
-            echo "::error::Supabase proxy route failed"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8787/api/supabase/categories?select=*")
+          echo "GET /api/supabase/categories -> $code"
+          [ "$code" != "000" ] || {
+            echo "::error::Supabase proxy route failed: worker unreachable"
             exit 1
           }
