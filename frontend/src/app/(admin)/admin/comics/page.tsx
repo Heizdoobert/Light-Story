@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Plus, Edit, Trash2, Search, BookOpen, Layers, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
@@ -10,6 +11,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
+import { apiClient } from "@/lib/api/apiClient";
 import { useAdminComics } from "@/hooks/features/use-admin-comics";
 import { useModalA11y } from "@/hooks/common/use-modal-a11y";
 
@@ -41,6 +43,23 @@ export default function AdminComicsPage() {
     handleDeleteComic,
   } = useAdminComics();
   const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
+  const [categories, setCategories] = useState<string[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get<{ id: string; name: string }[]>(ROUTES.API.CATEGORIES)
+      .then((rows) => {
+        if (!active || !Array.isArray(rows)) return;
+        setCategories(rows.map((row) => row.name).filter(Boolean));
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -126,7 +145,7 @@ export default function AdminComicsPage() {
                     <td className="p-4 text-slate-300">{comic.author || "Chưa cập nhật"}</td>
                     <td className="p-4">
                       <span className="px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium">
-                        {comic.category || "Fantasy"}
+                        {comic.category || "Chưa cập nhật"}
                       </span>
                     </td>
                     <td className="p-4 font-semibold text-orange-400">
@@ -231,15 +250,10 @@ export default function AdminComicsPage() {
                     onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                   >
-                    <option value="Action">Action</option>
-                    <option value="Fantasy">Fantasy</option>
-                    <option value="Romance">Romance</option>
-                    <option value="Comedy">Comedy</option>
-                    <option value="Drama">Drama</option>
-                    <option value="Horror">Horror</option>
-                    <option value="Mystery">Mystery</option>
-                    <option value="Science Fiction">Science Fiction</option>
-                    <option value="Slice of Life">Slice of Life</option>
+                    <option value="">Tất cả thể loại</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
               </div>

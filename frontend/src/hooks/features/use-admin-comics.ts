@@ -30,7 +30,7 @@ export function useAdminComics() {
   // Form State
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
-  const [category, setCategory] = useState("Fantasy");
+  const [category, setCategory] = useState("");
   const [status, setStatus] = useState("published");
   const [coverUrl, setCoverUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -64,7 +64,7 @@ export function useAdminComics() {
     setEditingComic(null);
     setTitle("");
     setAuthor("");
-    setCategory("Fantasy");
+    setCategory("");
     setStatus("published");
     setCoverUrl("");
     setIsModalOpen(true);
@@ -74,7 +74,7 @@ export function useAdminComics() {
     setEditingComic(comic);
     setTitle(comic.title);
     setAuthor(comic.author || "");
-    setCategory(comic.category || "Fantasy");
+    setCategory(comic.category || "");
     setStatus(comic.status || "published");
     setCoverUrl(comic.cover_url || "");
     setIsModalOpen(true);
