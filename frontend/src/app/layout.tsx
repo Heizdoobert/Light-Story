@@ -14,7 +14,7 @@ function resolveMetadataBase(): URL {
     return new URL("http://localhost:3000");
   }
   if (siteUrl) {
-    return new URL(siteUrl);
+    return new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);
   }
   const fallback =
     process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
