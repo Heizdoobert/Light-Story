@@ -51,5 +51,12 @@ jobs:
       - name: Run Node.js RLS Integration Tests
         run: |
           cd backend-supabase
+          # supabase test db stops non-DB services; restart them for the API
+          supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector > /dev/null 2>&1
           eval "$(supabase status -o env)"
+          if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::supabase status did not export SUPABASE_ANON_KEY"
+            supabase status -o env
+            exit 1
+          fi
           node supabase/tests/rls-integration.test.js
