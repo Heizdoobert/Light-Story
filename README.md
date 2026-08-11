@@ -145,8 +145,8 @@ JWT_SECRET=your-production-jwt-secret-key
 R2_ACCOUNT_ID=your_cloudflare_account_id
 R2_ACCESS_KEY_ID=your_r2_access_key
 R2_SECRET_ACCESS_KEY=your_r2_secret_key
-NEXT_PUBLIC_R2_BUCKET_COVERS=light-story-covers
-NEXT_PUBLIC_R2_BUCKET_CHAPTERS=light-story-chapters
+NEXT_PUBLIC_R2_BUCKET_COVERS=comic
+NEXT_PUBLIC_R2_BUCKET_CHAPTERS=comic
 ```
 
 For complete instructions on generating keys and setup rules, see [Instruction_create_key.md](Instruction_create_key.md).
