@@ -20,7 +20,7 @@ export async function createCategory(data: CreateCategoryInput): Promise<ActionR
     if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { data: row, error } = await db
       .from('categories')
-      .insert({ name: parsed.data.name, slug: parsed.data.slug })
+      .insert({ name: parsed.data.name })
       .select('id')
       .single();
     if (error || !row) return { success: false, error: error?.message ?? 'Tạo thể loại thất bại' };

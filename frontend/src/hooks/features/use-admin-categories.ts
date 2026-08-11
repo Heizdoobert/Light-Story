@@ -31,7 +31,7 @@ export function useAdminCategories() {
         setCategories(res);
       } else {
         const supabase = getSupabaseBrowserClient();
-        const { data } = await supabase.from("categories").select("id, name, slug");
+        const { data } = await supabase.from("categories").select("id, name");
         if (data) setCategories(data as CategoryItem[]);
       }
     } catch (err) {
@@ -66,10 +66,9 @@ export function useAdminCategories() {
 
     setSubmitting(true);
     try {
-      const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-");
       const res = editingCategory
-        ? await updateCategory(editingCategory.id, { name: name.trim(), slug })
-        : await createCategory({ name: name.trim(), slug });
+        ? await updateCategory(editingCategory.id, { name: name.trim() })
+        : await createCategory({ name: name.trim() });
       if (res.success === false) {
         toast.error(res.error);
         return;
