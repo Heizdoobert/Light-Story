@@ -374,6 +374,10 @@ export default {
     } else if (method === 'GET' && strippedPath.startsWith('/media/')) {
       const bucket = env.R2_BUCKET;
       if (!bucket) {
+        console.error('[Media] R2 binding missing', {
+          event: 'media_r2_not_configured',
+          requestId: downstreamHeaders.get('x-request-id'),
+        });
         res = err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
       } else {
         // Security: decode and sanitize against path traversal attacks (..)
@@ -386,6 +390,11 @@ export default {
         rawKey = rawKey.replace(/\\/g, '/').replace(/\/\//g, '/');
 
         if (rawKey.includes('..') || rawKey.startsWith('/')) {
+          console.warn('[Media] rejected key', {
+            event: 'media_key_rejected',
+            key: rawKey.slice(0, 500),
+            requestId: downstreamHeaders.get('x-request-id'),
+          });
           res = err('BAD_REQUEST', 'Invalid key path', 400);
         } else {
           const rangeHeader = request.headers.get('range');
@@ -397,6 +406,11 @@ export default {
 
           const object = await bucket.get(rawKey, options);
           if (!object) {
+            console.warn('[Media] object not found', {
+              event: 'media_not_found',
+              key: rawKey.slice(0, 500),
+              requestId: downstreamHeaders.get('x-request-id'),
+            });
             if (ifNoneMatch) {
               res = new Response(null, { status: 304 });
             } else {
@@ -414,6 +428,7 @@ export default {
             mediaHeaders.set('accept-ranges', 'bytes');
             mediaHeaders.set('x-content-type-options', 'nosniff');
             mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
+            mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
 
             if (object.range) {
               const r = object.range as { offset?: number; length?: number };
