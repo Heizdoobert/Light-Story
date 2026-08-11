@@ -9,7 +9,8 @@ export const ROUTES = {
   COMIC_DETAIL: (id: string) => `/comics/${id}`,
   CHAPTER_READER: (comicId: string, chapterId: string) =>
     `/comics/${comicId}/chapter/${chapterId}`,
-  PLACEHOLDER_COVER: "/placeholder-cover.jpg",
+  PLACEHOLDER_COVER:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Crect width='100%25' height='100%25' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' fill='%2364748b' font-family='sans-serif' font-size='18' text-anchor='middle' dominant-baseline='middle'%3ENo Cover%3C/text%3E%3C/svg%3E",
   USER: {
     ROOT: "/user",
     PROFILE: "/user/profile",
