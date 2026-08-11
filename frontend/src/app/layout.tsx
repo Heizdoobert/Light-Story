@@ -10,8 +10,12 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
 function toAbsoluteUrl(value: string): URL {
-  const trimmed = value.trim();
-  return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  try {
+    const trimmed = value.trim();
+    return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    return new URL("https://lightstory.app");
+  }
 }
 
 function resolveMetadataBase(): URL {
