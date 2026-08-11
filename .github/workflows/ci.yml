@@ -43,6 +43,7 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://lightstory.app
+          NEXT_PUBLIC_GATEWAY_URL_PRODUCTION: https://kv-worker.hhhuygiau.workers.dev
 
       - name: Test
         run: npm run test:run
@@ -113,10 +114,10 @@ jobs:
           npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 > /tmp/prism.log 2>&1 &
           PRISM_PID=$!
           for i in $(seq 1 15); do
-            curl -sf http://localhost:4010/comics > /tmp/mock-response.json && break
+            curl -sf http://localhost:4010/stories > /tmp/mock-response.json && break
             sleep 2
           done
-          if ! curl -sf http://localhost:4010/comics > /tmp/mock-response.json; then
+          if ! curl -sf http://localhost:4010/stories > /tmp/mock-response.json; then
             echo "::error::Prism mock did not respond with 200"
             cat /tmp/prism.log
             exit 1
@@ -149,13 +150,13 @@ jobs:
         run: |
           npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 > /tmp/prism-contract.log 2>&1 &
           for i in $(seq 1 15); do
-            curl -sf http://localhost:4010/comics > /dev/null 2>&1 && break
+            curl -sf http://localhost:4010/chapters > /dev/null 2>&1 && break
             sleep 2
           done
 
       - name: Validate chapters response against spec
         run: |
-          if ! curl -sf "http://localhost:4010/comics/test-comic/chapters" > /tmp/chapters.json; then
+          if ! curl -sf "http://localhost:4010/chapters" > /tmp/chapters.json; then
             echo "::error::Chapters endpoint did not respond"
             exit 1
           fi
