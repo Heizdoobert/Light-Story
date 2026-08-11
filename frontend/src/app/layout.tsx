@@ -9,18 +9,23 @@ import { getGatewayUrl } from "@/lib/utils/gateway-url";
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
 
+function toAbsoluteUrl(value: string): URL {
+  const trimmed = value.trim();
+  return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+}
+
 function resolveMetadataBase(): URL {
   if (process.env.NODE_ENV !== "production") {
     return new URL("http://localhost:3000");
   }
   if (siteUrl) {
-    return new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);
+    return toAbsoluteUrl(siteUrl);
   }
   const fallback =
     process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
     process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
     "https://lightstory.app";
-  return new URL(fallback.startsWith("http") ? fallback : `https://${fallback}`);
+  return toAbsoluteUrl(fallback);
 }
 
 export const metadata: Metadata = {
