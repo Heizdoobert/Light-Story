@@ -2,54 +2,65 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { getReadingHistory } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
 import { toast } from "sonner";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
-export function useComicDetailPresenter() {
+import { fetchStoryById } from "@/services/comics/story.service";
+import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
+import { supabase } from "@/lib/supabase/client";
+import { getVietnameseStatus } from "@/lib/utils/status-styles";
+
+type ComicDetailProps = {
+  initialComic?: Comic | null;
+  initialChapters?: Chapter[];
+  initialCategories?: Category[];
+  hydrated?: boolean;
+};
+
+export function useComicDetailPresenter({
+  initialComic = null,
+  initialChapters = [],
+  initialCategories = [],
+  hydrated = false,
+}: ComicDetailProps = {}) {
   const params = useParams();
   const comicId = params.comicId as string;
 
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comic, setComic] = useState<Comic | null>(initialComic);
+  const [chapters, setChapters] = useState<Chapter[]>(initialChapters);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(!hydrated);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    if (hydrated) return;
     const fetchComicDetail = async () => {
+      setLoading(true);
       try {
-        const [comicRes, chaptersRes, catsRes] = await Promise.all([
-          apiClient.get<any>(`/api/comics/${comicId}`).catch(() => null),
-          apiClient.get<any>(`/api/comics/${comicId}/chapters`).catch(() => []),
-          apiClient.get<any>("/api/categories").catch(() => []),
+        const [comicData, chaptersData] = await Promise.all([
+          fetchStoryById(comicId).catch(() => null),
+          fetchChaptersByStoryId(comicId).catch(() => []),
         ]);
 
-        if (comicRes) {
-          const comicData = Array.isArray(comicRes)
-            ? comicRes[0]
-            : comicRes?.comic || comicRes;
-          setComic(comicData);
+        if (comicData) {
+          setComic(comicData as any);
         }
 
-        const chaptersData: Chapter[] = Array.isArray(chaptersRes)
-          ? chaptersRes
-          : chaptersRes?.items || chaptersRes?.chapters || [];
-
-        const sortedChapters = chaptersData.sort(
+        const sortedChapters = (chaptersData || []).sort(
           (a, b) =>
             new Date(b.created_at || 0).getTime() -
             new Date(a.created_at || 0).getTime(),
         );
         setChapters(sortedChapters);
 
-        if (Array.isArray(catsRes)) {
-          setCategories(catsRes);
+        if (supabase) {
+          const { data } = await supabase.from("categories").select("*");
+          if (data) setCategories(data as Category[]);
         }
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
@@ -60,7 +71,7 @@ export function useComicDetailPresenter() {
     };
 
     if (comicId) fetchComicDetail();
-  }, [comicId]);
+  }, [comicId, hydrated]);
 
   useEffect(() => {
     getReadingHistory()
@@ -75,14 +86,6 @@ export function useComicDetailPresenter() {
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
-  };
-
-  const getVietnameseStatus = (status: string) => {
-    if (status === "completed") return "Hoàn thành";
-    if (status === "ongoing") return "Đang cập nhật";
-    if (status === "published") return "Đã xuất bản";
-    if (status === "draft") return "Bản nháp";
-    return "Đang cập nhật";
   };
 
   const rawCover = (comic as any)?.coverUrl || (comic as any)?.cover_url || "";

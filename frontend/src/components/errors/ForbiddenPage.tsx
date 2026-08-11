@@ -1,5 +1,6 @@
 import React from 'react';
 import { StatusErrorPage } from '@/components/errors/StatusErrorPage';
+import { ROUTES } from '@/lib/constants/routes';
 
 export const ForbiddenPage: React.FC = () => {
   return (
@@ -8,7 +9,7 @@ export const ForbiddenPage: React.FC = () => {
       title="Forbidden"
       message="You do not have permission to access this resource."
       actionLabel="Return Home"
-      actionHref="/"
+      actionHref={ROUTES.HOME}
     />
   );
 };

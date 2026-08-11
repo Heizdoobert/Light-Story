@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function UnauthorizedAliasPage() {
-  redirect('/handle-exception/401');
+  redirect(ROUTES.ERROR.UNAUTHORIZED);
 }

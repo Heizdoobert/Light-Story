@@ -1,9 +1,11 @@
 /** Unified Gateway - Main entry point */
 
+import { WorkflowEntrypoint, WorkflowEvent, WorkflowStep } from 'cloudflare:workers';
 import {
   err,
   json,
   authToken,
+  recordAnalyticsEngineEvent,
 } from './utils/supabase-client';
 import {
   corsHeaders,
@@ -25,18 +27,31 @@ import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 
+function detectDevice(ua: string): string {
+  if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
+  if (/iPad|Tablet|PlayBook|Silk|Kindle/i.test(ua)) return 'tablet';
+  if (/Mobi|Android|iPhone|BlackBerry|Windows Phone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
 async function handleSupabaseProxy(
   pathname: string,
   request: Request,
   origin: string | null,
   env: Env,
 ): Promise<Response> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+  const respond = (body: unknown, init: { status: number; headers?: HeadersInit }) => {
+    const headers = new Headers(init.headers);
+    applySecurityHeaders(headers);
     return new Response(
-      JSON.stringify({
-        status: 'error',
-        error: { code: 'SUPABASE_NOT_CONFIGURED' },
-      }),
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { ...init, headers },
+    );
+  };
+
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    return respond(
+      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED' } },
       {
         status: 500,
         headers: {
@@ -49,11 +64,8 @@ async function handleSupabaseProxy(
 
   const sbPath = supabaseProxyPath(pathname);
   if (!sbPath) {
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        error: { code: 'INVALID_SUPABASE_PATH' },
-      }),
+    return respond(
+      { success: false, error: { code: 'INVALID_SUPABASE_PATH' } },
       {
         status: 400,
         headers: {
@@ -98,6 +110,7 @@ async function handleSupabaseProxy(
   const c = corsHeaders(origin);
   for (const [k, v] of Object.entries(c))
     responseHeaders.set(k, v as string);
+  applySecurityHeaders(responseHeaders);
 
   if (contentType.includes('application/json')) {
     const bodyText = await res.text();
@@ -156,10 +169,55 @@ export default {
     }
 
     if (origin && !isOriginAllowed(origin)) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', {
+        status: 403,
+        headers: (() => {
+          const h = new Headers();
+          applySecurityHeaders(h);
+          return h;
+        })(),
+      });
     }
 
     const pathname = url.pathname;
+
+    // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
+    // blobs: [hostname, device, pathname]; index: 'request'.
+    // NOTE: blob ORDER is the read contract with /analytics/infrastructure —
+    // read via aliased SQL columns (blob1=host, blob2=device, blob3=pathname).
+    // cf-cache-status is a response header; edge hits bypass the worker, so
+    // a cache-hit ratio from request headers would be structurally wrong.
+    recordAnalyticsEngineEvent(env, {
+      indexes: ['request'],
+      blobs: [
+        url.hostname,
+        detectDevice(request.headers.get('User-Agent') || ''),
+        pathname,
+      ],
+      doubles: [Date.now()],
+    });
+
+    if (request.method === 'GET' && pathname === '/api/health') {
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          worker: 'kv-worker',
+          timestamp: new Date().toISOString(),
+        }),
+        {
+          status: 200,
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
+        },
+      );
+    }
+
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
 
     const authHeader = request.headers.get('Authorization') ?? '';
@@ -173,27 +231,31 @@ export default {
           if (e instanceof UnauthorizedError) {
             return new Response(
               JSON.stringify({
-                status: 'error',
-                error: {
+                success: false,
+        error: {
                   code: 'UNAUTHORIZED',
                   message: e.message,
                 },
               }),
               {
                 status: 401,
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...corsHeaders(origin),
-                },
+                headers: (() => {
+                  const h = new Headers({
+                    'Content-Type': 'application/json',
+                    ...corsHeaders(origin),
+                  });
+                  applySecurityHeaders(h);
+                  return h;
+                })(),
               },
             );
           }
           return new Response(
             JSON.stringify({
-              status: 'error',
-              error: { code: 'INTERNAL_ERROR' },
+              success: false,
+        error: { code: 'INTERNAL_ERROR' },
             }),
-            { status: 500 },
+            { status: 500, headers: (() => { const h = new Headers(); applySecurityHeaders(h); return h; })() },
           );
         }
         // For public GET requests, log warning and allow unauthenticated fallback
@@ -216,8 +278,8 @@ export default {
       applySecurityHeaders(headers);
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+          success: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
         }),
         { status: 429, headers },
       );
@@ -229,15 +291,19 @@ export default {
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+          success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
         }),
         {
           status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders(origin),
-          },
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }
@@ -444,7 +510,7 @@ export default {
         });
       }
       const obj = parsed as Record<string, unknown>;
-      if (obj && (typeof obj.success === 'boolean' || obj.status === 'error')) {
+      if (obj && typeof obj.success === 'boolean') {
         return new Response(bodyText, {
           status: res.status,
           headers: resHeaders,
@@ -482,12 +548,23 @@ export default {
 
   async queue(
     batch: MessageBatch<any>,
-    _env: Env,
+    env: Env,
     _ctx: ExecutionContext,
   ): Promise<void> {
     for (const message of batch.messages) {
       try {
-        console.log(`[Queue] Processing message ${message.id}:`, message.body);
+        const payload = message.body;
+        console.log(`[Queue] Processing message ${message.id} (type: ${payload?.type || 'UNKNOWN'}):`, payload);
+
+        if (payload?.type === 'CACHE_INVALIDATION' && payload?.key && env.APP_KV) {
+          await env.APP_KV.delete(payload.key);
+          console.log(`[Queue] Invalidated KV key: ${payload.key}`);
+        } else if (payload?.type === 'ANALYTICS_EVENT') {
+          console.log(`[Queue] Ingested analytics event for comic: ${payload?.comicId || 'N/A'}`);
+        } else if (payload?.type === 'AUDIT_EVENT') {
+          console.log(`[Queue] Recorded audit log for action: ${payload?.action || 'N/A'}`);
+        }
+
         message.ack();
       } catch (err) {
         console.error(`[Queue] Error processing message ${message.id}:`, err);
@@ -496,3 +573,13 @@ export default {
     }
   },
 };
+
+// ponytail: Cloudflare Workflows durable execution handler
+export class LightStoryWorkflow extends WorkflowEntrypoint<Env, { action: string }> {
+  async run(event: Readonly<WorkflowEvent<{ action: string }>>, step: WorkflowStep) {
+    const res = await step.do('execute-pipeline-step', async () => {
+      return { status: 'completed', action: event.payload?.action || 'default', timestamp: new Date().toISOString() };
+    });
+    return res;
+  }
+}

@@ -1,0 +1,8 @@
+﻿ frontend/src/app/(admin)/admin/audit/page.tsx      | 32 +++++---
+ .../(admin)/admin/chapters/[chapterId]/page.tsx    | 90 ++++++++++++++++++++--
+ .../src/app/(public)/genres/[genreSlug]/page.tsx   | 41 +++++++++-
+ frontend/src/app/(user)/layout.tsx                 | 15 +++-
+ frontend/src/app/(user)/user/profile/page.tsx      | 20 ++---
+ .../src/components/comics/SearchPageContent.tsx    |  6 +-
+ .../src/hooks/presenters/useSearchPresenter.ts     |  4 +-
+ 7 files changed, 168 insertions(+), 40 deletions(-)

@@ -1,8 +1,12 @@
+"use client";
+
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { ROUTES } from '@/lib/constants/routes';
+import { resetPasswordSchema } from '@/lib/schemas/auth';
 import { toast } from 'sonner';
 
 export const ResetPasswordPage: React.FC = () => {
@@ -34,13 +38,9 @@ export const ResetPasswordPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error('Password confirmation does not match');
+    const result = resetPasswordSchema.safeParse({ password, confirmPassword });
+    if (!result.success) {
+      toast.error(result.error.issues[0].message);
       return;
     }
 
@@ -48,7 +48,7 @@ export const ResetPasswordPage: React.FC = () => {
     try {
       await updatePassword(password);
       toast.success('Password updated. Please sign in again.');
-      router.replace('/');
+      router.replace(ROUTES.HOME);
     } catch {
       // Error already handled in context
     } finally {
@@ -79,7 +79,7 @@ export const ResetPasswordPage: React.FC = () => {
               This reset link is invalid or has expired. Please request a new password reset email.
             </p>
             <Link
-              href="/"
+              href={ROUTES.HOME}
               className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-900 dark:bg-cyan-400 text-white dark:text-slate-950 text-sm font-bold"
             >
               Return Home

@@ -8,32 +8,41 @@ import { getReadingHistory, HistoryItem } from "@/services/reader/readerHub.serv
 import { Chapter, Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
+import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
+import { applyComicCoverFallback } from "@/lib/utils/image-url";
+import { supabase } from "@/lib/supabase/client";
+
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
 
-export function useHomePagePresenter(initialComics: Comic[] = []) {
+export function useHomePagePresenter(
+  initialComics: Comic[] = [],
+  initialTrending: Comic[] = [],
+  initialLatestChapters: Record<string, Chapter> = {},
+  hydrated = false,
+) {
   const { t } = useLanguage();
-  const [_categories, setCategories] = useState<Category[]>([]);
+  const [, setCategories] = useState<Category[]>([]);
   const [comics, setComics] = useState<Comic[]>(initialComics);
-  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>({});
-  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
-  const [trendingLoaded, setTrendingLoaded] = useState(false);
-  const [loading, setLoading] = useState(initialComics.length === 0);
+  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(initialLatestChapters);
+  const [trendingComics, setTrendingComics] = useState<Comic[]>(initialTrending);
+  const [trendingLoaded, setTrendingLoaded] = useState(hydrated);
+  const [loading, setLoading] = useState(!hydrated && initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [historyComics, setHistoryComics] = useState<HistoryComic[]>([]);
 
   useEffect(() => {
+    if (hydrated) return;
     const loadInitData = async () => {
       try {
-        const cats = await apiClient.get<any>("/api/categories").catch(() => []);
-        if (Array.isArray(cats)) setCategories(cats);
+        let cats: Category[] = [];
+        if (supabase) {
+          const { data } = await supabase.from("categories").select("*");
+          if (data) cats = data as Category[];
+        }
+        setCategories(cats);
 
-        const trendingRes = await apiClient
-          .get<any>("/api/comics?sort=most_viewed&limit=6")
-          .catch(() => null);
-        const trendingData = Array.isArray(trendingRes)
-          ? trendingRes
-          : trendingRes?.items || trendingRes?.comics || [];
-        setTrendingComics(trendingData);
+        const { items: trendingData } = await fetchStoriesPage({ page: 1, pageSize: 6, sort: "most_viewed" });
+        setTrendingComics(trendingData as any);
       } catch (error) {
         console.error("Lỗi tải dữ liệu khởi tạo:", error);
       } finally {
@@ -41,7 +50,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
       }
     };
     loadInitData();
-  }, []);
+  }, [hydrated]);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,9 +60,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
         if (cancelled || !history?.length) return;
         const comicIds = [...new Set(history.map((h) => h.comicId))];
         const details = await Promise.all(
-          comicIds.map((id) =>
-            apiClient.get<any>(`/api/comics/${id}`).catch(() => null),
-          ),
+          comicIds.map((id) => fetchStoryById(id).catch(() => null)),
         );
         if (cancelled) return;
         const merged = details
@@ -75,36 +82,38 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
   }, []);
 
   useEffect(() => {
+    if (hydrated) return;
     let isMounted = true;
     async function loadComics() {
       if (initialComics.length === 0) setLoading(true);
       try {
-        const response = await apiClient
-          .get<any>("/api/comics?sort=newest&limit=15")
-          .catch(() => null);
+        const { items } = await fetchStoriesPage({ page: 1, pageSize: 15, sort: "newest" });
+        const comicsData = items.length > 0 ? items : initialComics;
 
-        let comicsData = Array.isArray(response)
-          ? response
-          : response?.items || response?.comics || initialComics;
-
-        comicsData = comicsData.slice(0, 15);
         if (!isMounted) return;
 
-        setComics(comicsData);
+        setComics(comicsData as any);
         setLoading(false);
 
         if (comicsData.length > 0) {
           try {
-            const comicIds = comicsData.map((c: Comic) => c.id).join(",");
-            const batchRes = await apiClient
-              .get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`)
-              .catch(() => []);
-            const chapters: any[] = Array.isArray(batchRes)
-              ? batchRes
-              : batchRes?.chapters || [];
+            const comicIds = comicsData.map((c: any) => c.id).join(",");
+            let chapters: any[] = [];
+            try {
+              const batchRes = await apiClient.get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
+              chapters = Array.isArray(batchRes) ? batchRes : batchRes?.chapters || [];
+            } catch {
+              if (supabase) {
+                const ids = comicsData.map((c: any) => c.id);
+                const { data } = await supabase.from("chapters").select("*").in("story_id", ids);
+                if (data) chapters = data;
+              }
+            }
             const chapterMap: Record<string, Chapter> = {};
             for (const ch of chapters) {
-              if (ch.story_id) chapterMap[ch.story_id] = ch;
+              if (ch.story_id && (!chapterMap[ch.story_id] || (ch.chapter_number ?? 0) > (chapterMap[ch.story_id].chapter_number ?? 0))) {
+                chapterMap[ch.story_id] = ch;
+              }
             }
             if (isMounted) setLatestChapters(chapterMap);
           } catch {
@@ -113,6 +122,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
         }
       } catch (error) {
         console.error("Lỗi tải danh sách truyện tranh:", error);
+      } finally {
         if (isMounted) setLoading(false);
       }
     }
@@ -121,22 +131,13 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
     return () => {
       isMounted = false;
     };
-  }, [initialComics]);
+  }, [hydrated, initialComics]);
 
   const getComicCover = useCallback((comic: any): string => {
     const raw = comic.coverUrl || comic.cover_url || "";
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   }, []);
-
-  const applyComicCoverFallback = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>) => {
-      const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
-      if (event.currentTarget.src !== fallback)
-        event.currentTarget.src = fallback;
-    },
-    [],
-  );
 
   return {
     t,

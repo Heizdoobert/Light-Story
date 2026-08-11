@@ -23,7 +23,7 @@ const mockApiClient = {
   delete: vi.fn(),
 };
 
-vi.mock('@/infrastructure/supabase/client', () => ({ supabase: mockSupabase }));
+vi.mock('@/lib/supabase/client', () => ({ supabase: mockSupabase }));
 vi.mock('@/lib/api/apiClient', () => ({ apiClient: mockApiClient }));
 
 beforeEach(() => {

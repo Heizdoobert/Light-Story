@@ -2,18 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiClient } from "@/lib/api/apiClient";
+import { fetchStoriesPage } from "@/services/comics/story.service";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
-import { Category } from "@/types/entities";
 import { toast } from "sonner";
 import { useLanguage } from "@/context/LanguageContext";
+import { getVietnameseStatus } from "@/lib/utils/status-styles";
+import { applyComicCoverFallback } from "@/lib/utils/image-url";
 
-export function useSearchPresenter() {
+export function useSearchPresenter(initialCategory?: string) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const keyword = searchParams.get("keyword") || "";
 
-  const categoryParam = searchParams.get("category") || "all";
+  const categoryParam = searchParams.get("category") || initialCategory || "all";
   const category =
     categoryParam !== "all" ? decodeURIComponent(categoryParam) : "all";
 
@@ -22,7 +23,6 @@ export function useSearchPresenter() {
   const currentPage = parseInt(pageParam, 10) || 1;
 
   const [comics, setComics] = useState<Comic[]>([]);
-  const [_categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [totalPages, setTotalPages] = useState(1);
@@ -32,32 +32,20 @@ export function useSearchPresenter() {
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
-    apiClient
-      .get<any>("/api/categories")
-      .then((res) => {
-        if (Array.isArray(res)) setCategories(res);
-      })
-      .catch((err) => console.error("Lỗi tải thể loại:", err));
-  }, []);
-
-  useEffect(() => {
     const fetchAndFilterResults = async () => {
       setLoading(true);
       try {
-        const queryParams = new URLSearchParams();
-        if (keyword) queryParams.append("keyword", keyword);
-        if (category !== "all") queryParams.append("category", category);
-        queryParams.append("sort", sort);
-        queryParams.append("page", String(currentPage));
-        queryParams.append("pageSize", "12");
+        const { items, total } = await fetchStoriesPage({
+          page: currentPage,
+          pageSize: 12,
+          keyword,
+          category,
+          sort: sort as any,
+        });
 
-        const response = await apiClient.get<any>(
-          `/api/stories?${queryParams.toString()}`,
-        );
-
-        setComics(response?.items || []);
-        setTotalPages(Math.ceil((response?.total || 0) / 12) || 1);
-        setTotalItems(response?.total || 0);
+        setComics(items as any);
+        setTotalPages(Math.ceil((total || 0) / 12) || 1);
+        setTotalItems(total || 0);
       } catch (error) {
         console.error("Lỗi tải kết quả tìm kiếm:", error);
         toast.error("Đã xảy ra lỗi khi tìm kiếm.");
@@ -75,22 +63,6 @@ export function useSearchPresenter() {
       document.body.style.overflow = "unset";
     };
   }, [showFilter]);
-
-  const applyComicCoverFallback = (
-    event: React.SyntheticEvent<HTMLImageElement>,
-  ) => {
-    const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
-    if (event.currentTarget.src !== fallback)
-      event.currentTarget.src = fallback;
-  };
-
-  const getVietnameseStatus = (status: string) => {
-    if (status === "completed") return "Hoàn thành";
-    if (status === "ongoing") return "Đang cập nhật";
-    if (status === "published") return "Đã xuất bản";
-    if (status === "draft") return "Bản nháp";
-    return "Đang cập nhật";
-  };
 
   return {
     t,

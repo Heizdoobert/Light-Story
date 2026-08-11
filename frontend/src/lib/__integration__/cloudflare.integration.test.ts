@@ -70,7 +70,7 @@ describe('Deployed Workers - infrastructure', () => {
       signal: AbortSignal.timeout(10000),
     });
     expect(res.status).toBe(404);
-    const data = await res.json();
+    const data = (await res.json()) as { error?: { code?: string }; timestamp?: string };
     expect(data).toHaveProperty('error');
     expect(data.error).toHaveProperty('code', 'NOT_FOUND');
     expect(data).toHaveProperty('timestamp');

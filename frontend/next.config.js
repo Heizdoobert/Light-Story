@@ -7,6 +7,10 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   productionBrowserSourceMaps: false,
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 5,
+  },
   images: {
     minimumCacheTTL: 31536000,
     formats: ["image/avif", "image/webp"],

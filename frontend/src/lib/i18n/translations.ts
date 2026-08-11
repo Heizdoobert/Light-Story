@@ -35,6 +35,27 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     admin_dashboard: "Quản trị",
     profile: "Hồ sơ cá nhân",
 
+    // Auth Pages
+    auth_welcome_back: "Chào mừng trở lại",
+    auth_sign_in_subtitle: "Đăng nhập để tiếp tục trải nghiệm.",
+    auth_sign_in: "Đăng nhập",
+    auth_register: "Đăng ký",
+    auth_forgot_password: "Quên mật khẩu",
+    auth_email_address: "ĐỊA CHỈ EMAIL",
+    auth_password: "MẬT KHẨU",
+    auth_full_name: "HỌ VÀ TÊN",
+    auth_confirm_password: "XÁC NHẬN MẬT KHẨU",
+    auth_or: "hoặc",
+    auth_continue_google: "Tiếp tục với Google",
+    auth_send_magic_link: "Gửi mã đăng nhập (Magic Link)",
+    auth_create_account: "Tạo tài khoản",
+    auth_create_account_subtitle: "Đăng ký tài khoản người dùng. Vai trò quản trị do Superadmin phân quyền.",
+    auth_register_link: "Đăng ký",
+    auth_sign_in_link: "Đăng nhập",
+    auth_reset_password_title: "Đặt lại mật khẩu",
+    auth_reset_password_subtitle: "Nhập email để nhận liên kết đặt lại mật khẩu.",
+    auth_send_reset_link: "Gửi liên kết đặt lại",
+
     // Filter Menu & Search Page
     filter_menu_title: "Bộ lọc & Tìm kiếm",
     search_label: "Tìm kiếm",
@@ -46,6 +67,15 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     sort_oldest: "Cũ nhất",
     apply_filter: "Áp dụng & Tìm kiếm",
     quick_search_category: "Tìm thể loại nhanh...",
+    search_results_title: "Danh sách truyện",
+    search_keyword_label: "Từ khóa:",
+    search_category_label: "• Thể loại:",
+    results_count: "kết quả",
+    filter_button: "Bộ lọc",
+    empty_search_title: "Không tìm thấy kết quả",
+    empty_search_description: "Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.",
+    reset_filter: "Đặt lại bộ lọc",
+    read_now: "Đọc ngay",
 
     // Header & Sub Navigation
     nav_home: "TRANG CHỦ",
@@ -57,7 +87,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_fanpage: "FANPAGE",
     category_list_title: "DANH SÁCH THỂ LOẠI",
     all_categories: "Tất cả thể loại",
+    unnamed: "Không tên",
     see_all: "Xem tất cả »",
+    footer_about: "Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.",
 
     // Homepage Sections
     popular_comics: "TRUYỆN PHỔ BIẾN",
@@ -66,7 +98,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     view_all_comics: "Xem tất cả truyện »",
     new_badge: "Mới",
     no_comics_yet: "Chưa có bộ truyện nào.",
+    continue_reading: "ĐỌC TIẾP",
     updating: "Đang cập nhật",
+    searching: "Đang tìm kiếm...",
+    no_comics_found: "Không tìm thấy truyện nào.",
 
     // Navigation & Sidebar
     nav_dashboard: "Bảng điều khiển",
@@ -258,6 +293,27 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     admin_dashboard: "Admin Dashboard",
     profile: "My Profile",
 
+    // Auth Pages
+    auth_welcome_back: "Welcome back",
+    auth_sign_in_subtitle: "Sign in to continue your experience.",
+    auth_sign_in: "Sign In",
+    auth_register: "Register",
+    auth_forgot_password: "Forgot password",
+    auth_email_address: "EMAIL ADDRESS",
+    auth_password: "PASSWORD",
+    auth_full_name: "FULL NAME",
+    auth_confirm_password: "CONFIRM PASSWORD",
+    auth_or: "or",
+    auth_continue_google: "Continue with Google",
+    auth_send_magic_link: "Send Magic Link",
+    auth_create_account: "Create account",
+    auth_create_account_subtitle: "Register as a user account. Admin roles are assigned by superadmin.",
+    auth_register_link: "Register",
+    auth_sign_in_link: "Sign in",
+    auth_reset_password_title: "Reset password",
+    auth_reset_password_subtitle: "Enter your email to receive a password reset link.",
+    auth_send_reset_link: "Send Reset Link",
+
     // Filter Menu & Search Page
     filter_menu_title: "Filter & Search",
     search_label: "Search",
@@ -269,6 +325,15 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     sort_oldest: "Oldest",
     apply_filter: "Apply & Search",
     quick_search_category: "Quick category search...",
+    search_results_title: "Comic List",
+    search_keyword_label: "Keyword:",
+    search_category_label: "• Category:",
+    results_count: "results",
+    filter_button: "Filters",
+    empty_search_title: "No results found",
+    empty_search_description: "No comics match your filters. Try changing your keyword or category.",
+    reset_filter: "Reset filters",
+    read_now: "Read now",
 
     // Header & Sub Navigation
     nav_home: "HOME",
@@ -280,7 +345,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_fanpage: "FANPAGE",
     category_list_title: "CATEGORY LIST",
     all_categories: "All Categories",
+    unnamed: "Untitled",
     see_all: "See all »",
+    footer_about: "A licensed comic reading platform. Published and managed by Administrators.",
 
     // Homepage Sections
     popular_comics: "POPULAR COMICS",
@@ -289,7 +356,10 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     view_all_comics: "View all comics »",
     new_badge: "New",
     no_comics_yet: "No comics available yet.",
+    continue_reading: "CONTINUE READING",
     updating: "Updating",
+    searching: "Searching...",
+    no_comics_found: "No comics found.",
 
     // Navigation & Sidebar
     nav_dashboard: "Dashboard",

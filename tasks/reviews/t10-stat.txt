@@ -1,0 +1,19 @@
+﻿ frontend/src/app/(admin)/admin/analytics/page.tsx  | 71 ++++++++++++++--------
+ frontend/src/app/(admin)/admin/dashboard/page.tsx  | 13 ++--
+ frontend/src/app/(admin)/admin/profile/page.tsx    |  2 +-
+ frontend/src/app/(admin)/layout.tsx                | 10 +++
+ frontend/src/app/(admin)/not-found.tsx             | 21 +++++--
+ frontend/src/app/(auth)/error.tsx                  |  4 +-
+ frontend/src/app/(user)/user/error.tsx             |  4 +-
+ frontend/src/app/api/avatar/route.ts               |  4 ++
+ frontend/src/app/globals.css                       |  1 -
+ frontend/src/app/not-found.tsx                     | 13 ++--
+ frontend/src/app/robots.ts                         |  3 +-
+ frontend/src/components/comics/HomePage.tsx        | 10 +--
+ .../src/components/comics/RecommendedComics.tsx    |  3 +-
+ frontend/src/components/errors/StatusErrorPage.tsx |  5 +-
+ frontend/src/components/layout/user-sidebar.tsx    |  2 +-
+ frontend/src/context/AuthContext.tsx               | 12 ++--
+ frontend/src/services/comics/story.service.ts      |  9 ++-
+ tasks/reports/task-10b-report.md                   | 50 +++++++++++++++
+ 18 files changed, 175 insertions(+), 62 deletions(-)

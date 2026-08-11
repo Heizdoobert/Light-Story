@@ -4,9 +4,7 @@ import React from "react";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
-import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/securityUtils";
-import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { AdZone } from "@/components/shared/ads/AdZone";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
@@ -36,20 +34,13 @@ export const ProfilePageContent: React.FC = () => {
     profile,
     isEditModalOpen,
     setIsEditModalOpen,
-    isLoginModalOpen,
     setIsLoginModalOpen,
   } = useProfilePresenter();
 
   if (!user || !profile) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center max-w-md">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
+        <div className="text-center max-w-md">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
               <User size={28} className="text-slate-400" />
             </div>
@@ -63,14 +54,11 @@ export const ProfilePageContent: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col">
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-
       <div className="flex-1 w-full px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <EditUserProfileModal
@@ -101,6 +89,9 @@ export const ProfilePageContent: React.FC = () => {
                   <img
                     src={proxyAvatarUrl(profile.avatar_url) || undefined}
                     alt="Avatar"
+                    width={80}
+                    height={80}
+                    decoding="async"
                     className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
                     onError={(e) => {
                       e.currentTarget.onerror = null;

@@ -1,5 +1,9 @@
+"use client";
+
 import React, { useState } from 'react';
-import { createAuthor, updateAuthor, deleteAuthor, createTranslator, updateTranslator, deleteTranslator } from '@/services/comics/taxonomy.service';
+import { useModalA11y } from '@/hooks/common/use-modal-a11y';
+import { createAuthor, updateAuthor, deleteAuthor } from '@/actions/taxonomy.actions';
+import { createTranslator, updateTranslator, deleteTranslator } from '@/actions/translators.actions';
 import { useAuthorPresenter } from '@/hooks/presenters/useAuthorPresenter';
 import { useTranslatorPresenter } from '@/hooks/presenters/useTranslatorPresenter';
 import { useCrudMutation } from '@/hooks/presenters/useTaxonomyCrud';
@@ -60,7 +64,7 @@ const AuthorsSection: React.FC = () => {
 
   const updateMutation = useCrudMutation({
     mutationFn: (payload: { id: string; name: string; bio?: string }) =>
-      updateAuthor(payload.id, { name: payload.name, bio: payload.bio }),
+      updateAuthor({ id: payload.id, name: payload.name, bio: payload.bio }),
     queryKeys: [['authors']],
     successMsg: 'Author updated successfully',
     actionLabel: (v) => `Updating author "${v.name.trim() || 'author'}"`,
@@ -68,7 +72,7 @@ const AuthorsSection: React.FC = () => {
   });
 
   const deleteMutation = useCrudMutation({
-    mutationFn: (id: string) => deleteAuthor(id),
+    mutationFn: (id: string) => deleteAuthor({ id }),
     queryKeys: [['authors'], ['author-story-links']],
     successMsg: 'Author deleted successfully',
     actionLabel: 'Deleting author...',
@@ -95,12 +99,14 @@ const AuthorsSection: React.FC = () => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Author name"
+          aria-label="Author name"
           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-bold"
         />
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           placeholder="Short bio (optional)"
+          aria-label="Short bio (optional)"
           rows={4}
           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-bold resize-none"
         />
@@ -134,12 +140,14 @@ const AuthorsSection: React.FC = () => {
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
+                          aria-label="Author name"
                           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm font-bold"
                         />
                         <textarea
                           value={editBio}
                           onChange={(e) => setEditBio(e.target.value)}
                           rows={3}
+                          aria-label="Author bio"
                           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm resize-none"
                         />
                         <div className="flex items-center gap-2">
@@ -231,6 +239,8 @@ const TranslatorsSection: React.FC = () => {
     setFormError(null);
   };
 
+  const closeModalRef = useModalA11y(showModal, closeModal);
+
   const openAddModal = () => {
     closeModal();
     setShowModal(true);
@@ -255,7 +265,7 @@ const TranslatorsSection: React.FC = () => {
   });
 
   const updateMutation = useCrudMutation({
-    mutationFn: () => updateTranslator(editingId!, { name: formName.trim(), contact: formContact.trim(), notes: formNotes.trim(), status: formStatus }),
+    mutationFn: () => updateTranslator({ id: editingId!, name: formName.trim(), contact: formContact.trim(), notes: formNotes.trim(), status: formStatus }),
     queryKeys: [['translators']],
     successMsg: 'Translator updated successfully',
     actionLabel: `Updating translator "${formName.trim()}"`,
@@ -263,7 +273,7 @@ const TranslatorsSection: React.FC = () => {
   });
 
   const deleteMutation = useCrudMutation({
-    mutationFn: (id: string) => deleteTranslator(id),
+    mutationFn: (id: string) => deleteTranslator({ id }),
     queryKeys: [['translators']],
     successMsg: 'Translator deleted successfully',
     actionLabel: 'Deleting translator...',
@@ -297,6 +307,7 @@ const TranslatorsSection: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search translators..."
+            aria-label="Search translators"
             className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm"
           />
         </div>
@@ -390,8 +401,9 @@ const TranslatorsSection: React.FC = () => {
                 </div>
               )}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Name *</label>
+                <label htmlFor="translator-name" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Name *</label>
                 <input
+                  id="translator-name"
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
@@ -399,8 +411,9 @@ const TranslatorsSection: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Contact</label>
+                <label htmlFor="translator-contact" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Contact</label>
                 <input
+                  id="translator-contact"
                   type="text"
                   value={formContact}
                   onChange={(e) => setFormContact(e.target.value)}
@@ -408,8 +421,9 @@ const TranslatorsSection: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Status</label>
+                <label htmlFor="translator-status" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Status</label>
                 <select
+                  id="translator-status"
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm"
@@ -419,8 +433,9 @@ const TranslatorsSection: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Notes</label>
+                <label htmlFor="translator-notes" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Notes</label>
                 <textarea
+                  id="translator-notes"
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   rows={3}
@@ -430,6 +445,7 @@ const TranslatorsSection: React.FC = () => {
               <div className="flex items-center justify-end gap-3 pt-4">
                 <button
                   type="button"
+                  ref={closeModalRef}
                   onClick={closeModal}
                   disabled={mutationPending}
                   className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-bold disabled:opacity-50"

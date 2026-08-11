@@ -38,6 +38,19 @@ Key central modules derived from the codebase knowledge graph (`graphify-out`):
 - **Run Unit Tests**: `npm run test:run` (inside `frontend/`)
 - **Full CI Check**: `npm run ci:verify` (inside `frontend/`)
 
+## 🧪 Testing Conventions (vitest)
+- **Tier system**: tests live in `frontend/src/__tests__/tier<N>/` — tier1 = pure unit logic, tier2 = module/file boundaries, tier3 = cross-feature interactions, tier4 = real-world scenarios.
+- **Naming**: `f<N>_<subject>.test.ts(x)`, numbering continues across tiers (currently up to `f8`).
+- **Placement**: pure logic tests (parsers, helpers) → tier1; component/page tests → tier2+.
+- **Pattern**: vitest `describe` / `it` / `expect`, import via `@/` aliases. Assert on behavior/state, not implementation details.
+- **Focused run**: `npx vitest run src/__tests__/tier1/<file>.test.ts` (inside `frontend/`).
+
+## 🧑‍💻 Git & Commit Conventions
+- **Style**: Conventional Commits with scope, e.g. `feat(admin): ...`, `fix(app): ...`, `test(admin): ...`, `docs: ...`. Existing history uses `(task N)` suffixes for task-tracked work.
+- **Commit messages**: never mention tools used to write the change (no "ai", "agent", "doc/instruction md" references).
+- **Hooks**: a lint hook runs on commit automatically — lint failure blocks the commit.
+- **Scope discipline**: stage only files belonging to the change; leave unrelated working-tree changes (e.g. `opencode.json`, `tasks/` docs) unstaged unless asked.
+
 ## 📊 Graphify Knowledge Graph Rules
 - **Before starting work**:
   1. Read `graphify-out/GRAPH_REPORT.md` (top-level overview + community hubs + god nodes).

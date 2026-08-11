@@ -1,71 +1,108 @@
-import { NextResponse, type NextRequest } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { ROUTES } from "@/lib/constants/routes";
 
-const ADMIN_ROLES = ['superadmin', 'admin', 'employee'];
+const ADMIN_ROLES = ["superadmin", "admin", "employee"];
 
-function addSecurityHeaders(res: NextResponse): NextResponse {
-  const r2Domain = process.env.R2_CLOUDFLARE_STORAGE_DOMAIN || '*.r2.cloudflarestorage.com';
-  const workerDomain = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || 'https://kv-worker.hhhuygiau.workers.dev';
-  const csp = `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://${r2Domain} https://placehold.co; connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`;
-  res.headers.set('Content-Security-Policy', csp);
-  res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
-  res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
+  const r2Domain = process.env.R2_CLOUDFLARE_STORAGE_DOMAIN || "*.r2.cloudflarestorage.com";
+  const workerDomain = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || "https://kv-worker.hhhuygiau.workers.dev";
+  
+  const csp = `
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: blob: https://${r2Domain} https://placehold.co https://*.googlesyndication.com;
+    connect-src 'self' http://localhost:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain} ${isDev ? "ws: wss:" : ""};
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+  `.replace(/\s{2,}/g, " ").trim();
+
+  res.headers.set("Content-Security-Policy", csp);
+  res.headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("X-Frame-Options", "DENY");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  
   return res;
 }
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const isDev = process.env.NODE_ENV === "development";
+  const pathname = request.nextUrl.pathname;
 
-  // Admin route protection — server-side guard before page loads
-  if (pathname.startsWith('/admin')) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const isAdminPath = pathname.startsWith(ROUTES.ADMIN.ROOT);
+  const isUserPath = pathname.startsWith(ROUTES.USER.ROOT);
 
-    if (!supabaseUrl || !supabaseKey) {
-      // ponytail: no env vars → block admin access, don't fail open
+  // Public routes: headers only — skip the Supabase auth round-trip
+  if (!isAdminPath && !isUserPath) {
+    return addSecurityHeaders(NextResponse.next(), isDev);
+  }
+
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    if (isAdminPath) {
       return addSecurityHeaders(
-        NextResponse.redirect(new URL('/handle-exception/401', request.url))
+        NextResponse.redirect(new URL(ROUTES.ERROR.UNAUTHORIZED, request.url)),
+        isDev
       );
     }
+    return addSecurityHeaders(response, isDev);
+  }
 
-    let response = NextResponse.next();
-
-    const supabase = createServerClient(supabaseUrl, supabaseKey, {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          for (const { name, value, options } of cookiesToSet) {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
-          }
-        },
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    });
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        response = NextResponse.next({
+          request,
+        });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
 
-    const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
+  // Admin route protection
+  if (isAdminPath) {
     if (error || !user) {
-      return addSecurityHeaders(
-        NextResponse.redirect(new URL('/handle-exception/401', request.url))
-      );
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ERROR.UNAUTHORIZED;
+      return addSecurityHeaders(NextResponse.redirect(url), isDev);
     }
 
     let role = (
       user.app_metadata?.role ||
       user.user_metadata?.role ||
-      ''
+      ""
     ).toString().trim().toLowerCase();
 
-    // Fallback: If app_metadata is stale or missing, check the profiles table
+    // Fallback: DB check
     if (!ADMIN_ROLES.includes(role)) {
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
         .maybeSingle();
 
       if (profile?.role) {
@@ -74,18 +111,26 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!ADMIN_ROLES.includes(role)) {
-      return addSecurityHeaders(
-        NextResponse.redirect(new URL('/handle-exception/403', request.url))
-      );
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ERROR.FORBIDDEN;
+      return addSecurityHeaders(NextResponse.redirect(url), isDev);
     }
-
-    return addSecurityHeaders(response);
   }
 
-  // All other routes — CSP headers only
-  return addSecurityHeaders(NextResponse.next());
+  // User route protection
+  if (isUserPath) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.LOGIN;
+      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+    }
+  }
+
+  return addSecurityHeaders(response, isDev);
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

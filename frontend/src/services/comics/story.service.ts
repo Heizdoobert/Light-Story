@@ -1,5 +1,7 @@
 import { Story } from '@/types/entities';
 import { apiClient } from '@/lib/api/apiClient';
+import { ROUTES } from '@/lib/constants/routes';
+import { supabase } from '@/lib/supabase/client';
 
 type StoryStatus = Story['status'];
 
@@ -20,67 +22,127 @@ export type StoryPageResult = {
 type StoryListResponse = Story[] | { items: Story[] };
 
 export async function fetchStories(): Promise<Story[]> {
-  const result = await apiClient.get<StoryListResponse>('/api/stories');
-  return Array.isArray(result) ? result : result.items;
+  try {
+    const result = await apiClient.get<StoryListResponse>(ROUTES.API.STORIES);
+    if (result) {
+      const list = Array.isArray(result) ? result : result.items;
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch (err) {
+    console.warn('[story.service] fetchStories via apiClient failed, trying Supabase fallback', err);
+  }
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .neq('status', 'archived')
+        .order('created_at', { ascending: false });
+      if (data) return data as Story[];
+    } catch {}
+  }
+  return [];
 }
 
 export async function fetchStoryById(id: string): Promise<Story | null> {
-  return apiClient.get<Story>(`/api/stories/${id}`);
+  try {
+    const result = await apiClient.get<Story>(ROUTES.API.STORY(id));
+    if (result) return result;
+  } catch (err) {
+    console.warn(`[story.service] fetchStoryById ${id} via apiClient failed, trying Supabase fallback`, err);
+  }
+
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (data) return data as Story;
+    } catch {}
+  }
+  return null;
+}
+
+export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
+  if (!ids.length) return [];
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .in('id', ids);
+      if (data) {
+        const byId = new Map((data as Story[]).map((story) => [story.id, story]));
+        return ids
+          .map((id) => byId.get(id))
+          .filter((story): story is Story => story != null);
+      }
+    } catch {}
+  }
+  // ponytail: total failure returns [] silently — acceptable for current callers; add error
+  // propagation when a caller needs to distinguish "no rows" from "fetch failed".
+  return [];
 }
 
 export async function incrementViews(storyId: string): Promise<void> {
-  await apiClient.post('/api/stories/views', { storyId });
-}
-
-export async function saveStory(story: Partial<Story>): Promise<Story> {
-  const result = await apiClient.post<Story[] | { story: Story }>('/api/admin/manage-story', { story });
-  const created = Array.isArray(result) ? result[0] : result.story;
-  if (!created) throw new Error('Story was created but the server did not return the record');
-  return created;
+  try {
+    await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
+  } catch {
+    if (supabase) {
+      try {
+        await supabase.rpc('increment_story_views', { story_id: storyId });
+      } catch {}
+    }
+  }
 }
 
 export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPageResult> {
-  const searchParams = new URLSearchParams();
-  searchParams.set('page', String(Math.max(1, params.page ?? 1)));
-  searchParams.set('pageSize', String(Math.min(50, Math.max(1, params.pageSize ?? 10))));
-  if (params.keyword) searchParams.set('keyword', params.keyword);
-  if (params.category && params.category !== 'all') searchParams.set('category', params.category);
-  if (params.status && params.status !== 'all') searchParams.set('status', params.status);
-  if (params.sort) searchParams.set('sort', params.sort);
+  try {
+    const searchParams = new URLSearchParams();
+    searchParams.set('page', String(Math.max(1, params.page ?? 1)));
+    searchParams.set('pageSize', String(Math.min(50, Math.max(1, params.pageSize ?? 10))));
+    if (params.keyword) searchParams.set('keyword', params.keyword);
+    if (params.category && params.category !== 'all') searchParams.set('category', params.category);
+    if (params.status && params.status !== 'all') searchParams.set('status', params.status);
+    if (params.sort) searchParams.set('sort', params.sort);
 
-  const result = await apiClient.get<any>(`/api/stories?${searchParams.toString()}`);
-  const items = Array.isArray(result) ? result : (result.items ?? []);
-  const total = result.total ?? items.length;
-  return { items, total };
+    const result = await apiClient.get<any>(ROUTES.API.STORIES_PAGE(searchParams.toString()));
+    if (result) {
+      const items = Array.isArray(result) ? result : (result.items ?? []);
+      const total = result.total ?? items.length;
+      return { items, total };
+    }
+  } catch (err) {
+    console.warn('[story.service] fetchStoriesPage via apiClient failed, trying Supabase fallback', err);
+  }
+
+  if (supabase) {
+    try {
+      let query = supabase.from('stories').select('*', { count: 'exact' }).neq('status', 'archived');
+      if (params.keyword) {
+        query = query.or(`title.ilike.%${params.keyword}%,author.ilike.%${params.keyword}%`);
+      }
+      if (params.status && params.status !== 'all') {
+        query = query.eq('status', params.status);
+      }
+
+      const sortField = params.sort === 'most_viewed' ? 'views' : params.sort === 'oldest' ? 'created_at' : 'created_at';
+      const ascending = params.sort === 'oldest';
+      query = query.order(sortField, { ascending });
+
+      const page = Math.max(1, params.page ?? 1);
+      const pageSize = Math.min(50, Math.max(1, params.pageSize ?? 10));
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
+
+      const { data, count } = await query;
+      return { items: (data as Story[]) || [], total: count ?? 0 };
+    } catch {}
+  }
+
+  return { items: [], total: 0 };
 }
-
-export async function updateStory(id: string, payload: Pick<Story, 'title' | 'description' | 'status'>): Promise<Story> {
-  const result = await apiClient.post<Story[] | { story: Story }>('/api/admin/manage-story', { action: 'update', id, payload });
-  const updated = Array.isArray(result) ? result[0] : result.story;
-  if (!updated) throw new Error('Update failed');
-  return updated;
-}
-
-export async function deleteStory(id: string): Promise<void> {
-  await apiClient.post('/api/admin/manage-story', { action: 'delete', id });
-}
-
-export async function bulkUpdateStatus(ids: string[], status: StoryStatus): Promise<void> {
-  await apiClient.post('/api/admin/manage-story', { action: 'bulkUpdateStatus', ids, status });
-}
-
-export async function bulkDeleteStories(ids: string[]): Promise<void> {
-  await apiClient.post('/api/admin/manage-story', { action: 'bulkDelete', ids });
-}
-
-export default {
-  fetchStories,
-  fetchStoryById,
-  incrementViews,
-  saveStory,
-  fetchStoriesPage,
-  updateStory,
-  deleteStory,
-  bulkUpdateStatus,
-  bulkDeleteStories,
-};

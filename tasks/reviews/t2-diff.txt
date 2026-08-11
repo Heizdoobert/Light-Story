@@ -1,0 +1,171 @@
+﻿diff --git a/frontend/src/app/(auth)/layout.tsx b/frontend/src/app/(auth)/layout.tsx
+new file mode 100644
+index 0000000..b4304ca
+--- /dev/null
++++ b/frontend/src/app/(auth)/layout.tsx
+@@ -0,0 +1,20 @@
++// ponytail: layout duplicated from (public); extract shared chrome only if a 3rd group needs it
++'use client';
++
++import { useState } from 'react';
++import { Header } from '@/components/navigation/Header';
++import PublicFooter from '@/components/layout/public-footer';
++import LoginModal from '@/components/auth/login-modal';
++
++export default function AuthLayout({ children }: { children: React.ReactNode }) {
++  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
++
++  return (
++    <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500 flex flex-col">
++      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
++      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
++      <main className="flex-grow w-full">{children}</main>
++      <PublicFooter />
++    </div>
++  );
++}
+diff --git a/tasks/briefs/task-2-brief.md b/tasks/briefs/task-2-brief.md
+new file mode 100644
+index 0000000..41fe9c5
+--- /dev/null
++++ b/tasks/briefs/task-2-brief.md
+@@ -0,0 +1,30 @@
++# Task 2: Route structure audit + (auth)/layout.tsx
++
++## Description
++Audit the route structure of `frontend/src/app/` against PROJECT_RULES.md II.1 (route groups, URL prefixes, error/loading files per group, page.tsx presence). Then create the missing `(auth)/layout.tsx` per the Global Constraints.
++
++## Acceptance criteria
++- [ ] Audit table produced: every route dir has `page.tsx`; dynamic `[x]` dirs have sibling-matching layout/loading/error; each of the 5 groups + sublayouts checked; URL prefixes correct ((user) ΓåÆ /user, (admin) ΓåÆ /admin, (public)/(auth) ΓåÆ no prefix)
++- [ ] `(auth)/layout.tsx` created ΓÇö EXACT clone of `(public)/layout.tsx` chrome (Header + LoginModal + Footer, `'use client'`, identical imports/structure)
++- [ ] NO page moves, NO changes to `(public)/auth/layout.tsx` or any other file
++- [ ] `// ponytail: layout duplicated from (public); extract shared chrome only if a 3rd group needs it` comment at top of the new file
++- [ ] Audit findings recorded with severity in the task report (no fixes in this task)
++
++## Verification
++- [ ] `npm run build` green (workdir D:\Light-Story\frontend)
++- [ ] New file present: `frontend/src/app/(auth)/layout.tsx`
++
++## Dependencies
++None.
++
++## Files likely touched
++- `frontend/src/app/(auth)/layout.tsx` (NEW ΓÇö the only file change)
++
++## Context / constraints
++- `(auth)` currently has only error.tsx + loading.tsx, zero pages. That is fine ΓÇö layout is for future pages. Do NOT move pages.
++- `(public)/layout.tsx` is the template: it is a `'use client'` component with `useState` for the login modal, imports `Header` from `@/components/navigation/Header`, `PublicFooter` from `@/components/layout/public-footer`, `LoginModal` from `@/components/auth/login-modal`. Copy it verbatim (same file name/export structure), swap only the function name to `AuthLayout`.
++- Route groups: `(public)` no auth; `(user)` auth required URL /user; `(admin)` admin URL /admin. `(auth)` and `(errors)` are public.
++- Each group should have error.tsx + loading.tsx; `(errors)` group has pages but no layout ΓÇö check and flag if that's an inconsistency.
++- PowerShell shell, Windows paths. Commands in `D:\Light-Story\frontend`.
++- Do not modify `opencode.json`.
++- Report file: `D:\Light-Story\tasks\reports\task-2-report.md` ΓÇö contains the FULL audit table + findings (file, issue, severity, rule) + build result. If you find structural defects, list them but DO NOT fix them in this task.
+diff --git a/tasks/reports/task-2-report.md b/tasks/reports/task-2-report.md
+new file mode 100644
+index 0000000..37391a1
+--- /dev/null
++++ b/tasks/reports/task-2-report.md
+@@ -0,0 +1,103 @@
++# Task 2 Report ΓÇö Route structure audit + `(auth)/layout.tsx`
++
++**Task**: Audit `frontend/src/app/` route structure against PROJECT_RULES.md II.1; create missing `(auth)/layout.tsx`.
++**Status**: DONE
++**Commit**: (see final line)
++
++## 1. Audit table
++
++Legend: Γ£ô present, Γ£ù missing, ΓÇö not required (leaf dir / segment-parent dir / API route).
++
++### Group-level files (5 route groups + root)
++
++| Route dir | URL prefix | page.tsx | layout.tsx | loading.tsx | error.tsx | not-found | Notes |
++|---|---|---|---|---|---|---|---|
++| `app/` (root) | ΓÇö | Γ£ô (n/a) | Γ£ô | Γ£ô | Γ£ô + global-error | Γ£ô | + robots/sitemap/opengraph OK |
++| `(public)` | none Γ£ô | Γ£ô | Γ£ô | Γ£ô | Γ£ô | ΓÇö | |
++| `(user)` | `/user` Γ£ô | ΓÇö (segment parent, OK) | Γ£ô | Γ£ô | Γ£ô | Γ£ù | group OK; no not-found (vs `(admin)`) |
++| `(admin)` | `/admin` Γ£ô | ΓÇö (segment parent, OK) | Γ£ô | Γ£ô | Γ£ô | Γ£ô | |
++| `(auth)` | none Γ£ô | ΓÇö (zero pages, by design) | Γ£ù ΓåÆ **NEW** Γ£ô | Γ£ô | Γ£ô | ΓÇö | layout created by this task |
++| `(errors)` | none Γ£ô | ΓÇö (segment parent, OK) | Γ£ù | Γ£ù | Γ£ù | ΓÇö | **flagged, see F2** |
++
++### Route dirs: page.tsx presence + dynamic-segment siblings
++
++| Route dir | page.tsx | sibling layout | sibling loading | sibling error |
++|---|---|---|---|---|
++| `(public)/auth` | ΓÇö (parent) | Γ£ô | Γ£ù (group covers) | Γ£ô |
++| `(public)/auth/login` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(public)/auth/register` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(public)/auth/forgetPassword` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(public)/auth/reset-password` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(public)/comics` | Γ£ô | Γ£ô | Γ£ù (group covers) | Γ£ù (group covers) |
++| `(public)/comics/[comicId]` | Γ£ô | Γ£ô | Γ£ô | Γ£ô |
++| `(public)/comics/[comicId]/chapter/[chapterId]` | Γ£ô | Γ£ô | Γ£ô | Γ£ô |
++| `(public)/genres` | Γ£ô | Γ£ù | Γ£ù (group covers) | Γ£ù (group covers) |
++| `(public)/genres/[genreSlug]` | Γ£ô | Γ£ô | Γ£ô | Γ£ô |
++| `(public)/profile` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(public)/search` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(user)/user` | Γ£ù | ΓÇö | Γ£ô | Γ£ô | **F1** |
++| `(user)/user/bookmarks` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(user)/user/dashboard` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(user)/user/history` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(user)/user/profile` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin` | Γ£ô | ΓÇö | Γ£ô | Γ£ô |
++| `(admin)/admin/ads` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/analytics` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/audit` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/categories` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/chapters` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/chapters/[chapterId]` | Γ£ô | Γ£ù | Γ£ù | Γ£ù | **F3** |
++| `(admin)/admin/comics` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/comics/[comicId]` | Γ£ô | Γ£ù | Γ£ù | Γ£ù | **F3** |
++| `(admin)/admin/comics/new` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/dashboard` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/profile` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/settings` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(admin)/admin/users` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/forbidden` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/unauthorized` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/handle-exception/400` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/handle-exception/401` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/handle-exception/403` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/handle-exception/404` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `(errors)/handle-exception/503` | Γ£ô | ΓÇö | ΓÇö | ΓÇö |
++| `api/avatar`, `api/health`, `api/r2/proxy`, `api/r2/upload`, `api/webhooks/supabase` | route.ts Γ£ô (correct for API) | ΓÇö | ΓÇö | ΓÇö |
++
++### URL prefix check (PROJECT_RULES II.1)
++
++| Group | Expected prefix | Actual | Verdict |
++|---|---|---|---|
++| `(public)` | none | `/`, `/comics/...`, `/genres/...`, `/auth/...` | Γ£ô |
++| `(auth)` | none | (no pages yet) | Γ£ô |
++| `(errors)` | none | `/forbidden`, `/unauthorized`, `/handle-exception/*` | Γ£ô |
++| `(user)` | `/user` | `/user/bookmarks|dashboard|history|profile` | Γ£ô |
++| `(admin)` | `/admin` | `/admin/*` (all 10 subroutes) | Γ£ô |
++
++## 2. Findings (no fixes in this task)
++
++| ID | File/dir | Issue | Severity | Rule |
++|---|---|---|---|---|
++| F1 | `(user)/user/` | No `page.tsx` ΓåÆ `/user` URL returns 404. Confirmed in build route table: no `/user` route emitted. | MEDIUM | II.1 route structure / plan (every route dir has page.tsx) |
++| F2 | `(errors)/` | Pages exist but group has no `layout.tsx`, `error.tsx`, `loading.tsx` ΓÇö error pages render without chrome, no group error boundary. | MEDIUM | II.1 "Mß╗ùi route group n├¬n c├│ file error.tsx v├á loading.tsx" (flagged per brief) |
++| F3 | `(admin)/admin/chapters/[chapterId]`, `(admin)/admin/comics/[comicId]` | Dynamic segments lack sibling `layout/loading/error` ΓÇö `(public)` dynamic segments have all three; `(admin)` pattern inconsistent (group-level error/loading mitigates). | LOW | brief: dynamic `[x]` dirs have sibling-matching layout/loading/error |
++| F4 | `(user)/` vs `(admin)/` | `(admin)` has `not-found.tsx`, `(user)` does not ΓÇö inconsistent group chrome. | LOW | II.1 (consistency) |
++| F5 | `(public)/comics/`, `(public)/genres/` | Segment dirs lack own `error/loading` (covered by `(public)` group-level files) ΓÇö acceptable, informational. | INFO | II.1 |
++| F6 | root `layout.tsx` | `metadataBase` not set ΓÇö build warning, pre-existing, out of scope. | INFO | ΓÇö |
++
++## 3. Changes made
++
++Only one file created, verbatim clone of `(public)/layout.tsx` with function renamed + required ponytail comment:
++
++- `frontend/src/app/(auth)/layout.tsx` (NEW) ΓÇö `'use client'`, `AuthLayout`, imports `Header`, `PublicFooter`, `LoginModal`, `useState` login-modal state; header comment `// ponytail: layout duplicated from (public); extract shared chrome only if a 3rd group needs it`.
++
++No other files modified. `(public)/auth/layout.tsx` untouched. `opencode.json` untouched.
++
++## 4. Verification
++
++- `npm run build` (workdir `D:\Light-Story\frontend`): **PASS** ΓÇö Next.js 16.3.0 (Turbopack), compiled + typecheck OK, 41/41 pages generated. Only pre-existing warning: `metadataBase` not set (F6). PowerShell stderr wrapper noise is cosmetic.
++- New file present: `frontend/src/app/(auth)/layout.tsx` Γ£ô
++- Build route table confirms `(auth)` group emits nothing yet (zero pages, by design) and `/user` absent (F1).
++
++## 5. Commit
++
++- Hash: `__COMMIT_HASH__` (filled after commit)

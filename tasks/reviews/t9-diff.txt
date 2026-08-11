@@ -1,0 +1,1853 @@
+﻿diff --git a/frontend/src/__tests__/tier1/f2_rsc_pages.test.ts b/frontend/src/__tests__/tier1/f2_rsc_pages.test.ts
+index 3b3100e..151e767 100644
+--- a/frontend/src/__tests__/tier1/f2_rsc_pages.test.ts
++++ b/frontend/src/__tests__/tier1/f2_rsc_pages.test.ts
+@@ -37,29 +37,32 @@ const EXPECTED_SERVER_PAGES = [
+   '(public)/auth/reset-password/page.tsx',
+   '(public)/comics/[comicId]/chapter/[chapterId]/page.tsx',
+   '(public)/comics/[comicId]/page.tsx',
+   '(public)/comics/page.tsx',
+   '(public)/genres/[genreSlug]/page.tsx',
+   '(public)/page.tsx',
+   '(public)/profile/page.tsx',
+   '(public)/search/page.tsx',
+   '(user)/user/bookmarks/page.tsx',
+   '(user)/user/history/page.tsx',
++  '(user)/user/page.tsx',
++  '(user)/user/profile/page.tsx',
+ ];
+ 
+ const THIN_WRAPPERS: Record<string, string> = {
+   '(public)/auth/reset-password/page.tsx': 'ResetPasswordPage',
+   '(errors)/handle-exception/400/page.tsx': 'BadRequestPage',
+   '(errors)/handle-exception/401/page.tsx': 'UnauthorizedPage',
+   '(errors)/handle-exception/403/page.tsx': 'ForbiddenPage',
+   '(errors)/handle-exception/404/page.tsx': 'NotFoundPage',
+   '(errors)/handle-exception/503/page.tsx': 'ServiceUnavailablePage',
++  '(user)/user/profile/page.tsx': 'ProfilePageContent',
+ };
+ 
+ describe('F2 RSC page files under src/app', () => {
+   it('contains page.tsx files across app route groups', () => {
+     expect(findPages().length).toBeGreaterThanOrEqual(18);
+   });
+ 
+   it('exports a default component from every page', () => {
+     for (const p of findPages()) expect(readPage(p), p).toContain('export default');
+   });
+diff --git a/frontend/src/__tests__/tier2/f2_rsc_pages_boundary.test.ts b/frontend/src/__tests__/tier2/f2_rsc_pages_boundary.test.ts
+index abfcd23..8000cc3 100644
+--- a/frontend/src/__tests__/tier2/f2_rsc_pages_boundary.test.ts
++++ b/frontend/src/__tests__/tier2/f2_rsc_pages_boundary.test.ts
+@@ -37,29 +37,32 @@ const SERVER_PAGES = [
+   '(public)/auth/reset-password/page.tsx',
+   '(public)/comics/[comicId]/chapter/[chapterId]/page.tsx',
+   '(public)/comics/[comicId]/page.tsx',
+   '(public)/comics/page.tsx',
+   '(public)/genres/[genreSlug]/page.tsx',
+   '(public)/page.tsx',
+   '(public)/profile/page.tsx',
+   '(public)/search/page.tsx',
+   '(user)/user/bookmarks/page.tsx',
+   '(user)/user/history/page.tsx',
++  '(user)/user/page.tsx',
++  '(user)/user/profile/page.tsx',
+ ];
+ 
+ const THIN_WRAPPERS: Record<string, string> = {
+   '(public)/auth/reset-password/page.tsx': 'ResetPasswordPage',
+   '(errors)/handle-exception/400/page.tsx': 'BadRequestPage',
+   '(errors)/handle-exception/401/page.tsx': 'UnauthorizedPage',
+   '(errors)/handle-exception/403/page.tsx': 'ForbiddenPage',
+   '(errors)/handle-exception/404/page.tsx': 'NotFoundPage',
+   '(errors)/handle-exception/503/page.tsx': 'ServiceUnavailablePage',
++  '(user)/user/profile/page.tsx': 'ProfilePageContent',
+ };
+ 
+ describe('F2 boundary: RSC page files under src/app', () => {
+   it('contains page.tsx files across app route groups', () => {
+     expect(findPages().length).toBeGreaterThanOrEqual(18);
+   });
+ 
+   it('gives every page exactly one default export (no stray extras)', () => {
+     for (const p of findPages()) {
+       const matches = readPage(p).match(/export default/g) ?? [];
+diff --git a/frontend/src/app/(admin)/admin/categories/page.tsx b/frontend/src/app/(admin)/admin/categories/page.tsx
+index cd93dcc..b525c70 100644
+--- a/frontend/src/app/(admin)/admin/categories/page.tsx
++++ b/frontend/src/app/(admin)/admin/categories/page.tsx
+@@ -72,21 +72,21 @@ export default function AdminCategoriesPage() {
+                   </td>
+                 </tr>
+               )}
+             </tbody>
+           </table>
+         </div>
+       </div>
+ 
+       {isModalOpen && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
++          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+               <h2 className="text-lg font-bold">{editingCategory ? "Sß╗¡a Thß╗â Loß║íi" : "Th├¬m Thß╗â Loß║íi Mß╗¢i"}</h2>
+               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+                 <X size={20} />
+               </button>
+             </div>
+ 
+             <form onSubmit={handleSaveCategory} className="space-y-4">
+               <div>
+                 <label className="block text-xs font-semibold text-slate-300 mb-1">T├¬n Thß╗â Loß║íi *</label>
+diff --git a/frontend/src/app/(admin)/admin/chapters/page.tsx b/frontend/src/app/(admin)/admin/chapters/page.tsx
+index 631647c..95cd953 100644
+--- a/frontend/src/app/(admin)/admin/chapters/page.tsx
++++ b/frontend/src/app/(admin)/admin/chapters/page.tsx
+@@ -121,21 +121,21 @@ export default function AdminChaptersPage() {
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleOpenEditModal(ch)}
+                           title="Sß╗¡a ch╞░╞íng"
+                         >
+                           <Edit size={14} />
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="danger"
+-                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number)}
++                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number, ch.story_id)}
+                           title="X├│a ch╞░╞íng"
+                         >
+                           <Trash2 size={14} />
+                         </Button>
+                       </div>
+                     </td>
+                   </tr>
+                 ))
+               ) : (
+                 <tr>
+diff --git a/frontend/src/app/(admin)/admin/comics/[comicId]/page.tsx b/frontend/src/app/(admin)/admin/comics/[comicId]/page.tsx
+index d566cbc..982e50c 100644
+--- a/frontend/src/app/(admin)/admin/comics/[comicId]/page.tsx
++++ b/frontend/src/app/(admin)/admin/comics/[comicId]/page.tsx
+@@ -1,51 +1,95 @@
+ "use client";
+ 
+-import { use, useEffect, useState } from 'react';
++import { use, useCallback, useEffect, useState } from 'react';
+ import { useRouter } from 'next/navigation';
++import { toast } from 'sonner';
+ import { FormEditor } from '@/components/admin/form-editor';
+ import { Input } from '@/components/ui/input';
+ import { updateComic } from '@/lib/actions/comic.actions';
+-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
++import { fetchStoryById } from '@/services/comics/story.service';
+ import { ROUTES } from '@/lib/constants/routes';
+ 
+ export default function AdminEditComicPage({ params }: { params: Promise<{ comicId: string }> }) {
+   const { comicId } = use(params);
+   const router = useRouter();
+   const [title, setTitle] = useState('');
+   const [author, setAuthor] = useState('');
+   const [description, setDescription] = useState('');
++  const [isLoading, setIsLoading] = useState(true);
++  const [error, setError] = useState<string | null>(null);
+   const [isSubmitting, setIsSubmitting] = useState(false);
+ 
+-  useEffect(() => {
+-    async function loadComic() {
+-      const supabase = getSupabaseBrowserClient();
+-      const { data } = await supabase.from('stories').select('*').eq('id', comicId).maybeSingle();
+-      if (data) {
+-        setTitle(data.title || '');
+-        setAuthor(data.author || '');
+-        setDescription(data.description || '');
++  const loadComic = useCallback(async () => {
++    setIsLoading(true);
++    setError(null);
++    try {
++      const story = await fetchStoryById(comicId);
++      if (!story) {
++        setError('Kh├┤ng t├¼m thß║Ñy truyß╗çn');
++        return;
+       }
++      setTitle(story.title || '');
++      setAuthor(story.author || '');
++      setDescription(story.description || '');
++    } catch (err) {
++      setError((err as Error).message || 'Kh├┤ng thß╗â tß║úi th├┤ng tin truyß╗çn');
++    } finally {
++      setIsLoading(false);
+     }
+-    loadComic();
+   }, [comicId]);
+ 
++  useEffect(() => {
++    loadComic();
++  }, [loadComic]);
++
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setIsSubmitting(true);
+-    const res = await updateComic(comicId, { title, author });
+-    if (res.success) {
+-      router.push(ROUTES.ADMIN.COMICS);
++    try {
++      const res = await updateComic(comicId, { title, author, description });
++      if (res.success) {
++        toast.success('L╞░u truyß╗çn th├ánh c├┤ng');
++        router.push(ROUTES.ADMIN.COMICS);
++        return;
++      }
++      toast.error(res.error || 'L╞░u truyß╗çn thß║Ñt bß║íi');
++    } catch (err) {
++      toast.error((err as Error).message || 'L╞░u truyß╗çn thß║Ñt bß║íi');
++    } finally {
++      setIsSubmitting(false);
+     }
+-    setIsSubmitting(false);
+   };
+ 
++  if (isLoading) {
++    return (
++      <div className="max-w-3xl mx-auto py-6">
++        <p className="text-sm font-semibold animate-pulse">─Éang tß║úi th├┤ng tin truyß╗çn...</p>
++      </div>
++    );
++  }
++
++  if (error) {
++    return (
++      <div className="max-w-3xl mx-auto py-6 text-center space-y-4">
++        <p className="text-sm font-semibold text-rose-500">{error}</p>
++        <button
++          type="button"
++          onClick={loadComic}
++          className="px-4 py-2 text-sm rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600"
++        >
++          Thß╗¡ Lß║íi
++        </button>
++      </div>
++    );
++  }
++
+   return (
+     <div className="max-w-3xl mx-auto py-6">
+       <FormEditor title="Chß╗ënh Sß╗¡a Th├┤ng Tin Truyß╗çn" onSubmit={handleSubmit} isSubmitting={isSubmitting}>
+         <div className="space-y-4">
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">T├¬n Truyß╗çn</label>
+             <Input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+           </div>
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">T├íc Giß║ú</label>
+diff --git a/frontend/src/app/(admin)/admin/comics/new/page.tsx b/frontend/src/app/(admin)/admin/comics/new/page.tsx
+index 07dd1a4..e897454 100644
+--- a/frontend/src/app/(admin)/admin/comics/new/page.tsx
++++ b/frontend/src/app/(admin)/admin/comics/new/page.tsx
+@@ -1,34 +1,50 @@
+ "use client";
+ 
+ import { useState } from 'react';
+ import { useRouter } from 'next/navigation';
++import { toast } from 'sonner';
+ import { FormEditor } from '@/components/admin/form-editor';
+ import { Input } from '@/components/ui/input';
+ import { createComic } from '@/lib/actions/comic.actions';
++import { COMIC_STATUSES } from '@/lib/schemas/comic';
+ import { ROUTES } from '@/lib/constants/routes';
+ 
+ export default function AdminNewComicPage() {
+   const router = useRouter();
+   const [title, setTitle] = useState('');
+   const [author, setAuthor] = useState('');
+   const [description, setDescription] = useState('');
++  const [status, setStatus] = useState<string>('ongoing');
+   const [isSubmitting, setIsSubmitting] = useState(false);
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setIsSubmitting(true);
+-    const res = await createComic({ title, author, status: 'ongoing' });
+-    if (res.success) {
+-      router.push(ROUTES.ADMIN.COMICS);
++    try {
++      const res = await createComic({
++        title,
++        author,
++        description,
++        status: status as (typeof COMIC_STATUSES)[number],
++      });
++      if (res.success) {
++        toast.success('Tß║ío truyß╗çn th├ánh c├┤ng');
++        router.push(ROUTES.ADMIN.COMICS);
++        return;
++      }
++      toast.error(res.error || 'Tß║ío truyß╗çn thß║Ñt bß║íi');
++    } catch (err) {
++      toast.error((err as Error).message || 'Tß║ío truyß╗çn thß║Ñt bß║íi');
++    } finally {
++      setIsSubmitting(false);
+     }
+-    setIsSubmitting(false);
+   };
+ 
+   return (
+     <div className="max-w-3xl mx-auto py-6">
+       <FormEditor title="Tß║ío Truyß╗çn Mß╗¢i" onSubmit={handleSubmit} isSubmitting={isSubmitting}>
+         <div className="space-y-4">
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">T├¬n Truyß╗çn</label>
+             <Input
+               type="text"
+@@ -40,20 +56,34 @@ export default function AdminNewComicPage() {
+           </div>
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">T├íc Giß║ú</label>
+             <Input
+               type="text"
+               placeholder="T├¬n t├íc giß║ú..."
+               value={author}
+               onChange={(e) => setAuthor(e.target.value)}
+             />
+           </div>
++          <div className="space-y-2">
++            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Trß║íng Th├íi</label>
++            <select
++              value={status}
++              onChange={(e) => setStatus(e.target.value)}
++              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
++            >
++              {COMIC_STATUSES.map((s) => (
++                <option key={s} value={s}>
++                  {s}
++                </option>
++              ))}
++            </select>
++          </div>
+           <div className="space-y-2">
+             <label className="text-xs font-bold text-slate-700 dark:text-slate-300">M├┤ Tß║ú</label>
+             <textarea
+               className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+               rows={4}
+               placeholder="Nhß║¡p m├┤ tß║ú chi tiß║┐t..."
+               value={description}
+               onChange={(e) => setDescription(e.target.value)}
+             />
+           </div>
+diff --git a/frontend/src/app/(admin)/admin/settings/page.tsx b/frontend/src/app/(admin)/admin/settings/page.tsx
+index d83b13b..02e38d6 100644
+--- a/frontend/src/app/(admin)/admin/settings/page.tsx
++++ b/frontend/src/app/(admin)/admin/settings/page.tsx
+@@ -101,21 +101,23 @@ export default function AdminSettingsPage() {
+ 
+         {/* Infrastructure Status */}
+         <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-4">
+           <h3 className="font-bold text-lg border-b border-slate-800 pb-3">Kß║┐t Nß╗æi Hß║í Tß║ºng ─É├ú Thiß║┐t Lß║¡p</h3>
+ 
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center gap-3">
+               <Database className="text-cyan-400" size={24} />
+               <div>
+                 <p className="text-xs font-bold text-white">Supabase Endpoint</p>
+-                <p className="text-[11px] font-mono text-slate-400 truncate">https://xgtlrztskoomimvfpdoy.supabase.co</p>
++                <p className="text-[11px] font-mono text-slate-400 truncate">
++                  {process.env.NEXT_PUBLIC_SUPABASE_URL || "Ch╞░a cß║Ñu h├¼nh (NEXT_PUBLIC_SUPABASE_URL)"}
++                </p>
+               </div>
+             </div>
+ 
+             <div className="p-4 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center gap-3">
+               <Cloud className="text-orange-400" size={24} />
+               <div>
+                 <p className="text-xs font-bold text-white">Cloudflare R2 Bucket</p>
+                 <p className="text-[11px] font-mono text-slate-400 truncate">lightstory-assets (Bound)</p>
+               </div>
+             </div>
+diff --git a/frontend/src/app/(admin)/admin/users/page.tsx b/frontend/src/app/(admin)/admin/users/page.tsx
+index d253ea4..0f811ad 100644
+--- a/frontend/src/app/(admin)/admin/users/page.tsx
++++ b/frontend/src/app/(admin)/admin/users/page.tsx
+@@ -1,18 +1,20 @@
+ "use client";
+ 
+ import { Users, Search, ShieldCheck, UserCheck, X } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import { Badge } from "@/components/ui/badge";
+ import { useAdminUsers } from "@/hooks/features/use-admin-users";
++import { useUser } from "@/hooks/features/use-user";
+ 
+ export default function AdminUsersPage() {
++  const { role } = useUser();
+   const {
+     users,
+     loading,
+     search,
+     setSearch,
+     selectedUser,
+     setSelectedUser,
+     newRole,
+     setNewRole,
+     isSubmitting,
+@@ -111,21 +113,21 @@ export default function AdminUsersPage() {
+                 </tr>
+               )}
+             </tbody>
+           </table>
+         </div>
+       </div>
+ 
+       {/* Change Role Modal */}
+       {selectedUser && (
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
++          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+               <h2 className="text-lg font-bold flex items-center gap-2">
+                 <ShieldCheck size={20} className="text-orange-500" />
+                 Ph├ón Quyß╗ün Cho Ng╞░ß╗¥i D├╣ng
+               </h2>
+               <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-white">
+                 <X size={20} />
+               </button>
+             </div>
+ 
+@@ -138,21 +140,21 @@ export default function AdminUsersPage() {
+               <div>
+                 <label className="block text-xs font-semibold text-slate-300 mb-1">Chß╗ìn Vai Tr├▓ Mß╗¢i *</label>
+                 <select
+                   value={newRole}
+                   onChange={(e) => setNewRole(e.target.value)}
+                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                 >
+                   <option value="user">Ng╞░ß╗¥i d├╣ng (User)</option>
+                   <option value="employee">Nh├ón vi├¬n (Employee)</option>
+                   <option value="admin">Quß║ún trß╗ï vi├¬n (Admin)</option>
+-                  <option value="superadmin">Super Admin</option>
++                  {role === "superadmin" && <option value="superadmin">Super Admin</option>}
+                 </select>
+               </div>
+ 
+               <div className="flex justify-end gap-3 pt-2">
+                 <Button type="button" variant="outline" onClick={() => setSelectedUser(null)}>
+                   Hß╗ºy
+                 </Button>
+                 <Button type="submit" disabled={isSubmitting} className="bg-orange-500 hover:bg-orange-600 font-bold">
+                   {isSubmitting ? "─Éang l╞░u..." : "Cß║¡p Nhß║¡t Vai Tr├▓"}
+                 </Button>
+diff --git a/frontend/src/app/(public)/comics/[comicId]/page.tsx b/frontend/src/app/(public)/comics/[comicId]/page.tsx
+index 28a8cee..a77273a 100644
+--- a/frontend/src/app/(public)/comics/[comicId]/page.tsx
++++ b/frontend/src/app/(public)/comics/[comicId]/page.tsx
+@@ -1,40 +1,5 @@
+-import type { Metadata } from "next";
+-import { getServerSupabase } from "@/lib/supabase/server";
+ import { ComicDetailPageContent } from '@/components/comics/ComicDetailPageContent';
+ 
+-export async function generateMetadata({
+-  params,
+-}: {
+-  params: Promise<{ comicId: string }>;
+-}): Promise<Metadata> {
+-  const { comicId } = await params;
+-
+-  let title = "Truyß╗çn tranh - Light Story";
+-  let description =
+-    "─Éß╗ìc truyß╗çn tranh tß║íi Light Story ΓÇö cß║¡p nhß║¡t nhanh, ─æß╗ìc m╞░ß╗út m├á tr├¬n mß╗ìi thiß║┐t bß╗ï.";
+-
+-  try {
+-    const db = await getServerSupabase();
+-    if (db) {
+-      const { data } = await db
+-        .from("stories")
+-        .select("title, author")
+-        .eq("id", comicId)
+-        .maybeSingle();
+-      if (data?.title) {
+-        title = `${data.title} - Light Story`;
+-        description = data.author
+-          ? `─Éß╗ìc truyß╗çn "${data.title}" cß╗ºa t├íc giß║ú ${data.author} tß║íi Light Story.`
+-          : `─Éß╗ìc truyß╗çn "${data.title}" tß║íi Light Story.`;
+-      }
+-    }
+-  } catch {
+-    // fall back to defaults when the database is unreachable
+-  }
+-
+-  return { title, description };
+-}
+-
+ export default function ComicDetailPage() {
+   return <ComicDetailPageContent />;
+ }
+diff --git a/frontend/src/app/(user)/error.tsx b/frontend/src/app/(user)/error.tsx
+deleted file mode 100644
+index 723a517..0000000
+--- a/frontend/src/app/(user)/error.tsx
++++ /dev/null
+@@ -1,36 +0,0 @@
+-"use client";
+-
+-import { useEffect } from "react";
+-import { AlertCircle, RefreshCw } from "lucide-react";
+-
+-export default function UserErrorBoundary({
+-  error,
+-  reset,
+-}: {
+-  error: Error & { digest?: string };
+-  reset: () => void;
+-}) {
+-  useEffect(() => {
+-    console.error("User route group error:", error);
+-  }, [error]);
+-
+-  return (
+-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+-      <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mb-4">
+-        <AlertCircle size={28} />
+-      </div>
+-      <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+-        ─É├ú xß║úy ra lß╗ùi hß╗ç thß╗æng
+-      </h2>
+-      <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">
+-        {error.message || "Kh├┤ng thß╗â tß║úi trang c├í nh├ón. Vui l├▓ng thß╗¡ lß║íi."}
+-      </p>
+-      <button
+-        onClick={() => reset()}
+-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:opacity-90 transition-all text-sm"
+-      >
+-        <RefreshCw size={16} /> Thß╗¡ lß║íi
+-      </button>
+-    </div>
+-  );
+-}
+diff --git a/frontend/src/app/(user)/user/dashboard/page.tsx b/frontend/src/app/(user)/user/dashboard/page.tsx
+index 851f0a2..8575313 100644
+--- a/frontend/src/app/(user)/user/dashboard/page.tsx
++++ b/frontend/src/app/(user)/user/dashboard/page.tsx
+@@ -1,65 +1,57 @@
+ "use client";
+ 
+ import { useEffect, useState } from "react";
+ import Link from "next/link";
+-import { ReadingProgress } from "@/components/user/reading-progress";
+ import { Card } from "@/components/ui/card";
+ import { Skeleton } from "@/components/ui/skeleton";
+ import { useUser } from "@/hooks/features/use-user";
+ import { ROUTES } from "@/lib/constants/routes";
+ import { useReadingHistory } from "@/hooks/features/useReadingHistory";
+-import { fetchStoryById, fetchStoriesPage } from "@/services/comics/story.service";
+-import { Story } from "@/types/entities";
++import { fetchStoriesByIds, fetchStoriesPage } from "@/services/comics/story.service";
+ 
+ interface RecommendedItem {
+   id: string;
+   title: string;
+-  latestChapter?: number;
+ }
+ 
+ interface ReadingItem {
+   id: string;
+   title: string;
+   currentChapter: number;
+-  progressPct: number;
+ }
+ 
+ export default function UserDashboardPage() {
+   const { user } = useUser();
+   const { history, isLoading: isHistoryLoading } = useReadingHistory();
+   const [readingList, setReadingList] = useState<ReadingItem[]>([]);
+   const [recommended, setRecommended] = useState<RecommendedItem[]>([]);
+   const [recommendedLoading, setRecommendedLoading] = useState(true);
+ 
+   useEffect(() => {
+     let cancelled = false;
+     const load = async () => {
+       try {
+         if (!history?.length) {
+           if (!cancelled) setReadingList([]);
+           return;
+         }
+         const comicIds = [...new Set(history.map((h) => h.comicId))];
+-        const details = await Promise.all(
+-          comicIds.map((id) => fetchStoryById(id).catch(() => null)),
+-        );
++        const details = await fetchStoriesByIds(comicIds);
+         if (cancelled) return;
+         const merged = details
+-          .filter((d): d is Story => Boolean(d))
+           .map((d) => {
+             const h = history.find((item) => item.comicId === d.id);
+             return {
+               id: d.id,
+               title: d.title,
+               currentChapter: h?.chapterNumber ?? 0,
+-              progressPct: 0,
+             };
+           })
+           .slice(0, 8);
+         setReadingList(merged);
+       } catch {
+         /* silent */
+       }
+     };
+     load();
+     return () => {
+@@ -95,64 +87,60 @@ export default function UserDashboardPage() {
+       <div>
+         <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+           Ch├áo mß╗½ng trß╗ƒ lß║íi, {user?.email || "─Éß╗Öc giß║ú"}!
+         </h1>
+         <p className="text-sm text-slate-500 mt-1">
+           Theo d├╡i tiß║┐n tr├¼nh ─æß╗ìc v├á kh├ím ph├í gß╗úi ├╜ d├ánh ri├¬ng cho bß║ín.
+         </p>
+       </div>
+ 
+       {/* Reading Progress Section */}
++      {/* ponytail: progress bar removed ΓÇö progress% needs total chapter count, which neither Story nor reading history provides; was hardcoded 0. */}
+       <section className="space-y-4">
+         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+           Truyß╗çn ─Éang ─Éß╗ìc Dß╗ƒ
+         </h2>
+         {isHistoryLoading ? (
+           <Skeleton className="h-32 w-full rounded-2xl" />
+         ) : (
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             {readingList.map((item) => (
+               <Card key={item.id} className="p-4 space-y-3">
+                 <div className="flex justify-between items-center">
+                   <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                     {item.title}
+                   </h3>
+                   <span className="text-xs font-semibold text-orange-500">
+                     Chap {item.currentChapter}
+                   </span>
+                 </div>
+-                <ReadingProgress progressPct={item.progressPct} />
+               </Card>
+             ))}
+           </div>
+         )}
+       </section>
+ 
+       {/* Recommendations */}
+       <section className="space-y-4">
+         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+           ─Éß╗ü Xuß║Ñt Cho Bß║ín
+         </h2>
+         {recommendedLoading ? (
+           <Skeleton className="h-48 w-full rounded-2xl" />
+         ) : (
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             {recommended.map((rec) => (
+               <Link key={rec.id} href={ROUTES.COMIC_DETAIL(rec.id)}>
++                {/* ponytail: latestChapter line removed ΓÇö Story has no latest-chapter field; render path was dead. */}
+                 <Card className="p-4 hover:border-primary transition-all cursor-pointer">
+                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                     {rec.title}
+                   </h3>
+-                  {rec.latestChapter && (
+-                    <p className="text-xs text-slate-500 mt-1">
+-                      Mß╗¢i nhß║Ñt: Chap {rec.latestChapter}
+-                    </p>
+-                  )}
+                 </Card>
+               </Link>
+             ))}
+           </div>
+         )}
+       </section>
+     </div>
+   );
+ }
+diff --git a/frontend/src/app/(user)/user/page.tsx b/frontend/src/app/(user)/user/page.tsx
+new file mode 100644
+index 0000000..24e9bf2
+--- /dev/null
++++ b/frontend/src/app/(user)/user/page.tsx
+@@ -0,0 +1,6 @@
++import { redirect } from 'next/navigation';
++import { ROUTES } from '@/lib/constants/routes';
++
++export default function UserRedirectPage() {
++  redirect(ROUTES.USER.DASHBOARD);
++}
+diff --git a/frontend/src/app/(user)/user/profile/page.tsx b/frontend/src/app/(user)/user/profile/page.tsx
+index a348201..312a5b6 100644
+--- a/frontend/src/app/(user)/user/profile/page.tsx
++++ b/frontend/src/app/(user)/user/profile/page.tsx
+@@ -1,213 +1,5 @@
+-"use client";
+-
+-import { useState, useEffect } from "react";
+-import Link from "next/link";
+-import { User, Mail, Calendar, Bookmark, History, Save, LogOut } from "lucide-react";
+-import { Card } from "@/components/ui/card";
+-import { Input } from "@/components/ui/input";
+-import { Button } from "@/components/ui/button";
+-import { Badge } from "@/components/ui/badge";
+-import dynamic from "next/dynamic";
+-const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
+-  ssr: false,
+-});
+-import { useUser } from "@/hooks/features/use-user";
+-import { updateUserProfile } from "@/lib/actions/user.actions";
+-import { getR2ImageUrl } from "@/lib/utils/image-url";
+-import { toast } from "sonner";
+-import { ROUTES } from "@/lib/constants/routes";
++import { ProfilePageContent } from '@/components/user/ProfilePageContent';
+ 
+ export default function UserProfilePage() {
+-  const { user, profile, role, isLoading, signOut } = useUser();
+-  const [fullName, setFullName] = useState("");
+-  const [avatarUrl, setAvatarUrl] = useState("");
+-  const [isSaving, setIsSaving] = useState(false);
+-
+-  useEffect(() => {
+-    if (profile) {
+-      setFullName(profile.full_name || "");
+-      setAvatarUrl(profile.avatar_url || "");
+-    }
+-  }, [profile]);
+-
+-  const handleUpdate = async (e: React.FormEvent) => {
+-    e.preventDefault();
+-    if (!user) {
+-      toast.error("Bß║ín ch╞░a ─æ─âng nhß║¡p");
+-      return;
+-    }
+-    setIsSaving(true);
+-    try {
+-      const res = await updateUserProfile(user.id, {
+-        full_name: fullName,
+-        avatar_url: avatarUrl,
+-      });
+-      if (!res.success) throw new Error(res.error);
+-
+-      toast.success("Cß║¡p nhß║¡t th├┤ng tin t├ái khoß║ún th├ánh c├┤ng!");
+-    } catch (err) {
+-      toast.error((err instanceof Error ? err.message : String(err)) || "Cß║¡p nhß║¡t t├ái khoß║ún thß║Ñt bß║íi");
+-    } finally {
+-      setIsSaving(false);
+-    }
+-  };
+-
+-  if (isLoading) {
+-    return (
+-      <div className="p-8 text-center text-slate-400 animate-pulse max-w-4xl mx-auto">
+-        ─Éang tß║úi th├┤ng tin t├ái khoß║ún...
+-      </div>
+-    );
+-  }
+-
+-  if (!user) {
+-    return (
+-      <div className="p-8 text-center max-w-xl mx-auto space-y-4">
+-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Ch╞░a ─É─âng Nhß║¡p</h1>
+-        <p className="text-sm text-slate-500">Vui l├▓ng ─æ─âng nhß║¡p ─æß╗â xem th├┤ng tin c├í nh├ón.</p>
+-        <Link href={ROUTES.LOGIN}>
+-          <Button className="bg-orange-500 hover:bg-orange-600 text-white font-bold">─É─âng Nhß║¡p Ngay</Button>
+-        </Link>
+-      </div>
+-    );
+-  }
+-
+-  return (
+-    <div className="space-y-6 max-w-4xl mx-auto py-6">
+-      {/* Header */}
+-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+-        <div>
+-          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+-            <User className="text-orange-500" size={28} />
+-            Hß╗ô S╞í C├í Nh├ón
+-          </h1>
+-          <p className="text-sm text-slate-500 mt-1">
+-            Quß║ún l├╜ th├┤ng tin t├ái khoß║ún, ß║únh ─æß║íi diß╗çn v├á c├ái ─æß║╖t c├í nh├ón
+-          </p>
+-        </div>
+-        <Button
+-          onClick={async () => {
+-            toast.success("─É─âng xuß║Ñt th├ánh c├┤ng! ─Éang chuyß╗ân h╞░ß╗¢ng vß╗ü trang chß╗º trong 2 gi├óy...");
+-            await signOut();
+-          }}
+-          variant="danger"
+-          className="gap-2 shrink-0 font-bold"
+-        >
+-          <LogOut size={16} /> ─É─âng Xuß║Ñt
+-        </Button>
+-      </div>
+-
+-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+-        {/* User Card Summary */}
+-        <Card className="p-6 text-center space-y-6">
+-          <div className="relative w-28 h-28 mx-auto rounded-full overflow-hidden border-2 border-orange-500/50 bg-slate-100 dark:bg-slate-800 flex items-center justify-center shadow-md">
+-            {avatarUrl ? (
+-              <img
+-                src={getR2ImageUrl(avatarUrl)}
+-                alt={fullName || "User Avatar"}
+-                className="w-full h-full object-cover"
+-                onError={(e) => {
+-                  (e.target as HTMLImageElement).style.display = "none";
+-                }}
+-              />
+-            ) : (
+-              <span className="text-4xl font-black text-orange-500">
+-                {fullName ? fullName[0].toUpperCase() : user.email ? user.email[0].toUpperCase() : "U"}
+-              </span>
+-            )}
+-          </div>
+-
+-          <div className="space-y-1">
+-            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{fullName || "Ng╞░ß╗¥i d├╣ng"}</h2>
+-            <p className="text-xs text-slate-500 font-mono">{user.email}</p>
+-            <div className="pt-2">
+-              <Badge variant={role === "superadmin" || role === "admin" ? "warning" : "default"}>
+-                {role ? role.toUpperCase() : "USER"}
+-              </Badge>
+-            </div>
+-          </div>
+-
+-          {/* Quick Links */}
+-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 grid grid-cols-2 gap-2 text-xs">
+-            <Link
+-              href={ROUTES.USER.FAVORITES}
+-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 font-bold transition-all flex flex-col items-center gap-1"
+-            >
+-              <Bookmark size={18} />
+-              <span>Tß╗º S├ích</span>
+-            </Link>
+-            <Link
+-              href={ROUTES.USER.HISTORY}
+-              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-orange-500 hover:text-white dark:hover:bg-orange-500 font-bold transition-all flex flex-col items-center gap-1"
+-            >
+-              <History size={18} />
+-              <span>Lß╗ïch Sß╗¡ ─Éß╗ìc</span>
+-            </Link>
+-          </div>
+-
+-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2 text-left text-xs text-slate-500">
+-            <div className="flex items-center gap-2">
+-              <Mail size={14} className="text-slate-400" />
+-              <span>Email: <strong className="text-slate-800 dark:text-slate-200">{user.email}</strong></span>
+-            </div>
+-            <div className="flex items-center gap-2">
+-              <Calendar size={14} className="text-slate-400" />
+-              <span>Ng├áy tham gia: <strong className="text-slate-800 dark:text-slate-200">{user.created_at ? new Date(user.created_at).toLocaleDateString("vi-VN") : "H├┤m nay"}</strong></span>
+-            </div>
+-          </div>
+-        </Card>
+-
+-        {/* Edit Form */}
+-        <Card className="lg:col-span-2 p-6 space-y-6">
+-          <h3 className="font-bold text-lg border-b border-slate-200 dark:border-slate-800 pb-3 text-slate-900 dark:text-slate-100">
+-            Cß║¡p Nhß║¡t Th├┤ng Tin C├í Nh├ón
+-          </h3>
+-
+-          <form onSubmit={handleUpdate} className="space-y-4">
+-            <div className="space-y-2">
+-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Hß╗ì v├á T├¬n *</label>
+-              <Input
+-                type="text"
+-                required
+-                placeholder="Nhß║¡p hß╗ì v├á t├¬n..."
+-                value={fullName}
+-                onChange={(e) => setFullName(e.target.value)}
+-              />
+-            </div>
+-
+-            <div className="space-y-2">
+-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+-                Tß║úi L├¬n ß║ónh ─Éß║íi Diß╗çn (Cloudflare R2 Storage)
+-              </label>
+-              <ImageUploader
+-                folder="avatars"
+-                onImagesUploaded={(urls) => {
+-                  if (urls.length > 0) setAvatarUrl(urls[0]);
+-                }}
+-              />
+-              {avatarUrl && (
+-                <p className="text-[11px] text-orange-500 mt-1 truncate">─É╞░ß╗¥ng dß║½n ß║únh R2: {avatarUrl}</p>
+-              )}
+-            </div>
+-
+-            <div className="space-y-2">
+-              <label className="text-xs font-bold text-slate-400">─Éß╗ïa Chß╗ë Email (Cß╗æ ─æß╗ïnh)</label>
+-              <Input
+-                type="email"
+-                disabled
+-                value={user.email || ""}
+-                className="bg-slate-100 dark:bg-slate-800/60 cursor-not-allowed text-slate-500"
+-              />
+-            </div>
+-
+-            <div className="pt-2 flex justify-end">
+-              <Button type="submit" disabled={isSaving} className="bg-orange-500 hover:bg-orange-600 font-bold gap-2 text-white">
+-                <Save size={16} /> {isSaving ? "─Éang l╞░u..." : "L╞░u Thay ─Éß╗òi"}
+-              </Button>
+-            </div>
+-          </form>
+-        </Card>
+-      </div>
+-    </div>
+-  );
++  return <ProfilePageContent />;
+ }
+diff --git a/frontend/src/components/auth/ResetPasswordPage.tsx b/frontend/src/components/auth/ResetPasswordPage.tsx
+index 4ebaac0..927dae1 100644
+--- a/frontend/src/components/auth/ResetPasswordPage.tsx
++++ b/frontend/src/components/auth/ResetPasswordPage.tsx
+@@ -1,18 +1,19 @@
+ "use client";
+ 
+ import React, { useEffect, useState } from 'react';
+ import Link from 'next/link';
+ import { useRouter } from 'next/navigation';
+ import { Loader2, Lock, ShieldCheck } from 'lucide-react';
+ import { useAuth } from '@/context/AuthContext';
+ import { ROUTES } from '@/lib/constants/routes';
++import { resetPasswordSchema } from '@/lib/schemas/auth';
+ import { toast } from 'sonner';
+ 
+ export const ResetPasswordPage: React.FC = () => {
+   const [password, setPassword] = useState('');
+   const [confirmPassword, setConfirmPassword] = useState('');
+   const [submitting, setSubmitting] = useState(false);
+   const [verifying, setVerifying] = useState(true);
+   const [isRecoveryFlow, setIsRecoveryFlow] = useState(false);
+   const { updatePassword } = useAuth();
+   const router = useRouter();
+@@ -30,27 +31,23 @@ export const ResetPasswordPage: React.FC = () => {
+         setVerifying(false);
+       }
+     };
+ 
+     verifyRecovery();
+   }, []);
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+ 
+-    if (password.length < 6) {
+-      toast.error('Password must be at least 6 characters');
+-      return;
+-    }
+-
+-    if (password !== confirmPassword) {
+-      toast.error('Password confirmation does not match');
++    const result = resetPasswordSchema.safeParse({ password, confirmPassword });
++    if (!result.success) {
++      toast.error(result.error.issues[0].message);
+       return;
+     }
+ 
+     setSubmitting(true);
+     try {
+       await updatePassword(password);
+       toast.success('Password updated. Please sign in again.');
+       router.replace(ROUTES.HOME);
+     } catch {
+       // Error already handled in context
+diff --git a/frontend/src/components/auth/login-modal.tsx b/frontend/src/components/auth/login-modal.tsx
+index 0bc8227..ced460e 100644
+--- a/frontend/src/components/auth/login-modal.tsx
++++ b/frontend/src/components/auth/login-modal.tsx
+@@ -7,20 +7,21 @@ import {
+   Mail,
+   Lock,
+   Loader2,
+   LogIn,
+   UserPlus,
+   KeyRound,
+ } from "lucide-react";
+ import { toast } from "sonner";
+ import { useRouter } from "next/navigation";
+ import { useUser } from "@/hooks/features/use-user";
++import { resetPasswordSchema, signInPasswordSchema } from "@/lib/schemas/auth";
+ 
+ type AuthMode = "signin" | "register" | "forgot";
+ 
+ export default function LoginModal({
+   isOpen,
+   onClose,
+ }: {
+   isOpen: boolean;
+   onClose: () => void;
+ }) {
+@@ -51,39 +52,37 @@ export default function LoginModal({
+   const handleClose = () => {
+     resetLocalState();
+     onClose();
+   };
+ 
+   const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setIsSubmitting(true);
+     try {
+       if (mode === "signin") {
+-        if (!password) {
+-          toast.error("Please enter your password");
++        const pw = signInPasswordSchema.safeParse(password);
++        if (!pw.success) {
++          toast.error(pw.error.issues[0].message);
+           return;
+         }
+         await signInWithPassword(email, password);
+         toast.success("Signed in successfully");
+         handleClose();
+         router.refresh();
+       } else if (mode === "register") {
+         if (!fullName.trim()) {
+           toast.error("Please enter your full name");
+           return;
+         }
+-        if (password.length < 6) {
+-          toast.error("Password must be at least 6 characters");
+-          return;
+-        }
+-        if (password !== confirmPassword) {
+-          toast.error("Password confirmation does not match");
++        const pw = resetPasswordSchema.safeParse({ password, confirmPassword });
++        if (!pw.success) {
++          toast.error(pw.error.issues[0].message);
+           return;
+         }
+         await register(email, password, fullName.trim());
+         toast.success(
+           "Registration successful. Please check your email to verify your account.",
+         );
+         setMode("signin");
+         setPassword("");
+         setConfirmPassword("");
+       } else {
+diff --git a/frontend/src/components/comics/ComicDetailPageContent.tsx b/frontend/src/components/comics/ComicDetailPageContent.tsx
+index bf8e62e..4df5a94 100644
+--- a/frontend/src/components/comics/ComicDetailPageContent.tsx
++++ b/frontend/src/components/comics/ComicDetailPageContent.tsx
+@@ -84,32 +84,32 @@ export const ComicDetailPageContent: React.FC = () => {
+               src={coverUrl}
+               alt={comic.title}
+               onError={handleImageError}
+               className="w-full aspect-[3/4] object-cover rounded-2xl shadow-2xl shadow-primary/20 border-4 border-white dark:border-slate-800"
+             />
+ 
+             <div className="w-full mt-6 space-y-3">
+               <Link
+                 href={
+                   firstChapter
+-                    ? `/comics/${comicId}/chapter/${firstChapter.id}`
++                    ? ROUTES.CHAPTER_READER(comicId, firstChapter.id)
+                     : "#"
+                 }
+                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg ${firstChapter ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1" : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"}`}
+               >
+                 <BookOpen size={18} /> ─Éß╗ìc tß╗½ ─æß║ºu
+               </Link>
+ 
+               <Link
+                 href={
+                   latestChapter
+-                    ? `/comics/${comicId}/chapter/${latestChapter.id}`
++                    ? ROUTES.CHAPTER_READER(comicId, latestChapter.id)
+                     : "#"
+                 }
+                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2 ${latestChapter ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"}`}
+               >
+                 <Play size={18} /> ─Éß╗ìc mß╗¢i nhß║Ñt
+               </Link>
+ 
+               <BookmarkButton comicId={comicId} className="w-full justify-center" />
+             </div>
+           </div>
+@@ -194,21 +194,21 @@ export const ComicDetailPageContent: React.FC = () => {
+ 
+           {chapters.length === 0 ? (
+             <div className="text-center py-10 text-slate-500 dark:text-slate-400">
+               Truyß╗çn ch╞░a cß║¡p nhß║¡t ch╞░╞íng n├áo.
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+               {chapters.map((chapter) => (
+                 <Link
+                   key={chapter.id}
+-                  href={`/comics/${comicId}/chapter/${chapter.id}`}
++                  href={ROUTES.CHAPTER_READER(comicId, chapter.id)}
+                   className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/50 transition-all hover:shadow-md"
+                 >
+                   <div className="flex-1 min-w-0">
+                     <h4 className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate group-hover:text-primary transition flex items-center gap-2">
+                       {readChapters.has(chapter.chapter_number || 0) && (
+                         <span className="text-emerald-500 shrink-0" title="─É├ú ─æß╗ìc">Γ£ô</span>
+                       )}
+                       {chapter.chapter_number
+                         ? `Ch╞░╞íng ${chapter.chapter_number}`
+                         : chapter.title}
+diff --git a/frontend/src/components/comics/SearchPageContent.tsx b/frontend/src/components/comics/SearchPageContent.tsx
+index e607062..88604c0 100644
+--- a/frontend/src/components/comics/SearchPageContent.tsx
++++ b/frontend/src/components/comics/SearchPageContent.tsx
+@@ -142,21 +142,21 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
+             >
+               {t("reset_filter")}
+             </Link>
+           </motion.div>
+         ) : (
+           <>
+             <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
+               {comics.map((comic, i) => (
+                 <Link
+                   key={comic.id}
+-                  href={`/comics/${comic.id}`}
++                  href={ROUTES.COMIC_DETAIL(comic.id)}
+                   className="block outline-none cursor-pointer w-full max-w-[180px]"
+                 >
+                   <motion.div
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     transition={{ delay: i * 0.03 }}
+                     className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-xs hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-1.5 transition-all duration-300 border border-slate-200/80 dark:border-slate-800"
+                   >
+                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
+                       <img
+diff --git a/frontend/src/components/reader/ChapterReaderPageContent.tsx b/frontend/src/components/reader/ChapterReaderPageContent.tsx
+index e366757..28789f1 100644
+--- a/frontend/src/components/reader/ChapterReaderPageContent.tsx
++++ b/frontend/src/components/reader/ChapterReaderPageContent.tsx
+@@ -78,21 +78,21 @@ export const ChapterReaderPageContent: React.FC = () => {
+   return (
+     <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
+       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
+         <div className="h-1 bg-slate-200 dark:bg-slate-800">
+           <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
+         </div>
+       </div>
+ 
+       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
+         <Link
+-          href={`/comics/${comicId}`}
++          href={ROUTES.COMIC_DETAIL(comicId)}
+           className="inline-block text-xl sm:text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors mb-2"
+         >
+           {comic?.title || "T├¬n Truyß╗çn ─Éang Cß║¡p Nhß║¡t"}
+         </Link>
+         <div className="text-slate-500 dark:text-zinc-400 font-medium text-sm sm:text-base">
+           {currentChapter?.chapter_number
+             ? `Ch╞░╞íng ${currentChapter.chapter_number}`
+             : "Ch╞░╞íng ?"}
+           {currentChapter?.title && ` - ${currentChapter.title}`}
+         </div>
+@@ -130,30 +130,30 @@ export const ChapterReaderPageContent: React.FC = () => {
+         )}
+       </div>
+ 
+       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 mt-2">
+         <AdRenderer position="sidebar" />
+       </div>
+ 
+       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 py-6 sm:py-8 flex items-center justify-between gap-3 sm:gap-4 border-t border-slate-200 dark:border-white/5 mt-4">
+         <Link
+           href={
+-            prevChapter ? `/comics/${comicId}/chapter/${prevChapter.id}` : "#"
++            prevChapter ? ROUTES.CHAPTER_READER(comicId, prevChapter.id) : "#"
+           }
+           className={chapterNavClass(prevChapter)}
+         >
+           <ChevronLeft size={18} />{" "}
+           <span className="line-clamp-1">Ch╞░╞íng tr╞░ß╗¢c</span>
+         </Link>
+         <Link
+           href={
+-            nextChapter ? `/comics/${comicId}/chapter/${nextChapter.id}` : "#"
++            nextChapter ? ROUTES.CHAPTER_READER(comicId, nextChapter.id) : "#"
+           }
+           className={chapterNavClass(nextChapter)}
+         >
+           <span className="line-clamp-1">Ch╞░╞íng sau</span>{" "}
+           <ChevronRight size={18} />
+         </Link>
+       </div>
+ 
+       {showThumbnails && (
+         <div className="fixed bottom-16 left-0 right-0 z-[65] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-2 py-2">
+@@ -195,21 +195,21 @@ export const ChapterReaderPageContent: React.FC = () => {
+               onClick={toggleTheme}
+               className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
+               title={theme === "dark" ? "S├íng" : "Tß╗æi"}
+             >
+               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+             </button>
+ 
+             <Link
+               href={
+                 prevChapter
+-                  ? `/comics/${comicId}/chapter/${prevChapter.id}`
++                  ? ROUTES.CHAPTER_READER(comicId, prevChapter.id)
+                   : "#"
+               }
+               className={
+                 `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
+                 (prevChapter
+                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
+                   : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
+               }
+               title="Ch╞░╞íng tr╞░ß╗¢c"
+             >
+@@ -246,21 +246,21 @@ export const ChapterReaderPageContent: React.FC = () => {
+                         : chap.title}
+                     </button>
+                   ))}
+                 </div>
+               )}
+             </div>
+ 
+             <Link
+               href={
+                 nextChapter
+-                  ? `/comics/${comicId}/chapter/${nextChapter.id}`
++                  ? ROUTES.CHAPTER_READER(comicId, nextChapter.id)
+                   : "#"
+               }
+               className={
+                 `flex items-center justify-center p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ` +
+                 (nextChapter
+                   ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-primary hover:text-white dark:hover:bg-primary dark:hover:text-white"
+                   : "bg-slate-50 dark:bg-slate-800/40 text-slate-300 dark:text-slate-700 pointer-events-none")
+               }
+               title="Ch╞░╞íng sau"
+             >
+diff --git a/frontend/src/components/user/ReadingHistoryDrawer.tsx b/frontend/src/components/user/ReadingHistoryDrawer.tsx
+index 7c05574..97fc900 100644
+--- a/frontend/src/components/user/ReadingHistoryDrawer.tsx
++++ b/frontend/src/components/user/ReadingHistoryDrawer.tsx
+@@ -1,16 +1,17 @@
+ "use client";
+ 
+ import React from 'react';
+ import Link from 'next/link';
+ import { History, X, BookOpen } from 'lucide-react';
+ import { useReadingHistory } from '@/hooks/features/useReadingHistory';
++import { ROUTES } from '@/lib/constants/routes';
+ 
+ type ReadingHistoryDrawerProps = {
+   isOpen: boolean;
+   onClose: () => void;
+ };
+ 
+ export const ReadingHistoryDrawer: React.FC<ReadingHistoryDrawerProps> = ({ isOpen, onClose }) => {
+   const { history, isLoading } = useReadingHistory();
+ 
+   if (!isOpen) return null;
+@@ -30,21 +31,21 @@ export const ReadingHistoryDrawer: React.FC<ReadingHistoryDrawerProps> = ({ isOp
+ 
+         <div className="flex-1 overflow-y-auto py-4 space-y-3">
+           {isLoading ? (
+             <p className="text-slate-400 text-center py-8">─Éang tß║úi...</p>
+           ) : history.length === 0 ? (
+             <p className="text-slate-400 text-center py-8">Bß║ín ch╞░a ─æß╗ìc truyß╗çn n├áo.</p>
+           ) : (
+             history.map((item) => (
+               <Link
+                 key={`${item.comicId}-${item.chapterId}`}
+-                href={`/comics/${item.comicId}/chapter/${item.chapterId}`}
++                href={ROUTES.CHAPTER_READER(item.comicId, item.chapterId)}
+                 onClick={onClose}
+                 className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition group"
+               >
+                 <div className="flex items-center gap-3">
+                   <BookOpen className="w-4 h-4 text-primary" />
+                   <div>
+                     <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-primary transition line-clamp-1">
+                       {item.comicId}
+                     </h4>
+                     <p className="text-[11px] text-slate-400">─É├ú ─æß╗ìc Ch╞░╞íng {item.chapterNumber}</p>
+diff --git a/frontend/src/components/user/UserBookmarksPageContent.tsx b/frontend/src/components/user/UserBookmarksPageContent.tsx
+index eed92c8..c7483de 100644
+--- a/frontend/src/components/user/UserBookmarksPageContent.tsx
++++ b/frontend/src/components/user/UserBookmarksPageContent.tsx
+@@ -44,29 +44,29 @@ export const UserBookmarksPageContent: React.FC = () => {
+             Kh├ím ph├í ngay
+           </Link>
+         </div>
+       ) : (
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+           {bookmarks.map((comicId) => (
+             <div
+               key={comicId}
+               className="group relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 flex flex-col"
+             >
+-              <Link href={`/comics/${comicId}`} className="block relative aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 p-4">
++              <Link href={ROUTES.COMIC_DETAIL(comicId)} className="block relative aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800 p-4">
+                 <div className="flex items-center justify-center h-full">
+                   <span className="font-bold text-xs text-slate-600 dark:text-slate-300 text-center line-clamp-3">
+                     Truyß╗çn ID: {comicId}
+                   </span>
+                 </div>
+               </Link>
+               <div className="p-3 flex flex-col flex-1 justify-between">
+-                <Link href={`/comics/${comicId}`}>
++                <Link href={ROUTES.COMIC_DETAIL(comicId)}>
+                   <h3 className="font-bold text-sm text-slate-900 dark:text-white line-clamp-1 group-hover:text-primary transition-colors">
+                     Truyß╗çn {comicId.slice(0, 8)}
+                   </h3>
+                 </Link>
+                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                   <span className="text-xs text-slate-400 font-medium">Theo d├╡i</span>
+                   <button
+                     onClick={() => removeBookmark(comicId)}
+                     className="text-xs text-rose-500 hover:underline font-semibold"
+                   >
+diff --git a/frontend/src/components/user/UserReadingHistoryPageContent.tsx b/frontend/src/components/user/UserReadingHistoryPageContent.tsx
+index e628ead..db08a77 100644
+--- a/frontend/src/components/user/UserReadingHistoryPageContent.tsx
++++ b/frontend/src/components/user/UserReadingHistoryPageContent.tsx
+@@ -55,33 +55,33 @@ export const UserReadingHistoryPageContent: React.FC = () => {
+         </div>
+       ) : (
+         <div className="space-y-3">
+           {history.map((item) => (
+             <div
+               key={`${item.comicId}-${item.chapterId}`}
+               className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-4 hover:border-primary/40 transition-all"
+             >
+               <div className="flex items-center gap-4 min-w-0">
+                 <div className="min-w-0">
+-                  <Link href={`/comics/${item.comicId}`}>
++                  <Link href={ROUTES.COMIC_DETAIL(item.comicId)}>
+                     <h3 className="font-bold text-base text-slate-900 dark:text-white truncate hover:text-primary transition-colors">
+                       Truyß╗çn {item.comicId.slice(0, 8)}
+                     </h3>
+                   </Link>
+                   <p className="text-xs font-semibold text-primary mt-1">
+                     Ch╞░╞íng {item.chapterNumber}
+                   </p>
+                 </div>
+               </div>
+ 
+               <Link
+-                href={`/comics/${item.comicId}/chapter/${item.chapterId}`}
++                href={ROUTES.CHAPTER_READER(item.comicId, item.chapterId)}
+                 className="px-4 py-2 bg-primary/10 text-primary hover:bg-primary hover:text-white rounded-xl text-xs font-bold transition-all flex-shrink-0"
+               >
+                 ─Éß╗ìc tiß║┐p
+               </Link>
+             </div>
+           ))}
+         </div>
+       )}
+     </div>
+   );
+diff --git a/frontend/src/components/user/index.ts b/frontend/src/components/user/index.ts
+index c074cda..e970ed5 100644
+--- a/frontend/src/components/user/index.ts
++++ b/frontend/src/components/user/index.ts
+@@ -1,7 +1,6 @@
+ export * from "./EditUserProfileModal";
+ export * from "./ProfilePageContent";
+ export * from "./ReadingHistoryDrawer";
+ export * from "./UserBookmarksPageContent";
+ export * from "./UserReadingHistoryPageContent";
+ export * from "./bookmark-button";
+-export * from "./reading-progress";
+diff --git a/frontend/src/components/user/reading-progress.tsx b/frontend/src/components/user/reading-progress.tsx
+deleted file mode 100644
+index 2610cd6..0000000
+--- a/frontend/src/components/user/reading-progress.tsx
++++ /dev/null
+@@ -1,19 +0,0 @@
+-"use client";
+-
+-export interface ReadingProgressProps {
+-  progressPct: number;
+-}
+-
+-export function ReadingProgress({ progressPct }: ReadingProgressProps) {
+-  const pct = Math.min(100, Math.max(0, progressPct));
+-  return (
+-    <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+-      <div
+-        className="bg-orange-500 dark:bg-[#001eff] h-full transition-all duration-300"
+-        style={{ width: `${pct}%` }}
+-      />
+-    </div>
+-  );
+-}
+-
+-export default ReadingProgress;
+diff --git a/frontend/src/hooks/features/use-admin-chapters.ts b/frontend/src/hooks/features/use-admin-chapters.ts
+index 98cb37e..955d0c5 100644
+--- a/frontend/src/hooks/features/use-admin-chapters.ts
++++ b/frontend/src/hooks/features/use-admin-chapters.ts
+@@ -123,25 +123,25 @@ export function useAdminChapters(initialComicId: string = "all") {
+       await loadInitialData();
+       setEditingChapter(null);
+       setIsModalOpen(false);
+     } catch (err) {
+       toast.error((err as Error).message || "Kh├┤ng thß╗â l╞░u ch╞░╞íng");
+     } finally {
+       setSubmitting(false);
+     }
+   };
+ 
+-  const handleDeleteChapter = async (id: string, chNum: number) => {
++  const handleDeleteChapter = async (id: string, chNum: number, storyId: string) => {
+     if (!window.confirm(`X├│a ch╞░╞íng #${chNum}?`)) return;
+ 
+     try {
+-      const res = await deleteChapter(id, targetComicId);
++      const res = await deleteChapter(id, storyId);
+       if (res.success === false) {
+         toast.error(res.error);
+         return;
+       }
+       toast.success("─É├ú x├│a ch╞░╞íng");
+       await loadInitialData();
+     } catch (err) {
+       toast.error((err as Error).message || "Kh├┤ng thß╗â x├│a ch╞░╞íng");
+     }
+   };
+diff --git a/frontend/src/hooks/features/use-admin-settings.ts b/frontend/src/hooks/features/use-admin-settings.ts
+index 4505769..ba3204f 100644
+--- a/frontend/src/hooks/features/use-admin-settings.ts
++++ b/frontend/src/hooks/features/use-admin-settings.ts
+@@ -16,22 +16,22 @@ export function useAdminSettings() {
+   const loadSettings = useCallback(async () => {
+     setLoading(true);
+     try {
+       const supabase = getSupabaseBrowserClient();
+       const { data } = await supabase.from("site_settings").select("key, value");
+ 
+       if (data && data.length > 0) {
+         data.forEach((row) => {
+           if (row.key === "site_name" && typeof row.value === "string") setSiteName(row.value);
+           if (row.key === "site_description" && typeof row.value === "string") setSiteDescription(row.value);
+-          if (row.key === "maintenance_mode") setMaintenanceMode(row.value === "true" || Boolean(row.value));
+-          if (row.key === "compact_mode") setCompactMode(row.value === "true" || Boolean(row.value));
++          if (row.key === "maintenance_mode") setMaintenanceMode(row.value === "true");
++          if (row.key === "compact_mode") setCompactMode(row.value === "true");
+         });
+       }
+     } catch (err) {
+       console.error("Failed to load site settings from server", err);
+     } finally {
+       setLoading(false);
+     }
+   }, []);
+ 
+   useEffect(() => {
+diff --git a/frontend/src/hooks/features/use-user.ts b/frontend/src/hooks/features/use-user.ts
+index 2a0ea73..98e22db 100644
+--- a/frontend/src/hooks/features/use-user.ts
++++ b/frontend/src/hooks/features/use-user.ts
+@@ -4,44 +4,61 @@ import { useEffect, useState, useCallback } from "react";
+ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+ import { ROUTES } from "@/lib/constants/routes";
+ import type { User } from "@supabase/supabase-js";
+ 
+ type ProfileRow = {
+   role: string | null;
+   full_name: string | null;
+   avatar_url: string | null;
+ };
+ 
++const ADMIN_ROLES = ["superadmin", "admin", "employee", "internal"];
++
++function resolveRole(role: unknown): string | null {
++  if (typeof role === "string" && role.trim()) {
++    return role.trim().toLowerCase();
++  }
++  return null;
++}
++
+ export function useUser() {
+   const [user, setUser] = useState<User | null>(null);
+   const [profile, setProfile] = useState<ProfileRow | null>(null);
+   const [role, setRole] = useState<string | null>("user");
+   const [isLoading, setIsLoading] = useState(true);
+ 
+   const loadSession = useCallback(async () => {
+     try {
+       const supabase = getSupabaseBrowserClient();
+       const {
+         data: { user: currentUser },
+       } = await supabase.auth.getUser();
+ 
+       if (currentUser) {
+         setUser(currentUser);
++        // Role source mirrors middleware.ts: app_metadata.role preferred
++        // (synced by the DB trigger), user_metadata fallback, profiles last.
++        const resolvedRole =
++          resolveRole(currentUser.app_metadata?.role) ??
++          resolveRole(currentUser.user_metadata?.role);
+         const { data: prof } = await supabase
+           .from("profiles")
+           .select("role, full_name, avatar_url")
+           .eq("id", currentUser.id)
+           .maybeSingle();
+ 
+         if (prof) {
+           setProfile(prof);
+-          setRole(prof.role || "user");
++          setRole(resolvedRole ?? resolveRole(prof.role) ?? "user");
++        } else {
++          setProfile(null);
++          setRole(resolvedRole ?? "user");
+         }
+       } else {
+         setUser(null);
+         setProfile(null);
+         setRole(null);
+       }
+     } catch (err) {
+       console.error("Error fetching user session:", err);
+       setUser(null);
+       setProfile(null);
+@@ -157,19 +174,19 @@ export function useUser() {
+     if (error) throw error;
+   };
+ 
+   return {
+     user,
+     profile,
+     role,
+     isLoading,
+     isAuthenticated: !!user,
+     isAdmin: role === "superadmin" || role === "admin",
+-    isStaff: role === "superadmin" || role === "admin" || role === "employee",
++    isStaff: !!role && ADMIN_ROLES.includes(role),
+     signIn,
+     signInWithEmail,
+     signInWithPassword,
+     register,
+     sendPasswordReset,
+     signOut,
+   };
+ }
+diff --git a/frontend/src/lib/actions/comic.actions.ts b/frontend/src/lib/actions/comic.actions.ts
+index 5bb9f76..cbc298e 100644
+--- a/frontend/src/lib/actions/comic.actions.ts
++++ b/frontend/src/lib/actions/comic.actions.ts
+@@ -19,20 +19,21 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
+       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dß╗» liß╗çu kh├┤ng hß╗úp lß╗ç' };
+     }
+     const db = await getServerSupabase();
+     if (!db) return { ok: false, success: false, error: 'Kh├┤ng thß╗â kß║┐t nß╗æi c╞í sß╗ƒ dß╗» liß╗çu' };
+     const { data: row, error } = await db
+       .from('stories')
+       .insert({
+         title: parsed.data.title,
+         author: parsed.data.author,
+         category: parsed.data.category,
++        description: parsed.data.description,
+         status: parsed.data.status,
+         cover_url: parsed.data.cover_url,
+       })
+       .select('id')
+       .single();
+     if (error || !row) {
+       return { ok: false, success: false, error: error?.message ?? 'Tß║ío truyß╗çn thß║Ñt bß║íi' };
+     }
+     revalidateTag(CACHE_TAGS.COMICS, 'max');
+     return { ok: true, success: true, data: { id: row.id } };
+diff --git a/frontend/src/lib/actions/settings.actions.ts b/frontend/src/lib/actions/settings.actions.ts
+index 8785595..4657f85 100644
+--- a/frontend/src/lib/actions/settings.actions.ts
++++ b/frontend/src/lib/actions/settings.actions.ts
+@@ -1,32 +1,40 @@
+ 'use server';
+ 
+ import { revalidateTag } from 'next/cache';
+ import { CACHE_TAGS } from '@/lib/constants/cache-tags';
+ import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+ import { getServerSupabase } from '@/lib/supabase/server';
+ import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
+ import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
++import { AD_SLOT_KEYS, parseSiteSettingsRows, validateAdMarkup } from '@/lib/admin/ad-policy';
+ 
+ type ActionResult<T = unknown> =
+   | { ok: true; success: true; data?: T; error?: undefined }
+   | { ok: false; success: false; error: string; data?: undefined };
+ 
+ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<ActionResult<{ count: number }>> {
+   try {
+     await requireActionRole(ACTION_ADMIN_ROLES);
+     const parsed = saveSiteSettingsSchema.safeParse(input);
+     if (!parsed.success) {
+       return { ok: false, success: false, error: parsed.error.issues[0]?.message ?? 'Dß╗» liß╗çu kh├┤ng hß╗úp lß╗ç' };
+     }
+     const db = await getServerSupabase();
+     if (!db) return { ok: false, success: false, error: 'Kh├┤ng thß╗â kß║┐t nß╗æi c╞í sß╗ƒ dß╗» liß╗çu' };
++    const { runtime, slotMarkup } = parseSiteSettingsRows(parsed.data.entries);
++    for (const key of AD_SLOT_KEYS) {
++      const validation = validateAdMarkup(slotMarkup[key], runtime);
++      if (!validation.ok) {
++        return { ok: false, success: false, error: `Ad markup policy violation (${key}): ${validation.reason}` };
++      }
++    }
+     const rows = parsed.data.entries.map((e) => ({
+       key: e.key,
+       value: e.value,
+       updated_at: new Date().toISOString(),
+     }));
+     const { error } = await db.from('site_settings').upsert(rows);
+     if (error) return { ok: false, success: false, error: error.message };
+     revalidateTag(CACHE_TAGS.SETTINGS, 'max');
+     return { ok: true, success: true, data: { count: rows.length } };
+   } catch (err) {
+diff --git a/frontend/src/lib/schemas/auth.ts b/frontend/src/lib/schemas/auth.ts
+new file mode 100644
+index 0000000..2f2f3a6
+--- /dev/null
++++ b/frontend/src/lib/schemas/auth.ts
+@@ -0,0 +1,17 @@
++import { z } from "zod";
++
++export const signInPasswordSchema = z.string().min(1, "Please enter your password");
++
++export const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
++
++export const resetPasswordSchema = z
++  .object({
++    password: passwordSchema,
++    confirmPassword: z.string(),
++  })
++  .refine((data) => data.password === data.confirmPassword, {
++    message: "Password confirmation does not match",
++    path: ["confirmPassword"],
++  });
++
++export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+diff --git a/frontend/src/lib/schemas/comic.ts b/frontend/src/lib/schemas/comic.ts
+index 1eeabec..c81cfc9 100644
+--- a/frontend/src/lib/schemas/comic.ts
++++ b/frontend/src/lib/schemas/comic.ts
+@@ -1,16 +1,23 @@
+ import { z } from 'zod';
+ 
++export const COMIC_STATUSES = [
++  'draft',
++  'published',
++  'ongoing',
++  'completed',
++  'archived',
++] as const;
++
+ export const createComicSchema = z.object({
+   title: z.string().min(1, 'Ti├¬u ─æß╗ü kh├┤ng ─æ╞░ß╗úc ─æß╗â trß╗æng'),
+   author: z.string().optional().default(''),
+   category: z.string().optional().default(''),
+-  status: z
+-    .enum(['ongoing', 'completed', 'dropped', 'draft', 'published'])
+-    .default('published'),
++  description: z.string().optional().default(''),
++  status: z.enum(COMIC_STATUSES).default('published'),
+   cover_url: z.string().optional().default(''),
+ });
+ 
+ export const updateComicSchema = createComicSchema.partial();
+ 
+ export type CreateComicInput = z.input<typeof createComicSchema>;
+ export type UpdateComicInput = z.input<typeof updateComicSchema>;
+diff --git a/frontend/src/services/comics/story.service.ts b/frontend/src/services/comics/story.service.ts
+index 6350967..8d42bc6 100644
+--- a/frontend/src/services/comics/story.service.ts
++++ b/frontend/src/services/comics/story.service.ts
+@@ -59,20 +59,34 @@ export async function fetchStoryById(id: string): Promise<Story | null> {
+         .from('stories')
+         .select('*')
+         .eq('id', id)
+         .maybeSingle();
+       if (data) return data as Story;
+     } catch {}
+   }
+   return null;
+ }
+ 
++export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
++  if (!ids.length) return [];
++  if (supabase) {
++    try {
++      const { data } = await supabase
++        .from('stories')
++        .select('*')
++        .in('id', ids);
++      if (data) return data as Story[];
++    } catch {}
++  }
++  return [];
++}
++
+ export async function incrementViews(storyId: string): Promise<void> {
+   try {
+     await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
+   } catch (err) {
+     if (supabase) {
+       try {
+         await supabase.rpc('increment_story_views', { story_id: storyId });
+       } catch {}
+     }
+   }
+diff --git a/tasks/reports/task-9a-report.md b/tasks/reports/task-9a-report.md
+new file mode 100644
+index 0000000..49724aa
+--- /dev/null
++++ b/tasks/reports/task-9a-report.md
+@@ -0,0 +1,38 @@
++# Task 9a Report ΓÇö Fix Batch 3a (auth Zod schema + duplicate metadata)
++
++Date: 2026-08-09 ┬╖ Implementer: opencode agent
++
++## M9 ΓÇö Manual auth password validation (ResetPasswordPage + login-modal)
++
++**Before:** `ResetPasswordPage.tsx:40-48` hand-rolled `password.length < 6` / `password !== confirmPassword` checks; `login-modal.tsx:61-64` (`!password`) and `:74-81` (min-length + match) did the same inline. No shared auth schema existed.
++
++**After:** New `frontend/src/lib/schemas/auth.ts` (no `'use server'`, zod v4 per repo convention, style mirrored from `schemas/user.ts`):
++
++- `signInPasswordSchema` ΓÇö `min(1, "Please enter your password")`
++- `passwordSchema` ΓÇö `min(6, "Password must be at least 6 characters")`
++- `resetPasswordSchema` ΓÇö `{ password: passwordSchema, confirmPassword: string }` + `.refine(password === confirmPassword, { message: "Password confirmation does not match", path: ["confirmPassword"] })`
++- `ResetPasswordInput` type export
++
++Wiring:
++- `ResetPasswordPage.tsx`: `handleSubmit` parses `resetPasswordSchema.safeParse({ password, confirmPassword })`, toasts `issues[0].message` on failure. Object field order preserves prior behavior (length checked before match).
++- `login-modal.tsx`: signin mode parses `signInPasswordSchema` (preserves the distinct "Please enter your password" message ΓÇö an empty password would otherwise surface the min-6 message, changing existing copy); register mode parses `resetPasswordSchema` (covers both length + match in one parse). Full-name check left inline (not a password rule, out of scope).
++
++**Validation-coverage audit (login-modal):** Rules found were exactly: required password (signin), min 6 chars (register), confirm-match (register). No special-character/uppercase/number rules exist anywhere, so nothing was weakened and nothing extra needed porting. All user-facing messages byte-identical to prior copy.
++
++## M10 ΓÇö Duplicate generateMetadata on comic detail
++
++**Before:** `(public)/comics/[comicId]/page.tsx:5-36` and `[comicId]/layout.tsx:7-39` both exported `generateMetadata`, each doing its own `stories` Supabase query ΓåÆ 2 DB hits per view.
++
++**After:** Removed `generateMetadata` + now-unused imports (`Metadata`, `getServerSupabase`) from `page.tsx`; it renders `<ComicDetailPageContent />` only. Kept the layout's metadata (fuller title/description/OG set). One query per view.
++
++## Verification
++
++- `npm run build` ΓÇö passed (all routes compiled, output shown to end).
++- `npm run test:run` ΓÇö 45 files / 385 tests passed.
++- `npm run lint` ΓÇö "Lint ok" (no-op script).
++- Commit: `bf08310` (message: `fix(app): shared zod auth schema, drop duplicate comic metadata`)
++
++## Concerns
++
++- `opencode.json` shows as modified in `git status` but was modified before this session; not touched, not staged.
++- Signin's required-password check needed a separate `signInPasswordSchema` (not the min-6 `passwordSchema`) purely to keep the existing message; both live in `auth.ts` so future consolidation is one export away.
+diff --git a/tasks/reports/task-9c-report.md b/tasks/reports/task-9c-report.md
+new file mode 100644
+index 0000000..1d66ac5
+--- /dev/null
++++ b/tasks/reports/task-9c-report.md
+@@ -0,0 +1,115 @@
++# Task 9c Report ΓÇö Fix Batch 3c: admin role source + comic CRUD pages
++
++- Date: 2026-08-09
++- Scope: M12, M13, M14, M15, F16, F17
++- Workdir: `D:\Light-Story\frontend`
++
++## Summary
++
++All acceptance criteria met. `npm run build` and `npm run test:run` both green.
++Commit: see bottom of report (task-9c).
++
++## Description decision (brief required evidence)
++
++**Decision: ADD description to create/update flow ΓÇö the story model supports it.**
++
++Evidence:
++- `src/types/entities.ts:6` ΓÇö `Story.description: string` (stories table row type).
++- `src/lib/schemas/admin-stories.ts:20` ΓÇö `updateStorySchema` includes `description: z.string()`, sent to the gateway in `src/actions/admin-stories.actions.ts:88`.
++- `src/services/comics/comicCms.service.ts` ΓÇö `ComicDbRow.description` (:65); `createComicFromMetadata` POSTs description (:292); `updateComicRecord` PATCHes description (:310).
++- `src/services/comics/comic.service.ts:11,23` ΓÇö `ComicContext.description`; `createComic` POSTs `description` (:195).
++- `src/lib/schemas/comic-cms-schemas.ts:38` ΓÇö `description` in `ComicCmsFormSchema`.
++- The edit page already read `data.description` from `stories` (dead on write ΓÇö the bug).
++
++The backend/gateway + DB model accept description on both create and update, so the
++correct fix is wiring it through, not deleting the field.
++
++## Per-finding before/after
++
++### M12 ΓÇö `(admin)/layout.tsx` / `use-user.ts`: role source mismatch
++
++**Before:** `use-user.ts:29-38` resolved role only from `profiles.role`;
++`app_metadata.role` (the source synced by the DB trigger and used by
++`permission.ts:37-40` + `middleware.ts:86-88`) was never consulted ΓåÆ admin gate
++could disagree with the server-side guard. `isStaff` also omitted `internal`,
++which middleware's `ADMIN_ROLES` allows.
++
++**After:** `src/hooks/features/use-user.ts` mirrors the middleware pattern:
++`app_metadata.role` preferred ΓåÆ `user_metadata.role` fallback ΓåÆ `profiles.role`
++last (normalized trim/lowercase). `isStaff` now uses
++`ADMIN_ROLES = ["superadmin","admin","employee","internal"]`, matching
++`middleware.ts:5`. `(admin)/layout.tsx` unchanged (its role source is `useUser().isStaff`).
++
++### M13 ΓÇö `admin/comics/new/page.tsx`: dead `description` state
++
++**Before:** `description` state existed but was never passed to `createComic`
++(`:20` submitted `{ title, author, status }` only).
++
++**After:** `description` is included in the `createComic` payload. Schema
++(`lib/schemas/comic.ts`) gained `description: z.string().optional().default('')`;
++action (`comic.actions.ts`) inserts `description` into `stories`.
++
++### F16 ΓÇö same file: hardcoded `status: 'ongoing'`
++
++**Before:** `status: 'ongoing'` hardcoded in the submit call.
++
++**After:** Added a status `<select>` (plain `<select>`, matching the textarea
++styling in the file; no UI Select component exists). Backed by a new exported
++`COMIC_STATUSES` constant in `lib/schemas/comic.ts`. The schema's status enum
++was also unified from `['ongoing','completed','dropped','draft','published']`
++to the canonical `['draft','published','ongoing','completed','archived']`
++(`dropped` exists nowhere else ΓÇö `Story`/`comic-cms-schemas`/`admin-stories`/
++`story-form` all use the archived set; `dropped` would write an invalid value).
++Default in the form stays `'ongoing'` (preserves prior behavior).
++
++### F17 ΓÇö same file: silent `createComic` failure
++
++**Before:** `if (res.success) router.push(...)` ΓÇö failures silently did nothing.
++
++**After:** `sonner` toast (pattern from `admin/chapters/[chapterId]/page.tsx:73-78`):
++`toast.success` on success, `toast.error(res.error)` on failure, `try/catch`
++with `finally` resetting `isSubmitting`.
++
++### M14 ΓÇö `admin/comics/[comicId]/page.tsx`: inline supabase read, no loading/error
++
++**Before:** inline `useEffect` ΓåÆ `supabase.from('stories').select('*')` with no
++loading or error state; a failed fetch silently rendered an empty form.
++
++**After:** read moved to the existing `fetchStoryById` service
++(`src/services/comics/story.service.ts:48` ΓÇö apiClient with Supabase fallback,
++the same service used by `useComicDetailPresenter`/`useStoryDetail`; no new
++service needed). Added `isLoading` state (pulse "─Éang tß║úiΓÇª" placeholder),
++`error` state + retry button (renders "Kh├┤ng t├¼m thß║Ñy truyß╗çn" on null or the
++error message), so a failed fetch never shows a silent empty form.
++
++### M15 ΓÇö same file: `description` edits discarded
++
++**Before:** form edited `description` but submit called
++`updateComic(comicId, { title, author })` ΓÇö edits silently lost.
++
++**After:** `updateComic(comicId, { title, author, description })`. Flow-through
++is automatic: `updateComicSchema = createComicSchema.partial()` now includes
++`description`, and the action spreads `parsed.data` into the update. Submit also
++gains the same toast error/success feedback as the new page (prevents silent
++submit failures).
++
++## Test outputs
++
++```
++> next build
++Γ£ô Compiled successfully in 6.5s
++Γ£ô Finished TypeScript in 8.8s
++Γ£ô Generating static pages (41/41)
++All routes compiled (incl. /admin/comics/new, /admin/comics/[comicId])
++```
++
++```
++> vitest run
++Test Files  45 passed (45)
++     Tests  385 passed (385)
++  Duration  28.47s
++```
++
++## Commit
++
++`f3a877c` ΓÇö `fix(admin): align admin role source with app_metadata, fix comic create/edit pages (task 9c)` (pre-commit lint hook passed).

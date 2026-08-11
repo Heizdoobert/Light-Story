@@ -1,16 +1,25 @@
 import { z } from 'zod';
 
-export const BookmarkDTOSchema = z.object({
-  comicId: z.string().min(1, 'Comic ID required'),
+const idField = z.string().min(1, 'ID required');
+
+// Worker responses are untrusted third-party data; validate at the boundary.
+// Both snake_case (worker) and camelCase (in-memory) shapes are tolerated.
+const BookmarkRowSchema = z.object({
+  comicId: idField.optional(),
+  comic_id: idField.optional(),
 });
 
-export const HistoryItemDTOSchema = z.object({
-  comicId: z.string().min(1, 'Comic ID required'),
-  chapterId: z.string().min(1, 'Chapter ID required'),
-  chapterNumber: z.number().positive('Chapter number must be positive'),
-  progressPct: z.number().min(0).max(100).optional(),
+const HistoryItemRowSchema = z.object({
+  comicId: idField.optional(),
+  comic_id: idField.optional(),
+  chapterId: idField.optional(),
+  chapter_id: idField.optional(),
+  chapterNumber: z.number().nonnegative().optional(),
+  chapter_number: z.number().nonnegative().optional(),
   updatedAt: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 
-export type BookmarkDTO = z.infer<typeof BookmarkDTOSchema>;
-export type HistoryItemDTO = z.infer<typeof HistoryItemDTOSchema>;
+export const BookmarkListSchema = z.array(BookmarkRowSchema);
+
+export const HistoryItemListSchema = z.array(HistoryItemRowSchema);

@@ -1,5 +1,8 @@
 import { apiClient } from '@/lib/api/apiClient';
-import { supabase } from '@/infrastructure/supabase/client';
+import { ROUTES } from '@/lib/constants/routes';
+import { supabase } from '@/lib/supabase/client';
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
+import { decodeJwtPayload } from '@/lib/utils/jwt';
 
 export type ComicContext = {
   id: string;
@@ -43,6 +46,7 @@ type ChapterCreateResponse = {
     title: string;
     content: string;
     view_count: number;
+    status: 'uploading' | 'draft' | 'published';
   };
 };
 
@@ -54,9 +58,10 @@ type UploadOptions = {
   comicId?: string;
   chapterNumber?: number;
   userId?: string;
+  maxSize?: number;
 };
 
-async function convertToWebP(file: File): Promise<File> {
+async function convertToWebP(file: File, maxSize?: number): Promise<File> {
   const ext = file.name.split('.').pop()?.toLowerCase();
   if (!ext || !['jpg', 'jpeg', 'png', 'webp', 'avif', 'tiff'].includes(ext)) return file;
 
@@ -65,11 +70,17 @@ async function convertToWebP(file: File): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    if (maxSize) {
+      const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    } else {
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+    }
     const ctx = canvas.getContext('2d');
     if (!ctx) { bitmap.close(); return file; }
-    ctx.drawImage(bitmap, 0, 0);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
 
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/webp', 0.85));
@@ -81,7 +92,7 @@ async function convertToWebP(file: File): Promise<File> {
   }
 }
 
-async function uploadFilesToR2(bucket: string, files: File[], options: UploadOptions = {}): Promise<string[]> {
+async function uploadFilesToR2(bucket: string | undefined, files: File[], options: UploadOptions = {}): Promise<string[]> {
   const allowDevFallback = process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK === 'true';
 
   if (!bucket) {
@@ -91,7 +102,7 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
     return makeDevUrls(files);
   }
 
-  const webpFiles = await Promise.all(files.map(convertToWebP));
+  const webpFiles = await Promise.all(files.map((f) => convertToWebP(f, options.maxSize)));
   const form = new FormData();
   webpFiles.forEach((file) => form.append('file', file));
   if (options.folder) form.append('folder', options.folder);
@@ -105,7 +116,7 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
     if (token) headers['Authorization'] = `Bearer ${token}`;
     headers['x-r2-bucket'] = bucket;
 
-    const response = await fetch(`${getGatewayUrl()}/api/admin/r2/upload`, {
+    const response = await fetch(`${getGatewayUrl()}${ROUTES.API.ADMIN.R2_UPLOAD_GATEWAY}`, {
       method: 'POST',
       headers,
       body: form,
@@ -123,23 +134,11 @@ async function uploadFilesToR2(bucket: string, files: File[], options: UploadOpt
   }
 }
 
-function getGatewayUrl(): string {
-  if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL || 'https://kv-worker.hhhuygiau.workers.dev';
-  }
-  return process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:8787';
-}
-
 function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp ? now >= payload.exp - 10 : true;
-  } catch {
-    return true;
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp ? now >= payload.exp - 10 : true;
 }
 
 export async function getAccessToken(): Promise<string | null> {
@@ -172,19 +171,21 @@ export async function getAccessToken(): Promise<string | null> {
 }
 
 export async function uploadComicCover(cover: File, comicId?: string): Promise<string> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS || 'covers';
-  const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId });
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS;
+  // ponytail: covers render at <=300 CSS px (3x DPR = 900px); 1000px long edge is the ceiling
+  const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId, maxSize: 1000 });
   if (urls.length === 0) throw new Error('Unable to upload comic cover');
   return urls[0];
 }
 
 export async function uploadChapterImages(images: File[], comicId?: string, chapterNumber?: number): Promise<string[]> {
-  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS || 'chapters';
-  return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber });
+  const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
+  // ponytail: 1920px long edge covers full-width 2x readers; raise if hi-dpi zoom matters
+  return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber, maxSize: 1920 });
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {
-  const result = await apiClient.post<any>('/api/comics', {
+  const result = await apiClient.post<ComicContext[] | { comic?: ComicContext }>(ROUTES.API.COMICS, {
     title: input.title,
     description: input.description,
     cover_url: input.coverUrl,
@@ -198,7 +199,7 @@ export async function createComic(input: CreateComicInput): Promise<ComicContext
 }
 
 export async function createComicChapter(input: ChapterCreateInput): Promise<ChapterCreateResponse['chapter']> {
-  const result = await apiClient.post<any>(`/api/comics/${input.comicId}/chapters`, {
+  const result = await apiClient.post<ChapterCreateResponse['chapter'][] | { chapter?: ChapterCreateResponse['chapter'] }>(ROUTES.API.COMIC_CHAPTERS(input.comicId), {
     storyId: input.storyId,
     tenantKey: input.tenantKey,
     chapterNumber: input.chapterNumber,
@@ -212,10 +213,10 @@ export async function createComicChapter(input: ChapterCreateInput): Promise<Cha
 
 export async function getRecommendations(comicId: string, limit = 6): Promise<ComicContext[]> {
   try {
-    const res = await apiClient.get<ComicContext[]>(`/api/comics/recommendations?comicId=${encodeURIComponent(comicId)}&limit=${limit}`);
+    const res = await apiClient.get<ComicContext[]>(ROUTES.API.COMICS_RECOMMENDATIONS(comicId, limit));
     return Array.isArray(res) ? res : [];
   } catch {
-    const fallback = await apiClient.get<any>(`/api/comics?sort=most_viewed&limit=${limit}`).catch(() => []);
+    const fallback = await apiClient.get<any>(ROUTES.API.COMICS_MOST_VIEWED(limit)).catch(() => []);
     return Array.isArray(fallback) ? fallback : fallback?.items || fallback?.comics || [];
   }
 }

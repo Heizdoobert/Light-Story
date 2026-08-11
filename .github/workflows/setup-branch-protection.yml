@@ -27,7 +27,9 @@ jobs:
               "strict": true,
               "contexts": [
                 "Frontend Lint and Build",
-                "Backend Structure Validation"
+                "Backend Structure Validation",
+                "Worker Type-Check (kv-worker)",
+                "light-story-ci"
               ]
             },
             "enforce_admins": false,

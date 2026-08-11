@@ -95,16 +95,29 @@ language plpgsql
 security definer
 set search_path = public
 as $$
+declare
+  assigned_role text;
 begin
+  assigned_role := coalesce(nullif(new.raw_user_meta_data ->> 'role', ''), 'user');
+  if assigned_role not in ('superadmin', 'admin', 'employee', 'user', 'haunt') then
+    assigned_role := 'user';
+  end if;
+
   insert into public.profiles (id, email, full_name, avatar_url, role)
   values (
     new.id,
     new.email,
     new.raw_user_meta_data ->> 'full_name',
     new.raw_user_meta_data ->> 'avatar_url',
-    'user'
+    assigned_role
   )
-  on conflict (id) do nothing;
+  on conflict (id) do update
+  set role = case 
+        when excluded.role <> 'user' then excluded.role 
+        else public.profiles.role 
+      end,
+      full_name = coalesce(excluded.full_name, public.profiles.full_name),
+      avatar_url = coalesce(excluded.avatar_url, public.profiles.avatar_url);
   return new;
 end;
 $$;
@@ -1038,7 +1051,7 @@ create table if not exists public.transactions (
 create table if not exists public.comments (
 	id uuid primary key default gen_random_uuid(),
 	story_id uuid not null references public.stories(id) on delete cascade,
-	user_id uuid not null references public.profiles(id) on delete cascade,
+	author_id uuid not null references public.profiles(id) on delete cascade,
 	parent_id uuid references public.comments(id) on delete cascade,
 	body text not null,
 	status text not null default 'visible' check (status in ('visible', 'hidden', 'deleted', 'flagged')),
@@ -1242,20 +1255,22 @@ with check (
 	app_private.has_role(array['superadmin', 'admin']::text[])
 );
 
+drop policy if exists "comments_select_public" on public.comments;
 create policy "comments_select_public"
 on public.comments
 for select
-using (status = 'visible' or user_id = auth.uid());
+using (status = 'visible' or author_id = auth.uid());
 
+drop policy if exists "comments_write_own_or_staff" on public.comments;
 create policy "comments_write_own_or_staff"
 on public.comments
 for all
 using (
-	user_id = auth.uid()
+	author_id = auth.uid()
 	or app_private.has_role(array['superadmin', 'admin', 'employee']::text[])
 )
 with check (
-	user_id = auth.uid()
+	author_id = auth.uid()
 	or app_private.has_role(array['superadmin', 'admin', 'employee']::text[])
 );
 
@@ -2178,6 +2193,10 @@ CREATE TABLE IF NOT EXISTS public.stories (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Fresh-install guard: V1 stories may already exist; ensure V2 columns are present
+ALTER TABLE public.stories ADD COLUMN IF NOT EXISTS summary text;
+ALTER TABLE public.stories ADD COLUMN IF NOT EXISTS search_vector vector(1536);
+
 -- 3) Chapters table
 CREATE TABLE IF NOT EXISTS public.chapters (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2191,6 +2210,10 @@ CREATE TABLE IF NOT EXISTS public.chapters (
   updated_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (story_id, chapter_number)
 );
+
+-- Fresh-install guard: V1 chapters may already exist; ensure V2 columns are present
+ALTER TABLE public.chapters ADD COLUMN IF NOT EXISTS vip_content boolean NOT NULL DEFAULT false;
+ALTER TABLE public.chapters ADD COLUMN IF NOT EXISTS published_at timestamptz;
 
 -- 4) RLS: enable on both tables
 ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
@@ -3009,11 +3032,11 @@ create policy "admin_read_recruitment_invites"
 -- Migration: 20260628154354_audit_logs_rls_staff.sql
 
 -- Enable RLS on audit_logs (already enabled, idempotent)
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Allow staff to INSERT audit entries
-DROP POLICY IF EXISTS audit_logs_insert_staff ON public.audit_logs;
-CREATE POLICY audit_logs_insert_staff ON public.audit_logs
+DROP POLICY IF EXISTS audit_logs_insert_staff ON public.admin_audit_logs;
+CREATE POLICY audit_logs_insert_staff ON public.admin_audit_logs
   FOR INSERT
   TO authenticated
   WITH CHECK (
@@ -3025,8 +3048,8 @@ CREATE POLICY audit_logs_insert_staff ON public.audit_logs
   );
 
 -- Allow staff to SELECT audit entries
-DROP POLICY IF EXISTS audit_logs_select_staff ON public.audit_logs;
-CREATE POLICY audit_logs_select_staff ON public.audit_logs
+DROP POLICY IF EXISTS audit_logs_select_staff ON public.admin_audit_logs;
+CREATE POLICY audit_logs_select_staff ON public.admin_audit_logs
   FOR SELECT
   TO authenticated
   USING (

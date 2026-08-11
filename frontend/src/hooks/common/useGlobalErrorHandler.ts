@@ -59,26 +59,6 @@ export const isSupabaseConnectionError = (error: unknown): boolean => {
   return false;
 };
 
-/**
- * Get human-readable error message for Supabase errors.
- */
-export const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) {
-    if (isSupabaseConnectionError(error)) {
-      return 'Unable to connect to the server. Please check your network connection and try again.';
-    }
-    if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-      return 'Your session has expired. Please sign in again.';
-    }
-    if (error.message.includes('403') || error.message.includes('Forbidden')) {
-      return 'You do not have permission to perform this action.';
-    }
-    if (error.message.includes('404') || error.message.includes('Not Found')) {
-      return 'The requested resource was not found.';
-    }
-    if (process.env.NODE_ENV === 'development') {
-      return error.message;
-    }
-  }
-  return 'An unexpected error occurred. Please try again or contact support.';
-};
+// ponytail: single canonical implementation in lib/utils/error-utils — re-exported
+// here so the hooks/common barrel surface stays stable.
+export { getErrorMessage } from '@/lib/utils/error-utils';

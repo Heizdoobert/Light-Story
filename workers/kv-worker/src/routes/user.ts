@@ -18,18 +18,104 @@ export async function handleUserRequest(
 
   try {
     if (method === 'GET' && pathname === '/user/bookmarks') {
+      const pageSize = Math.min(
+        100,
+        Math.max(1, parseInt(new URL(request.url).searchParams.get('pageSize') || '50')),
+      );
       const res = await sbGet(
         'bookmarks',
-        `user_id=eq.${userId}&select=comic_id,created_at&order=created_at.desc`,
+        `user_id=eq.${userId}&select=comic_id,created_at&order=created_at.desc&limit=${pageSize}`,
         env,
         token,
       );
       return handleRes(res);
     }
 
+    if (method === 'POST' && pathname === '/user/bookmarks/add') {
+      const body = (await request.json()) as { comicId?: string };
+      if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
+
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (!Array.isArray(existing) || existing.length === 0) {
+        await sbPost('bookmarks', { user_id: userId, comic_id: body.comicId }, env, token);
+      }
+      return json({ bookmarked: true });
+    }
+
+    if (method === 'POST' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
+      const comicId = pathname.split('/')[3];
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (!Array.isArray(existing) || existing.length === 0) {
+        await sbPost('bookmarks', { user_id: userId, comic_id: comicId }, env, token);
+      }
+      return json({ bookmarked: true });
+    }
+
+    if (method === 'DELETE' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
+      const comicId = pathname.split('/')[3];
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        await sb(
+          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          { method: 'DELETE' },
+          env,
+          token,
+        );
+      }
+      return json({ bookmarked: false });
+    }
+
+    if (method === 'POST' && pathname === '/user/bookmarks/remove') {
+      const body = (await request.json()) as { comicId?: string };
+      if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
+
+      const existing = await (
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
+          },
+        })
+      ).json();
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        await sb(
+          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          { method: 'DELETE' },
+          env,
+          token,
+        );
+      }
+      return json({ bookmarked: false });
+    }
+
     if (method === 'POST' && pathname === '/user/bookmarks/toggle') {
       const body = (await request.json()) as { comicId?: string };
-      if (!body.comicId) return err('BAD_REQUEST', 'comicId required', 400);
+      if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
 
       const existing = await (
         await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
@@ -55,9 +141,13 @@ export async function handleUserRequest(
     }
 
     if (method === 'GET' && pathname === '/user/history') {
+      const pageSize = Math.min(
+        100,
+        Math.max(1, parseInt(new URL(request.url).searchParams.get('pageSize') || '50')),
+      );
       const res = await sbGet(
         'reading_history',
-        `user_id=eq.${userId}&select=comic_id,chapter_id,chapter_number,updated_at&order=updated_at.desc&limit=50`,
+        `user_id=eq.${userId}&select=comic_id,chapter_id,chapter_number,updated_at&order=updated_at.desc&limit=${pageSize}`,
         env,
         token,
       );
@@ -66,7 +156,7 @@ export async function handleUserRequest(
 
     if (method === 'POST' && pathname === '/user/history') {
       const body = (await request.json()) as { comicId?: string; chapterId?: string; chapterNumber?: number };
-      if (!body.comicId) return err('BAD_REQUEST', 'comicId required', 400);
+      if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
 
       const payload: Record<string, unknown> = {
         user_id: userId,

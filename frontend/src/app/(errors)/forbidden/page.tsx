@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
+import { ROUTES } from '@/lib/constants/routes';
 
 export default function ForbiddenAliasPage() {
-  redirect('/handle-exception/403');
+  redirect(ROUTES.ERROR.FORBIDDEN);
 }

@@ -1,4 +1,7 @@
+import { ROUTES } from '@/lib/constants/routes';
 import { apiClient } from '@/lib/api/apiClient';
+import { getAccessToken } from '../comics/comic.service';
+import { BookmarkListSchema, HistoryItemListSchema } from '@/types/readerHub.dto';
 
 const BOOKMARKS_KEY = 'reader:bookmarks';
 const HISTORY_KEY = 'reader:history';
@@ -20,11 +23,6 @@ function getLocalBookmarks(): string[] {
   }
 }
 
-function setLocalBookmarks(list: string[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(list));
-}
-
 function getLocalHistory(): HistoryItem[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -42,41 +40,52 @@ function setLocalHistory(list: HistoryItem[]): void {
 
 export async function getBookmarks(): Promise<string[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/user/bookmarks').catch(() => null);
-    if (Array.isArray(res)) return res.map((item) => item.comic_id || item.comicId);
-  } catch {}
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiClient.get<unknown[]>(ROUTES.API.USER.BOOKMARKS);
+      const parsed = BookmarkListSchema.safeParse(Array.isArray(res) ? res : []);
+      if (parsed.success) {
+        return parsed.data.map((item) => item.comic_id || item.comicId || '');
+      }
+      // Contract violation: the worker returned data that fails boundary validation.
+      // Don't silently serve stale local data as if nothing went wrong.
+      console.error('[readerHub] bookmarks response failed validation', parsed.error);
+    }
+  } catch {
+    // Network/auth failure → offline path, fall back to local cache (intentional).
+  }
   return getLocalBookmarks();
-}
-
-export async function toggleBookmark(comicId: string): Promise<boolean> {
-  const local = getLocalBookmarks();
-  const exists = local.includes(comicId);
-
-  await apiClient.post('/api/user/bookmarks/toggle', { comicId }).catch(() => null);
-
-  const updated = exists ? local.filter((id) => id !== comicId) : [...local, comicId];
-  setLocalBookmarks(updated);
-  return !exists;
 }
 
 export async function getReadingHistory(): Promise<HistoryItem[]> {
   try {
-    const res = await apiClient.get<any[]>('/api/user/history').catch(() => null);
-    if (Array.isArray(res)) {
-      return res.map((item) => ({
-        comicId: item.comic_id || item.comicId,
-        chapterId: item.chapter_id || item.chapterId,
-        chapterNumber: item.chapter_number || item.chapterNumber || 1,
-        updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
-      }));
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiClient.get<unknown[]>(ROUTES.API.USER.HISTORY);
+      const parsed = HistoryItemListSchema.safeParse(Array.isArray(res) ? res : []);
+      if (parsed.success) {
+        return parsed.data.map((item) => ({
+          comicId: item.comic_id || item.comicId || '',
+          chapterId: item.chapter_id || item.chapterId || '',
+          chapterNumber: item.chapter_number ?? item.chapterNumber ?? 1,
+          updatedAt: item.updated_at || item.updatedAt || new Date().toISOString(),
+        }));
+      }
+      // Contract violation: worker returned data that fails boundary validation.
+      console.error('[readerHub] history response failed validation', parsed.error);
     }
-  } catch {}
+  } catch {
+    // Network/auth failure → offline path, fall back to local cache (intentional).
+  }
   return getLocalHistory();
 }
 
-export async function recordReadingHistory(comicId: string, chapterId: string, chapterNumber: number): Promise<void> {
-  await apiClient.post('/api/user/history', { comicId, chapterId, chapterNumber }).catch(() => {});
-
+export function mirrorReadingHistory(item: {
+  comicId: string;
+  chapterId: string;
+  chapterNumber: number;
+}): void {
+  const { comicId, chapterId, chapterNumber } = item;
   const history = getLocalHistory().filter((h) => h.comicId !== comicId);
   const newItem: HistoryItem = {
     comicId,

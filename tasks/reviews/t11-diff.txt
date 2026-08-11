@@ -1,0 +1,557 @@
+﻿diff --git a/frontend/src/app/(public)/auth/forgetPassword/page.tsx b/frontend/src/app/(public)/auth/forgetPassword/page.tsx
+index f0f1884..e98c776 100644
+--- a/frontend/src/app/(public)/auth/forgetPassword/page.tsx
++++ b/frontend/src/app/(public)/auth/forgetPassword/page.tsx
+@@ -1,8 +1,13 @@
++import type { Metadata } from "next";
++import { ForgetPasswordForm } from "@/components/auth/ForgetPasswordForm";
++
++export function generateMetadata(): Metadata {
++  return {
++    title: "Qu├¬n mß║¡t khß║⌐u",
++    description: "Kh├┤i phß╗Ñc mß║¡t khß║⌐u t├ái khoß║ún Light Story cß╗ºa bß║ín qua email.",
++  };
++}
++
+ export default function ForgetPasswordPage() {
+-  return (
+-    <main className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Qu├¬n mß║¡t khß║⌐u</h1>
+-      <p className="mt-2 text-sm text-slate-500">T├¡nh n─âng kh├┤i phß╗Ñc mß║¡t khß║⌐u ─æang ─æ╞░ß╗úc ph├ít triß╗ân.</p>
+-    </main>
+-  );
++  return <ForgetPasswordForm />;
+ }
+diff --git a/frontend/src/app/(public)/auth/login/page.tsx b/frontend/src/app/(public)/auth/login/page.tsx
+index 2d32f2d..82ef5e8 100644
+--- a/frontend/src/app/(public)/auth/login/page.tsx
++++ b/frontend/src/app/(public)/auth/login/page.tsx
+@@ -1,8 +1,13 @@
++import type { Metadata } from "next";
++import { LoginForm } from "@/components/auth/LoginForm";
++
++export function generateMetadata(): Metadata {
++  return {
++    title: "─É─âng nhß║¡p",
++    description: "─É─âng nhß║¡p v├áo Light Story ─æß╗â tiß║┐p tß╗Ñc trß║úi nghiß╗çm truyß╗çn cß╗ºa bß║ín.",
++  };
++}
++
+ export default function LoginPage() {
+-  return (
+-    <main className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">─É─âng nhß║¡p</h1>
+-      <p className="mt-2 text-sm text-slate-500">Vui l├▓ng sß╗¡ dß╗Ñng n├║t ─æ─âng nhß║¡p ß╗ƒ g├│c tr├¬n b├¬n phß║úi.</p>
+-    </main>
+-  );
++  return <LoginForm />;
+ }
+diff --git a/frontend/src/app/(public)/auth/register/page.tsx b/frontend/src/app/(public)/auth/register/page.tsx
+index aaf081a..2461be2 100644
+--- a/frontend/src/app/(public)/auth/register/page.tsx
++++ b/frontend/src/app/(public)/auth/register/page.tsx
+@@ -1,8 +1,13 @@
++import type { Metadata } from "next";
++import { RegisterForm } from "@/components/auth/RegisterForm";
++
++export function generateMetadata(): Metadata {
++  return {
++    title: "─É─âng k├╜",
++    description: "Tß║ío t├ái khoß║ún Light Story ─æß╗â theo d├╡i v├á l╞░u truyß╗çn y├¬u th├¡ch.",
++  };
++}
++
+ export default function RegisterPage() {
+-  return (
+-    <main className="min-h-[50vh] flex flex-col items-center justify-center p-6 text-center">
+-      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">─É─âng k├╜</h1>
+-      <p className="mt-2 text-sm text-slate-500">Vui l├▓ng sß╗¡ dß╗Ñng n├║t ─æ─âng nhß║¡p ß╗ƒ g├│c tr├¬n b├¬n phß║úi ─æß╗â tß║ío t├ái khoß║ún.</p>
+-    </main>
+-  );
++  return <RegisterForm />;
+ }
+diff --git a/frontend/src/components/auth/AuthFormShell.tsx b/frontend/src/components/auth/AuthFormShell.tsx
+new file mode 100644
+index 0000000..6b4ce76
+--- /dev/null
++++ b/frontend/src/components/auth/AuthFormShell.tsx
+@@ -0,0 +1,93 @@
++"use client";
++
++import type { ReactNode } from "react";
++import type { LucideIcon } from "lucide-react";
++import { Loader2 } from "lucide-react";
++
++const inputClass =
++  "w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-2 border-slate-100 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500";
++
++export function AuthField({
++  label,
++  icon: Icon,
++  ...props
++}: {
++  label: string;
++  icon?: LucideIcon;
++} & React.InputHTMLAttributes<HTMLInputElement>) {
++  return (
++    <div>
++      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
++        {label}
++      </label>
++      <div className="relative mt-2">
++        {Icon && (
++          <Icon size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
++        )}
++        <input className={inputClass} {...props} />
++      </div>
++    </div>
++  );
++}
++
++export function AuthFormShell({
++  title,
++  subtitle,
++  submitLabel,
++  submitIcon: SubmitIcon,
++  isSubmitting,
++  onSubmit,
++  footer,
++  children,
++}: {
++  title: string;
++  subtitle: string;
++  submitLabel: string;
++  submitIcon: LucideIcon;
++  isSubmitting: boolean;
++  onSubmit: (e: React.FormEvent) => void;
++  footer: ReactNode;
++  children: ReactNode;
++}) {
++  return (
++    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
++      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh] border border-white/20 p-8">
++        <div className="mb-8">
++          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
++            {title}
++          </h1>
++          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
++            {subtitle}
++          </p>
++        </div>
++
++        <form onSubmit={onSubmit} className="space-y-6">
++          {children}
++          <button
++            type="submit"
++            disabled={isSubmitting}
++            className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
++          >
++            {isSubmitting ? (
++              <Loader2 size={18} className="animate-spin" />
++            ) : (
++              <SubmitIcon size={18} />
++            )}
++            {submitLabel}
++          </button>
++        </form>
++
++        {footer && (
++          <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
++            <div className="flex items-center justify-center gap-3 text-xs font-bold">
++              {footer}
++            </div>
++          </div>
++        )}
++      </div>
++    </main>
++  );
++}
++
++export const authFooterLinkClass =
++  "text-slate-500 hover:text-primary transition-colors";
+diff --git a/frontend/src/components/auth/ForgetPasswordForm.tsx b/frontend/src/components/auth/ForgetPasswordForm.tsx
+new file mode 100644
+index 0000000..cb1e95a
+--- /dev/null
++++ b/frontend/src/components/auth/ForgetPasswordForm.tsx
+@@ -0,0 +1,85 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { Mail, KeyRound } from "lucide-react";
++import { toast } from "sonner";
++import { useUser } from "@/hooks/features/use-user";
++import { ROUTES } from "@/lib/constants/routes";
++import {
++  AuthField,
++  AuthFormShell,
++  authFooterLinkClass,
++} from "./AuthFormShell";
++
++export function ForgetPasswordForm() {
++  const { sendPasswordReset } = useUser();
++  const [email, setEmail] = useState("");
++  const [isSubmitting, setIsSubmitting] = useState(false);
++  const [sent, setSent] = useState(false);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setIsSubmitting(true);
++    try {
++      await sendPasswordReset(email);
++      toast.success("Password reset email sent. Please check your inbox.");
++      setSent(true);
++    } catch (err: unknown) {
++      const message =
++        err instanceof Error
++          ? err.message
++          : "Authentication failed. Please check your credentials.";
++      toast.error(message || "Authentication failed. Please check your credentials.");
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  if (sent) {
++    return (
++      <AuthFormShell
++        title="Reset password"
++        subtitle="Enter your email to receive a password reset link."
++        submitLabel="Send Reset Link"
++        submitIcon={KeyRound}
++        isSubmitting={false}
++        onSubmit={(e) => e.preventDefault()}
++        footer={
++          <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
++            Sign in
++          </Link>
++        }
++      >
++        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
++          Password reset email sent. Please check your inbox.
++        </p>
++      </AuthFormShell>
++    );
++  }
++
++  return (
++    <AuthFormShell
++      title="Reset password"
++      subtitle="Enter your email to receive a password reset link."
++      submitLabel="Send Reset Link"
++      submitIcon={KeyRound}
++      isSubmitting={isSubmitting}
++      onSubmit={handleSubmit}
++      footer={
++        <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
++          Sign in
++        </Link>
++      }
++    >
++      <AuthField
++        label="Email Address"
++        icon={Mail}
++        type="email"
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        placeholder="you@example.com"
++      />
++    </AuthFormShell>
++  );
++}
+diff --git a/frontend/src/components/auth/LoginForm.tsx b/frontend/src/components/auth/LoginForm.tsx
+new file mode 100644
+index 0000000..460e3c3
+--- /dev/null
++++ b/frontend/src/components/auth/LoginForm.tsx
+@@ -0,0 +1,139 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { useRouter } from "next/navigation";
++import { LogIn, Mail, Lock } from "lucide-react";
++import { toast } from "sonner";
++import { useUser } from "@/hooks/features/use-user";
++import { signInPasswordSchema } from "@/lib/schemas/auth";
++import { ROUTES } from "@/lib/constants/routes";
++import {
++  AuthField,
++  AuthFormShell,
++  authFooterLinkClass,
++} from "./AuthFormShell";
++
++export function LoginForm() {
++  const router = useRouter();
++  const { signIn, signInWithEmail, signInWithPassword } = useUser();
++  const [email, setEmail] = useState("");
++  const [password, setPassword] = useState("");
++  const [isSubmitting, setIsSubmitting] = useState(false);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setIsSubmitting(true);
++    try {
++      const pw = signInPasswordSchema.safeParse(password);
++      if (!pw.success) {
++        toast.error(pw.error.issues[0].message);
++        return;
++      }
++      await signInWithPassword(email, password);
++      toast.success("Signed in successfully");
++      router.push(ROUTES.USER.DASHBOARD);
++      router.refresh();
++    } catch (err: unknown) {
++      const message =
++        err instanceof Error
++          ? err.message
++          : "Authentication failed. Please check your credentials.";
++      toast.error(message || "Authentication failed. Please check your credentials.");
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  const handleGoogle = async () => {
++    setIsSubmitting(true);
++    try {
++      await signIn();
++    } catch {
++      // ignored
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  const handleMagicLink = async () => {
++    if (!email) {
++      toast.error("Please enter your email first");
++      return;
++    }
++    setIsSubmitting(true);
++    try {
++      await signInWithEmail(email);
++      toast.success("Magic link sent. Please check your inbox.");
++    } catch {
++      // ignored
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  return (
++    <AuthFormShell
++      title="Welcome back"
++      subtitle="Sign in to continue your experience."
++      submitLabel="Sign In"
++      submitIcon={LogIn}
++      isSubmitting={isSubmitting}
++      onSubmit={handleSubmit}
++      footer={
++        <>
++          <Link href={ROUTES.REGISTER} className={authFooterLinkClass}>
++            Register
++          </Link>
++          <Link href={ROUTES.FORGET_PASSWORD} className={authFooterLinkClass}>
++            Forgot password
++          </Link>
++        </>
++      }
++    >
++      <AuthField
++        label="Email Address"
++        icon={Mail}
++        type="email"
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        placeholder="you@example.com"
++      />
++      <AuthField
++        label="Password"
++        icon={Lock}
++        type="password"
++        value={password}
++        onChange={(e) => setPassword(e.target.value)}
++        placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
++      />
++
++      <div className="relative">
++        <div className="absolute inset-0 flex items-center">
++          <div className="w-full border-t border-slate-100 dark:border-slate-800" />
++        </div>
++        <div className="relative flex justify-center text-xs">
++          <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-bold">
++            or
++          </span>
++        </div>
++      </div>
++      <button
++        type="button"
++        onClick={handleGoogle}
++        disabled={isSubmitting}
++        className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
++      >
++        Continue with Google
++      </button>
++      <button
++        type="button"
++        onClick={handleMagicLink}
++        disabled={isSubmitting}
++        className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
++      >
++        Send Magic Link
++      </button>
++    </AuthFormShell>
++  );
++}
+diff --git a/frontend/src/components/auth/RegisterForm.tsx b/frontend/src/components/auth/RegisterForm.tsx
+new file mode 100644
+index 0000000..f083abc
+--- /dev/null
++++ b/frontend/src/components/auth/RegisterForm.tsx
+@@ -0,0 +1,124 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import { Mail, Lock, KeyRound, UserPlus } from "lucide-react";
++import { toast } from "sonner";
++import { useUser } from "@/hooks/features/use-user";
++import { resetPasswordSchema } from "@/lib/schemas/auth";
++import { ROUTES } from "@/lib/constants/routes";
++import {
++  AuthField,
++  AuthFormShell,
++  authFooterLinkClass,
++} from "./AuthFormShell";
++
++export function RegisterForm() {
++  const { register } = useUser();
++  const [fullName, setFullName] = useState("");
++  const [email, setEmail] = useState("");
++  const [password, setPassword] = useState("");
++  const [confirmPassword, setConfirmPassword] = useState("");
++  const [isSubmitting, setIsSubmitting] = useState(false);
++  const [registered, setRegistered] = useState(false);
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setIsSubmitting(true);
++    try {
++      if (!fullName.trim()) {
++        toast.error("Please enter your full name");
++        return;
++      }
++      const pw = resetPasswordSchema.safeParse({ password, confirmPassword });
++      if (!pw.success) {
++        toast.error(pw.error.issues[0].message);
++        return;
++      }
++      await register(email, password, fullName.trim());
++      toast.success(
++        "Registration successful. Please check your email to verify your account.",
++      );
++      setRegistered(true);
++    } catch (err: unknown) {
++      const message =
++        err instanceof Error
++          ? err.message
++          : "Authentication failed. Please check your credentials.";
++      toast.error(message || "Authentication failed. Please check your credentials.");
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  if (registered) {
++    return (
++      <AuthFormShell
++        title="Create account"
++        subtitle="Register as a user account. Admin roles are assigned by superadmin."
++        submitLabel="Create Account"
++        submitIcon={UserPlus}
++        isSubmitting={false}
++        onSubmit={(e) => e.preventDefault()}
++        footer={
++          <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
++            Sign in
++          </Link>
++        }
++      >
++        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
++          Registration successful. Please check your email to verify your
++          account.
++        </p>
++      </AuthFormShell>
++    );
++  }
++
++  return (
++    <AuthFormShell
++      title="Create account"
++      subtitle="Register as a user account. Admin roles are assigned by superadmin."
++      submitLabel="Create Account"
++      submitIcon={UserPlus}
++      isSubmitting={isSubmitting}
++      onSubmit={handleSubmit}
++      footer={
++        <Link href={ROUTES.LOGIN} className={authFooterLinkClass}>
++          Sign in
++        </Link>
++      }
++    >
++      <AuthField
++        label="Full Name"
++        type="text"
++        value={fullName}
++        onChange={(e) => setFullName(e.target.value)}
++        placeholder="Your name"
++      />
++      <AuthField
++        label="Email Address"
++        icon={Mail}
++        type="email"
++        value={email}
++        onChange={(e) => setEmail(e.target.value)}
++        placeholder="you@example.com"
++      />
++      <AuthField
++        label="Password"
++        icon={Lock}
++        type="password"
++        value={password}
++        onChange={(e) => setPassword(e.target.value)}
++        placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
++      />
++      <AuthField
++        label="Confirm Password"
++        icon={KeyRound}
++        type="password"
++        value={confirmPassword}
++        onChange={(e) => setConfirmPassword(e.target.value)}
++        placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
++      />
++    </AuthFormShell>
++  );
++}
+diff --git a/frontend/src/lib/constants/routes.ts b/frontend/src/lib/constants/routes.ts
+index b1b8789..1ce0d8f 100644
+--- a/frontend/src/lib/constants/routes.ts
++++ b/frontend/src/lib/constants/routes.ts
+@@ -1,14 +1,15 @@
+ export const ROUTES = {
+   HOME: "/",
+   LOGIN: "/auth/login",
+   REGISTER: "/auth/register",
++  FORGET_PASSWORD: "/auth/forgetPassword",
+   RESET_PASSWORD: "/auth/reset-password",
+   COMICS: "/comics",
+   SEARCH: "/search",
+   COMIC_DETAIL: (id: string) => `/comics/${id}`,
+   CHAPTER_READER: (comicId: string, chapterId: string) =>
+     `/comics/${comicId}/chapter/${chapterId}`,
+   PLACEHOLDER_COVER: "/placeholder-cover.jpg",
+   USER: {
+     ROOT: "/user",
+     PROFILE: "/user/profile",

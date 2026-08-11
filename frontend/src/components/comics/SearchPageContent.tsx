@@ -3,16 +3,18 @@
 import React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
-import { Image as ImageIcon, SearchX, X } from "lucide-react";
-import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
+import { Image as ImageIcon, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
-import { getStatusStyles } from "@/lib/utils/statusStyles";
+import { getStatusStyles } from "@/lib/utils/status-styles";
+import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
+import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
-export const SearchPageContent: React.FC = () => {
+export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
+  initialCategory,
+}) => {
   const {
     t,
     keyword,
@@ -22,13 +24,11 @@ export const SearchPageContent: React.FC = () => {
     loading,
     totalPages,
     totalItems,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     showFilter,
     setShowFilter,
     applyComicCoverFallback,
     getVietnameseStatus,
-  } = useSearchPresenter();
+  } = useSearchPresenter(initialCategory);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500 pb-20">
@@ -73,32 +73,26 @@ export const SearchPageContent: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-12">
         <div className="mb-8 pt-4 border-b border-slate-200 dark:border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-white">
-              Danh sách truyện
+              {t("search_results_title")}
             </h1>
             <div className="flex flex-wrap items-center gap-2 mt-2 text-slate-500 dark:text-slate-400">
               {keyword && (
                 <span>
-                  Từ khóa: <strong className="text-primary">"{keyword}"</strong>
+                  {t("search_keyword_label")}{" "}<strong className="text-primary">&quot;{keyword}&quot;</strong>
                 </span>
               )}
               {category !== "all" && (
                 <span>
-                  • Thể loại:{" "}
+                  {t("search_category_label")}{" "}
                   <strong className="text-primary">{category}</strong>
                 </span>
               )}
               <span className="ml-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
-                {totalItems} kết quả
+                {totalItems} {t("results_count")}
               </span>
             </div>
           </div>
@@ -106,10 +100,10 @@ export const SearchPageContent: React.FC = () => {
           <div className="flex-shrink-0 mt-2 sm:mt-0 flex items-center gap-2">
             <button
               onClick={() => setShowFilter(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-orange-500 dark:hover:border-[#001eff] hover:text-orange-500 dark:hover:text-[#39ff14] transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:border-orange-500 dark:hover:border-primary hover:text-orange-500 dark:hover:text-accent transition-all shadow-sm"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-              Bộ lọc
+              <SlidersHorizontal size={16} />
+              {t("filter_button")}
             </button>
             <SortDropdown />
           </div>
@@ -138,16 +132,16 @@ export const SearchPageContent: React.FC = () => {
               <SearchX size={40} />
             </div>
             <h3 className="text-xl font-black text-slate-800 dark:text-white mb-2">
-              Không tìm thấy kết quả
+              {t("empty_search_title")}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 font-medium mb-8 max-w-md text-sm sm:text-base">
-              Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.
+              {t("empty_search_description")}
             </p>
             <Link
-              href="/search"
+              href={ROUTES.SEARCH}
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 hover:opacity-90 transition-opacity"
             >
-              Đặt lại bộ lọc
+              {t("reset_filter")}
             </Link>
           </motion.div>
         ) : (
@@ -156,7 +150,7 @@ export const SearchPageContent: React.FC = () => {
               {comics.map((comic, i) => (
                 <Link
                   key={comic.id}
-                  href={`/comics/${comic.id}`}
+                  href={ROUTES.COMIC_DETAIL(comic.id)}
                   className="block outline-none cursor-pointer w-full max-w-[180px]"
                 >
                   <motion.div
@@ -167,14 +161,18 @@ export const SearchPageContent: React.FC = () => {
                   >
                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
+                        src={proxiedR2ImageUrl(comic.coverUrl || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
+                        width={300}
+                        height={400}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         onError={applyComicCoverFallback}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-2.5">
                         <span className="text-white text-[11px] font-bold flex items-center gap-1 translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                          <ImageIcon size={13} /> Đọc ngay
+                          <ImageIcon size={13} /> {t("read_now")}
                         </span>
                       </div>
                       <div className="absolute top-1.5 right-1.5">
@@ -190,7 +188,7 @@ export const SearchPageContent: React.FC = () => {
                         {comic.title}
                       </h2>
                       <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-normal break-words [overflow-wrap:anywhere]">
-                        {comic.author || "Đang cập nhật"}
+                        {comic.author || t("updating")}
                       </div>
                     </div>
                   </motion.div>

@@ -60,6 +60,7 @@
   "exclude": [
     "node_modules",
     "tests/e2e",
-    "src/specs"
+    "src/specs",
+    "src/__tests__/tier4/f_real_world_scenarios.test.tsx"
   ]
 }

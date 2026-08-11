@@ -17,11 +17,11 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
-import { Header } from "@/components/navigation/Header";
-import { LoginModal } from "@/components/auth/LoginModal";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
+import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
 import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
+import { ROUTES } from "@/lib/constants/routes";
 
 export const ChapterReaderPageContent: React.FC = () => {
   const {
@@ -32,7 +32,6 @@ export const ChapterReaderPageContent: React.FC = () => {
     allChapters,
     images,
     loading,
-    isLoginModalOpen,
     setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
@@ -48,6 +47,9 @@ export const ChapterReaderPageContent: React.FC = () => {
     progress,
     theme,
     toggleTheme,
+    brightness,
+    autoScrollSpeed,
+    setAutoScrollSpeed,
     handleTouchStart,
     handleTouchEnd,
     handleSelectChapter,
@@ -60,8 +62,21 @@ export const ChapterReaderPageContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#111] flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!currentChapter) {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
+          Không tìm thấy chương truyện
+        </h1>
+        <Link href={ROUTES.HOME} className="px-6 py-2 bg-primary text-white rounded-full">
+          Quay lại trang chủ
+        </Link>
       </div>
     );
   }
@@ -74,13 +89,8 @@ export const ChapterReaderPageContent: React.FC = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors flex flex-col">
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-        <LoginModal
-          isOpen={isLoginModalOpen}
-          onClose={() => setIsLoginModalOpen(false)}
-        />
         <div className="h-1 bg-slate-200 dark:bg-slate-800">
           <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
         </div>
@@ -88,10 +98,10 @@ export const ChapterReaderPageContent: React.FC = () => {
 
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
         <Link
-          href={`/comics/${comicId}`}
+          href={ROUTES.COMIC_DETAIL(comicId)}
           className="inline-block text-xl sm:text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors mb-2"
         >
-          {comic?.title || "Tên Truyện Đang Cập Nhật"}
+          <h1 className="inline">{comic?.title || "Tên Truyện Đang Cập Nhật"}</h1>
         </Link>
         <div className="text-slate-500 dark:text-zinc-400 font-medium text-sm sm:text-base">
           {currentChapter?.chapter_number
@@ -105,6 +115,7 @@ export const ChapterReaderPageContent: React.FC = () => {
 
       <div
         className={`w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y ${fitScreen ? "max-w-full" : "max-w-[800px]"}`}
+        style={{ filter: `brightness(${brightness}%)` }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={() => setShowToolbar(!showToolbar)}
@@ -139,7 +150,7 @@ export const ChapterReaderPageContent: React.FC = () => {
       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 py-6 sm:py-8 flex items-center justify-between gap-3 sm:gap-4 border-t border-slate-200 dark:border-white/5 mt-4">
         <Link
           href={
-            prevChapter ? `/comics/${comicId}/chapter/${prevChapter.id}` : "#"
+            prevChapter ? ROUTES.CHAPTER_READER(comicId, prevChapter.id) : "#"
           }
           className={chapterNavClass(prevChapter)}
         >
@@ -148,7 +159,7 @@ export const ChapterReaderPageContent: React.FC = () => {
         </Link>
         <Link
           href={
-            nextChapter ? `/comics/${comicId}/chapter/${nextChapter.id}` : "#"
+            nextChapter ? ROUTES.CHAPTER_READER(comicId, nextChapter.id) : "#"
           }
           className={chapterNavClass(nextChapter)}
         >
@@ -169,8 +180,11 @@ export const ChapterReaderPageContent: React.FC = () => {
                 <img
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
+                  width={64}
+                  height={96}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
                 />
               </button>
             ))}
@@ -186,7 +200,7 @@ export const ChapterReaderPageContent: React.FC = () => {
         <div className="pointer-events-auto bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/80 dark:border-slate-800 px-3 py-2 sm:py-2.5 pb-safe shadow-[0_-10px_30px_rgba(0,0,0,0.08)] dark:shadow-2xl transition-colors">
           <div className="max-w-[700px] mx-auto flex items-center justify-between gap-2">
             <Link
-              href="/"
+              href={ROUTES.HOME}
               className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
               title="Trang chủ"
             >
@@ -204,7 +218,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 prevChapter
-                  ? `/comics/${comicId}/chapter/${prevChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, prevChapter.id)
                   : "#"
               }
               className={
@@ -255,7 +269,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 nextChapter
-                  ? `/comics/${comicId}/chapter/${nextChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, nextChapter.id)
                   : "#"
               }
               className={
@@ -315,6 +329,18 @@ export const ChapterReaderPageContent: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setAutoScrollSpeed((prev) => (prev >= 3 ? 0 : prev + 1))}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 font-bold text-xs ${
+                autoScrollSpeed > 0
+                  ? "bg-primary text-white shadow-md shadow-primary/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={autoScrollSpeed > 0 ? `Tốc độ cuộn: ${autoScrollSpeed}x` : "Cuộn tự động"}
+            >
+              {autoScrollSpeed > 0 ? `${autoScrollSpeed}x` : "Cuộn"}
+            </button>
+
+            <button
               onClick={scrollToTop}
               className="p-2.5 sm:p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex-shrink-0"
               title="Cuộn lên đầu trang"
@@ -324,6 +350,12 @@ export const ChapterReaderPageContent: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <ChapterCommentsSection
+        chapterId={chapterId}
+        comicId={comicId}
+        onLoginClick={() => setIsLoginModalOpen(true)}
+      />
 
       {showChapterMenu && (
         <div

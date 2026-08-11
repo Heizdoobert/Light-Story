@@ -14,6 +14,7 @@ interface __BaseEnv_Env {
 	HYPERDRIVE?: Hyperdrive;
 	ANALYTICS_DATA?: AnalyticsEngineDataset;
 	LIGHTSTORY_QUEUE?: Queue;
+	LIGHTSTORY_WORKFLOW?: Workflow;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {

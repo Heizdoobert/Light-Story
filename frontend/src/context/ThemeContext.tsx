@@ -1,8 +1,6 @@
-/*
-  ThemeContext.tsx - FOUC-Proof Theme Management
-  Uses a blocking script pattern + useLayoutEffect to prevent white flash on load.
-*/
-import React, { createContext, useContext, useLayoutEffect, useState } from 'react';
+"use client";
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -11,32 +9,35 @@ interface ThemeContextType {
   toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('light');
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>('dark');
 
-  // Use useLayoutEffect to apply theme before React hydrates (prevents FOUC)
-  useLayoutEffect(() => {
+  useEffect(() => {
     const saved = localStorage.getItem('theme');
+    let currentTheme: Theme = 'dark';
     if (saved === 'light' || saved === 'dark') {
-      setTheme(saved);
-      return;
+      currentTheme = saved;
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      currentTheme = 'dark';
+    } else {
+      currentTheme = 'light';
     }
 
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDark ? 'dark' : 'light');
+    setTheme(currentTheme);
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(currentTheme);
   }, []);
 
-  useLayoutEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev) => {
+      const nextTheme: Theme = prev === 'light' ? 'dark' : 'light';
+      document.documentElement.classList.remove('light', 'dark');
+      document.documentElement.classList.add(nextTheme);
+      localStorage.setItem('theme', nextTheme);
+      return nextTheme;
+    });
   };
 
   return (
@@ -44,10 +45,26 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
     </ThemeContext.Provider>
   );
-};
+}
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
+  if (!context) {
+    return {
+      theme: 'dark' as Theme,
+      toggleTheme: () => {
+        if (typeof window !== 'undefined') {
+          const root = document.documentElement;
+          const isDark = root.classList.contains('dark');
+          const next = isDark ? 'light' : 'dark';
+          root.classList.remove('light', 'dark');
+          root.classList.add(next);
+          localStorage.setItem('theme', next);
+        }
+      },
+    };
+  }
   return context;
 };
+
+export default ThemeProvider;

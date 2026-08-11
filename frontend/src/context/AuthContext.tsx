@@ -4,14 +4,16 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/infrastructure/supabase/client";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { getErrorMessage } from "@/lib/utils/errorUtils";
+import { getErrorMessage } from "@/lib/utils/error-utils";
 import { type AdminProfileDto } from '@/types/dto';
+import { updateUserProfile } from "@/lib/actions/user.actions";
+import { ROUTES } from "@/lib/constants/routes";
 
-export type UserRole = "superadmin" | "admin" | "employee" | "user";
+export type UserRole = "superadmin" | "admin" | "employee" | "internal" | "user";
 
-const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "user"];
+const USER_ROLES: UserRole[] = ["superadmin", "admin", "employee", "internal", "user"];
 
 const isUserRole = (value: unknown): value is UserRole =>
   typeof value === "string" && USER_ROLES.includes(value as UserRole);
@@ -19,16 +21,21 @@ const isUserRole = (value: unknown): value is UserRole =>
 const normalizeRole = (value: unknown): UserRole | null => {
   if (typeof value !== "string") return null;
   const normalized = value.trim().toLowerCase();
+  if (normalized === "super_admin") return "superadmin";
   return isUserRole(normalized) ? normalized : null;
 };
 
 const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
-  // Prefer role from profiles table to avoid stale app_metadata causing false 403.
-  const resolvedProfileRole = normalizeRole(profileRole);
-  if (resolvedProfileRole) return resolvedProfileRole;
-
+  // Mirror middleware/use-user: app_metadata.role preferred (synced by the DB
+  // trigger), user_metadata fallback, profiles table last.
   const resolvedAppRole = normalizeRole(user?.app_metadata?.role);
   if (resolvedAppRole) return resolvedAppRole;
+
+  const resolvedMetaRole = normalizeRole(user?.user_metadata?.role);
+  if (resolvedMetaRole) return resolvedMetaRole;
+
+  const resolvedProfileRole = normalizeRole(profileRole);
+  if (resolvedProfileRole) return resolvedProfileRole;
 
   return null;
 };
@@ -97,6 +104,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  const ensureProfileExists = async (authUser: User) => {
+    if (!supabase) return;
+    try {
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+            avatar_url: authUser.user_metadata?.avatar_url ?? null,
+            role: "user",
+          },
+          {
+            onConflict: "id",
+            ignoreDuplicates: true,
+          },
+        );
+    } catch (err) {
+      console.warn("Could not auto-create profile:", getErrorMessage(err));
+    }
+  };
+
+  const fetchProfile = async (authUser: User) => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    try {
+      await ensureProfileExists(authUser);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(PROFILE_SELECT)
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
+    } catch (error) {
+      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
+      setProfile(buildProfile(authUser));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -156,54 +210,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       window.clearTimeout(loadingFallback);
       subscription.unsubscribe();
     };
+    // ponytail: bootstrap runs once; fetchProfile identity changes per render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const ensureProfileExists = async (authUser: User) => {
-    if (!supabase) return;
-    try {
-      await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: authUser.id,
-            email: authUser.email ?? "",
-            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
-            avatar_url: authUser.user_metadata?.avatar_url ?? null,
-            role: "user",
-          },
-          {
-            onConflict: "id",
-            ignoreDuplicates: true,
-          },
-        );
-    } catch (err) {
-      console.warn("Could not auto-create profile:", getErrorMessage(err));
-    }
-  };
-
-  const fetchProfile = async (authUser: User) => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    try {
-      await ensureProfileExists(authUser);
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(PROFILE_SELECT)
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
-    } catch (error) {
-      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
-      setProfile(buildProfile(authUser));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signIn = async () => {
     if (!supabase) return;
@@ -261,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!supabase) return;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo: `${window.location.origin}${ROUTES.RESET_PASSWORD}`,
     });
 
     if (error) {
@@ -285,8 +294,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signOut = async () => {
     if (!supabase) return;
-    await supabase.auth.signOut();
-    queryClient.clear();
+    try {
+      await supabase.auth.signOut({ scope: "global" });
+    } catch (err) {
+      console.error("SignOut error:", err);
+    } finally {
+      setUser(null);
+      setProfile(null);
+      queryClient.clear();
+    }
   };
 
   const register = async (
@@ -317,28 +333,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     full_name?: string;
     avatar_url?: string | null;
   }) => {
-    if (!supabase || !user) return;
+    if (!user) return;
 
-    const updates: {
-      full_name?: string;
-      avatar_url?: string | null;
-    } = {};
+    const res = await updateUserProfile(user.id, payload);
 
-    if (payload.full_name !== undefined) {
-      updates.full_name = payload.full_name;
+    if (res.success === false) {
+      toast.error(res.error);
+      return;
     }
 
-    if (payload.avatar_url !== undefined) {
-      updates.avatar_url = payload.avatar_url;
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user.id);
-
-    if (error) {
-      throw error;
+    if (!supabase) {
+      setProfile(
+        buildProfile(user, {
+          id: user.id,
+          email: user.email ?? "",
+          full_name:
+            payload.full_name ?? user.user_metadata?.full_name ?? user.email ?? "Admin",
+          avatar_url:
+            payload.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+          role: null,
+          created_at: null,
+        }),
+      );
+      return;
     }
 
     const { data: freshProfile, error: refreshError } = await supabase
@@ -348,13 +365,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .maybeSingle();
 
     if (refreshError) {
-      setProfile((prev: any) => ({
-        ...(prev || {}),
-        ...updates,
-        id: prev?.id ?? user.id,
-        email: prev?.email ?? user.email ?? "",
-        role: prev?.role ?? resolveRole(user, prev?.role),
-      }));
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              ...payload,
+            }
+          : buildProfile(user, {
+              id: user.id,
+              email: user.email ?? "",
+              full_name:
+                payload.full_name ??
+                user.user_metadata?.full_name ??
+                user.email ??
+                "Admin",
+              avatar_url:
+                payload.avatar_url ?? user.user_metadata?.avatar_url ?? null,
+              role: null,
+              created_at: null,
+            }),
+      );
       return;
     }
 

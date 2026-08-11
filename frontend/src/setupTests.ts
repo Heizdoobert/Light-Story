@@ -1,3 +1,6 @@
+process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+
 import '@testing-library/jest-dom';
 
 // Ensure localStorage mock is available for Node 22 + happy-dom testing environment
@@ -84,7 +87,7 @@ if (typeof originalFetch === 'function') {
         if (typeof input === 'string') input = newUrl;
         else input = new Request(newUrl, input as RequestInit);
       }
-    } catch (e) {
+    } catch {
       // ignore and proceed to original fetch
     }
 
