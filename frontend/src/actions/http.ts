@@ -11,7 +11,15 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
   if (!(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  return fetch(`${getGatewayUrl()}${path}`, { ...init, headers });
+  const res = await fetch(`${getGatewayUrl()}${path}`, { ...init, headers });
+  if (!res.ok) {
+    // ponytail: console sink matches repo convention; fields bounded (no user/url values)
+    console.warn(
+      { event: 'gateway_request_failed', path, status: res.status, statusText: res.statusText },
+      'gateway request failed',
+    );
+  }
+  return res;
 }
 
 // ponytail: mirrors apiClient's inline error chain; shared by all action modules
