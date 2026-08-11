@@ -1,11 +1,11 @@
 "use client";
 
-import { Users, Search, ShieldCheck, UserCheck, X } from "lucide-react";
+import { Users, Search, ShieldCheck, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAdminUsers } from "@/hooks/features/use-admin-users";
 import { useUser } from "@/hooks/features/use-user";
-import { useModalA11y } from "@/hooks/common/use-modal-a11y";
+import { Modal } from "@/components/ui/modal";
 import { useRoleGuard } from "@/hooks/common/use-role-guard";
 import { ROUTES } from "@/lib/constants/routes";
 
@@ -25,7 +25,6 @@ export default function AdminUsersPage() {
     handleOpenRoleModal,
     handleSaveRole,
   } = useAdminUsers();
-  const closeModalRef = useModalA11y(!!selectedUser, () => setSelectedUser(null));
 
   return (
     <div className="space-y-6">
@@ -124,23 +123,21 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Change Role Modal */}
-      {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <ShieldCheck size={20} className="text-orange-500" />
-                Phân Quyền Cho Người Dùng
-              </h2>
-              <button ref={closeModalRef} onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveRole} className="space-y-4">
+      <Modal
+        isOpen={!!selectedUser}
+        onClose={() => setSelectedUser(null)}
+        variant="dark"
+        title={
+          <span className="flex items-center gap-2">
+            <ShieldCheck size={20} className="text-orange-500" />
+            Phân Quyền Cho Người Dùng
+          </span>
+        }
+      >
+        <form onSubmit={handleSaveRole} className="space-y-4">
               <div>
                 <p className="text-xs text-slate-400">Tài khoản:</p>
-                <p className="text-sm font-bold text-white mt-0.5">{selectedUser.email || selectedUser.full_name}</p>
+                <p className="text-sm font-bold text-white mt-0.5">{selectedUser?.email || selectedUser?.full_name}</p>
               </div>
 
               <div>
@@ -167,9 +164,7 @@ export default function AdminUsersPage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }
