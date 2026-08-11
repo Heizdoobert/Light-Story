@@ -28,13 +28,14 @@ jobs:
 
       - name: Start Supabase Local Stack
         working-directory: backend-supabase
+        timeout-minutes: 15
         run: |
-          supabase start || echo "Supabase local stack start skipped in runner"
+          supabase start
 
       - name: Run pgTAP SQL Tests
         working-directory: backend-supabase
         run: |
-          supabase db test || echo "pgTAP tests completed"
+          supabase db test
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -48,6 +49,6 @@ jobs:
 
       - name: Run Node.js RLS Integration Tests
         run: |
-          node backend-supabase/supabase/tests/rls-integration.test.js || echo "RLS integration test completed (no active Supabase daemon on runner)"
+          node backend-supabase/supabase/tests/rls-integration.test.js
         env:
           SUPABASE_URL: http://localhost:54321

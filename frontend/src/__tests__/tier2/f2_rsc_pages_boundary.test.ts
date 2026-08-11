@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import fs, { readFileSync } from 'fs';
+import path, { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
 const APP_DIR = join(__dirname, '..', '..', 'app');
@@ -8,8 +8,6 @@ const readPage = (rel: string): string =>
   readFileSync(join(APP_DIR, ...rel.split('/')), 'utf-8').replace(/^\uFEFF/, '');
 
 const findPages = (): string[] => {
-  const fs = require('fs');
-  const path = require('path');
   const results: string[] = [];
   const walk = (dir: string): void => {
     for (const entry of fs.readdirSync(dir).sort()) {

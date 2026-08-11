@@ -31,7 +31,7 @@ try {
     writeFileSync(tmpFile, localContent + suffix, 'utf-8');
     try {
       renameSync(tmpFile, localEnv);
-    } catch (renameErr) {
+    } catch {
       try {
         unlinkSync(tmpFile);
       } catch {}

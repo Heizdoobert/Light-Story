@@ -104,6 +104,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  const ensureProfileExists = async (authUser: User) => {
+    if (!supabase) return;
+    try {
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+            avatar_url: authUser.user_metadata?.avatar_url ?? null,
+            role: "user",
+          },
+          {
+            onConflict: "id",
+            ignoreDuplicates: true,
+          },
+        );
+    } catch (err) {
+      console.warn("Could not auto-create profile:", getErrorMessage(err));
+    }
+  };
+
+  const fetchProfile = async (authUser: User) => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    try {
+      await ensureProfileExists(authUser);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(PROFILE_SELECT)
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
+    } catch (error) {
+      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
+      setProfile(buildProfile(authUser));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -163,54 +210,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       window.clearTimeout(loadingFallback);
       subscription.unsubscribe();
     };
+    // ponytail: bootstrap runs once; fetchProfile identity changes per render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const ensureProfileExists = async (authUser: User) => {
-    if (!supabase) return;
-    try {
-      await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: authUser.id,
-            email: authUser.email ?? "",
-            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
-            avatar_url: authUser.user_metadata?.avatar_url ?? null,
-            role: "user",
-          },
-          {
-            onConflict: "id",
-            ignoreDuplicates: true,
-          },
-        );
-    } catch (err) {
-      console.warn("Could not auto-create profile:", getErrorMessage(err));
-    }
-  };
-
-  const fetchProfile = async (authUser: User) => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    try {
-      await ensureProfileExists(authUser);
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(PROFILE_SELECT)
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
-    } catch (error) {
-      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
-      setProfile(buildProfile(authUser));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signIn = async () => {
     if (!supabase) return;

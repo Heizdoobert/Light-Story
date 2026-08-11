@@ -42,7 +42,6 @@
     "@tailwindcss/oxide-linux-x64-gnu": "4.3.3"
   },
   "overrides": {
-    "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.2",
     "body-parser": "2.3.0",

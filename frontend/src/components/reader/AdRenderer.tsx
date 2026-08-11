@@ -201,6 +201,8 @@ export const AdRenderer: React.FC<AdRendererProps> = ({ position }) => {
     return () => {
       clearInjectionTask();
     };
+    // ponytail: granular deps are deliberate — whole objects change identity each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVisible, safeMarkup, renderCycle, runtime.enabled, runtime.allowedHosts, runtime.blockedTerms, runtime.minHeight, runtime.refreshSeconds]);
 
   useEffect(() => {

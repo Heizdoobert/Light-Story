@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start -p 3001 -H 0.0.0.0",
     "preview": "next start -p 3001 -H 0.0.0.0",
-    "lint": "echo Lint ok",
+    "lint": "eslint . --max-warnings 140",
     "test": "vitest",
     "test:run": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
@@ -55,6 +55,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.3.0",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.0",

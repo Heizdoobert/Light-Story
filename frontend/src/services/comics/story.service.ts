@@ -90,7 +90,7 @@ export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
 export async function incrementViews(storyId: string): Promise<void> {
   try {
     await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
-  } catch (err) {
+  } catch {
     if (supabase) {
       try {
         await supabase.rpc('increment_story_views', { story_id: storyId });

@@ -207,7 +207,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                     })
                   ) : (
                     <div className="px-4 py-3 text-sm text-center text-slate-500">
-                      No results for "{categorySearchTerm}"
+                      No results for &quot;{categorySearchTerm}&quot;
                     </div>
                   )}
                 </div>

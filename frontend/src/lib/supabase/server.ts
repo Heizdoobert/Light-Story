@@ -63,7 +63,6 @@ export function getServerSupabase(): SupabaseClient | null {
 
   if (!config.url || !config.publicKey) {
     // Do not throw at import-time; return null so callers can handle missing config during build/dev.
-    // eslint-disable-next-line no-console
     const envKeys = Object.keys(process.env).filter((k) => /SUPABASE|VITE|NEXT_PUBLIC/i.test(k));
     console.warn('frontend: server supabase client missing env vars', {
       hasUrl: !!config.url,
@@ -78,7 +77,6 @@ export function getServerSupabase(): SupabaseClient | null {
   }
 
   if (!config.hasServiceKey) {
-    // eslint-disable-next-line no-console
     const envKeys = Object.keys(process.env).filter((k) => /SUPABASE|VITE|NEXT_PUBLIC/i.test(k));
     console.warn('frontend: server supabase client using publishable key fallback because service role key is missing or placeholder', {
       hasUrl: !!config.url,

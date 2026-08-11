@@ -1,7 +1,7 @@
 import colors from "tailwindcss/colors";
 
 /** @type {import('tailwindcss').Config} */
-export default {
+const config = {
   content: [
     // Quét cả thư mục gốc và thư mục src (tránh bỏ sót nếu file nằm ngoài src)
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -24,3 +24,5 @@ export default {
     },
   ],
 };
+
+export default config;

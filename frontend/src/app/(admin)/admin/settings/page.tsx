@@ -156,7 +156,7 @@ export default function AdminSettingsPage() {
                 <div>
                   <p className="text-sm font-bold text-white flex items-center gap-2">
                     <Tags size={16} className="text-emerald-400" />
-                    Menu "Thể Loại Truyện"
+                    Menu &quot;Thể Loại Truyện&quot;
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">Hiển thị mục thể loại trên sidebar cho vai trò này.</p>
                 </div>

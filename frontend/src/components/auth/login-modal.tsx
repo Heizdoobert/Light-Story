@@ -64,6 +64,7 @@ export default function LoginModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // ponytail: handleClose identity changes per render; isOpen gate keeps it fresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
