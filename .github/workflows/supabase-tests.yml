@@ -53,7 +53,12 @@ jobs:
           cd backend-supabase
           # supabase test db stops non-DB services; restart them for the API
           supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector > /dev/null 2>&1
-          eval "$(supabase status -o env)"
+          # poll until the API is back up; ANON_KEY is empty while services are starting
+          for _ in $(seq 1 30); do
+            eval "$(supabase status -o env 2>/dev/null)"
+            [ -n "${ANON_KEY:-}" ] && break
+            sleep 2
+          done
           if [ -z "${ANON_KEY:-}" ]; then
             echo "::error::supabase status did not export ANON_KEY"
             supabase status -o env
