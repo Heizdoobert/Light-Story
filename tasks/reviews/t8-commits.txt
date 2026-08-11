@@ -1,2 +1,0 @@
-﻿dfdfb67 fix(app): guard metadataBase, error message, sitemap URL; style global-error
-5695e52 fix(api): cap buffered bodies in avatar/r2 routes; wire header search to stories service

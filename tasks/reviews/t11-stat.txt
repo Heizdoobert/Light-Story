@@ -1,9 +1,0 @@
-﻿ .../src/app/(public)/auth/forgetPassword/page.tsx  |  17 ++-
- frontend/src/app/(public)/auth/login/page.tsx      |  17 ++-
- frontend/src/app/(public)/auth/register/page.tsx   |  17 ++-
- frontend/src/components/auth/AuthFormShell.tsx     |  93 ++++++++++++++
- .../src/components/auth/ForgetPasswordForm.tsx     |  85 +++++++++++++
- frontend/src/components/auth/LoginForm.tsx         | 139 +++++++++++++++++++++
- frontend/src/components/auth/RegisterForm.tsx      | 124 ++++++++++++++++++
- frontend/src/lib/constants/routes.ts               |   1 +
- 8 files changed, 475 insertions(+), 18 deletions(-)

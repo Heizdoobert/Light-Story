@@ -1,2 +1,0 @@
-﻿7ae05ee fix(app): filter genre pages by slug, guard (user) group, route profile via server action
-4f624f2 fix(admin): load chapter before edit, persist uploaded images, real audit empty state
