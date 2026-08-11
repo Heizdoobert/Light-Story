@@ -112,6 +112,10 @@ export default function AdminComicsPage() {
                       <img
                         src={getR2ImageUrl(comic.cover_url)}
                         alt={comic.title}
+                        width={48}
+                        height={64}
+                        loading="lazy"
+                        decoding="async"
                         className="w-12 h-16 rounded-lg object-cover border border-slate-800 bg-slate-950"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;

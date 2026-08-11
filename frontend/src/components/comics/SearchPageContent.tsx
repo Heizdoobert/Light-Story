@@ -10,6 +10,7 @@ import { Pagination } from "@/components/navigation/Pagination";
 import { getStatusStyles } from "@/lib/utils/status-styles";
 import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
+import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
   initialCategory,
@@ -81,7 +82,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
             <div className="flex flex-wrap items-center gap-2 mt-2 text-slate-500 dark:text-slate-400">
               {keyword && (
                 <span>
-                  {t("search_keyword_label")}{" "}<strong className="text-primary">"{keyword}"</strong>
+                  {t("search_keyword_label")}{" "}<strong className="text-primary">&quot;{keyword}&quot;</strong>
                 </span>
               )}
               {category !== "all" && (
@@ -160,8 +161,12 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                   >
                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={comic.coverUrl || "https://placehold.co/400x600/png?text=No+Cover"}
+                        src={proxiedR2ImageUrl(comic.coverUrl || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
+                        width={300}
+                        height={400}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         onError={applyComicCoverFallback}
                       />

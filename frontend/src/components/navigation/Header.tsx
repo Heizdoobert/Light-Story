@@ -260,6 +260,10 @@ export const Header: React.FC<HeaderProps> = ({
                         <img
                           src={getComicCover(comic)}
                           alt={comic.title}
+                          width={40}
+                          height={56}
+                          loading="lazy"
+                          decoding="async"
                           className="w-10 h-14 rounded object-cover border border-slate-200 dark:border-white/10 shrink-0"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
@@ -353,6 +357,9 @@ export const Header: React.FC<HeaderProps> = ({
                     <img
                       src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                       alt="Avatar"
+                      width={40}
+                      height={40}
+                      decoding="async"
                       className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-orange-500 dark:border-primary object-cover"
                       onError={(e) => {
                         e.currentTarget.onerror = null;

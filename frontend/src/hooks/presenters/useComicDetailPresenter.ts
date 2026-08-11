@@ -13,19 +13,32 @@ import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { supabase } from "@/lib/supabase/client";
 import { getVietnameseStatus } from "@/lib/utils/status-styles";
 
-export function useComicDetailPresenter() {
+type ComicDetailProps = {
+  initialComic?: Comic | null;
+  initialChapters?: Chapter[];
+  initialCategories?: Category[];
+  hydrated?: boolean;
+};
+
+export function useComicDetailPresenter({
+  initialComic = null,
+  initialChapters = [],
+  initialCategories = [],
+  hydrated = false,
+}: ComicDetailProps = {}) {
   const params = useParams();
   const comicId = params.comicId as string;
 
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comic, setComic] = useState<Comic | null>(initialComic);
+  const [chapters, setChapters] = useState<Chapter[]>(initialChapters);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [loading, setLoading] = useState(!hydrated);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
+    if (hydrated) return;
     const fetchComicDetail = async () => {
       setLoading(true);
       try {
@@ -58,7 +71,7 @@ export function useComicDetailPresenter() {
     };
 
     if (comicId) fetchComicDetail();
-  }, [comicId]);
+  }, [comicId, hydrated]);
 
   useEffect(() => {
     getReadingHistory()

@@ -17,9 +17,23 @@ import {
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/user/bookmark-button";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
+import type { ComicContext as Comic } from "@/services/comics/comic.service";
+import type { Chapter, Category } from "@/types/entities";
 import { ROUTES } from "@/lib/constants/routes";
 
-export const ComicDetailPageContent: React.FC = () => {
+type ComicDetailPageContentProps = {
+  initialComic?: Comic | null;
+  initialChapters?: Chapter[];
+  initialCategories?: Category[];
+  hydrated?: boolean;
+};
+
+export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
+  initialComic = null,
+  initialChapters = [],
+  initialCategories = [],
+  hydrated = false,
+}) => {
   const {
     comicId,
     comic,
@@ -33,7 +47,7 @@ export const ComicDetailPageContent: React.FC = () => {
     latestChapter,
     firstChapter,
     categoryArray,
-  } = useComicDetailPresenter();
+  } = useComicDetailPresenter({ initialComic, initialChapters, initialCategories, hydrated });
 
   if (loading) {
     return (
@@ -219,9 +233,9 @@ export const ComicDetailPageContent: React.FC = () => {
                     <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
-                        {new Date(
-                          chapter.created_at || Date.now(),
-                        ).toLocaleDateString("vi-VN")}
+                        {chapter.created_at
+                          ? new Date(chapter.created_at).toLocaleDateString("vi-VN")
+                          : null}
                       </span>
                     </div>
                   </div>

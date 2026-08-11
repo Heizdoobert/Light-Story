@@ -187,6 +187,9 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                       <img
                         src={safeAvatarUrl.startsWith("blob:") || safeAvatarUrl.startsWith("http") || safeAvatarUrl.startsWith("/") ? safeAvatarUrl : undefined}
                         alt="Avatar"
+                        width={64}
+                        height={64}
+                        decoding="async"
                         className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
                       />
                     ) : (

@@ -180,8 +180,11 @@ export const ChapterReaderPageContent: React.FC = () => {
                 <img
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
+                  width={64}
+                  height={96}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
                 />
               </button>
             ))}

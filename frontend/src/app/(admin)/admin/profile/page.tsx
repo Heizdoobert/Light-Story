@@ -66,6 +66,9 @@ export default function AdminProfilePage() {
               <img
                 src={getR2ImageUrl(avatarUrl)}
                 alt={fullName || "Admin Avatar"}
+                width={112}
+                height={112}
+                decoding="async"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";

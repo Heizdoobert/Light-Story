@@ -9,9 +9,17 @@ import { ROUTES } from "@/lib/constants/routes";
 
 type HomePageProps = {
   initialComics?: Comic[];
+  initialTrending?: Comic[];
+  initialLatestChapters?: Record<string, import("@/types/entities").Chapter>;
+  hydrated?: boolean;
 };
 
-export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
+export const HomePage: React.FC<HomePageProps> = ({
+  initialComics = [],
+  initialTrending = [],
+  initialLatestChapters = {},
+  hydrated = false,
+}) => {
   const {
     t,
     comics,
@@ -22,7 +30,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
     historyComics,
     getComicCover,
     applyComicCoverFallback,
-  } = useHomePagePresenter(initialComics);
+  } = useHomePagePresenter(initialComics, initialTrending, initialLatestChapters, hydrated);
 
   return (
     <div className="max-w-7xl mx-auto p-3 sm:p-5 lg:p-8 space-y-6">
@@ -50,6 +58,7 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                       alt={comic.title}
                       width={300}
                       height={400}
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
@@ -103,6 +112,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                       alt={comic.title}
                       width={300}
                       height={400}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}
@@ -159,6 +170,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                           alt={comic.title}
                           width={300}
                           height={400}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                           referrerPolicy="no-referrer"
                           onError={applyComicCoverFallback}
@@ -237,6 +250,8 @@ export const HomePage: React.FC<HomePageProps> = ({ initialComics = [] }) => {
                         alt={comic.title}
                         width={300}
                         height={400}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         referrerPolicy="no-referrer"
                         onError={applyComicCoverFallback}

@@ -58,9 +58,10 @@ type UploadOptions = {
   comicId?: string;
   chapterNumber?: number;
   userId?: string;
+  maxSize?: number;
 };
 
-async function convertToWebP(file: File): Promise<File> {
+async function convertToWebP(file: File, maxSize?: number): Promise<File> {
   const ext = file.name.split('.').pop()?.toLowerCase();
   if (!ext || !['jpg', 'jpeg', 'png', 'webp', 'avif', 'tiff'].includes(ext)) return file;
 
@@ -69,11 +70,17 @@ async function convertToWebP(file: File): Promise<File> {
   try {
     const bitmap = await createImageBitmap(file);
     const canvas = document.createElement('canvas');
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
+    if (maxSize) {
+      const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    } else {
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+    }
     const ctx = canvas.getContext('2d');
     if (!ctx) { bitmap.close(); return file; }
-    ctx.drawImage(bitmap, 0, 0);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
 
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/webp', 0.85));
@@ -95,7 +102,7 @@ async function uploadFilesToR2(bucket: string | undefined, files: File[], option
     return makeDevUrls(files);
   }
 
-  const webpFiles = await Promise.all(files.map(convertToWebP));
+  const webpFiles = await Promise.all(files.map((f) => convertToWebP(f, options.maxSize)));
   const form = new FormData();
   webpFiles.forEach((file) => form.append('file', file));
   if (options.folder) form.append('folder', options.folder);
@@ -165,14 +172,16 @@ export async function getAccessToken(): Promise<string | null> {
 
 export async function uploadComicCover(cover: File, comicId?: string): Promise<string> {
   const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_COVERS;
-  const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId });
+  // ponytail: covers render at <=300 CSS px (3x DPR = 900px); 1000px long edge is the ceiling
+  const urls = await uploadFilesToR2(bucket, [cover], { folder: 'covers', comicId, maxSize: 1000 });
   if (urls.length === 0) throw new Error('Unable to upload comic cover');
   return urls[0];
 }
 
 export async function uploadChapterImages(images: File[], comicId?: string, chapterNumber?: number): Promise<string[]> {
   const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS;
-  return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber });
+  // ponytail: 1920px long edge covers full-width 2x readers; raise if hi-dpi zoom matters
+  return uploadFilesToR2(bucket, images, { folder: 'chapters', comicId, chapterNumber, maxSize: 1920 });
 }
 
 export async function createComic(input: CreateComicInput): Promise<ComicContext> {

@@ -89,6 +89,9 @@ export const ProfilePageContent: React.FC = () => {
                   <img
                     src={proxyAvatarUrl(profile.avatar_url) || undefined}
                     alt="Avatar"
+                    width={80}
+                    height={80}
+                    decoding="async"
                     className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
                     onError={(e) => {
                       e.currentTarget.onerror = null;

@@ -32,20 +32,28 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
 }
 
 export async function middleware(request: NextRequest) {
+  const isDev = process.env.NODE_ENV === "development";
+  const pathname = request.nextUrl.pathname;
+
+  const isAdminPath = pathname.startsWith(ROUTES.ADMIN.ROOT);
+  const isUserPath = pathname.startsWith(ROUTES.USER.ROOT);
+
+  // Public routes: headers only — skip the Supabase auth round-trip
+  if (!isAdminPath && !isUserPath) {
+    return addSecurityHeaders(NextResponse.next(), isDev);
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  const isDev = process.env.NODE_ENV === "development";
-  const pathname = request.nextUrl.pathname;
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
   if (!supabaseUrl || !supabaseKey) {
-    if (pathname.startsWith(ROUTES.ADMIN.ROOT)) {
+    if (isAdminPath) {
       return addSecurityHeaders(
         NextResponse.redirect(new URL(ROUTES.ERROR.UNAUTHORIZED, request.url)),
         isDev
@@ -76,7 +84,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user }, error } = await supabase.auth.getUser();
 
   // Admin route protection
-  if (pathname.startsWith(ROUTES.ADMIN.ROOT)) {
+  if (isAdminPath) {
     if (error || !user) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.UNAUTHORIZED;
@@ -110,7 +118,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // User route protection
-  if (pathname.startsWith(ROUTES.USER.ROOT)) {
+  if (isUserPath) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.LOGIN;
