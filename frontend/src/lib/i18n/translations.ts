@@ -100,6 +100,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     no_comics_yet: "Chưa có bộ truyện nào.",
     continue_reading: "ĐỌC TIẾP",
     updating: "Đang cập nhật",
+    searching: "Đang tìm kiếm...",
+    no_comics_found: "Không tìm thấy truyện nào.",
 
     // Navigation & Sidebar
     nav_dashboard: "Bảng điều khiển",
@@ -356,6 +358,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     no_comics_yet: "No comics available yet.",
     continue_reading: "CONTINUE READING",
     updating: "Updating",
+    searching: "Searching...",
+    no_comics_found: "No comics found.",
 
     // Navigation & Sidebar
     nav_dashboard: "Dashboard",

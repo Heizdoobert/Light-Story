@@ -68,7 +68,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         {comic.title}
                       </h3>
                       <p className="text-[10px] text-slate-300">
-                        {latestChapters[comic.id]?.title || "Chapter 1"}
+                        {latestChapters[comic.id]?.title || `Chương ${latestChapters[comic.id]?.chapter_number ?? 1}`}
                       </p>
                     </div>
                   </div>
@@ -192,7 +192,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
                           <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900 px-2 py-1 rounded">
                             <span className="font-medium text-primary dark:text-accent truncate">
-                              » {latestChapters[comic.id]?.title || "Chapter 1"}
+                              » {latestChapters[comic.id]?.title || `Chương ${latestChapters[comic.id]?.chapter_number ?? 1}`}
                             </span>
                             <span className="text-[10px] text-slate-400 dark:text-[#39ff14] shrink-0 ml-1">
                               {t("new_badge")}
@@ -264,7 +264,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                       </h3>
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="font-medium text-primary dark:text-accent truncate max-w-[80%]">
-                          » {latestChapters[comic.id]?.title || "Chapter 1"}
+                          » {latestChapters[comic.id]?.title || `Chương ${latestChapters[comic.id]?.chapter_number ?? 1}`}
                         </span>
                         <span className="text-[10px] text-slate-400 dark:text-[#39ff14] shrink-0">
                           {(comic.viewCount || 0).toLocaleString()} 👁

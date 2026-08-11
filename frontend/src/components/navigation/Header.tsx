@@ -216,7 +216,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onFocus={() => {
                   if (searchResults.length > 0) setShowResults(true);
                 }}
-                placeholder={language === "VI" ? "Tìm kiếm truyện..." : "Search comics..."}
+                placeholder={t("search_placeholder")}
                 className="w-full pl-4 pr-10 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-primary transition-all"
               />
               <button
@@ -242,11 +242,11 @@ export const Header: React.FC<HeaderProps> = ({
                 {isSearching && searchResults.length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                     <Loader2 size={14} className="animate-spin text-orange-500 dark:text-accent" />
-                    <span>{language === "VI" ? "Đang tìm kiếm..." : "Searching..."}</span>
+                    <span>{t("searching")}</span>
                   </div>
                 ) : searchResults.length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400">
-                    {language === "VI" ? "Không tìm thấy truyện nào." : "No comics found."}
+                    {t("no_comics_found")}
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-100 dark:divide-white/10 max-h-80 overflow-y-auto">
@@ -275,7 +275,7 @@ export const Header: React.FC<HeaderProps> = ({
                             {comic.title}
                           </h4>
                           <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">
-                            {comic.author || (language === "VI" ? "Đang cập nhật" : "Updating")}
+                            {comic.author || t("updating")}
                           </p>
                         </div>
                       </Link>
@@ -408,7 +408,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <button
                           onClick={async () => {
                             setIsUserMenuOpen(false);
-                            toast.success('Đăng xuất thành công! Đang chuyển hướng về trang chủ trong 2 giây...');
+                            toast.success(t("logout_success"));
                             await signOut();
                           }}
                           className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
