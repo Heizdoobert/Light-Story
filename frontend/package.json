@@ -41,7 +41,6 @@
     "dompurify": "^3.4.13",
     "dotenv": "^17.2.3",
     "jszip": "^3.10.1",
-    "light-story-workspace": "file:..",
     "lucide-react": "^1.25.0",
     "motion": "^13.0.0",
     "next": "^16.2.10",
