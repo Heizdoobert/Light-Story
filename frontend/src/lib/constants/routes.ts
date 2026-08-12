@@ -34,6 +34,7 @@ export const ROUTES = {
     OPERATIONS: "/admin/operations",
     ANALYTICS: "/admin/analytics",
     PROFILE: "/admin/profile",
+    SENTRY: "/admin/sentry",
   },
   ERROR: {
     UNAUTHORIZED: "/handle-exception/401",
