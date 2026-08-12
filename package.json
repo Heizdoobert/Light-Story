@@ -18,9 +18,12 @@
     "deploy": "wrangler deploy --config workers/kv-worker/wrangler.jsonc",
     "test:run": "npm --prefix frontend run test:run",
     "generate:types": "npm --prefix packages/api-types run generate",
-    "docker:build": "docker compose build --no-cache",
-    "docker:up": "docker compose up -d",
-    "docker:rebuild": "docker compose down && docker compose build --no-cache && docker compose up -d"
+    "docker:build": "docker compose --env-file docker-local.env down --rmi all --volumes && docker system prune -af --volumes && docker compose --env-file docker-local.env build --no-cache && docker compose --env-file docker-local.env up -d",
+    "docker:up": "docker compose --env-file docker-local.env up -d",
+    "docker:local": "powershell -ExecutionPolicy Bypass -File docker-local.ps1",
+    "docker:local:emulator": "powershell -ExecutionPolicy Bypass -File docker-local.ps1 -Local",
+    "docker:local:fast": "powershell -ExecutionPolicy Bypass -File docker-local.ps1 -Fast",
+    "docker:rebuild": "npm run docker:build"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260625.1",

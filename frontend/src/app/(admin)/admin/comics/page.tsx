@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Plus, Edit, Trash2, Search, BookOpen, Layers } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
@@ -11,8 +10,8 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
-import { apiClient } from "@/lib/api/apiClient";
 import { useAdminComics } from "@/hooks/features/use-admin-comics";
+import { useAdminFormOptions } from "@/hooks/features/use-admin-form-options";
 import { Modal } from "@/components/ui/modal";
 
 export default function AdminComicsPage() {
@@ -30,6 +29,8 @@ export default function AdminComicsPage() {
     setTitle,
     author,
     setAuthor,
+    translator,
+    setTranslator,
     category,
     setCategory,
     status,
@@ -42,23 +43,9 @@ export default function AdminComicsPage() {
     handleSaveComic,
     handleDeleteComic,
   } = useAdminComics();
-  const [categories, setCategories] = useState<string[]>([]);
-
-  useEffect(() => {
-    let active = true;
-    apiClient
-      .get<{ id: string; name: string }[]>(ROUTES.API.CATEGORIES)
-      .then((rows) => {
-        if (!active || !Array.isArray(rows)) return;
-        setCategories(rows.map((row) => row.name).filter(Boolean));
-      })
-      .catch(() => {
-        if (active) setCategories([]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { categories, authors, translators, loading: optionsLoading } = useAdminFormOptions();
+  const optionsEmpty = authors.length === 0 && translators.length === 0;
+  const canSaveComic = !submitting && !optionsLoading && !optionsEmpty && categories.length > 0;
 
   return (
     <div className="space-y-6">
@@ -224,32 +211,59 @@ export default function AdminComicsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="comic-author" className="block text-xs font-semibold text-slate-300 mb-1">Tác Giả</label>
-                  <input
+              <div>
+                <label htmlFor="comic-author" className="block text-xs font-semibold text-slate-300 mb-1">
+                  Tác Giả / Dịch Giả * <span className="text-slate-500 font-normal">(bắt buộc chọn 1)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <select
                     id="comic-author"
-                    type="text"
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Tên tác giả..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại</label>
-                  <select
-                    id="comic-category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                   >
-                    <option value="">Tất cả thể loại</option>
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>{cat}</option>
+                    <option value="">Tác giả...</option>
+                    {authors.map((a) => (
+                      <option key={a.id} value={a.name}>{a.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    id="comic-translator"
+                    value={translator}
+                    onChange={(e) => setTranslator(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="">Dịch giả (đội dịch)...</option>
+                    {translators.map((tr) => (
+                      <option key={tr.id} value={tr.name}>{tr.name}</option>
                     ))}
                   </select>
                 </div>
+                {optionsEmpty && (
+                  <p className="text-[11px] text-orange-400 mt-1">
+                    Chưa có tác giả hoặc dịch giả. Vui lòng thêm tác giả / dịch giả trước khi tạo truyện.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại *</label>
+                <select
+                  id="comic-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                >
+                  <option value="">Chọn thể loại...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                {categories.length === 0 && (
+                  <p className="text-[11px] text-orange-400 mt-1">
+                    Chưa có thể loại. Vui lòng thêm thể loại trước khi tạo truyện.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -286,7 +300,11 @@ export default function AdminComicsPage() {
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Hủy
                 </Button>
-                <Button type="submit" disabled={submitting} className="bg-orange-500 hover:bg-orange-600">
+                <Button
+                  type="submit"
+                  disabled={!canSaveComic}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
                   {submitting ? "Đang lưu..." : "Lưu Thay Đổi"}
                 </Button>
               </div>

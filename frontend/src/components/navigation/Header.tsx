@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetchStoriesPage({ keyword: trimmed, page: 1, pageSize: 6, sort: 'newest' }).catch(() => null);
+        const res = await fetchStoriesPage({ keyword: trimmed, page: 1, pageSize: 7, sort: 'newest' }).catch(() => null);
         setSearchResults(res?.items ?? []);
         setShowResults(true);
       } catch {

@@ -38,6 +38,7 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
       .insert({
         title: parsed.data.title,
         author: parsed.data.author,
+        translator: parsed.data.translator,
         category: parsed.data.category,
         description: parsed.data.description,
         status: parsed.data.status,

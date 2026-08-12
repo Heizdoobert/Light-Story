@@ -34,6 +34,7 @@ export default function AdminChaptersPage() {
     images,
     setImages,
     submitting,
+    handleBulkCbzProcessed,
     handleOpenCreateModal,
     handleOpenEditModal,
     handleSaveChapter,
@@ -211,8 +212,13 @@ export default function AdminChaptersPage() {
                 </label>
                 <ImageUploader
                   folder="chapters"
+                  bulkChapters={!editingChapter}
+                  onCbzName={(name) => {
+                    if (!editingChapter) setTitle(name);
+                  }}
+                  onCbzProcessed={handleBulkCbzProcessed}
                   onImagesUploaded={(urls) => {
-                    setImages((prev) => [...prev, ...urls]);
+                    if (!editingChapter) setImages((prev) => [...prev, ...urls]);
                   }}
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Đã chọn: {images.length} trang ảnh</p>

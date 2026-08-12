@@ -6,6 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+docker-local.env
 .dev.vars
 .agents/
 agents/
@@ -152,3 +153,9 @@ deploy_key*
 # Sentry Config File
 .env.sentry-build-plugin
 backend-supabase/supabase/.branches/
+
+# CocoIndex artifacts
+.cocoindex/
+*.cocoindex
+cocoindex.db
+
