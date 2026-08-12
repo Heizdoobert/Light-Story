@@ -14,6 +14,7 @@
     "build": "npm --prefix frontend run build",
     "check": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
+      "typecheck": "npm --prefix frontend run typecheck",
     "preview": "npm --prefix frontend run preview",
     "deploy": "wrangler deploy --config workers/kv-worker/wrangler.jsonc",
     "test:run": "npm --prefix frontend run test:run",
