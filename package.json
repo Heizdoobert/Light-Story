@@ -18,6 +18,7 @@
     "preview": "npm --prefix frontend run preview",
     "deploy": "wrangler deploy --config workers/kv-worker/wrangler.jsonc",
     "test:run": "npm --prefix frontend run test:run",
+      "postinstall": "node -e \"try{require('fs').rmSync('node_modules/light-story-workspace',{recursive:true,force:true})}catch(e){}\"",
     "generate:types": "npm --prefix packages/api-types run generate",
     "docker:build": "docker compose --env-file docker-local.env down --rmi all --volumes && docker system prune -af --volumes && docker compose --env-file docker-local.env build --no-cache && docker compose --env-file docker-local.env up -d",
     "docker:up": "docker compose --env-file docker-local.env up -d",
