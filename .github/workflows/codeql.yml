@@ -3,13 +3,12 @@ name: CodeQL Security Scan
 on:
   push:
     branches:
-      - main
+      - dev
+      - preview
   pull_request:
     branches:
-      - main
-  schedule:
-    # Run every Monday at 06:00 UTC
-    - cron: "0 6 * * 1"
+      - dev
+      - preview
 
 permissions:
   actions: read
