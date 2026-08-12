@@ -159,3 +159,6 @@ backend-supabase/supabase/.branches/
 *.cocoindex
 cocoindex.db
 
+
+# Agent task plans
+tasks/
