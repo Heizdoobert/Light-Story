@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Edit, Trash2, Search, BookOpen, Layers, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search, BookOpen, Layers } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,7 @@ import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
 import { apiClient } from "@/lib/api/apiClient";
 import { useAdminComics } from "@/hooks/features/use-admin-comics";
-import { useModalA11y } from "@/hooks/common/use-modal-a11y";
+import { Modal } from "@/components/ui/modal";
 
 export default function AdminComicsPage() {
   const {
@@ -42,7 +42,6 @@ export default function AdminComicsPage() {
     handleSaveComic,
     handleDeleteComic,
   } = useAdminComics();
-  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
   const [categories, setCategories] = useState<string[]>([]);
 
   useEffect(() => {
@@ -204,19 +203,14 @@ export default function AdminComicsPage() {
       </div>
 
       {/* Create / Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold">
-                {editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
-              </h2>
-              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveComic} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        variant="dark"
+        className="max-w-xl"
+        title={editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
+      >
+        <form onSubmit={handleSaveComic} className="space-y-4">
               <div>
                 <label htmlFor="comic-title" className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
                 <input
@@ -297,9 +291,7 @@ export default function AdminComicsPage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

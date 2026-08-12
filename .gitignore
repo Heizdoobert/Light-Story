@@ -151,3 +151,4 @@ deploy_key*
 
 # Sentry Config File
 .env.sentry-build-plugin
+backend-supabase/supabase/.branches/

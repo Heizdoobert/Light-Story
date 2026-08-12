@@ -1,9 +1,0 @@
-﻿43b2cec fix(user): dedupe profile page to ProfilePageContent, centralize comic URLs to ROUTES (task 9g)
-e2f903f fix(user): restore /user route, drop faked dashboard progress, batch story fetch
-a2046ff fix(admin): strict boolean parse for site settings and delete chapter with row story_id
-2ec01e1 fix(admin): modal scroll, env supabase url, superadmin gating, server-side ad markup policy (task 9d)
-9606444 docs(report): record task-9c commit hash
-f3a877c fix(admin): align admin role source with app_metadata, fix comic create/edit pages (task 9c)
-73447d1 refactor(app): centralize comic/chapter route URLs via ROUTES helpers (task 9b)
-ff5c079 docs(report): task-9a report hash correction
-bf08310 fix(app): shared zod auth schema, drop duplicate comic metadata

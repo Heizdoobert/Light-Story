@@ -29,10 +29,30 @@ describe('getGatewayUrl', () => {
     expect(getGatewayUrl()).toBe(PROD);
   });
 
-  it('throws when no URL is configured', () => {
+  it('falls back to the hardcoded production URL when none is configured', () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', '');
     vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL_PRODUCTION', '');
-    expect(() => getGatewayUrl()).toThrow('Missing NEXT_PUBLIC_GATEWAY_URL');
+    expect(getGatewayUrl()).toBe('https://kv-worker.hhhuygiau.workers.dev');
+  });
+
+  it('falls back to the localhost dev URL outside production when none is configured', () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', '');
+    expect(getGatewayUrl()).toBe('http://localhost:8787');
+  });
+
+  it('warns once with a structured event when production falls back to the hardcoded URL', async () => {
+    vi.resetModules();
+    const { getGatewayUrl: fresh } = await import('@/lib/utils/gateway-url');
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL_PRODUCTION', '');
+    fresh();
+    fresh();
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(spy.mock.calls[0][0]).toMatchObject({ event: 'gateway_url_fallback' });
+    spy.mockRestore();
   });
 });

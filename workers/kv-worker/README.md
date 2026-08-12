@@ -61,7 +61,7 @@ SUPABASE_URL=<your-project-url>
 SUPABASE_ANON_KEY=<anon-key>
 SUPABASE_SERVICE_KEY=<service-role-key>  # For admin operations
 SUPABASE_JWKS_URL=<jwks-endpoint>         # For JWT validation
-R2_BUCKET=lightstory-assets               # For file uploads
+R2_BUCKET=comic                       # For file uploads
 USE_NEW_UNIFIED_GATEWAY=true              # Feature flag (optional)
 ```
 

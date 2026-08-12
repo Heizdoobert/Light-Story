@@ -202,15 +202,16 @@ describe('Phase P0 Edge Cases - http.ts (messageFromResponse & fetchApi)', () =>
       expect(headers.get('Content-Type')).toBeNull();
     });
 
-    it('throws when no gateway URL is configured (mock fallback removed)', async () => {
+    it('falls back to the localhost URL when no gateway URL is configured', async () => {
       const prev = process.env.NEXT_PUBLIC_GATEWAY_URL;
       const prevProd = process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
       delete process.env.NEXT_PUBLIC_GATEWAY_URL;
       delete process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION;
 
       try {
-        await expect(fetchApi('/route')).rejects.toThrow(
-          'NEXT_PUBLIC_GATEWAY_URL',
+        await fetchApi('/route');
+        expect(vi.mocked(global.fetch).mock.calls[0][0]).toBe(
+          'http://localhost:8787/route',
         );
       } finally {
         if (prev !== undefined) process.env.NEXT_PUBLIC_GATEWAY_URL = prev;

@@ -82,15 +82,15 @@ describe('F5 R2 upload standardization boundary', () => {
     ).rejects.toThrow(TypeError);
   });
 
-  it('throws a clear error when NEXT_PUBLIC_GATEWAY_URL is missing (no dev fallback in test env)', async () => {
+  it('falls back to the localhost dev URL when NEXT_PUBLIC_GATEWAY_URL is missing', async () => {
     delete process.env.NEXT_PUBLIC_GATEWAY_URL;
     const fetchMock = vi.fn().mockResolvedValue(okResponse({ success: true, data: { urls: [] } }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(uploadChapterImages([makeFile('a.png')], 'comic-1')).rejects.toThrow(
-      'Missing NEXT_PUBLIC_GATEWAY_URL',
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
+    const urls = await uploadChapterImages([makeFile('a.png')], 'comic-1');
+    expect(urls).toEqual([]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(String(fetchMock.mock.calls[0][0])).toMatch(/^http:\/\/localhost:8787/);
   });
 
   it('DEVIATION: a missing bucket env is rejected by the R2 bucket guard before any fetch', async () => {

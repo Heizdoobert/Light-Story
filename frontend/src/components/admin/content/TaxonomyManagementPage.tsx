@@ -1,9 +1,9 @@
 "use client";
 
-import { Layers, Tag, Plus, Edit, Trash2, X } from "lucide-react";
+import { Layers, Tag, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminTaxonomy, type TaxonomyEntity } from "@/hooks/features/use-admin-taxonomy";
-import { useModalA11y } from "@/hooks/common/use-modal-a11y";
+import { Modal } from "@/components/ui/modal";
 
 const META: Record<TaxonomyEntity, { title: string; description: string; addLabel: string; itemLabel: string }> = {
   genre: {
@@ -39,7 +39,6 @@ export function TaxonomyManagementPage({ entity }: { entity: TaxonomyEntity }) {
     handleSave,
     handleDelete,
   } = useAdminTaxonomy(entity);
-  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
 
   return (
     <div className="space-y-6">
@@ -98,19 +97,13 @@ export function TaxonomyManagementPage({ entity }: { entity: TaxonomyEntity }) {
         </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold">
-                {editingItem ? `Sửa ${meta.itemLabel}` : `Thêm ${meta.itemLabel} Mới`}
-              </h2>
-              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSave} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        variant="dark"
+        title={editingItem ? `Sửa ${meta.itemLabel}` : `Thêm ${meta.itemLabel} Mới`}
+      >
+        <form onSubmit={handleSave} className="space-y-4">
               <div>
                 <label htmlFor={`${entity}-name`} className="block text-xs font-semibold text-slate-300 mb-1">
                   Tên {meta.itemLabel} *
@@ -149,9 +142,7 @@ export function TaxonomyManagementPage({ entity }: { entity: TaxonomyEntity }) {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

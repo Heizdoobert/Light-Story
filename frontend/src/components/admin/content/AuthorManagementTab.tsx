@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useModalA11y } from '@/hooks/common/use-modal-a11y';
+import { Modal } from '@/components/ui/modal';
 import { createAuthor, updateAuthor, deleteAuthor } from '@/actions/taxonomy.actions';
 import { createTranslator, updateTranslator, deleteTranslator } from '@/actions/translators.actions';
 import { useAuthorPresenter } from '@/hooks/presenters/useAuthorPresenter';
@@ -239,8 +239,6 @@ const TranslatorsSection: React.FC = () => {
     setFormError(null);
   };
 
-  const closeModalRef = useModalA11y(showModal, closeModal);
-
   const openAddModal = () => {
     closeModal();
     setShowModal(true);
@@ -388,13 +386,8 @@ const TranslatorsSection: React.FC = () => {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4">
-              {editingId ? 'Edit Translator' : 'Add Translator'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal isOpen={showModal} onClose={closeModal} title={editingId ? 'Edit Translator' : 'Add Translator'}>
+        <form onSubmit={handleSubmit} className="space-y-4">
               {formError && (
                 <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-600 dark:text-rose-400 font-medium">
                   {formError}
@@ -445,7 +438,6 @@ const TranslatorsSection: React.FC = () => {
               <div className="flex items-center justify-end gap-3 pt-4">
                 <button
                   type="button"
-                  ref={closeModalRef}
                   onClick={closeModal}
                   disabled={mutationPending}
                   className="rounded-lg border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-bold disabled:opacity-50"
@@ -461,9 +453,7 @@ const TranslatorsSection: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };

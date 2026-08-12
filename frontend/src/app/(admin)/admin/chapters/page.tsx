@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Layers, Plus, Edit, Trash2, Search, X, BookOpen } from "lucide-react";
+import { Layers, Plus, Edit, Trash2, Search, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
 });
 import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
-import { useModalA11y } from "@/hooks/common/use-modal-a11y";
+import { Modal } from "@/components/ui/modal";
 
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();
@@ -39,7 +39,6 @@ export default function AdminChaptersPage() {
     handleSaveChapter,
     handleDeleteChapter,
   } = useAdminChapters(initialComicId);
-  const closeModalRef = useModalA11y(isModalOpen, () => setIsModalOpen(false));
 
   return (
     <div className="space-y-6">
@@ -155,19 +154,14 @@ export default function AdminChaptersPage() {
       </div>
 
       {/* Create / Edit Chapter Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold">
-                {editingChapter ? "Chỉnh Sửa Chương" : "Thêm Chương Mới"}
-              </h2>
-              <button ref={closeModalRef} onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveChapter} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        variant="dark"
+        className="max-w-xl"
+        title={editingChapter ? "Chỉnh Sửa Chương" : "Thêm Chương Mới"}
+      >
+        <form onSubmit={handleSaveChapter} className="space-y-4">
               <div>
                 <label htmlFor="chapter-comic" className="block text-xs font-semibold text-slate-300 mb-1">Chọn Bộ Truyện *</label>
                 <select
@@ -233,9 +227,7 @@ export default function AdminChaptersPage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }
