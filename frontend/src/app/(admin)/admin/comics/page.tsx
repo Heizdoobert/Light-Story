@@ -27,9 +27,11 @@ export default function AdminComicsPage() {
     editingComic,
     title,
     setTitle,
-    author,
+    authorId,
+    setAuthorId,
     setAuthor,
-    translator,
+    translatorId,
+    setTranslatorId,
     setTranslator,
     category,
     setCategory,
@@ -218,24 +220,32 @@ export default function AdminComicsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <select
                     id="comic-author"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
+                    value={authorId}
+                    onChange={(e) => {
+                      const opt = authors.find((a) => a.id === e.target.value);
+                      setAuthorId(e.target.value);
+                      setAuthor(opt?.name ?? "");
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                   >
                     <option value="">Tác giả...</option>
                     {authors.map((a) => (
-                      <option key={a.id} value={a.name}>{a.name}</option>
+                      <option key={a.id} value={a.id}>{a.name}</option>
                     ))}
                   </select>
                   <select
                     id="comic-translator"
-                    value={translator}
-                    onChange={(e) => setTranslator(e.target.value)}
+                    value={translatorId}
+                    onChange={(e) => {
+                      const opt = translators.find((tr) => tr.id === e.target.value);
+                      setTranslatorId(e.target.value);
+                      setTranslator(opt?.name ?? "");
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                   >
                     <option value="">Dịch giả (đội dịch)...</option>
                     {translators.map((tr) => (
-                      <option key={tr.id} value={tr.name}>{tr.name}</option>
+                      <option key={tr.id} value={tr.id}>{tr.name}</option>
                     ))}
                   </select>
                 </div>

@@ -10,7 +10,9 @@ export interface ComicItem {
   id: string;
   title: string;
   author: string;
+  author_id?: string | null;
   translator?: string;
+  translator_id?: string | null;
   category?: string;
   cover_url?: string | null;
   status: string;
@@ -31,7 +33,9 @@ export function useAdminComics() {
   // Form State
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
+  const [authorId, setAuthorId] = useState("");
   const [translator, setTranslator] = useState("");
+  const [translatorId, setTranslatorId] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("published");
   const [coverUrl, setCoverUrl] = useState("");
@@ -43,7 +47,7 @@ export function useAdminComics() {
       const supabase = getSupabaseBrowserClient();
       const { data } = await supabase
         .from("stories")
-        .select("id, title, author, category, cover_url, status, created_at, views")
+        .select("id, title, author, author_id, translator, translator_id, category, cover_url, status, created_at, views")
         .order("created_at", { ascending: false })
         .limit(500);
 
@@ -66,7 +70,9 @@ export function useAdminComics() {
     setEditingComic(null);
     setTitle("");
     setAuthor("");
+    setAuthorId("");
     setTranslator("");
+    setTranslatorId("");
     setCategory("");
     setStatus("published");
     setCoverUrl("");
@@ -77,7 +83,9 @@ export function useAdminComics() {
     setEditingComic(comic);
     setTitle(comic.title);
     setAuthor(comic.author || "");
+    setAuthorId(comic.author_id || "");
     setTranslator(comic.translator || "");
+    setTranslatorId(comic.translator_id || "");
     setCategory(comic.category || "");
     setStatus(comic.status || "published");
     setCoverUrl(comic.cover_url || "");
@@ -102,7 +110,7 @@ export function useAdminComics() {
 
     setSubmitting(true);
     try {
-      const payload: CreateComicInput = { title, author, translator, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
+      const payload: CreateComicInput = { title, author, author_id: authorId, translator, translator_id: translatorId, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
       const res = editingComic
         ? await updateComic(editingComic.id, payload)
         : await createComic(payload);
@@ -159,8 +167,12 @@ export function useAdminComics() {
     setTitle,
     author,
     setAuthor,
+    authorId,
+    setAuthorId,
     translator,
     setTranslator,
+    translatorId,
+    setTranslatorId,
     category,
     setCategory,
     status,

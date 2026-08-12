@@ -11,7 +11,9 @@ export const COMIC_STATUSES = [
 export const createComicSchema = z.object({
   title: z.string().min(1, 'Tiêu đề không được để trống'),
   author: z.string().optional().default(''),
+  author_id: z.string().optional().default(''),
   translator: z.string().optional().default(''),
+  translator_id: z.string().optional().default(''),
   category: z.string().optional().default(''),
   description: z.string().optional().default(''),
   status: z.enum(COMIC_STATUSES).default('published'),
