@@ -10,6 +10,7 @@ export interface ComicItem {
   id: string;
   title: string;
   author: string;
+  translator?: string;
   category?: string;
   cover_url?: string | null;
   status: string;
@@ -30,6 +31,7 @@ export function useAdminComics() {
   // Form State
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
+  const [translator, setTranslator] = useState("");
   const [category, setCategory] = useState("");
   const [status, setStatus] = useState("published");
   const [coverUrl, setCoverUrl] = useState("");
@@ -64,6 +66,7 @@ export function useAdminComics() {
     setEditingComic(null);
     setTitle("");
     setAuthor("");
+    setTranslator("");
     setCategory("");
     setStatus("published");
     setCoverUrl("");
@@ -74,6 +77,7 @@ export function useAdminComics() {
     setEditingComic(comic);
     setTitle(comic.title);
     setAuthor(comic.author || "");
+    setTranslator(comic.translator || "");
     setCategory(comic.category || "");
     setStatus(comic.status || "published");
     setCoverUrl(comic.cover_url || "");
@@ -86,11 +90,19 @@ export function useAdminComics() {
       toast.error("Vui lòng nhập tên truyện");
       return;
     }
+    if (!author.trim() && !translator.trim()) {
+      toast.error("Vui lòng chọn tác giả hoặc dịch giả");
+      return;
+    }
+    if (!category) {
+      toast.error("Vui lòng chọn thể loại");
+      return;
+    }
     if (submitting) return;
 
     setSubmitting(true);
     try {
-      const payload: CreateComicInput = { title, author, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
+      const payload: CreateComicInput = { title, author, translator, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
       const res = editingComic
         ? await updateComic(editingComic.id, payload)
         : await createComic(payload);
@@ -147,6 +159,8 @@ export function useAdminComics() {
     setTitle,
     author,
     setAuthor,
+    translator,
+    setTranslator,
     category,
     setCategory,
     status,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { createChapter, updateChapter, deleteChapter } from "@/lib/actions/chapter.actions";
 import { toast } from "sonner";
@@ -46,6 +46,44 @@ export function useAdminChapters(initialComicId: string = "all") {
   const [title, setTitle] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Bulk cbz upload: uploads run parallel, chapter inserts serialized via promise chain
+  // so UNIQUE(story_id, chapter_number) is never hit by concurrent increments.
+  const bulkCounter = useRef<{ storyId: string; next: number } | null>(null);
+  const bulkQueue = useRef<Promise<void>>(Promise.resolve());
+
+  const handleBulkCbzProcessed = (name: string, urls: string[]) => {
+    if (editingChapter || !targetComicId) return;
+    bulkQueue.current = bulkQueue.current
+      .then(async () => {
+        if (!bulkCounter.current || bulkCounter.current.storyId !== targetComicId) {
+          const supabase = getSupabaseBrowserClient();
+          const { data } = await supabase
+            .from("chapters")
+            .select("chapter_number")
+            .eq("story_id", targetComicId)
+            .order("chapter_number", { ascending: false })
+            .limit(1);
+          bulkCounter.current = { storyId: targetComicId, next: (data?.[0]?.chapter_number ?? 0) + 1 };
+        }
+        const num = bulkCounter.current.next++;
+        const res = await createChapter({
+          story_id: targetComicId,
+          chapter_number: num,
+          title: name || `Chương ${num}`,
+          images: urls,
+        });
+        if (res.success === false) {
+          toast.error(res.error || `Không thể tạo chương ${name}`);
+          return;
+        }
+        toast.success(`Đã tạo chương ${num} - ${name}`);
+        setTitle("");
+        setImages([]);
+        await loadInitialData();
+      })
+      .catch(() => {});
+  };
 
   const loadInitialData = useCallback(async () => {
     setLoading(true);
@@ -98,6 +136,7 @@ export function useAdminChapters(initialComicId: string = "all") {
 
   const handleOpenCreateModal = () => {
     setEditingChapter(null);
+    bulkCounter.current = null;
     setChapterNumber(chapters.length > 0 ? chapters[0].chapter_number + 1 : 1);
     setTitle("");
     setImages([]);
@@ -137,6 +176,7 @@ export function useAdminChapters(initialComicId: string = "all") {
         return;
       }
       toast.success("Lưu chương thành công");
+      bulkCounter.current = null;
       await loadInitialData();
       setEditingChapter(null);
       setIsModalOpen(false);
@@ -190,6 +230,7 @@ export function useAdminChapters(initialComicId: string = "all") {
     images,
     setImages,
     submitting,
+    handleBulkCbzProcessed,
     handleOpenCreateModal,
     handleOpenEditModal,
     handleSaveChapter,
