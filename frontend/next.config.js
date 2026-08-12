@@ -66,7 +66,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://localhost:*; connect-src 'self' http://localhost:* https://*.workers.dev https://*.supabase.co wss://*.supabase.co https://va.vercel.com https://va.vercel-scripts.com ${process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || "https://kv-worker.hhhuygiau.workers.dev"}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`,
+            value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http://localhost:*; connect-src 'self' http://localhost:* https://*.workers.dev https://*.supabase.co wss://*.supabase.co https://va.vercel.com https://va.vercel-scripts.com https://vitals.vercel-insights.com ${process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || "https://kv-worker.hhhuygiau.workers.dev"}; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';`,
           },
         ],
       },
