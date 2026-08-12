@@ -152,3 +152,9 @@ deploy_key*
 # Sentry Config File
 .env.sentry-build-plugin
 backend-supabase/supabase/.branches/
+
+# CocoIndex artifacts
+.cocoindex/
+*.cocoindex
+cocoindex.db
+
