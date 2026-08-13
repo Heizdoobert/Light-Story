@@ -187,6 +187,9 @@ export const Header: React.FC<HeaderProps> = ({
           <motion.button
             {...bounceClick}
             onClick={() => setShowMobileMenu(true)}
+            aria-label={t("header_open_menu")}
+            aria-expanded={showMobileMenu}
+            aria-controls="mobile-nav-drawer"
             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all duration-300 shrink-0"
           >
             <Menu size={22} />
@@ -328,7 +331,7 @@ export const Header: React.FC<HeaderProps> = ({
             <motion.button
               {...bounceClick}
               onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-              aria-label="More menu"
+              aria-label={t("header_more_menu")}
               aria-expanded={isMoreMenuOpen}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
             >
@@ -615,7 +618,8 @@ export const Header: React.FC<HeaderProps> = ({
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Menu điều hướng"
+                id="mobile-nav-drawer"
+                aria-label={t("header_nav_drawer")}
                 className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-950 z-[90] shadow-lg flex flex-col"
               >
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/10">
@@ -629,7 +633,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                   <button
                     onClick={() => setShowMobileMenu(false)}
-                    aria-label="Đóng menu"
+                    aria-label={t("header_close_menu")}
                     className="p-2 bg-slate-100 dark:bg-slate-900 text-slate-500 hover:text-red-500 rounded-full transition-colors"
                   >
                     <X size={20} />
@@ -718,9 +722,9 @@ export const Header: React.FC<HeaderProps> = ({
                   
                   {/* Mobile Categories Grid */}
                   <div>
-                    <h4 className="font-bold text-xs uppercase text-slate-400 dark:text-slate-500 mb-3 px-3">
+                    <h2 className="font-bold text-xs uppercase text-slate-400 dark:text-slate-500 mb-3 px-3">
                       {t("category_list_title")}
-                    </h4>
+                    </h2>
                     <div className="grid grid-cols-2 gap-2">
                       {categories.map(cat => (
                         <Link 

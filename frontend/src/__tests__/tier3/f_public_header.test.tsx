@@ -105,4 +105,16 @@ describe('Header auth flow (public UI overhaul)', () => {
     expect(state.toastSuccess).not.toHaveBeenCalled();
     expect(state.push).not.toHaveBeenCalled();
   });
+
+  it('mobile hamburger is named, exposes expanded state, and opens the drawer', async () => {
+    render(<Header />);
+    const hamburger = screen.getByRole('button', { name: 'header_open_menu' });
+    expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+    expect(hamburger).toHaveAttribute('aria-controls', 'mobile-nav-drawer');
+
+    fireEvent.click(hamburger);
+    await waitFor(() => expect(hamburger).toHaveAttribute('aria-expanded', 'true'));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('id', 'mobile-nav-drawer');
+  });
 });
