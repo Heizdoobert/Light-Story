@@ -46,13 +46,15 @@ export function ImageUploader({
         setProgressMsg(msg);
       });
 
-      if (cbzRes.success && cbzRes.urls.length > 0) {
+      if (cbzRes.success && cbzRes.urls.length > 0 && cbzRes.failed === 0) {
         if (bulkChapters) {
           onCbzProcessed?.(name, cbzRes.urls);
         } else {
           uploadedUrls.push(...cbzRes.urls);
         }
         toast.success(`Đã tải lên ${cbzRes.urls.length} trang ảnh từ tệp ${file.name}!`);
+      } else if (cbzRes.failed > 0) {
+        toast.error(`Không thể tải hết trang ảnh từ ${file.name}: ${cbzRes.error || `${cbzRes.failed} trang thất bại`}. Chương không được tạo.`);
       } else {
         toast.error(cbzRes.error || `Không thể giải nén tệp ${file.name}`);
       }

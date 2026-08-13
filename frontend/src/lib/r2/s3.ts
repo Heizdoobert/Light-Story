@@ -15,7 +15,7 @@ export const R2_BUCKET_CHAPTERS =
 
 export function getBucketForFolder(folder: string): string {
   const normalized = folder.toLowerCase();
-  if (normalized.includes("cover")) return R2_BUCKET_COVERS;
+  if (normalized.includes("cover") || normalized.includes("avatar")) return R2_BUCKET_COVERS;
   return R2_BUCKET_CHAPTERS;
 }
 
@@ -26,10 +26,14 @@ export function contentKey(bucket: string, key: string): string {
   return `${host}/${key.replace(/^\/+/, "")}`;
 }
 
+let cachedClient: S3Client | null = null;
+
 export function getS3Client(token: {
   accessKeyId: string;
   secretAccessKey: string;
 }): S3Client {
+  if (cachedClient) return cachedClient;
+
   const accountId = process.env.R2_ACCOUNT_ID;
   const endpoint =
     process.env.R2_ENDPOINT ||
@@ -39,7 +43,7 @@ export function getS3Client(token: {
     throw new Error("R2_ENDPOINT or R2_ACCOUNT_ID is not configured");
   }
 
-  return new S3Client({
+  cachedClient = new S3Client({
     region: "auto",
     endpoint,
     credentials: {
@@ -47,6 +51,7 @@ export function getS3Client(token: {
       secretAccessKey: token.secretAccessKey,
     },
   });
+  return cachedClient;
 }
 
 export async function putObject(

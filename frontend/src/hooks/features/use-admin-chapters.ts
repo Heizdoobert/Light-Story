@@ -53,22 +53,33 @@ export function useAdminChapters(initialComicId: string = "all") {
   const bulkQueue = useRef<Promise<void>>(Promise.resolve());
 
   const handleBulkCbzProcessed = (name: string, urls: string[]) => {
-    if (editingChapter || !targetComicId) return;
+    if (editingChapter) return;
+    const comicId = targetComicId;
+    if (!comicId) return;
     bulkQueue.current = bulkQueue.current
       .then(async () => {
-        if (!bulkCounter.current || bulkCounter.current.storyId !== targetComicId) {
+        if (!bulkCounter.current || bulkCounter.current.storyId !== comicId) {
           const supabase = getSupabaseBrowserClient();
-          const { data } = await supabase
-            .from("chapters")
-            .select("chapter_number")
-            .eq("story_id", targetComicId)
-            .order("chapter_number", { ascending: false })
-            .limit(1);
-          bulkCounter.current = { storyId: targetComicId, next: (data?.[0]?.chapter_number ?? 0) + 1 };
+          const fetchMax = async () => {
+            const { data } = await supabase
+              .from("chapters")
+              .select("chapter_number")
+              .eq("story_id", comicId)
+              .order("chapter_number", { ascending: false })
+              .limit(1);
+            return data;
+          };
+          let data = await fetchMax();
+          if (!data) data = await fetchMax();
+          if (!data) {
+            toast.error(`Không thể xác định số chương kế tiếp cho ${name}. Hãy thử lại.`);
+            return;
+          }
+          bulkCounter.current = { storyId: comicId, next: (data[0]?.chapter_number ?? 0) + 1 };
         }
         const num = bulkCounter.current.next++;
         const res = await createChapter({
-          story_id: targetComicId,
+          story_id: comicId,
           chapter_number: num,
           title: name || `Chương ${num}`,
           images: urls,
