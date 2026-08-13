@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "dev:gateway": "npx wrangler dev --port 8787 --remote --config workers/kv-worker/wrangler.jsonc",
+    "dev:gateway": "npx wrangler dev --port 8787 --remote --config workers/kv-worker/wrangler.dev.jsonc",
     "dev:all": "concurrently -n fe,gw \"npm run dev\" \"npm run dev:gateway\"",
     "build": "npm --prefix frontend run build",
     "check": "npm --prefix frontend run build",
