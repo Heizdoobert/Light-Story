@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import UserSidebar from '@/components/layout/user-sidebar';
 import { Header } from '@/components/navigation/Header';
 import PublicFooter from '@/components/layout/public-footer';
-import LoginModal from '@/components/auth/login-modal';
 import { useAuth } from '@/context/AuthContext';
 import { ROUTES } from '@/lib/constants/routes';
 import UserLoading from './loading';
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -30,8 +28,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
       >
         Bỏ qua điều hướng
       </a>
-      <Header onLoginClick={() => setIsLoginModalOpen(true)} />
-      <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+      <Header />
       <div className="flex-1 flex max-w-7xl w-full mx-auto">
         <UserSidebar />
         <main id="main-content" className="flex-1 p-6">{children}</main>

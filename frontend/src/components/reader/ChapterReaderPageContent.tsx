@@ -32,7 +32,6 @@ export const ChapterReaderPageContent: React.FC = () => {
     allChapters,
     images,
     loading,
-    setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
     showChapterMenu,
@@ -354,7 +353,6 @@ export const ChapterReaderPageContent: React.FC = () => {
       <ChapterCommentsSection
         chapterId={chapterId}
         comicId={comicId}
-        onLoginClick={() => setIsLoginModalOpen(true)}
       />
 
       {showChapterMenu && (

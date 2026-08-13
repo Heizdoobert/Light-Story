@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
@@ -8,6 +9,7 @@ import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/secur
 import { AdZone } from "@/components/shared/ads/AdZone";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
+import { ROUTES } from "@/lib/constants/routes";
 
 const details = (profile: NonNullable<ReturnType<typeof useAuth>["profile"]>) => [
   { icon: Mail, label: "Email", value: profile.email },
@@ -29,12 +31,12 @@ const details = (profile: NonNullable<ReturnType<typeof useAuth>["profile"]>) =>
 ];
 
 export const ProfilePageContent: React.FC = () => {
+  const router = useRouter();
   const {
     user,
     profile,
     isEditModalOpen,
     setIsEditModalOpen,
-    setIsLoginModalOpen,
   } = useProfilePresenter();
 
   if (!user || !profile) {

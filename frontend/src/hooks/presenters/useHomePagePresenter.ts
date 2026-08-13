@@ -27,7 +27,6 @@ export function useHomePagePresenter(
   const [trendingComics, setTrendingComics] = useState<Comic[]>(initialTrending);
   const [trendingLoaded, setTrendingLoaded] = useState(hydrated);
   const [loading, setLoading] = useState(!hydrated && initialComics.length === 0);
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [historyComics, setHistoryComics] = useState<HistoryComic[]>([]);
 
   useEffect(() => {
@@ -146,8 +145,6 @@ export function useHomePagePresenter(
     trendingComics,
     trendingLoaded,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     historyComics,
     getComicCover,
     applyComicCoverFallback,

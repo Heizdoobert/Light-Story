@@ -30,7 +30,6 @@ export function useReadChapterPresenter() {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
@@ -322,8 +321,6 @@ export function useReadChapterPresenter() {
     allChapters,
     images,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
     showChapterMenu,

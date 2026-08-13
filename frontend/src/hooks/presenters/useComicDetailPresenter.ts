@@ -34,7 +34,6 @@ export function useComicDetailPresenter({
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [loading, setLoading] = useState(!hydrated);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -118,8 +117,6 @@ export function useComicDetailPresenter({
     chapters,
     categories,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     readChapters,
     handleImageError,
     getVietnameseStatus,

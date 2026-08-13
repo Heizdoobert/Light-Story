@@ -28,7 +28,6 @@ export function useSearchPresenter(initialCategory?: string) {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
@@ -74,8 +73,6 @@ export function useSearchPresenter(initialCategory?: string) {
     loading,
     totalPages,
     totalItems,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     showFilter,
     setShowFilter,
     applyComicCoverFallback,

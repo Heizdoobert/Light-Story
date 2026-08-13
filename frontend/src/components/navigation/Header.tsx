@@ -41,7 +41,7 @@ function isStaffRole(role: string | null | undefined): boolean {
 }
 
 type HeaderProps = {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -425,7 +425,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <motion.button
               {...bounceClick}
-              onClick={onLoginClick}
+              onClick={() => (onLoginClick ? onLoginClick() : router.push(ROUTES.LOGIN))}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 dark:bg-primary text-white rounded-full font-bold text-sm shadow-sm shadow-orange-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
             >
               <LogIn size={18} />
