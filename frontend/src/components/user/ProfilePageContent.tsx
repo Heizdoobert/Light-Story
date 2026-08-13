@@ -49,8 +49,8 @@ export const ProfilePageContent: React.FC = () => {
             <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Not signed in</h2>
             <p className="text-slate-500 dark:text-slate-400 mb-6">Sign in to view and manage your profile.</p>
             <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold hover:opacity-90 transition-all"
+              onClick={() => router.push(ROUTES.LOGIN)}
+              className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-xl font-bold shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all"
             >
               Sign In
             </button>
@@ -114,8 +114,8 @@ export const ProfilePageContent: React.FC = () => {
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {details(profile).map(({ icon: Icon, label, value }) => (
                   <div key={label} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                      <Icon size={16} className="text-slate-500" />
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-600/10 dark:from-primary/10 dark:to-purple-500/10 flex items-center justify-center shrink-0">
+                      <Icon size={16} className="text-orange-500 dark:text-accent" />
                     </div>
                     <div>
                       <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{label}</p>
