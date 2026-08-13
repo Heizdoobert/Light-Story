@@ -487,6 +487,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     switched_to_vi: "Switched to Vietnamese",
     switched_to_en: "Switched to English",
     logout_success: "Logged out successfully",
+    logout_failed: "Logout failed",
 
     // Comic Management Toast
     comic_updated: "Comic updated",

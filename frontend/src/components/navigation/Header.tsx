@@ -408,8 +408,13 @@ export const Header: React.FC<HeaderProps> = ({
                         <button
                           onClick={async () => {
                             setIsUserMenuOpen(false);
-                            toast.success(t("logout_success"));
-                            await signOut();
+                            try {
+                              await signOut();
+                              toast.success(t("logout_success"));
+                              router.push(ROUTES.HOME);
+                            } catch {
+                              toast.error(t("logout_failed"));
+                            }
                           }}
                           className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
                         >
@@ -557,6 +562,65 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 
                 <div className="p-4 flex-1 overflow-y-auto space-y-6">
+                  {user && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10">
+                      <img
+                        src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
+                        alt="Avatar"
+                        width={40}
+                        height={40}
+                        decoding="async"
+                        className="w-10 h-10 rounded-full border-2 border-orange-500 dark:border-primary object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-slate-800 dark:text-white line-clamp-1">
+                          {profile?.full_name || user.email?.split("@")[0]}
+                        </div>
+                        <div className="text-[10px] font-bold text-orange-500 dark:text-accent uppercase tracking-wider">
+                          {role}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setShowMobileMenu(false);
+                          try {
+                            await signOut();
+                            toast.success(t("logout_success"));
+                            router.push(ROUTES.HOME);
+                          } catch {
+                            toast.error(t("logout_failed"));
+                          }
+                        }}
+                        className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                        aria-label={t("logout")}
+                      >
+                        <LogOut size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Mobile Language + Theme Toggles */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={toggleLanguage}
+                      className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors"
+                    >
+                      <Globe size={14} className="text-orange-500 dark:text-accent" />
+                      {language}
+                    </button>
+                    <button
+                      onClick={toggleTheme}
+                      className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors"
+                    >
+                      {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-[#39ff14]" />}
+                      {theme === "light" ? "Dark" : "Light"}
+                    </button>
+                  </div>
+
                   {/* Mobile Navigation Links */}
                   <div className="flex flex-col gap-2">
                     <Link href={ROUTES.HOME} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
