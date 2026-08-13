@@ -20,6 +20,7 @@ import {
   Users,
   User,
   ChevronDown,
+  Ellipsis,
   X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -58,10 +59,12 @@ export const Header: React.FC<HeaderProps> = ({
   const [showResults, setShowResults] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const getComicCover = (comic: Story) => {
     const raw = comic.cover_url || "";
@@ -133,6 +136,9 @@ export const Header: React.FC<HeaderProps> = ({
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -150,15 +156,18 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [showMobileMenu]);
 
-  // Escape closes the mobile drawer
+  // Escape closes the mobile drawer and More menu
   useEffect(() => {
-    if (!showMobileMenu) return;
+    if (!showMobileMenu && !isMoreMenuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowMobileMenu(false);
+      if (e.key === "Escape") {
+        setShowMobileMenu(false);
+        setIsMoreMenuOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [showMobileMenu]);
+  }, [showMobileMenu, isMoreMenuOpen]);
 
   const bounceClick = {
     whileTap: { scale: 0.92 },
@@ -295,18 +304,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Language Switcher */}
-          <motion.button
-            {...bounceClick}
-            onClick={toggleLanguage}
-            className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
-            title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
-          >
-            <Globe size={14} className="text-orange-500 dark:text-accent" />
-            <span className="hidden sm:inline">{language}</span>
-          </motion.button>
-
-          {/* Theme Toggle Button (Light/Dark) */}
+          {/* Theme Toggle Button (Light/Dark) — always visible */}
           <motion.button
             {...bounceClick}
             onClick={toggleTheme}
@@ -323,6 +321,81 @@ export const Header: React.FC<HeaderProps> = ({
             }
           >
             {theme === "light" ? <Moon size={16} className="text-slate-700" /> : <Sun size={16} className="text-[#39ff14]" />}
+          </motion.button>
+
+          {/* More menu — secondary controls collapse here below md */}
+          <div className="relative md:hidden" ref={moreMenuRef}>
+            <motion.button
+              {...bounceClick}
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              aria-label="More menu"
+              aria-expanded={isMoreMenuOpen}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
+            >
+              <Ellipsis size={20} />
+            </motion.button>
+
+            <AnimatePresence>
+              {isMoreMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-2 z-50 overflow-hidden"
+                >
+                  <button
+                    onClick={toggleLanguage}
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                  >
+                    <Globe size={16} className="text-orange-500 dark:text-accent" />
+                    {language === "VI" ? "English (EN)" : "Tiếng Việt (VI)"}
+                  </button>
+
+                  <div className="px-4 py-2.5 flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                    <NotificationBell />
+                    {t("notifications")}
+                  </div>
+
+                  <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
+
+                  {user ? (
+                    <Link
+                      href={ROUTES.USER.PROFILE}
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                    >
+                      <Users size={16} />
+                      User Settings
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        router.push(ROUTES.LOGIN);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange-500 dark:text-accent hover:bg-orange-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                    >
+                      <LogIn size={16} />
+                      {t("login")}
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop inline controls */}
+          <div className="hidden md:flex items-center gap-1.5 sm:gap-3">
+          {/* Language Switcher */}
+          <motion.button
+            {...bounceClick}
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
+            title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
+          >
+            <Globe size={14} className="text-orange-500 dark:text-accent" />
+            <span className="hidden sm:inline">{language}</span>
           </motion.button>
 
           {/* Notification Bell with unread dot & dropdown */}
@@ -437,6 +510,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">{t("login")}</span>
             </motion.button>
           )}
+          </div>
         </div>
       </nav>
 
