@@ -190,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 dark:bg-primary rounded-full flex shrink-0 items-center justify-center text-white font-bold text-sm shadow-sm">
               L
             </div>
-            <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-800 dark:text-white">
+            <span className="hidden sm:inline font-bold text-xl sm:text-2xl tracking-tight text-slate-800 dark:text-white">
               Light<span className="text-orange-500 dark:text-accent">Story</span>
             </span>
           </Link>
@@ -294,7 +294,7 @@ export const Header: React.FC<HeaderProps> = ({
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Language Switcher */}
           <motion.button
             {...bounceClick}
@@ -303,7 +303,7 @@ export const Header: React.FC<HeaderProps> = ({
             title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
           >
             <Globe size={14} className="text-orange-500 dark:text-accent" />
-            <span>{language}</span>
+            <span className="hidden sm:inline">{language}</span>
           </motion.button>
 
           {/* Theme Toggle Button (Light/Dark) */}
@@ -441,7 +441,7 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
 
       {/* TruyenQQ Style Navigation Bar */}
-      <div className="relative bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border-t border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-12 transition-colors" ref={categoryDropdownRef}>
+      <div className="relative hidden md:block bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border-t border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-12 transition-colors" ref={categoryDropdownRef}>
         <div className="flex items-center justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs uppercase tracking-wide py-1.5">
           {/* Trang chủ */}
           <Link
