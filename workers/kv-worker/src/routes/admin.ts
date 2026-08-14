@@ -17,6 +17,11 @@ import {
   requireRole,
   VALID_STATUSES,
 } from '../utils/validation';
+import {
+  buildUploadKey,
+  isAllowedUploadFolder,
+  validateUploadBatch,
+} from '../utils/r2-keys';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -722,29 +727,39 @@ export async function handleAdminRequest(
       }
 
       const folder = (formData.get('folder') as string) || 'uploads';
+      if (!isAllowedUploadFolder(folder)) {
+        return err('BAD_REQUEST', `Invalid folder: ${folder}`, 400);
+      }
       const comicId = formData.get('comicId') as string | null;
       const chapterNumber = formData.get('chapterNumber') as string | null;
+      const pageNumbers = formData.getAll('pageNumber') as string[];
       const userId = formData.get('userId') as string | null;
+
+      // Validate-then-write: reject the whole batch before any put, so a bad
+      // file can't leave earlier files orphaned in R2 (no rollback exists).
+      const validation = validateUploadBatch(fileEntries);
+      if (validation) {
+        return err(validation.code, validation.message, validation.status);
+      }
 
       const uploadedUrls: string[] = [];
       for (let i = 0; i < fileEntries.length; i++) {
         const file = fileEntries[i];
         const ext = (file.name.split('.').pop() || 'png').toLowerCase();
 
-        let key = `uploads/${crypto.randomUUID()}.${ext}`;
-        if (folder === 'covers') {
-          key = comicId ? `covers/${comicId}.${ext}` : `covers/${crypto.randomUUID()}.${ext}`;
-        } else if (folder === 'chapters') {
-          const cId = comicId || 'general';
-          const cNum = chapterNumber || '1';
-          key = `chapters/${cId}/chapter-${cNum}/page-${i + 1}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-        } else if (folder === 'avatars') {
-          key = userId ? `avatars/${userId}.${ext}` : `avatars/${crypto.randomUUID()}.${ext}`;
-        }
+        const key = buildUploadKey({
+          folder,
+          ext,
+          comicId,
+          chapterNumber,
+          pageNumber: pageNumbers[i] ?? null,
+          loopIndex: i,
+          userId,
+        });
 
         await bucket.put(key, await file.arrayBuffer(), {
           httpMetadata: {
-            contentType: file.type || (ext === 'cbz' ? 'application/x-cbz' : 'application/octet-stream'),
+            contentType: file.type || 'application/octet-stream',
             cacheControl: 'public, max-age=31536000, immutable',
           },
           customMetadata: {

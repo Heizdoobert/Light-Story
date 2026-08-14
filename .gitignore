@@ -142,6 +142,7 @@ playwright/.cache/
 
 # Internal documentation and setup files (ignored on main)
 docs/
+AGENTS.md
 HUONG_DAN_SETUP.md
 deploy_key*
 

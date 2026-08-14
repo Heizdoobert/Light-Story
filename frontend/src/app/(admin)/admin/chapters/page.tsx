@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Layers, Plus, Edit, Trash2, Search, BookOpen } from "lucide-react";
+import { Layers, Plus, Edit, Trash2, Search, BookOpen, FileArchive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
+  ssr: false,
+});
+const CbzBatchImportModal = dynamic(() => import("@/components/admin/cbz-batch-import"), {
   ssr: false,
 });
 import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
@@ -13,6 +17,7 @@ import { Modal } from "@/components/ui/modal";
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();
   const initialComicId = searchParams.get("comicId") || "all";
+  const [importOpen, setImportOpen] = useState(false);
 
   const {
     chapters,
@@ -39,6 +44,7 @@ export default function AdminChaptersPage() {
     handleOpenEditModal,
     handleSaveChapter,
     handleDeleteChapter,
+    refresh,
   } = useAdminChapters(initialComicId);
 
   return (
@@ -54,9 +60,20 @@ export default function AdminChaptersPage() {
             Quản lý, tạo chương mới và tải ảnh trang đọc trực tiếp lên Cloudflare R2
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
-          <Plus size={18} /> Thêm Chương Mới
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setImportOpen(true)}
+            disabled={selectedComicId === "all"}
+            title={selectedComicId === "all" ? "Chọn một bộ truyện trước khi nhập hàng loạt" : undefined}
+            variant="outline"
+            className="gap-2 font-bold shrink-0"
+          >
+            <FileArchive size={18} /> Nhập CBZ Hàng Loạt
+          </Button>
+          <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
+            <Plus size={18} /> Thêm Chương Mới
+          </Button>
+        </div>
       </div>
 
       {/* Comic Selector & Search Filter */}
@@ -234,6 +251,14 @@ export default function AdminChaptersPage() {
               </div>
             </form>
       </Modal>
+
+      {/* CBZ Batch Import Modal */}
+      <CbzBatchImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        comicId={selectedComicId === "all" ? null : selectedComicId}
+        onComplete={() => void refresh()}
+      />
     </div>
   );
 }

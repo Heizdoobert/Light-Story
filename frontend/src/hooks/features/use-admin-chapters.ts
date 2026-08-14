@@ -246,5 +246,6 @@ export function useAdminChapters(initialComicId: string = "all") {
     handleOpenEditModal,
     handleSaveChapter,
     handleDeleteChapter,
+    refresh: loadInitialData,
   };
 }

@@ -176,6 +176,72 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     });
   });
 
+  it('rejects a mid-batch oversized file with 413 and performs zero puts (validate-then-write)', async () => {
+    const put = vi.fn().mockResolvedValue({});
+    const oversized = 'x'.repeat(11 * 1024 * 1024); // > 10MB guard
+    const request = makeRequest([
+      { name: 'file', filename: 'page-1.jpg', contentType: 'image/jpeg', value: 'ok' },
+      { name: 'file', filename: 'page-2.jpg', contentType: 'image/jpeg', value: oversized },
+    ], { role: 'admin' });
+    const res = await handleAdminRequest(request, testEnv(put), 'token', '/admin/r2/upload');
+    expect(res!.status).toBe(413);
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('rejects zero-byte files with 400 before any put (workerd drops empty parts at parse)', async () => {
+    const put = vi.fn().mockResolvedValue({});
+    const request = makeRequest([
+      { name: 'file', filename: 'empty.jpg', contentType: 'image/jpeg', value: '' },
+    ], { role: 'admin' });
+    const res = await handleAdminRequest(request, testEnv(put), 'token', '/admin/r2/upload');
+    expect(res!.status).toBe(400);
+    expect(await res!.json()).toEqual({
+      success: false,
+      error: { code: 'BAD_REQUEST', message: 'No files provided' },
+    });
+    expect(put).not.toHaveBeenCalled();
+  });
+
+  it('applies per-file pageNumbers to chapter keys in order', async () => {
+    const put = vi.fn().mockResolvedValue({});
+    const request = makeRequest([
+      { name: 'file', filename: 'p1.jpg', contentType: 'image/jpeg', value: 'a' },
+      { name: 'file', filename: 'p2.jpg', contentType: 'image/jpeg', value: 'b' },
+      { name: 'folder', value: 'chapters' },
+      { name: 'comicId', value: 'comic-1' },
+      { name: 'chapterNumber', value: '5' },
+      { name: 'pageNumber', value: '7' },
+      { name: 'pageNumber', value: '9' },
+    ], { role: 'admin' });
+    const res = await handleAdminRequest(request, testEnv(put), 'token', '/admin/r2/upload');
+    expect(res!.status).toBe(200);
+    const keys = put.mock.calls.map((c) => c[0] as string);
+    expect(keys[0]).toMatch(/^chapters\/comic-1\/chapter-5\/page-7-[0-9a-f]{8}\.jpg$/);
+    expect(keys[1]).toMatch(/^chapters\/comic-1\/chapter-5\/page-9-[0-9a-f]{8}\.jpg$/);
+  });
+
+  it('accepts tiff and empty content-type with image extension (frontend fallback paths)', async () => {
+    const put = vi.fn().mockResolvedValue({});
+    const request = makeRequest([
+      { name: 'file', filename: 'scan.tiff', contentType: 'image/tiff', value: 't' },
+      { name: 'file', filename: 'no-type.PNG', value: 'n' },
+      { name: 'folder', value: 'uploads' },
+    ], { role: 'admin' });
+    const res = await handleAdminRequest(request, testEnv(put), 'token', '/admin/r2/upload');
+    expect(res!.status).toBe(200);
+    expect(put).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects non-image files with 400 before any put', async () => {
+    const put = vi.fn().mockResolvedValue({});
+    const request = makeRequest([
+      { name: 'file', filename: 'evil.exe', contentType: 'application/x-msdownload', value: 'x' },
+    ], { role: 'admin' });
+    const res = await handleAdminRequest(request, testEnv(put), 'token', '/admin/r2/upload');
+    expect(res!.status).toBe(400);
+    expect(put).not.toHaveBeenCalled();
+  });
+
   it('rejects requests from users without an admin role with 403', async () => {
     const request = makeRequest([
       { name: 'file', filename: 'cover.png', contentType: 'image/png', value: 'x' },
@@ -200,10 +266,13 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     expect(serviceSource).toContain("form.append('userId', options.userId)");
 
     expect(adminSource).toContain("formData.getAll('file')");
-    expect(adminSource).toContain('`covers/${comicId}.${ext}`');
     expect(adminSource).toContain('uploadedUrls.push(`/api/media/${key}`)');
     expect(adminSource).toContain('json({ success: true, data: { urls: uploadedUrls } })');
     expect(adminSource).toContain("customMetadata: {");
+    // key scheme moved to utils/r2-keys.ts (pageNumber-aware; covers key contract unchanged)
+    const keysSource = fs.readFileSync(path.join(repoRoot, 'workers/kv-worker/src/utils/r2-keys.ts'), 'utf-8');
+    expect(keysSource).toContain('`covers/${opts.comicId}.${ext}`');
+    expect(keysSource).toContain('pageNumberFromForm(opts.pageNumber) ?? opts.loopIndex + 1');
   });
 });
 
