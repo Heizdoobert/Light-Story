@@ -48,24 +48,34 @@ describe("adPolicy", () => {
       expect(parseAdRuntimeSettings(mapValid).minHeight).toBe(200);
     });
 
-    it("parses allowed hosts from comma-separated string", () => {
+    it("parses allowed hosts from comma-separated string (union with defaults)", () => {
       const map = new Map([
         [AD_CONTROL_KEYS.allowedHosts, "google.com, facebook.com, twitter.com"],
       ]);
       const result = parseAdRuntimeSettings(map);
-      expect(result.allowedHosts).toEqual([
-        "google.com",
-        "facebook.com",
-        "twitter.com",
-      ]);
+      expect(result.allowedHosts).toContain("google.com");
+      expect(result.allowedHosts).toContain("facebook.com");
+      expect(result.allowedHosts).toContain("twitter.com");
     });
 
-    it("parses allowed hosts from JSON array", () => {
+    it("parses allowed hosts from JSON array (union with defaults)", () => {
       const map = new Map([
         [AD_CONTROL_KEYS.allowedHosts, ["google.com", "facebook.com"]],
       ]);
       const result = parseAdRuntimeSettings(map);
-      expect(result.allowedHosts).toEqual(["google.com", "facebook.com"]);
+      expect(result.allowedHosts).toEqual(
+        expect.arrayContaining(["google.com", "facebook.com"]),
+      );
+    });
+
+    it("keeps Shopee hosts even when a stale stored row omits them", () => {
+      const map = new Map([
+        [AD_CONTROL_KEYS.allowedHosts, ["pagead2.googlesyndication.com"]],
+      ]);
+      const result = parseAdRuntimeSettings(map);
+      expect(result.allowedHosts).toEqual(
+        expect.arrayContaining(["shope.ee", "affiliate.shopee.vn"]),
+      );
     });
 
     it("parses blocked terms and normalizes to lowercase", () => {
@@ -297,7 +307,9 @@ describe("adPolicy", () => {
       expect(result.controls.enabled).toBe(false);
       expect(result.controls.minHeight).toBe("180");
       expect(result.controls.refreshSeconds).toBe("90");
-      expect(result.controls.allowedHosts).toBe("example.com, cdn.example.com");
+      expect(result.controls.allowedHosts).toContain("example.com");
+      expect(result.controls.allowedHosts).toContain("cdn.example.com");
+      expect(result.controls.allowedHosts).toContain("pagead2.googlesyndication.com");
       expect(result.controls.blockedTerms).toBe("adult, casino");
     });
   });

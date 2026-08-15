@@ -36,7 +36,6 @@ const chapter: Chapter = {
 } as Chapter;
 
 vi.mock('@/components/reader/AdRenderer', () => ({ AdRenderer: () => null }));
-vi.mock('@/components/shared/ads/AdZone', () => ({ AdZone: () => null }));
 
 vi.mock('@/hooks/presenters/useHomePagePresenter', () => ({
   useHomePagePresenter: () => ({

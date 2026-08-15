@@ -450,7 +450,7 @@ export default {
         res = err('NOT_CONFIGURED', 'Service key not configured', 500);
       } else {
         try {
-          let q = 'select=key,value&key=like.public_%';
+          let q = 'select=key,value&or=(key.like.public_%,key.like.ad_%)';
           const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
             headers: {
               apikey: svcKey,

@@ -6,7 +6,7 @@ import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
-import { AdZone } from "@/components/shared/ads/AdZone";
+import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
 import { ROUTES } from "@/lib/constants/routes";
@@ -128,8 +128,8 @@ export const ProfilePageContent: React.FC = () => {
           </motion.div>
 
           <div className="xl:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 w-full">
-            <AdZone zoneId="profile-zone2-left-mobile" format="rectangle" label="Zone 2 - Trái" />
-            <AdZone zoneId="profile-zone2-right-mobile" format="rectangle" label="Zone 2 - Phải" />
+            <AdRenderer position="left_side" />
+            <AdRenderer position="right_side" />
           </div>
         </div>
       </div>

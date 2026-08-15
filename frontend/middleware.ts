@@ -10,9 +10,9 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   
   const csp = `
     default-src 'self';
-    script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com;
+    script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://shope.ee https://affiliate.shopee.vn;
     style-src 'self' 'unsafe-inline';
-    img-src 'self' data: blob: https://*.r2.dev https://${r2Domain} https://placehold.co https://*.googlesyndication.com ${workerDomain};
+    img-src 'self' data: blob: https://*.r2.dev https://${r2Domain} https://placehold.co https://*.googlesyndication.com https://shope.ee https://affiliate.shopee.vn ${workerDomain};
     connect-src 'self' http://localhost:* http://127.0.0.1:* http://host.docker.internal:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain} ${isDev ? "ws: wss:" : ""};
     font-src 'self' data:;
     object-src 'none';
