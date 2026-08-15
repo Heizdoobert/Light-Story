@@ -268,12 +268,27 @@ export async function handleAdminRequest(
       const page = clamp(parseInt(url.searchParams.get('page') || '1') || 1, 1, 100000);
       const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50') || 50, 1, 200);
       const offset = (page - 1) * pageSize;
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
-      const res = await sbGet('audit_logs', q, env, token);
+      const q = `select=id,actor_user_id,target_email,metadata,created_at&action=in.(dashboard_access,user_create,user_delete)&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      const res = await sbGet('admin_audit_logs', q, env, token);
       if (!res.ok) return handleRes(res);
-      const items = await res.json();
-      const total = await sbGetCount('audit_logs', env, token);
-      return json({ items, total });
+      const items = (await res.json()) as any[];
+      const userIds = items.map((l: any) => l.actor_user_id).filter(Boolean);
+      const emailById = new Map<string, string>();
+      if (userIds.length > 0) {
+        const ids = userIds.map((id: string) => encodeURIComponent(id)).join(',');
+        const pRes = await sbGet('profiles', `select=id,email&id=in.(${ids})`, env, token);
+        if (pRes.ok) {
+          for (const p of (await pRes.json()) as any[]) emailById.set(p.id, p.email);
+        }
+      }
+      const mapped = items.map((l: any) => ({
+        id: l.id,
+        action: l.action,
+        target_email: l.target_email ?? ((l.metadata?.email as string) || '') ?? emailById.get(l.actor_user_id) ?? null,
+        created_at: l.created_at,
+      }));
+      const total = await sbGetCount('admin_audit_logs?action=in.(dashboard_access,user_create,user_delete)', env, token);
+      return json({ items: mapped, total });
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
