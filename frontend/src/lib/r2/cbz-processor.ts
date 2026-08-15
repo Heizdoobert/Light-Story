@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import { uploadToR2 } from "./upload";
+import { resizeImageFile } from "./resize";
 import { getErrorMessage } from "@/lib/utils/error-utils";
 
 export interface CbzProgressCallback {
@@ -63,7 +64,8 @@ export async function processCbzFile(
         type: mimeType,
       });
 
-      const res = await uploadToR2(pageFile, folder);
+      const resized = await resizeImageFile(pageFile);
+      const res = await uploadToR2(resized.file, folder);
       if (res.success && res.url) {
         uploadedUrls.push(res.url);
       } else {

@@ -132,6 +132,7 @@ export const ChapterReaderPageContent: React.FC = () => {
                   alt={`Trang ${idx + 1}`}
                   index={idx}
                   fitScreen={fitScreen}
+                  priority={idx === 0}
                 />
               </div>
               {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
