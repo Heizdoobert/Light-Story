@@ -47,6 +47,8 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
   return (
     <div
       ref={containerRef}
+      data-testid="chapter-image-container"
+      style={fitScreen ? undefined : { aspectRatio: '3/4' }}
       className={`relative w-full flex items-center justify-center overflow-hidden my-2 ${fitScreen ? 'max-h-screen bg-transparent' : 'aspect-[3/4] rounded-xl bg-slate-900/10 dark:bg-slate-950/40'} ${className}`}
     >
       {!visible && (
