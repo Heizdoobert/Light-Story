@@ -400,8 +400,11 @@ export default {
           const rangeHeader = request.headers.get('range');
           const ifNoneMatch = request.headers.get('if-none-match');
 
+          // ponytail: images are served as full 200s, Range ignored on purpose.
+          // Chrome's sniff probes (Range: bytes=0-…) get ORB-blocked when the
+          // worker answers 206 partials (truncated image sniff fails -> retry
+          // storm -> CLS). The admin r2/file route keeps range support.
           const options: R2GetOptions = {};
-          if (rangeHeader) options.range = request.headers;
           if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
 
           const object = await bucket.get(rawKey, options);
@@ -430,26 +433,8 @@ export default {
             mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
             mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
 
-            if (object.range) {
-              const r = object.range as { offset?: number; length?: number };
-              const offset = r.offset ?? 0;
-              const length = r.length ?? object.size;
-              const isFullRange = offset === 0 && length >= object.size;
-              if (isFullRange) {
-                // R2 reports range metadata even for full gets; a 206 with the
-                // whole body gets ORB-blocked by Chrome (image load retries +
-                // layout shift). Full responses must be 200.
-                mediaHeaders.set('content-length', object.size.toString());
-                res = new Response(object.body, { status: 200, headers: mediaHeaders });
-              } else {
-                mediaHeaders.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
-                mediaHeaders.set('content-length', length.toString());
-                res = new Response(object.body, { status: 206, headers: mediaHeaders });
-              }
-            } else {
-              mediaHeaders.set('content-length', object.size.toString());
-              res = new Response(object.body, { status: 200, headers: mediaHeaders });
-            }
+            mediaHeaders.set('content-length', object.size.toString());
+            res = new Response(object.body, { status: 200, headers: mediaHeaders });
           }
         }
       }
