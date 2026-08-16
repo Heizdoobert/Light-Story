@@ -818,6 +818,13 @@ export async function handleAdminRequest(
         const r = object.range as { offset?: number; length?: number };
         const offset = r.offset ?? 0;
         const length = r.length ?? object.size;
+        const isFullRange = offset === 0 && length >= object.size;
+        if (isFullRange) {
+          // Full-body responses must be 200: a 206 with the whole object is
+          // ORB-blocked by Chrome (image load retries + layout shift).
+          headers.set('content-length', object.size.toString());
+          return new Response(object.body, { status: 200, headers });
+        }
         headers.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
         headers.set('content-length', length.toString());
         return new Response(object.body, { status: 206, headers });

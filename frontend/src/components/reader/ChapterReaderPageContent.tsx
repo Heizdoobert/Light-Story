@@ -20,10 +20,14 @@ import {
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
-import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
+import { useReadChapterPresenter, type ReaderInitialData } from "@/hooks/presenters/useReadChapterPresenter";
 import { ROUTES } from "@/lib/constants/routes";
 
-export const ChapterReaderPageContent: React.FC = () => {
+export interface ChapterReaderPageContentProps {
+  initialData?: ReaderInitialData | null;
+}
+
+export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> = ({ initialData }) => {
   const {
     comicId,
     chapterId,
@@ -57,7 +61,7 @@ export const ChapterReaderPageContent: React.FC = () => {
     handleDownload,
     prevChapter,
     nextChapter,
-  } = useReadChapterPresenter();
+  } = useReadChapterPresenter(initialData);
 
   if (loading) {
     return (

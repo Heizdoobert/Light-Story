@@ -434,9 +434,18 @@ export default {
               const r = object.range as { offset?: number; length?: number };
               const offset = r.offset ?? 0;
               const length = r.length ?? object.size;
-              mediaHeaders.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
-              mediaHeaders.set('content-length', length.toString());
-              res = new Response(object.body, { status: 206, headers: mediaHeaders });
+              const isFullRange = offset === 0 && length >= object.size;
+              if (isFullRange) {
+                // R2 reports range metadata even for full gets; a 206 with the
+                // whole body gets ORB-blocked by Chrome (image load retries +
+                // layout shift). Full responses must be 200.
+                mediaHeaders.set('content-length', object.size.toString());
+                res = new Response(object.body, { status: 200, headers: mediaHeaders });
+              } else {
+                mediaHeaders.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
+                mediaHeaders.set('content-length', length.toString());
+                res = new Response(object.body, { status: 206, headers: mediaHeaders });
+              }
             } else {
               mediaHeaders.set('content-length', object.size.toString());
               res = new Response(object.body, { status: 200, headers: mediaHeaders });
