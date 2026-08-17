@@ -92,8 +92,6 @@ export const ROUTES = {
       R2_PRESIGNED_URLS: "/api/admin/r2/presigned-urls",
       R2_UPLOAD_GATEWAY: "/api/admin/r2/upload",
       R2_FILE_PREFIX: "/api/admin/r2/file/",
-      R2_PROXY_QUERY: (url: string) =>
-        `/api/admin/r2?url=${encodeURIComponent(url)}`,
       STORIES_FIELD_VALUES: (field: string) =>
         `/api/admin/stories/field-values?field=${encodeURIComponent(field)}`,
       SITE_METRICS: (type: string) => `/api/admin/site-metrics?type=${type}`,
