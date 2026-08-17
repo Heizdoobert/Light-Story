@@ -48,8 +48,8 @@ jobs:
           NEXT_PUBLIC_SITE_URL: https://lightstory.app
           NEXT_PUBLIC_GATEWAY_URL_PRODUCTION: https://kv-worker.hhhuygiau.workers.dev
 
-      - name: Test
-        run: npm run test:run
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Security audit
         run: npm audit --audit-level=high
