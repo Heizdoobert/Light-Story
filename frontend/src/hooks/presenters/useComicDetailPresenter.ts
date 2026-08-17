@@ -51,9 +51,7 @@ export function useComicDetailPresenter({
         }
 
         const sortedChapters = (chaptersData || []).sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime(),
+          (a, b) => (a.chapter_number ?? 0) - (b.chapter_number ?? 0),
         );
         setChapters(sortedChapters);
 
@@ -92,8 +90,8 @@ export function useComicDetailPresenter({
     ? proxiedR2ImageUrl(rawCover)
     : "https://placehold.co/400x600/png?text=No+Cover";
 
-  const latestChapter = chapters.length > 0 ? chapters[0] : null;
-  const firstChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
+  const latestChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
+  const firstChapter = chapters.length > 0 ? chapters[0] : null;
 
   let categoryArray: string[] = [];
   if (comic?.category) {

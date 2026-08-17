@@ -62,7 +62,7 @@ export default async function ComicDetailPage({ params }: Props) {
         .from('chapters')
         .select('id,story_id,chapter_number,title,created_at')
         .eq('story_id', comicId)
-        .order('created_at', { ascending: false }),
+        .order('chapter_number', { ascending: true }),
       supabase.from('categories').select('*'),
     ]);
 
