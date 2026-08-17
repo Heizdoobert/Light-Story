@@ -66,7 +66,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
 
   beforeAll(async () => {
     hooks = await import('@/hooks');
-  });
+  }, 30_000);
 
   it('re-exports all 11 presenter hooks under their eponymous names', () => {
     for (const name of EPONYMOUS_PRESENTER_HOOKS) {

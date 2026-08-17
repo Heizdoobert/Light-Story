@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Clean Next cache
         run: rm -rf .next
@@ -71,7 +71,7 @@ jobs:
           node-version: 22
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Type-check worker
         run: |
@@ -110,7 +110,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Validate OpenAPI spec loads
         run: |
@@ -147,7 +147,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Prism mock server
         run: |
