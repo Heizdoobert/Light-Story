@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { Image as ImageIcon, SearchX, SlidersHorizontal, X } from "lucide-react";
+import { Image as ImageIcon, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
@@ -15,6 +16,7 @@ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
   initialCategory,
 }) => {
+  const router = useRouter();
   const {
     t,
     keyword,
@@ -29,6 +31,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
     applyComicCoverFallback,
     getVietnameseStatus,
   } = useSearchPresenter(initialCategory);
+  const [inputValue, setInputValue] = useState(keyword);
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500 pb-20">
@@ -51,7 +54,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
             >
               <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-800 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 dark:from-orange-600 dark:to-amber-700 rounded-full flex shrink-0 items-center justify-center text-white font-black text-sm shadow-md">
                     L
                   </div>
                   <span className="font-black text-xl tracking-tight text-slate-800 dark:text-white">
@@ -109,6 +112,37 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
           </div>
         </div>
 
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (inputValue.trim()) {
+              router.push(`${ROUTES.SEARCH}?keyword=${encodeURIComponent(inputValue.trim())}`);
+            } else {
+              router.push(ROUTES.SEARCH);
+            }
+          }}
+          className="mb-6"
+        >
+          <div className="relative">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder={t("search_input_placeholder")}
+              aria-label={t("search_input_placeholder")}
+              className="w-full pl-5 pr-14 py-4 rounded-2xl text-base font-semibold bg-white dark:bg-slate-900 text-slate-800 dark:text-white border-2 border-slate-200 dark:border-slate-800 focus:outline-none focus:border-primary dark:focus:border-primary transition-colors shadow-sm"
+            />
+            <button
+              type="submit"
+              aria-label={t("search")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 bg-orange-500 dark:bg-primary hover:bg-orange-600 dark:hover:bg-primary/90 text-white rounded-xl transition-colors flex items-center gap-2 font-bold text-sm"
+            >
+              <Search size={16} />
+              <span className="hidden sm:inline">{t("search")}</span>
+            </button>
+          </div>
+        </form>
+
         {loading ? (
           <div className="grid grid-cols-2 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 sm:gap-4 justify-items-center">
             {Array.from({ length: 14 }).map((_, index) => (
@@ -139,7 +173,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
             </p>
             <Link
               href={ROUTES.SEARCH}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/25 hover:opacity-90 transition-opacity"
+              className="px-6 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-2xl text-sm font-bold shadow-lg shadow-orange-500/25 hover:opacity-90 transition-opacity"
             >
               {t("reset_filter")}
             </Link>
@@ -161,7 +195,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                   >
                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
                       <img
-                        src={proxiedR2ImageUrl(comic.coverUrl || "") || "https://placehold.co/400x600/png?text=No+Cover"}
+                        src={proxiedR2ImageUrl(comic.coverUrl || comic.cover_url || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
                         width={300}
                         height={400}
@@ -187,8 +221,15 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                       <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white whitespace-normal break-words [overflow-wrap:anywhere] leading-snug group-hover:text-primary transition-colors">
                         {comic.title}
                       </h2>
-                      <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-normal break-words [overflow-wrap:anywhere]">
-                        {comic.author || t("updating")}
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-normal break-words [overflow-wrap:anywhere] line-clamp-1">
+                          {comic.author || t("updating")}
+                        </div>
+                        {comic.updated_at && (
+                          <div className="text-[9px] font-semibold text-slate-400 dark:text-slate-500 shrink-0">
+                            {new Date(comic.updated_at).toLocaleDateString("vi-VN")}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>

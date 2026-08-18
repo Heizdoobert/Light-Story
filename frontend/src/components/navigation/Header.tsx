@@ -34,6 +34,7 @@ import { fetchStoriesPage } from "@/services/comics/story.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { ROUTES } from "@/lib/constants/routes";
+import { QuickSearchModal } from "@/components/shared/ui/QuickSearchModal";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 
@@ -61,6 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -211,9 +213,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Header Center Search Box with Live Dropdown */}
         {/* Mobile search icon */}
         <button
-          onClick={() => router.push(ROUTES.SEARCH)}
+          onClick={() => setQuickSearchOpen(true)}
           className="flex sm:hidden p-2.5 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0"
-          title={t("search")}
+          aria-label={t("search")}
         >
           <Search size={18} />
         </button>
@@ -583,7 +585,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* GROUP */}
           <Link
-            href={ROUTES.HOME}
+            href={ROUTES.GROUP}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
           >
             <Users size={16} />
@@ -592,7 +594,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* FANPAGE */}
           <Link
-            href={ROUTES.HOME}
+            href={ROUTES.FANPAGE}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
           >
             <Globe size={16} />
@@ -763,7 +765,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </div>
           <Link
-            href={ROUTES.SEARCH}
+            href={ROUTES.GENRES}
             onClick={() => setShowCategoryDropdown(false)}
             className="px-3 py-1 bg-orange-50 dark:bg-slate-950 text-orange-600 dark:text-accent rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
           >
@@ -791,6 +793,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </AnimatePresence>
       </div>
+      <QuickSearchModal isOpen={quickSearchOpen} onClose={() => setQuickSearchOpen(false)} />
     </header>
   );
 };
