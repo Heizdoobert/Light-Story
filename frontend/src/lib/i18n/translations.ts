@@ -93,6 +93,43 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     all_categories: "Tất cả thể loại",
     unnamed: "Không tên",
     see_all: "Xem tất cả »",
+
+    close: "Đóng",
+    error: "Đã xảy ra lỗi",
+
+    // Under Construction
+    under_construction_title: "ĐANG XÂY DỰNG",
+    under_construction_description: "Trang này đang được xây dựng và sẽ sớm ra mắt. Quay lại sau nhé!",
+
+    // Bookmarks
+    bookmarks_title: "Truyện Theo Dõi",
+    bookmarks_empty_title: "Bạn chưa theo dõi truyện nào",
+    bookmarks_empty_description: "Hãy khám phá kho truyện phong phú và bấm nút Theo dõi để dễ dàng xem lại tại đây!",
+    bookmarks_empty_cta: "Khám phá ngay",
+    bookmarks_following: "Theo dõi",
+    bookmarks_unfollow: "Bỏ theo dõi",
+
+    // Quick Search
+    quick_search_title: "Tìm kiếm nhanh",
+    quick_search_placeholder: "Nhập tên truyện, tác giả...",
+    quick_search_see_all: "Xem tất cả kết quả cho",
+    quick_search_no_results: "Không tìm thấy kết quả nào.",
+
+    // Search Input
+    search_input_placeholder: "Nhập từ khóa để tìm truyện...",
+    search_input_label: "Tìm kiếm truyện",
+
+    // Profile
+    profile_email: "Email",
+    profile_full_name: "Họ và tên",
+    profile_status: "Trạng thái",
+    profile_active: "Hoạt động",
+    profile_member_since: "Thành viên từ",
+    profile_edit: "Chỉnh sửa",
+    profile_not_signed_in: "Chưa đăng nhập",
+    profile_sign_in_prompt: "Đăng nhập để xem và quản lý hồ sơ của bạn.",
+    profile_sign_in: "Đăng nhập",
+
     footer_about: "Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.",
 
     // Homepage Sections
@@ -385,6 +422,43 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     all_categories: "All Categories",
     unnamed: "Untitled",
     see_all: "See all »",
+
+    close: "Close",
+    error: "An error occurred",
+
+    // Under Construction
+    under_construction_title: "UNDER CONSTRUCTION",
+    under_construction_description: "This page is under construction and coming soon. Check back later!",
+
+    // Bookmarks
+    bookmarks_title: "Followed Comics",
+    bookmarks_empty_title: "You haven't followed any comics yet",
+    bookmarks_empty_description: "Explore our rich collection and hit Follow to easily track your favorite comics here!",
+    bookmarks_empty_cta: "Explore now",
+    bookmarks_following: "Following",
+    bookmarks_unfollow: "Unfollow",
+
+    // Quick Search
+    quick_search_title: "Quick Search",
+    quick_search_placeholder: "Enter comic title or author...",
+    quick_search_see_all: "See all results for",
+    quick_search_no_results: "No results found.",
+
+    // Search Input
+    search_input_placeholder: "Enter keywords to find comics...",
+    search_input_label: "Search comics",
+
+    // Profile
+    profile_email: "Email",
+    profile_full_name: "Full Name",
+    profile_status: "Status",
+    profile_active: "Active",
+    profile_member_since: "Member Since",
+    profile_edit: "Edit",
+    profile_not_signed_in: "Not signed in",
+    profile_sign_in_prompt: "Sign in to view and manage your profile.",
+    profile_sign_in: "Sign In",
+
     footer_about: "A licensed comic reading platform. Published and managed by Administrators.",
 
     // Homepage Sections
