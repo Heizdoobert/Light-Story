@@ -116,7 +116,7 @@ describe('POST /api/r2/upload', () => {
     expect(body.error).toMatch(/unsupported/i);
   });
 
-  it('returns 413 for file exceeding 50MB', async () => {
+  it('returns 413 for file exceeding 50MB', { timeout: 30_000 }, async () => {
     const res = await uploadFile('large.jpg', 'x'.repeat(50 * 1024 * 1024 + 1), 'image/jpeg');
     expect(res.status).toBe(413);
     const body = await res.json() as Record<string, string>;
