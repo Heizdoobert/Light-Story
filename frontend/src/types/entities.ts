@@ -10,6 +10,7 @@ export interface Story {
   status: 'draft' | 'published' | 'ongoing' | 'completed' | 'archived';
   views: number;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Author {

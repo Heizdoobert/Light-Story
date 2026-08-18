@@ -33,8 +33,10 @@ export default function AdminComicsPage() {
     translatorId,
     setTranslatorId,
     setTranslator,
-    category,
-    setCategory,
+    categorySet,
+    setCategorySet,
+    description,
+    setDescription,
     status,
     setStatus,
     coverUrl,
@@ -257,23 +259,52 @@ export default function AdminComicsPage() {
               </div>
 
               <div>
-                <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại *</label>
-                <select
-                  id="comic-category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
-                >
-                  <option value="">Chọn thể loại...</option>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">Thể Loại *</label>
+                <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    <label
+                      key={cat.id}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                        categorySet.has(cat.name)
+                          ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={categorySet.has(cat.name)}
+                        onChange={(e) => {
+                          const newSet = new Set(categorySet);
+                          if (e.target.checked) {
+                            newSet.add(cat.name);
+                          } else {
+                            newSet.delete(cat.name);
+                          }
+                          setCategorySet(newSet);
+                        }}
+                      />
+                      {cat.name}
+                    </label>
                   ))}
-                </select>
+                </div>
                 {categories.length === 0 && (
                   <p className="text-[11px] text-orange-400 mt-1">
                     Chưa có thể loại. Vui lòng thêm thể loại trước khi tạo truyện.
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="comic-description" className="block text-xs font-semibold text-slate-300 mb-1">Mô tả nội dung</label>
+                <textarea
+                  id="comic-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Nhập mô tả nội dung truyện..."
+                  rows={4}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500 resize-y"
+                />
               </div>
 
               <div>
