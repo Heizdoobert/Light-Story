@@ -47,8 +47,8 @@ async function fetchOverview(): Promise<OverviewData> {
       .post<EngagementSummary>(ROUTES.API.SUPABASE_RPC('get_user_engagement_summary'), { p_time_range: '30d' })
       .then((res) => res ?? null)
       .catch(() => null),
-    apiClient
-      .get<InfrastructureMetrics>(ROUTES.API.ANALYTICS_INFRASTRUCTURE)
+apiClient
+      .get<InfrastructureMetrics>(ROUTES.API.ANALYTICS_INFRASTRUCTURE, { signal: AbortSignal.timeout(20000) })
       .then((res) => res ?? null)
       .catch(() => null),
   ]);

@@ -120,6 +120,14 @@ export async function handleAnalyticsRequest(
       method === 'GET' &&
       pathname === '/analytics/infrastructure'
     ) {
+      // Cache: full R2 listing (13k objects) + Analytics Engine SQL takes ~8s —
+      // too slow for the frontend's 6s timeout. KV TTL 300s; recorded_at stays honest.
+      const CACHE_KEY = 'infra:metrics';
+      if (env.APP_KV) {
+        const cached = await env.APP_KV.get(CACHE_KEY, 'json');
+        if (cached) return json(cached);
+      }
+
       let r2ObjectCount = 0;
       let r2SizeBytes = 0;
 
@@ -177,7 +185,7 @@ export async function handleAnalyticsRequest(
         .slice(0, 5)
         .map(([zone, requests]) => ({ zone, requests }));
 
-      return json({
+      const payload = {
         r2_usage_gb: r2UsageGb,
         r2_allocated_gb: r2AllocatedGb,
         r2_object_count: r2ObjectCount,
@@ -192,7 +200,15 @@ export async function handleAnalyticsRequest(
         workflow_binding: env.LIGHTSTORY_WORKFLOW ? 'bound' : 'unbound',
         kv_binding: env.APP_KV ? 'bound' : 'unbound',
         recorded_at: new Date().toISOString(),
-      });
+      };
+
+      if (env.APP_KV) {
+        await env.APP_KV
+          .put(CACHE_KEY, JSON.stringify(payload), { expirationTtl: 300 })
+          .catch(() => {});
+      }
+
+      return json(payload);
     }
 
     if (
