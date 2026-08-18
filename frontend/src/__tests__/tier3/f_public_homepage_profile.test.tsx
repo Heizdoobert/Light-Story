@@ -68,6 +68,14 @@ vi.mock('@/components/user/EditUserProfileModal', () => ({
   EditUserProfileModal: () => null,
 }));
 
+vi.mock('@/context/LanguageContext', () => ({
+  useLanguage: () => ({
+    t: (key: string) => key,
+    language: 'EN',
+    setLanguage: () => {},
+  }),
+}));
+
 vi.mock('@/lib/security/security-utils', () => ({
   sanitizeImageUrl: (url: string) => url,
   getFallbackAvatar: (name: string) => `https://fallback/${name}`,
@@ -111,7 +119,7 @@ describe('HomePage redesign (modern vibrant)', () => {
 describe('ProfilePageContent signed-out state', () => {
   it('Sign In button navigates to /auth/login', () => {
     render(<ProfilePageContent />);
-    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    fireEvent.click(screen.getByRole('button', { name: /profile_sign_in/ }));
     expect(state.push).toHaveBeenCalledWith(ROUTES.LOGIN);
   });
 });
