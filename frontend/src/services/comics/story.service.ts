@@ -10,6 +10,7 @@ export type StoryPageParams = {
   pageSize: number;
   keyword?: string;
   category?: 'all' | string;
+  tag?: 'all' | string;
   status?: 'all' | StoryStatus;
   sort?: 'newest' | 'oldest' | 'most_viewed';
 };
@@ -106,6 +107,7 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
     searchParams.set('pageSize', String(Math.min(50, Math.max(1, params.pageSize ?? 10))));
     if (params.keyword) searchParams.set('keyword', params.keyword);
     if (params.category && params.category !== 'all') searchParams.set('category', params.category);
+    if (params.tag && params.tag !== 'all') searchParams.set('tag', params.tag);
     if (params.status && params.status !== 'all') searchParams.set('status', params.status);
     if (params.sort) searchParams.set('sort', params.sort);
 
@@ -127,6 +129,12 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
       }
       if (params.status && params.status !== 'all') {
         query = query.eq('status', params.status);
+      }
+      if (params.category && params.category !== 'all') {
+        query = query.ilike('category', `%${params.category}%`);
+      }
+      if (params.tag && params.tag !== 'all') {
+        query = query.ilike('tags', `%${params.tag}%`);
       }
 
       const sortField = params.sort === 'most_viewed' ? 'views' : params.sort === 'oldest' ? 'created_at' : 'created_at';

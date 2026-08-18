@@ -109,6 +109,18 @@ export function useComicDetailPresenter({
     }
   }
 
+  let tagArray: string[] = [];
+  if (comic?.tags) {
+    if (Array.isArray(comic.tags)) {
+      tagArray = comic.tags;
+    } else if (typeof comic.tags === "string") {
+      tagArray = (comic.tags as string)
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+  }
+
   return {
     comicId,
     comic,
@@ -122,5 +134,6 @@ export function useComicDetailPresenter({
     latestChapter,
     firstChapter,
     categoryArray,
+    tagArray,
   };
 }

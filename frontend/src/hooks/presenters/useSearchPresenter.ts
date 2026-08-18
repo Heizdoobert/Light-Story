@@ -18,6 +18,10 @@ export function useSearchPresenter(initialCategory?: string) {
   const category =
     categoryParam !== "all" ? decodeURIComponent(categoryParam) : "all";
 
+  const tagParam = searchParams.get("tag") || "all";
+  const tag =
+    tagParam !== "all" ? decodeURIComponent(tagParam) : "all";
+
   const sort = searchParams.get("sort") || "newest";
   const pageParam = searchParams.get("page") || "1";
   const currentPage = parseInt(pageParam, 10) || 1;
@@ -39,6 +43,7 @@ export function useSearchPresenter(initialCategory?: string) {
           pageSize: 12,
           keyword,
           category,
+          tag,
           sort: sort as any,
         });
 
@@ -54,7 +59,7 @@ export function useSearchPresenter(initialCategory?: string) {
     };
 
     fetchAndFilterResults();
-  }, [keyword, category, sort, currentPage]);
+  }, [keyword, category, tag, sort, currentPage]);
 
   useEffect(() => {
     document.body.style.overflow = showFilter ? "hidden" : "unset";

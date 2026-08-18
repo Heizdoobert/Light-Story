@@ -55,7 +55,7 @@ export default async function ComicDetailPage({ params }: Props) {
     const [storyRes, chaptersRes, categoriesRes] = await Promise.all([
       supabase
         .from('stories')
-        .select('id,title,slug,author,description,cover_url,category,status,views,created_at,updated_at')
+        .select('id,title,slug,author,description,cover_url,category,tags,status,views,created_at,updated_at')
         .eq('id', comicId)
         .maybeSingle(),
       supabase
@@ -78,6 +78,7 @@ export default async function ComicDetailPage({ params }: Props) {
         author: String(row.author ?? ''),
         status: row.status === 'completed' ? 'completed' : 'ongoing',
         category: Array.isArray(row.category) ? (row.category as string[]) : String(row.category ?? '').split(',').map((c) => c.trim()).filter(Boolean),
+        tags: row.tags ? String(row.tags) : undefined,
         viewCount: Number(row.views ?? 0),
         coverUrl: String(row.cover_url ?? ''),
         createdAt: row.created_at ? String(row.created_at) : undefined,

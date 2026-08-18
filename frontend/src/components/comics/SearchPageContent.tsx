@@ -216,6 +216,22 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                           {getVietnameseStatus(comic.status)}
                         </span>
                       </div>
+                      {comic.tags && (
+                        <div className="absolute top-1.5 left-1.5 flex flex-wrap gap-0.5 max-w-[60%]">
+                          {comic.tags.split(",").map((t: string, i: number) => {
+                            const trimmed = t.trim();
+                            if (!trimmed) return null;
+                            return (
+                              <span
+                                key={i}
+                                className="px-1 py-0.5 rounded text-[7px] sm:text-[8px] font-bold bg-purple-500/80 text-white shadow-xs backdrop-blur-md"
+                              >
+                                {trimmed}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                     <div className="px-0.5 pb-0.5 flex flex-col flex-1">
                       <h2 className="text-xs font-black mb-0.5 text-slate-900 dark:text-white whitespace-normal break-words [overflow-wrap:anywhere] leading-snug group-hover:text-primary transition-colors">

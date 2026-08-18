@@ -29,6 +29,7 @@ async function fetchOptions(path: string, table: string): Promise<FormOption[]> 
 
 export function useAdminFormOptions() {
   const [categories, setCategories] = useState<FormOption[]>([]);
+  const [tags, setTags] = useState<FormOption[]>([]);
   const [authors, setAuthors] = useState<FormOption[]>([]);
   const [translators, setTranslators] = useState<FormOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,13 +37,15 @@ export function useAdminFormOptions() {
   useEffect(() => {
     let active = true;
     const load = async () => {
-      const [cats, auths, trans] = await Promise.all([
+      const [cats, tagOpts, auths, trans] = await Promise.all([
         fetchOptions(ROUTES.API.CATEGORIES, "categories"),
+        fetchOptions(ROUTES.API.ADMIN.TAXONOMY("tag"), "tags"),
         fetchOptions(ROUTES.API.ADMIN.TAXONOMY("author"), "authors"),
         fetchOptions(ROUTES.API.ADMIN.TRANSLATORS, "translators"),
       ]);
       if (!active) return;
       setCategories(cats);
+      setTags(tagOpts);
       setAuthors(auths);
       setTranslators(trans);
       setLoading(false);
@@ -56,5 +59,5 @@ export function useAdminFormOptions() {
     };
   }, []);
 
-  return { categories, authors, translators, loading };
+  return { categories, tags, authors, translators, loading };
 }

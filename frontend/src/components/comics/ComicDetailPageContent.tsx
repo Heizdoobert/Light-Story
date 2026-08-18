@@ -48,6 +48,7 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
     latestChapter,
     firstChapter,
     categoryArray,
+    tagArray,
   } = useComicDetailPresenter({ initialComic, initialChapters, initialCategories, hydrated });
 
   if (loading) {
@@ -176,6 +177,21 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                       </Link>
                     );
                   })}
+                </div>
+              )}
+
+              {tagArray.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  <Tag size={16} className="text-purple-400" />
+                  {tagArray.map((tag, idx) => (
+                    <Link
+                      key={idx}
+                      href={`${ROUTES.SEARCH}?tag=${encodeURIComponent(tag)}`}
+                      className="px-3 py-1 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg text-xs font-bold text-purple-700 dark:text-purple-300 hover:border-purple-500 hover:text-purple-500 transition cursor-pointer"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
                 </div>
               )}
 
