@@ -3,6 +3,7 @@ import {
   BookOpen,
   Bug,
   DollarSign,
+  FileText,
   Layers,
   LayoutDashboard,
   PenSquare,
@@ -26,6 +27,7 @@ export type AdminMenuId =
   | "authors"
   | "genres"
   | "tags"
+  | "descriptions"
   | "users"
   | "ads"
   | "settings"
@@ -101,6 +103,13 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Thẻ Tag",
     href: ROUTES.ADMIN.TAGS,
     icon: Tags,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
+    id: "descriptions",
+    label: "Mô tả truyện",
+    href: ROUTES.ADMIN.DESCRIPTIONS,
+    icon: FileText,
     roles: ["superadmin", "admin", "employee"],
   },
   {
@@ -181,11 +190,12 @@ export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
     "authors",
     "genres",
     "tags",
+    "descriptions",
     "ads",
     "settings",
     "profile",
   ],
-  employee: ["comics", "chapters", "categories", "authors", "genres", "tags", "profile"],
+  employee: ["comics", "chapters", "categories", "authors", "genres", "tags", "descriptions", "profile"],
   internal: [],
   user: [],
 };

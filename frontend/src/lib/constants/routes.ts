@@ -31,6 +31,7 @@ export const ROUTES = {
     AUTHORS: "/admin/authors",
     GENRES: "/admin/genres",
     TAGS: "/admin/tags",
+    DESCRIPTIONS: "/admin/descriptions",
     SETTINGS: "/admin/settings",
     ADS: "/admin/ads",
     AUDIT: "/admin/audit",
