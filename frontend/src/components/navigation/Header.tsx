@@ -22,6 +22,7 @@ import {
   ChevronDown,
   Ellipsis,
   X,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -547,6 +548,15 @@ export const Header: React.FC<HeaderProps> = ({
             />
           </button>
 
+          {/* DANH SÁCH THỂ LOẠI */}
+          <Link
+            href={ROUTES.GENRES}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
+          >
+            <Tag size={16} />
+            <span>{t("category_list_title")}</span>
+          </Link>
+
           {/* XẾP HẠNG */}
           <Link
             href={`${ROUTES.SEARCH}?sort=most_viewed`}
@@ -713,6 +723,9 @@ export const Header: React.FC<HeaderProps> = ({
                     </Link>
                     <Link href={ROUTES.SEARCH} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Search size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_search_comics")}
+                    </Link>
+                    <Link href={ROUTES.GENRES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <Tag size={20} className="text-slate-400 dark:text-slate-500" /> {t("category_list_title")}
                     </Link>
                     <Link href={ROUTES.USER.FAVORITES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Bookmark size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_bookmarks")}

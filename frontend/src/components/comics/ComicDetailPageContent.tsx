@@ -20,6 +20,7 @@ import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresen
 import type { ComicContext as Comic } from "@/services/comics/comic.service";
 import type { Chapter, Category } from "@/types/entities";
 import { ROUTES } from "@/lib/constants/routes";
+import { normalizeName } from "@/lib/utils/slug";
 
 type ComicDetailPageContentProps = {
   initialComic?: Comic | null;
@@ -164,12 +165,11 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                     const catObj = categories.find(
                       (c) => c.name === cat || c.id === cat,
                     );
-                    const catId = catObj ? catObj.id : cat;
 
                     return (
                       <Link
                         key={idx}
-                        href={`/search?category=${encodeURIComponent(catId)}&sort=newest`}
+                        href={catObj ? `${ROUTES.GENRES}/${normalizeName(catObj.name)}` : `${ROUTES.SEARCH}?category=${encodeURIComponent(cat)}`}
                         className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:border-primary hover:text-primary transition cursor-pointer"
                       >
                         {cat}
