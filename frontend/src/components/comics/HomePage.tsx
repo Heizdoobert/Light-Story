@@ -304,9 +304,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                         <span className="text-xs font-semibold text-orange-600 dark:text-accent truncate">
                           {chapterLabel(comic)}
                         </span>
-                        <span className="text-[10px] font-bold text-emerald-600 dark:text-[#39ff14] shrink-0">
-                          {t("new_badge")}
-                        </span>
+                        {comic.updated_at && (
+                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+                            {new Date(comic.updated_at).toLocaleDateString("vi-VN")}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
