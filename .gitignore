@@ -20,6 +20,8 @@ agent/
 *.agent.md
 *.agent.original.md
 !.github/agents/*.agent.md
+downloads/
+.mcp.json
 
 # Frontend generated artifacts
 frontend/.next/
