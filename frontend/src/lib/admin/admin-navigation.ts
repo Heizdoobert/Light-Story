@@ -1,7 +1,6 @@
 import {
   BarChart3,
   BookOpen,
-  Bug,
   DollarSign,
   FileText,
   Layers,
@@ -37,8 +36,7 @@ export type AdminMenuId =
   | "create_story"
   | "stories"
   | "create_chapter"
-  | "create_comic"
-  | "sentry";
+  | "create_comic";
 
 export type AdminMenuItem = {
   id: AdminMenuId;
@@ -145,13 +143,6 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Audit Log",
     href: ROUTES.ADMIN.AUDIT,
     icon: ShieldAlert,
-    roles: ["superadmin"],
-  },
-  {
-    id: "sentry",
-    label: "Sentry",
-    href: ROUTES.ADMIN.SENTRY,
-    icon: Bug,
     roles: ["superadmin"],
   },
 ];

@@ -14,11 +14,11 @@
     "build": "npm --prefix frontend run build",
     "check": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
-      "typecheck": "npm --prefix frontend run typecheck",
+    "typecheck": "npm --prefix frontend run typecheck",
     "preview": "npm --prefix frontend run preview",
     "deploy": "wrangler deploy --config workers/kv-worker/wrangler.jsonc",
     "test:run": "npm --prefix frontend run test:run",
-      "postinstall": "node -e \"try{require('fs').rmSync('node_modules/light-story-workspace',{recursive:true,force:true})}catch(e){}\"",
+    "postinstall": "node -e \"try{require('fs').rmSync('node_modules/light-story-workspace',{recursive:true,force:true})}catch(e){}\"",
     "generate:types": "npm --prefix packages/api-types run generate",
     "docker:build": "docker compose --env-file docker-local.env down --rmi all --volumes && docker system prune -af --volumes && docker compose --env-file docker-local.env build --no-cache && docker compose --env-file docker-local.env up -d",
     "docker:up": "docker compose --env-file docker-local.env up -d",
@@ -63,14 +63,7 @@
       "@hono/node-server": "2.0.11"
     }
   },
-  "dependencies": {
-    "@sentry/nextjs": "^10.69.0",
-    "next": "^16.3.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
-  },
   "allowScripts": {
-    "@sentry/cli@2.58.6": true,
     "esbuild@0.28.1": true,
     "unrs-resolver@1.12.2": true,
     "workerd@1.20260625.1": true
