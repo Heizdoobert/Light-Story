@@ -46,6 +46,16 @@ type OverviewData = {
   engagement: EngagementSummary | null;
   infrastructure: Record<string, unknown> | null;
   stories: Story[];
+  recentSettingsChanges: SettingChange[];
+};
+
+type SettingChange = {
+  id: string;
+  action: string;
+  actor_email: string | null;
+  actor_name: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
 };
 
 const empty: OverviewData = {
@@ -53,6 +63,7 @@ const empty: OverviewData = {
   engagement: null,
   infrastructure: null,
   stories: [],
+  recentSettingsChanges: [],
 };
 
 /** Read a numeric field from the loosely-typed infrastructure object. */
@@ -60,7 +71,7 @@ const infraNum = (inf: Record<string, unknown> | null | undefined, key: string):
   (inf?.[key] as number) ?? 0;
 
 export default function AdminDashboardPage() {
-  useRoleGuard(["superadmin"], ROUTES.ADMIN.COMICS);
+  useRoleGuard(["superadmin", "admin", "employee"], ROUTES.ADMIN.COMICS);
   const [data, setData] = useState<OverviewData>(empty);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -86,7 +97,7 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
-  const { stats, engagement, infrastructure, stories } = data;
+  const { stats, engagement, infrastructure, stories, recentSettingsChanges } = data;
   const r2Usage = infraNum(infrastructure, "r2_usage_gb");
   const r2Allocated = infraNum(infrastructure, "r2_allocated_gb");
   const r2UsagePct =
@@ -349,6 +360,50 @@ export default function AdminDashboardPage() {
                   ).toLocaleString()
                 : "—"}
             </p>
+          </Section>
+
+          {/* Settings Change Log */}
+          <Section title="Lịch sử sửa cài đặt">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                <tr>
+                  <th className="p-3">Ai sửa</th>
+                  <th className="p-3">Thời gian</th>
+                  <th className="p-3">Nội dung</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {recentSettingsChanges.length > 0 ? (
+                  recentSettingsChanges.map((log) => (
+                    <tr
+                      key={log.id}
+                      className="hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="p-3 font-semibold text-white">
+                        {log.actor_name || log.actor_email || "—"}
+                      </td>
+                      <td className="p-3 text-slate-400">
+                        {new Date(log.created_at).toLocaleString()}
+                      </td>
+                      <td className="p-3 text-slate-300 font-mono text-[11px]">
+                        {Array.isArray(log.metadata?.keys)
+                          ? (log.metadata.keys as string[]).join(", ")
+                          : "—"}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="p-4 text-center text-slate-500"
+                    >
+                      Chưa có dữ liệu.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </Section>
 
           {/* Latest Stories */}

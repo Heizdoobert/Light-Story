@@ -52,14 +52,14 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Tổng quan",
     href: ROUTES.ADMIN.DASHBOARD,
     icon: LayoutDashboard,
-    roles: ["superadmin"],
+    roles: ["superadmin", "admin", "employee"],
   },
   {
     id: "analytics",
     label: "Thống kê & R2",
     href: ROUTES.ADMIN.ANALYTICS,
     icon: BarChart3,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
   {
     id: "comics",
@@ -129,7 +129,7 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Cài đặt",
     href: ROUTES.ADMIN.SETTINGS,
     icon: Settings,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
   {
     id: "profile",
