@@ -42,6 +42,7 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
         translator: parsed.data.translator,
         translator_id: parsed.data.translator_id || null,
         category: parsed.data.category,
+        tags: parsed.data.tags,
         description: parsed.data.description,
         status: parsed.data.status,
         cover_url: parsed.data.cover_url,

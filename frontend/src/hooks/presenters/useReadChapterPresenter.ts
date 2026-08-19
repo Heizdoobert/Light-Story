@@ -96,6 +96,17 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
   }, [autoScrollSpeed]);
 
   useEffect(() => {
+    if (autoScrollSpeed === 0) return;
+    const stop = () => setAutoScrollSpeed(0);
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchmove', stop, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchmove', stop);
+    };
+  }, [autoScrollSpeed]);
+
+  useEffect(() => {
     try {
       const mode = localStorage.getItem('reader:readingMode');
       if (mode && ['webtoon', 'single', 'double'].includes(mode)) setReadingMode(mode as any);

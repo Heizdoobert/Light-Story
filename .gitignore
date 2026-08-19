@@ -20,6 +20,8 @@ agent/
 *.agent.md
 *.agent.original.md
 !.github/agents/*.agent.md
+downloads/
+.mcp.json
 
 # Frontend generated artifacts
 frontend/.next/
@@ -146,12 +148,8 @@ AGENTS.md
 HUONG_DAN_SETUP.md
 deploy_key*
 
-
-
 .vercel
 
-# Sentry Config File
-.env.sentry-build-plugin
 backend-supabase/supabase/.branches/
 
 # CocoIndex artifacts
@@ -159,6 +157,7 @@ backend-supabase/supabase/.branches/
 *.cocoindex
 cocoindex.db
 
-
 # Agent task plans
 tasks/
+
+.worktrees/

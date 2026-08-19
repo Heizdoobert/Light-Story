@@ -56,6 +56,7 @@ export async function handleStoriesRequest(
       );
       const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
       const category = (url.searchParams.get('category') || '').replace(/[\(\),&]/g, '').trim();
+      const tag = (url.searchParams.get('tag') || '').replace(/[\(\),&]/g, '').trim();
       const sort = url.searchParams.get('sort') || 'newest';
       const offset = (page - 1) * pageSize;
       const allowedStatuses = ['published', 'ongoing', 'completed'];
@@ -68,12 +69,15 @@ export async function handleStoriesRequest(
       };
       const order = sortMap[sort] || 'created_at.desc';
 
-      let q = `select=id,title,author,description,cover_url,category,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
+      let q = `select=id,title,author,description,cover_url,category,tags,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
       if (keyword) {
         q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
       }
       if (category) {
         q += `&category=ilike.*${encodeURIComponent(category)}*`;
+      }
+      if (tag) {
+        q += `&tags=ilike.*${encodeURIComponent(tag)}*`;
       }
       const res = await sbGet('stories', q, env, token);
       if (!res.ok) return handleRes(res);
@@ -85,6 +89,9 @@ export async function handleStoriesRequest(
       }
       if (category) {
         countQ += `&category=ilike.*${encodeURIComponent(category)}*`;
+      }
+      if (tag) {
+        countQ += `&tags=ilike.*${encodeURIComponent(tag)}*`;
       }
       const total = await sbGetCount(countQ, env, token);
       return json({ items, total });

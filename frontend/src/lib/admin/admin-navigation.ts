@@ -1,8 +1,8 @@
 import {
   BarChart3,
   BookOpen,
-  Bug,
   DollarSign,
+  FileText,
   Layers,
   LayoutDashboard,
   PenSquare,
@@ -26,6 +26,7 @@ export type AdminMenuId =
   | "authors"
   | "genres"
   | "tags"
+  | "descriptions"
   | "users"
   | "ads"
   | "settings"
@@ -35,8 +36,7 @@ export type AdminMenuId =
   | "create_story"
   | "stories"
   | "create_chapter"
-  | "create_comic"
-  | "sentry";
+  | "create_comic";
 
 export type AdminMenuItem = {
   id: AdminMenuId;
@@ -52,7 +52,7 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Tổng quan",
     href: ROUTES.ADMIN.DASHBOARD,
     icon: LayoutDashboard,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
   {
     id: "analytics",
@@ -104,6 +104,13 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     roles: ["superadmin", "admin", "employee"],
   },
   {
+    id: "descriptions",
+    label: "Mô tả truyện",
+    href: ROUTES.ADMIN.DESCRIPTIONS,
+    icon: FileText,
+    roles: ["superadmin", "admin", "employee"],
+  },
+  {
     id: "users",
     label: "Người dùng",
     href: ROUTES.ADMIN.USERS,
@@ -138,13 +145,6 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     icon: ShieldAlert,
     roles: ["superadmin"],
   },
-  {
-    id: "sentry",
-    label: "Sentry",
-    href: ROUTES.ADMIN.SENTRY,
-    icon: Bug,
-    roles: ["superadmin"],
-  },
 ];
 
 export function getAdminMenuItems(
@@ -173,7 +173,6 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> =
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
-    "dashboard",
     "analytics",
     "comics",
     "chapters",
@@ -181,11 +180,12 @@ export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
     "authors",
     "genres",
     "tags",
+    "descriptions",
     "ads",
     "settings",
     "profile",
   ],
-  employee: ["comics", "chapters", "categories", "authors", "genres", "tags", "profile"],
+  employee: ["comics", "chapters", "categories", "authors", "genres", "tags", "descriptions", "profile"],
   internal: [],
   user: [],
 };

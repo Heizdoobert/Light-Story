@@ -523,7 +523,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* TruyenQQ Style Navigation Bar */}
       <div className="relative block bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border-t border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-12 transition-colors" ref={categoryDropdownRef}>
-        <div className="flex items-center justify-start md:justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs uppercase tracking-wide py-1.5">
+        <div className="flex items-center justify-start md:justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs uppercase tracking-wide py-1.5 scroll-smooth">
           {/* Trang chủ */}
           <Link
             href="/"
@@ -611,6 +611,9 @@ export const Header: React.FC<HeaderProps> = ({
             <span>{t("nav_fanpage")}</span>
           </Link>
         </div>
+
+        {/* Right scroll fade hint for mobile */}
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-100 dark:from-slate-900 to-transparent pointer-events-none md:hidden" />
 
         {/* Mobile Nav Drawer */}
         <AnimatePresence>

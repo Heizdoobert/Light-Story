@@ -48,6 +48,7 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
     latestChapter,
     firstChapter,
     categoryArray,
+    tagArray,
   } = useComicDetailPresenter({ initialComic, initialChapters, initialCategories, hydrated });
 
   if (loading) {
@@ -73,7 +74,7 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500 pb-20">
-      <div className="relative w-full h-[40vh] sm:h-[50vh] overflow-hidden">
+      <div className="relative w-full h-[30vh] sm:h-[40vh] md:h-[50vh] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-50 dark:opacity-30"
           style={{ backgroundImage: `url(${coverUrl})` }}
@@ -90,9 +91,9 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 sm:-mt-48 relative z-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 sm:-mt-32 md:-mt-48 relative z-20">
         <div className="flex flex-col sm:flex-row gap-6 sm:gap-10">
-          <div className="flex-shrink-0 flex flex-col items-center sm:items-start w-48 sm:w-64 mx-auto sm:mx-0">
+          <div className="flex-shrink-0 flex flex-col items-center sm:items-start w-40 min-[400px]:w-48 sm:w-64 mx-auto sm:mx-0">
             <motion.img
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -146,7 +147,7 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                 </div>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white leading-tight mb-4">
                 {comic.title}
               </h1>
 
@@ -179,6 +180,21 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                 </div>
               )}
 
+              {tagArray.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-6">
+                  <Tag size={16} className="text-purple-400" />
+                  {tagArray.map((tag, idx) => (
+                    <Link
+                      key={idx}
+                      href={`${ROUTES.SEARCH}?tag=${encodeURIComponent(tag)}`}
+                      className="px-3 py-1 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg text-xs font-bold text-purple-700 dark:text-purple-300 hover:border-purple-500 hover:text-purple-500 transition cursor-pointer"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
                 <h3 className="font-black text-slate-800 dark:text-white mb-2 flex items-center gap-2">
                   <List size={18} className="text-primary" /> Tóm tắt nội dung
@@ -195,11 +211,11 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mt-12 sm:mt-16 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200 dark:border-slate-800"
+          className="mt-8 sm:mt-12 md:mt-16 bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-6 md:p-8 shadow-xl border border-slate-200 dark:border-slate-800"
         >
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-              <List className="text-primary" /> Danh sách chương
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <List size={22} className="text-primary" /> Danh sách chương
             </h2>
             <span className="text-sm font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
               {chapters.length} Chương

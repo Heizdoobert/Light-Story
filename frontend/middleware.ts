@@ -116,6 +116,13 @@ export async function middleware(request: NextRequest) {
       url.pathname = ROUTES.ERROR.FORBIDDEN;
       return addSecurityHeaders(NextResponse.redirect(url), isDev);
     }
+
+    // Granular: dashboard overview is superadmin only
+    if (pathname.startsWith("/admin/dashboard") && role !== "superadmin") {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ERROR.FORBIDDEN;
+      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+    }
   }
 
   // User route protection

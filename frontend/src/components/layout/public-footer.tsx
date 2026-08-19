@@ -23,7 +23,7 @@ export default function PublicFooter() {
           <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm leading-relaxed mt-2">
             {t("footer_about")}
           </p>
-          <div className="mt-4">
+          <div className="mt-3 sm:mt-4">
             <Link href={ROUTES.GENRES} className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
               {t("category_list_title")}
             </Link>

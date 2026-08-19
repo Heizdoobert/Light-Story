@@ -93,7 +93,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-8 p-5 sm:p-8 items-center">
             <Link
               href={ROUTES.COMIC_DETAIL(spotlight.id)}
-              className="relative w-36 sm:w-44 lg:w-52 shrink-0 rounded-2xl overflow-hidden border-4 border-white/20 dark:border-white/10 shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-300"
+              className="relative w-32 min-[400px]:w-36 sm:w-44 lg:w-52 shrink-0 rounded-2xl overflow-hidden border-4 border-white/20 dark:border-white/10 shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-300"
             >
               <img
                 src={getComicCover(spotlight)}
@@ -130,17 +130,17 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </span>
                 ))}
               </div>
-              <div className="flex items-center justify-center sm:justify-start gap-3">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
                 <Link
                   href={ROUTES.COMIC_DETAIL(spotlight.id)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-slate-900 text-sm font-black shadow-lg hover:scale-105 transition-transform"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white text-slate-900 text-xs sm:text-sm font-black shadow-lg hover:scale-105 transition-transform"
                 >
                   <Play size={16} className="fill-current" />
                   {t("read_now")}
                 </Link>
                 <Link
                   href={ROUTES.SEARCH}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 dark:bg-white/10 backdrop-blur text-white text-sm font-bold hover:bg-white/25 transition-colors"
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-white/15 dark:bg-white/10 backdrop-blur text-white text-xs sm:text-sm font-bold hover:bg-white/25 transition-colors"
                 >
                   {t("view_all_comics")}
                 </Link>
@@ -274,7 +274,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   >
                     <Link
                       href={ROUTES.COMIC_DETAIL(comic.id)}
-                      className="relative w-20 h-28 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-black"
+                      className="relative w-16 h-[88px] sm:w-20 sm:h-28 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-black"
                     >
                       <img
                         src={getComicCover(comic)}
@@ -321,7 +321,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         <aside className="lg:col-span-1">
           <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm lg:sticky lg:top-24">
             <SectionHeader icon={Flame} title={t("top_read_comics")} />
-            <div className="divide-y divide-slate-100 dark:divide-white/10 min-h-[320px]">
+            <div className="divide-y divide-slate-100 dark:divide-white/10 min-h-0 lg:min-h-[320px]">
               {(comics.length > 0 ? (trendingComics.length > 0 ? trendingComics : comics) : []).slice(0, 10).map((comic, idx) => (
                 <Link
                   key={`top-${comic.id}`}
