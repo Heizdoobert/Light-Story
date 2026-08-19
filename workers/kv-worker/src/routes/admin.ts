@@ -7,6 +7,7 @@ import {
   sbAdminPatch as sbPatch,
   sbAdminDelete as sbDelete,
   sbAdminGetCount as sbGetCount,
+  sbRpc,
   handleRes,
   json,
 } from '../utils/supabase-client';
@@ -22,6 +23,7 @@ import {
   isAllowedUploadFolder,
   validateUploadBatch,
 } from '../utils/r2-keys';
+import { getInfrastructurePayload } from '../utils/infra';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -126,6 +128,11 @@ export async function handleAdminRequest(
   const isPublicScope = path === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public';
   if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin', 'admin'])) {
     return err('FORBIDDEN', 'Site settings require admin privileges', 403);
+  }
+
+  // Granular check: dashboard overview is superadmin only
+  if (method === 'GET' && path === '/admin/analytics/dashboard' && !requireRole(userRole, ['superadmin'])) {
+    return err('FORBIDDEN', 'Dashboard overview requires superadmin privileges', 403);
   }
 
   try {
@@ -496,24 +503,25 @@ export async function handleAdminRequest(
       method === 'GET' &&
       path === '/admin/analytics/dashboard'
     ) {
-      const range = url.searchParams.get('range') || '7d';
-      const storiesRes = await sbGet(
-        'stories',
-        'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
-        env,
-        token,
-      );
+      const [storiesRes, viewsRes] = await Promise.all([
+        sbGet(
+          'stories',
+          'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
+          env,
+          token,
+        ),
+        sbGet(
+          'stories',
+          'select=views&limit=10000',
+          env,
+          token,
+        ),
+      ]);
       const stories = storiesRes.ok
-        ? await storiesRes.json()
+        ? await storiesRes.json().catch(() => [])
         : [];
-      const viewsRes = await sbGet(
-        'stories',
-        'select=views&limit=10000',
-        env,
-        token,
-      );
       const views = viewsRes.ok
-        ? await viewsRes.json()
+        ? await viewsRes.json().catch(() => [])
         : [];
       const totalViews = Array.isArray(views)
         ? views.reduce(
@@ -522,21 +530,19 @@ export async function handleAdminRequest(
             0,
           )
         : 0;
-      const totalStories = await sbGetCount(
-        'stories?select=id',
-        env,
-        token,
-      );
-      const totalChapters = await sbGetCount(
-        'chapters?select=id',
-        env,
-        token,
-      );
-      const activeStories = await sbGetCount(
-        'stories?select=id&status=neq.draft&status=neq.archived',
-        env,
-        token,
-      );
+      const [totalStories, totalChapters, activeStories] = await Promise.all([
+        sbGetCount('stories?select=id', env, token),
+        sbGetCount('chapters?select=id', env, token),
+        sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token),
+      ]);
+
+      const [engagementRes, infrastructure] = await Promise.all([
+        sbRpc('get_user_engagement_summary', { p_time_range: '30d' }, env, token)
+          .then((res) => (res.ok ? res.json().catch(() => null) : null))
+          .catch(() => null),
+        getInfrastructurePayload(env).catch(() => null),
+      ]);
+
       return json({
         stories,
         stats: {
@@ -545,7 +551,8 @@ export async function handleAdminRequest(
           activeStories,
           totalViews,
         },
-        range,
+        engagement: engagementRes,
+        infrastructure,
       });
     }
 

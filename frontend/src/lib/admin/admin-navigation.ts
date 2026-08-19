@@ -52,7 +52,7 @@ export const ADMIN_MENU_ITEMS: AdminMenuItem[] = [
     label: "Tổng quan",
     href: ROUTES.ADMIN.DASHBOARD,
     icon: LayoutDashboard,
-    roles: ["superadmin", "admin"],
+    roles: ["superadmin"],
   },
   {
     id: "analytics",
@@ -173,7 +173,6 @@ export const ADMIN_MENU_LABELS: Record<AdminMenuId, string> =
 export const DEFAULT_ADMIN_MENU_VISIBILITY: Record<UserRole, AdminMenuId[]> = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
-    "dashboard",
     "analytics",
     "comics",
     "chapters",
