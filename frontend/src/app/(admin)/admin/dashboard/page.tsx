@@ -68,7 +68,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     let cancelled = false;
     apiClient
-      .get<OverviewData>(ROUTES.API.ADMIN.ANALYTICS_DASHBOARD)
+      .get<OverviewData>(ROUTES.API.ADMIN.ANALYTICS_DASHBOARD, { signal: AbortSignal.timeout(20000) })
       .then((result) => {
         if (cancelled) return;
         setData(result ?? empty);
