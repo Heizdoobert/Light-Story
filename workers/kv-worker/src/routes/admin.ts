@@ -564,7 +564,7 @@ export async function handleAdminRequest(
       let recentSettingsChanges: Array<{ id: string; action: string; actor_email: string | null; actor_name: string | null; metadata: Record<string, unknown>; created_at: string }> = [];
       const logsRes = await sbGet(
         'admin_audit_logs',
-        'select=id,action,actor_user_id,target_email,metadata,created_at&action=eq.settings_update&order=created_at.desc&limit=10',
+        'select=id,action,actor_user_id,metadata,created_at&action=eq.settings_update&order=created_at.desc&limit=10',
         env,
         token,
       ).catch(() => null);
