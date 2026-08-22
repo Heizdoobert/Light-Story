@@ -44,7 +44,8 @@
     "@rolldown/binding-linux-x64-gnu": "^1.2.0",
     "@supabase/cli-linux-x64": "^2.109.1",
     "@tailwindcss/oxide-linux-arm64-gnu": "4.3.3",
-    "@tailwindcss/oxide-linux-x64-gnu": "4.3.3"
+    "@tailwindcss/oxide-linux-x64-gnu": "4.3.3",
+    "@typescript/typescript-linux-x64": "7.0.2"
   },
   "overrides": {
     "shell-quote": "1.10.0",
