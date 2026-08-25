@@ -16,7 +16,7 @@ import { useRoleGuard } from "@/hooks/common/use-role-guard";
 import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminAnalyticsPage() {
-  useRoleGuard(["superadmin", "admin"], ROUTES.ADMIN.COMICS);
+  useRoleGuard(["superadmin"], ROUTES.ADMIN.COMICS);
   const { loading, data, usagePct, refresh } = useAdminAnalytics();
 
   return (

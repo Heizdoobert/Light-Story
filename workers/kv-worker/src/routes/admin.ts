@@ -124,15 +124,15 @@ export async function handleAdminRequest(
     return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
   }
 
-  // Granular check: site-settings are superadmin and admin only (except scope=public)
+  // Granular check: site-settings are superadmin only (except scope=public)
   const isPublicScope = path === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public';
-  if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin', 'admin'])) {
-    return err('FORBIDDEN', 'Site settings require admin privileges', 403);
+  if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin'])) {
+    return err('FORBIDDEN', 'Site settings require superadmin privileges', 403);
   }
 
-  // Granular check: dashboard overview is superadmin only
-  if (method === 'GET' && path === '/admin/analytics/dashboard' && !requireRole(userRole, ['superadmin'])) {
-    return err('FORBIDDEN', 'Dashboard overview requires superadmin privileges', 403);
+  // Granular check: dashboard overview — staff roles
+  if (method === 'GET' && path === '/admin/analytics/dashboard' && !requireRole(userRole, ['superadmin', 'admin', 'employee'])) {
+    return err('FORBIDDEN', 'Dashboard overview requires staff privileges', 403);
   }
 
   try {
@@ -367,6 +367,7 @@ export async function handleAdminRequest(
       const headers = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
       if (body.payload && Array.isArray(body.payload)) {
         const results = [];
+        const keys: string[] = [];
         for (const item of body.payload) {
           const upsertRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
             method: 'POST',
@@ -374,6 +375,15 @@ export async function handleAdminRequest(
             body: JSON.stringify({ key: item.key, value: item.value, updated_by: userId || null }),
           });
           results.push(await upsertRes.json().catch(() => ({})));
+          keys.push(item.key);
+        }
+        // Log settings change into private audit table
+        if (keys.length > 0 && userId) {
+          await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys } }),
+          }).catch(() => null);
         }
         return json({ success: true, results });
       }
@@ -382,6 +392,13 @@ export async function handleAdminRequest(
         headers: { ...headers, Prefer: 'return=representation' },
         body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
       });
+      if (res.ok && userId) {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
+        }).catch(() => null);
+      }
       return handleRes(res);
     }
 
@@ -543,6 +560,40 @@ export async function handleAdminRequest(
         getInfrastructurePayload(env).catch(() => null),
       ]);
 
+      // Recent settings changes (last 10) with actor info
+      let recentSettingsChanges: Array<{ id: string; action: string; actor_email: string | null; actor_name: string | null; metadata: Record<string, unknown>; created_at: string }> = [];
+      const logsRes = await sbGet(
+        'admin_audit_logs',
+        'select=id,action,actor_user_id,metadata,created_at&action=eq.settings_update&order=created_at.desc&limit=10',
+        env,
+        token,
+      ).catch(() => null);
+      if (logsRes && logsRes.ok) {
+        const logs = (await logsRes.json().catch(() => [])) as Array<{ id: string; action: string; actor_user_id: string | null; metadata: Record<string, unknown>; created_at: string }>;
+        const actorIds = [...new Set(logs.map((l) => l.actor_user_id).filter(Boolean))] as string[];
+        const emailByName = new Map<string, { email: string; name: string | null }>();
+        if (actorIds.length > 0) {
+          const ids = actorIds.map((id) => encodeURIComponent(id)).join(',');
+          const pRes = await sbGet('profiles', `select=id,email,full_name&id=in.(${ids})`, env, token).catch(() => null);
+          if (pRes && pRes.ok) {
+            for (const p of (await pRes.json().catch(() => [])) as Array<{ id: string; email: string; full_name: string | null }>) {
+              emailByName.set(p.id, { email: p.email, name: p.full_name });
+            }
+          }
+        }
+        recentSettingsChanges = logs.map((l) => {
+          const actor = l.actor_user_id ? emailByName.get(l.actor_user_id) : undefined;
+          return {
+            id: l.id,
+            action: l.action,
+            actor_email: actor?.email ?? null,
+            actor_name: actor?.name ?? null,
+            metadata: l.metadata,
+            created_at: l.created_at,
+          };
+        });
+      }
+
       return json({
         stories,
         stats: {
@@ -553,6 +604,7 @@ export async function handleAdminRequest(
         },
         engagement: engagementRes,
         infrastructure,
+        recentSettingsChanges,
       });
     }
 

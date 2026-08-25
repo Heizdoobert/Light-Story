@@ -117,8 +117,13 @@ export async function middleware(request: NextRequest) {
       return addSecurityHeaders(NextResponse.redirect(url), isDev);
     }
 
-    // Granular: dashboard overview is superadmin only
-    if (pathname.startsWith("/admin/dashboard") && role !== "superadmin") {
+    // Granular: analytics and settings are superadmin only
+    if (pathname.startsWith("/admin/analytics") && role !== "superadmin") {
+      const url = request.nextUrl.clone();
+      url.pathname = ROUTES.ERROR.FORBIDDEN;
+      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+    }
+    if (pathname.startsWith("/admin/settings") && role !== "superadmin") {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.FORBIDDEN;
       return addSecurityHeaders(NextResponse.redirect(url), isDev);
