@@ -526,31 +526,26 @@ export async function handleAdminRequest(
           'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
           env,
           token,
-        ),
+        ).catch(() => null),
         sbGet(
           'stories',
           'select=views&limit=10000',
           env,
           token,
-        ),
+        ).catch(() => null),
       ]);
-      const stories = storiesRes.ok
+      const stories = (storiesRes && storiesRes.ok)
         ? await storiesRes.json().catch(() => [])
         : [];
-      const views = viewsRes.ok
+      const views = (viewsRes && viewsRes.ok)
         ? await viewsRes.json().catch(() => [])
         : [];
-      const totalViews = Array.isArray(views)
-        ? views.reduce(
-            (sum: number, row: { views?: number }) =>
-              sum + (Number(row.views) || 0),
-            0,
-          )
-        : 0;
+      const totalViews = Array.isArray(views) ? views.reduce((acc: number, cur: any) => acc + (cur.views || 0), 0) : 0;
+
       const [totalStories, totalChapters, activeStories] = await Promise.all([
-        sbGetCount('stories?select=id', env, token),
-        sbGetCount('chapters?select=id', env, token),
-        sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token),
+        sbGetCount('stories?select=id', env, token).catch(() => 0),
+        sbGetCount('chapters?select=id', env, token).catch(() => 0),
+        sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token).catch(() => 0),
       ]);
 
       const [engagementRes, infrastructure] = await Promise.all([
