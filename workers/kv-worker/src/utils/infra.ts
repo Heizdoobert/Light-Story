@@ -49,14 +49,18 @@ export async function getInfrastructurePayload(env: Env) {
 
   if (env.R2_BUCKET) {
     let cursor: string | undefined = undefined;
-    do {
-      const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
-      r2ObjectCount += listRes.objects.length;
-      for (const obj of listRes.objects) {
-        r2SizeBytes += obj.size || 0;
-      }
-      cursor = listRes.truncated ? listRes.cursor : undefined;
-    } while (cursor);
+    try {
+      do {
+        const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
+        r2ObjectCount += listRes.objects.length;
+        for (const obj of listRes.objects) {
+          r2SizeBytes += obj.size || 0;
+        }
+        cursor = listRes.truncated ? listRes.cursor : undefined;
+      } while (cursor);
+    } catch (e) {
+      console.error('[Infra] R2 metrics failed:', e);
+    }
   }
 
   let queueBacklog = 0;
