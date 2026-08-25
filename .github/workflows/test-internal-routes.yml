@@ -12,16 +12,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
-      
+
       - name: Install deps
         run: npm install
-      
+
       - name: Start wrangler dev
         run: |
           npx wrangler dev --config workers/kv-worker/wrangler.jsonc --port 8787 &
@@ -34,17 +34,17 @@ jobs:
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_ANON_KEY: dummy_key
           SUPABASE_JWKS_URL: https://example.supabase.co/auth/v1/.well-known/jwks.json
-      
+
       - name: Test /api/stories
         run: |
           echo "=== GET /api/stories ==="
           curl -sf "http://localhost:8787/api/stories?page=1&pageSize=3" || echo "Worker smoke test check completed."
-      
+
       - name: Test /api/taxonomy/categories (via supabase proxy)
         run: |
           echo "=== GET /api/supabase/categories ==="
           curl -sf "http://localhost:8787/api/supabase/categories?select=*" || echo "Supabase proxy test check completed."
-      
+
       - name: Health check (404 route)
         run: |
           echo "=== GET /unknown-route ==="
