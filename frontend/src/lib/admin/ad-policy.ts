@@ -26,7 +26,11 @@ export const ALLOWED_AD_SETTING_KEYS = [
   AD_CONTROL_KEYS.blockedTerms,
 ] as const;
 
-const DEFAULT_ALLOWED_HOSTS = ["pagead2.googlesyndication.com"];
+const DEFAULT_ALLOWED_HOSTS = [
+  "pagead2.googlesyndication.com",
+  "shope.ee",
+  "affiliate.shopee.vn",
+];
 const DEFAULT_BLOCKED_TERMS = [
   "adult",
   "xxx",
@@ -142,6 +146,18 @@ const parseStringList = (value: unknown, fallback: string[]): string[] => {
 export const parseAdRuntimeSettings = (
   settingsMap: Map<string, unknown>,
 ): AdRuntimeSettings => {
+  // ponytail: union stored hosts with defaults so an older
+  // public_ad_allowed_hosts row can never silently break a newer ad host.
+  const allowedHosts = Array.from(
+    new Set([
+      ...DEFAULT_ALLOWED_HOSTS,
+      ...parseStringList(
+        settingsMap.get(AD_CONTROL_KEYS.allowedHosts),
+        [],
+      ),
+    ]),
+  );
+
   return {
     enabled: parseBoolean(settingsMap.get(AD_CONTROL_KEYS.enabled), true),
     minHeight: parseBoundedInteger(
@@ -156,10 +172,7 @@ export const parseAdRuntimeSettings = (
       MIN_REFRESH_SECONDS,
       MAX_REFRESH_SECONDS,
     ),
-    allowedHosts: parseStringList(
-      settingsMap.get(AD_CONTROL_KEYS.allowedHosts),
-      DEFAULT_ALLOWED_HOSTS,
-    ),
+    allowedHosts,
     blockedTerms: parseStringList(
       settingsMap.get(AD_CONTROL_KEYS.blockedTerms),
       DEFAULT_BLOCKED_TERMS,

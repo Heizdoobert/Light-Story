@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Light Story** is an enterprise-grade, high-performance digital publishing platform for web comics and web novels. Designed for sub-second page loads, global edge delivery, and secure digital asset protection, Light Story combines a modern Next.js 16 App Router frontend with a microservices suite of Cloudflare Workers and a Supabase (PostgreSQL + `pgvector`) data layer.
+**Light Story** is an enterprise-grade, high-performance digital publishing platform for web comics and web novels. Designed for sub-second page loads, global edge delivery, and secure digital asset protection, Light Story combines a modern Next.js 16 App Router frontend with a single unified API Gateway running as a Cloudflare Worker and a Supabase (PostgreSQL + `pgvector`) data layer.
 
 ---
 
@@ -29,30 +29,37 @@
 
 ## 🏗 Architectural Topology
 
-Light Story employs a decoupled, edge-first architecture. All API traffic passes through a **Unified API Gateway** running on Cloudflare's global edge network before routing to specialized domain microservices or Supabase.
+Light Story employs a decoupled, edge-first architecture. All API traffic passes through a **Unified API Gateway** (deployed as the Cloudflare Worker `kv-worker`) on Cloudflare's global edge network before routing to domain route handlers or Supabase.
 
 ```mermaid
 graph TD
-    User["Client Browser / Web App"] -->|HTTPS / Next.js 16| Frontend["Frontend Server (Next.js Standalone Container)"]
-    User -->|Direct API / REST| Gateway["Unified API Gateway (Cloudflare Worker @ 8787)"]
+    User["Client Browser / Web App"] -->|HTTPS / Next.js 16| Frontend["Frontend Server (Next.js Standalone)"]
+    User -->|Direct API / REST| Gateway["Unified API Gateway (Worker kv-worker)"]
     Frontend -->|Internal / Edge Fetch| Gateway
 
     subgraph Edge Layer [Cloudflare Workers Network]
-        Gateway -->|JWT / CORS Check| Router["Worker Router & Rate Limiter"]
-        Router --> ComicsWorker["comics-worker (Comic & Chapter Domain)"]
-        Router --> StoriesWorker["stories-worker (Novel & Chapter Domain)"]
-        Router --> R2SignedWorker["r2-signed-url (HMAC Token Generator)"]
-        Router --> AnalyticsWorker["analytics-worker (Metrics Aggregation)"]
-        Router --> AdminWorker["admin-worker (Privileged Operations)"]
+        Gateway -->|JWT / CORS / Rate Limit| Router["Worker Router & Middleware"]
+        Router --> Stories["/stories, /chapters"]
+        Router --> Comics["/comics"]
+        Router --> Admin["/admin (Privileged)"]
+        Router --> Analytics["/analytics (Metrics)"]
+        Router --> User["/user"]
+        Router --> Hyperdrive["/hyperdrive (Postgres proxy)"]
     end
 
     subgraph Data & Media Layer
-        ComicsWorker -->|PostgreSQL Protocol| Supabase["Supabase DB (pgvector + RLS)"]
-        StoriesWorker --> Supabase
-        R2SignedWorker -->|Signed Bucket Access| R2["Cloudflare R2 Bucket (Covers & Chapters)"]
-        AnalyticsWorker --> Supabase
+        Gateway -->|Supabase REST / RLS| Supabase["Supabase DB (pgvector + RLS)"]
+        Gateway -->|KV / Queues / Workflows| CFState["Cloudflare KV · Queues · Workflows"]
+        Gateway -->|Hyperdrive| Supabase
+        Gateway -->|Signed Bucket Access| R2["Cloudflare R2 Bucket (Covers & Chapters)"]
     end
 ```
+
+Key facts about the current topology:
+
+- **One Worker, not five.** The Phase-1 fleet (`api-gateway`, `stories-worker`, `comics-worker`, `admin-worker`, `analytics-worker`) was consolidated into the single `kv-worker` — see [workers/kv-worker/README.md](workers/kv-worker/README.md).
+- **Production route**: `api.lightstory.app/*` (zone `lightstory.app`). **Staging route**: `api-staging.lightstory.app/*`.
+- **Gateway URL contract** (fallback chain) is documented in [ADR-001](docs/decisions/ADR-001-gateway-url-fallback.md).
 
 ---
 
@@ -76,21 +83,17 @@ Light-Story/
 │   ├── src/components/           # Reusable UI components (Tailwind CSS v4, Lucide)
 │   └── ARCHITECTURE.md           # Frontend architecture documentation
 ├── packages/
-│   └── api-types/                # OpenAPI 3.0 spec & auto-generated TypeScript contracts
-├── workers/                      # Cloudflare Workers Microservices
-│   ├── unified-gateway/          # Central API Gateway (JWT auth, CORS, routing)
-│   ├── r2-signed-url/            # R2 Signed URL generation & asset gating
-│   ├── comics-worker/            # Comic & chapter CRUD service
-│   ├── stories-worker/           # Novel & story CRUD service
-│   ├── analytics-worker/         # Event tracking & metrics collection
-│   └── admin-worker/             # Admin management & audit logs
+│   ├── api-types/                # OpenAPI 3.0 spec & auto-generated TypeScript contracts
+│   └── mcp-lightstory/           # MCP server tooling (internal)
+├── workers/
+│   └── kv-worker/                # Unified API Gateway (JWT auth, CORS, routing) — the only Worker
 ├── backend-supabase/             # Database layer & Supabase migrations
-│   ├── supabase/migrations/      # SQL schema, RLS policies, triggers, and functions
+│   ├── supabase/                 # migrations/, scripts/, snippets/, tests/, config.toml
 │   └── docs/                     # Database schema, RLS, and storage documentation
-├── Dockerfile                    # Production multi-stage Docker build file
-├── Dockerfile.backend            # Production backend Docker service definition
-├── Dockerfile.frontend           # Dedicated frontend production Docker container
+├── Dockerfile                    # Unified single-container image (postgres + gateway + frontend)
+├── Dockerfile.frontend           # Frontend-only production image (standalone build)
 ├── docker-compose.yml            # Local & staging container orchestrator
+├── docs/decisions/               # Architecture Decision Records (ADR-001, …)
 └── Instruction_create_key.md     # Production environment variable reference
 ```
 
@@ -102,8 +105,8 @@ Light-Story/
 |---|---|---|
 | **Frontend** | Next.js 16 (App Router), React 19, TypeScript | High-performance SSR & ISR web interface |
 | **Styling** | Tailwind CSS v4, Lucide React, Shadcn UI | Modern responsive glassmorphic design system |
-| **API Gateway** | Cloudflare Workers, Hono / Wrangler | Global edge API routing & JWT token verification |
-| **Microservices** | Cloudflare Workers (TypeScript) | Decoupled domain microservices |
+| **API Gateway** | Cloudflare Worker (`kv-worker`), Hono / Wrangler | Global edge API routing, JWT verification, rate limiting |
+| **Edge State** | Cloudflare KV, Queues, Workflows, Hyperdrive | Caching, background jobs, Postgres proxying |
 | **Primary Database** | Supabase (PostgreSQL 15+) | Transactional data store with RLS and triggers |
 | **Vector Search** | Supabase `pgvector` | 1536-dim vector embeddings for similarity search |
 | **Media Storage** | Cloudflare R2 | S3-compatible asset storage for covers & chapters |
@@ -115,19 +118,20 @@ Light-Story/
 
 | Document | Description |
 |---|---|
-| [Unified Gateway Guide](workers/unified-gateway/README.md) | Architecture, routing rules, and authentication for API Gateway |
+| [Unified Gateway Guide](workers/kv-worker/README.md) | Gateway routes, bindings, and deployment for the API Gateway Worker |
 | [Frontend Architecture](frontend/ARCHITECTURE.md) | Next.js directory structure, client state, and rendering strategies |
 | [Database Schema Docs](backend-supabase/docs/db-schema.md) | PostgreSQL tables, foreign keys, enums, and indexes |
 | [Row-Level Security (RLS)](backend-supabase/docs/rls-policies.md) | Access control matrices and row security definitions |
 | [Storage Configuration](backend-supabase/docs/storage.md) | R2 bucket setup and media folder conventions |
 | [Environment Variable Guide](Instruction_create_key.md) | Exhaustive list of required production and staging `.env` keys |
 | [Docker Deployment Guide](README.Docker.md) | Container orchestration and cloud container runtime guide |
+| [Gateway URL Fallback (ADR-001)](docs/decisions/ADR-001-gateway-url-fallback.md) | Production gateway URL resolution contract |
 
 ---
 
 ## 🔑 Environment Configuration
 
-Light Story uses environment variable validation across services. Create `.env` in the root directory (or `frontend/.env.local` for Next.js).
+Light Story uses environment variable validation across services. Create `.env` in the root directory — the frontend auto-imports the keys it needs into `frontend/.env.local` via `frontend/scripts/import_root_env.mjs`. See [.env.example](.env.example) and [Instruction_create_key.md](Instruction_create_key.md) for the full reference.
 
 ### Essential Production Variables
 
@@ -138,16 +142,25 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_token_here
 SUPABASE_SERVICE_ROLE_KEY=sb_service_role_token_here
 
 # Gateway & Worker Endpoints
-NEXT_PUBLIC_GATEWAY_URL=https://api.yourdomain.com
+NEXT_PUBLIC_GATEWAY_URL=https://api.lightstory.app
+NEXT_PUBLIC_GATEWAY_URL_PRODUCTION=https://kv-worker.hhhuygiau.workers.dev
 JWT_SECRET=your-production-jwt-secret-key
 
-# Cloudflare R2 Storage
+# Cloudflare R2 Storage (single bucket `comic`, key-prefix separated)
 R2_ACCOUNT_ID=your_cloudflare_account_id
 R2_ACCESS_KEY_ID=your_r2_access_key
 R2_SECRET_ACCESS_KEY=your_r2_secret_key
+R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
 NEXT_PUBLIC_R2_BUCKET_COVERS=comic
 NEXT_PUBLIC_R2_BUCKET_CHAPTERS=comic
+
+# Internal Admin API (all three must match)
+INTERNAL_ADMIN_SECRET=<random-hex>
+NEXT_PUBLIC_INTERNAL_ADMIN_SECRET=<same-random-hex>
+ADMIN_API_KEY=<same-random-hex>
 ```
+
+> **Gateway URL contract**: in production the gateway URL resolves via `NEXT_PUBLIC_GATEWAY_URL_PRODUCTION` → `NEXT_PUBLIC_GATEWAY_URL` → hardcoded worker domain fallback. See [ADR-001](docs/decisions/ADR-001-gateway-url-fallback.md) before changing anything.
 
 For complete instructions on generating keys and setup rules, see [Instruction_create_key.md](Instruction_create_key.md).
 
@@ -185,7 +198,7 @@ For complete instructions on generating keys and setup rules, see [Instruction_c
      ```bash
      npm run dev
      ```
-   - **API Gateway Only (`http://localhost:8787`):**
+   - **API Gateway Only (`http://localhost:8787`, remote bindings):**
      ```bash
      npm run dev:gateway
      ```
@@ -196,34 +209,45 @@ For complete instructions on generating keys and setup rules, see [Instruction_c
    supabase start
    ```
 
----
+## 🚀 Production Deployment
 
-## 🐳 Production & Docker Deployment
+### Canonical Path: Cloudflare Workers + Supabase (GitHub Actions)
 
-### Building & Running Production Containers
+Pushing to `main` triggers [`.github/workflows/production.yml`](.github/workflows/production.yml), which after passing lint/typecheck/build/test:
 
-Light Story includes production-optimized multi-stage Dockerfiles.
+1. Deploys the gateway Worker: `wrangler deploy --config workers/kv-worker/wrangler.jsonc` (secret `CLOUDFLARE_API_TOKEN`).
+2. Pushes Supabase migrations: `supabase db push --include-all` against project `rwnzsmmfvsetfcnkjoxt` (secret `SUPABASE_ACCESS_TOKEN`).
+3. Runs a smoke test against `https://kv-worker.hhhuygiau.workers.dev/api/stories`.
 
-1. **Build Production Docker Images:**
+Production routing for the Worker is `api.lightstory.app/*`; the frontend deploys via the Vercel project configured by [frontend/vercel.json](frontend/vercel.json).
+
+### Docker (Alternative / Local Production Simulation)
+
+Light Story ships a unified single-container image (`node:22-slim`; postgres + gateway + frontend standalone).
+
+1. **Build & Launch Production Containers:**
    ```bash
    npm run docker:build
    ```
+   > ⚠️ `docker:build` tears down and prunes existing containers/images/volumes first. Use `npm run docker:up` for incremental runs.
 
 2. **Launch Services in Production Mode:**
    ```bash
    npm run docker:up
    ```
 
-3. **Rebuild & Restart Production Stack:**
-   ```bash
-   npm run docker:rebuild
+3. **Manual Build Command:**
+   ```powershell
+   docker system prune -a --volumes -f; docker build --no-cache --pull -t light-story .
    ```
 
-### Manual Docker Build Command
+4. **Publish Frontend Image to Docker Hub (manual only):**
+   ```bash
+   docker build -f Dockerfile.frontend -t heizdoobert/light-story-frontend .
+   docker push heizdoobert/light-story-frontend
+   ```
 
-```powershell
-docker system prune -a --volumes -f; docker build --no-cache --pull -t light-story .
-```
+See [README.Docker.md](README.Docker.md) for ports, health checks, and compose details.
 
 ---
 
@@ -238,18 +262,23 @@ docker system prune -a --volumes -f; docker build --no-cache --pull -t light-sto
 
 ## 🧪 Testing & Quality Assurance
 
-Run the automated test suite and type checks:
+Run the automated test suite and type checks (from `frontend/`, or via root scripts):
 
 ```bash
 # Type checking & TypeScript validation
+npm run typecheck
+
+# Lint (0 errors required)
 npm run lint
 
-# Execute frontend integration tests
+# Execute frontend integration tests (vitest run)
 npm run test:run
 
-# Validate Docker build pipeline
-npm run docker:build
+# CI-equivalent verification
+npm run ci:verify
 ```
+
+Test tiers: `npm test -- __tests__/tier1` (or `tier2`). See [AGENTS.md](AGENTS.md) for agent-facing command conventions.
 
 ---
 

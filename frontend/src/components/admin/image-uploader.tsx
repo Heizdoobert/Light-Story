@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { Upload, X, FileArchive, CheckCircle2 } from "lucide-react";
 import { uploadToR2 } from "@/lib/r2/upload";
+import { resizeImageFile } from "@/lib/r2/resize";
 import { processCbzFile } from "@/lib/r2/cbz-processor";
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { cbzBasename, isCbzOrZipFile } from "@/lib/r2/cbz-name";
@@ -46,13 +47,15 @@ export function ImageUploader({
         setProgressMsg(msg);
       });
 
-      if (cbzRes.success && cbzRes.urls.length > 0) {
+      if (cbzRes.success && cbzRes.urls.length > 0 && cbzRes.failed === 0) {
         if (bulkChapters) {
           onCbzProcessed?.(name, cbzRes.urls);
         } else {
           uploadedUrls.push(...cbzRes.urls);
         }
         toast.success(`Đã tải lên ${cbzRes.urls.length} trang ảnh từ tệp ${file.name}!`);
+      } else if (cbzRes.failed > 0) {
+        toast.error(`Không thể tải hết trang ảnh từ ${file.name}: ${cbzRes.error || `${cbzRes.failed} trang thất bại`}. Chương không được tạo.`);
       } else {
         toast.error(cbzRes.error || `Không thể giải nén tệp ${file.name}`);
       }
@@ -60,7 +63,8 @@ export function ImageUploader({
 
     const handleImage = async (file: File, i: number, total: number) => {
       setProgressMsg(`Đang tải lên ảnh ${i}/${total}...`);
-      const res = await uploadToR2(file, folder);
+      const resized = await resizeImageFile(file);
+      const res = await uploadToR2(resized.file, folder);
       if (res.success && res.url) {
         uploadedUrls.push(res.url);
       } else {

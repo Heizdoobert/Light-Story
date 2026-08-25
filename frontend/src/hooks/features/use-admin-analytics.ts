@@ -27,7 +27,7 @@ export function useAdminAnalytics() {
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get<AnalyticsData>("/api/analytics/infrastructure").catch(() => null);
+      const res = await apiClient.get<AnalyticsData>("/api/analytics/infrastructure", { signal: AbortSignal.timeout(20000) }).catch(() => null);
       if (res) {
         setData(res);
       }

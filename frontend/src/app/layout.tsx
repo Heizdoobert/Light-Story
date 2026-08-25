@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -97,7 +96,6 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
           <main className="flex-grow">{children}</main>
-          <Analytics />
         </Providers>
       </body>
     </html>

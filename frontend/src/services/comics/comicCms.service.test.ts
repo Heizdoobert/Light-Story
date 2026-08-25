@@ -11,16 +11,18 @@ afterEach(() => {
 });
 
 describe('proxiedR2ImageUrl', () => {
-  it('rewrites R2 URLs through gateway', () => {
+  it('rewrites R2 URLs through the public media route', () => {
     vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', 'https://gateway.example.com');
-    const result = service.proxiedR2ImageUrl('https://pub-abc.r2.dev/file.jpg');
-    expect(result).toBe('https://gateway.example.com/api/admin/r2?url=https%3A%2F%2Fpub-abc.r2.dev%2Ffile.jpg');
+    const result = service.proxiedR2ImageUrl('https://pub-abc.r2.dev/chapters/a/ch_1/001.jpg');
+    expect(result).toBe(
+      'https://gateway.example.com/api/media/chapters%2Fa%2Fch_1%2F001.jpg',
+    );
   });
 
-  it('rewrites Cloudflare URLs through gateway', () => {
+  it('rewrites Cloudflare URLs through the public media route', () => {
     vi.stubEnv('NEXT_PUBLIC_GATEWAY_URL', 'https://gateway.example.com');
     const result = service.proxiedR2ImageUrl('https://cloudflare.com/file.jpg');
-    expect(result).toBe('https://gateway.example.com/api/admin/r2?url=https%3A%2F%2Fcloudflare.com%2Ffile.jpg');
+    expect(result).toBe('https://gateway.example.com/api/media/file.jpg');
   });
 
   it('returns empty string for empty input', () => {

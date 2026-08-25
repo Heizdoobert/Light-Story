@@ -1,133 +1,105 @@
-# Unified Gateway - Phase 2
+# Unified API Gateway — Cloudflare Worker `kv-worker`
 
-## Overview
+The single Cloudflare Worker serving the whole Light Story API. Deployed under the **worker name `kv-worker`** (legacy name kept for deployment continuity), it consolidates what were previously 5 separate Workers (`api-gateway`, `stories-worker`, `comics-worker`, `admin-worker`, `analytics-worker`) into one deployment with modular route handlers and shared middleware.
 
-Phase 2 consolidates 5 separate Cloudflare Workers into a single **unified gateway** while maintaining 100% backward compatibility.
-
-### Previous Architecture (Phase 1)
-```
-api-gateway → [stories-worker, comics-worker, admin-worker, analytics-worker]
-```
-- 5 separate Worker definitions
-- Service bindings for routing
-- Duplicated middleware & utilities
-
-### New Architecture (Phase 2)
-```
-unified-gateway → [/stories, /comics, /admin, /analytics]
-```
-- Single Worker deployment
-- Modular route handlers
-- Shared middleware & utilities
-
-## Structure
+## Topology
 
 ```
-src/
-├── index.ts                 # Main gateway entry point
+kv-worker (wrangler.jsonc, src/index.ts)
 ├── middleware/
-│   ├── auth.ts             # JWT validation (from api-gateway)
-│   └── cors.ts             # CORS & request handling
+│   ├── auth.ts               # JWT validation (JWKS from Supabase)
+│   ├── cors.ts               # Origin allow-list + /supabase proxy
+│   ├── rateLimit.ts          # KV-backed rate limiting
+│   └── securityHeaders.ts    # Security headers on every response
 ├── routes/
-│   ├── stories.ts          # /stories, /chapters endpoints
-│   ├── comics.ts           # /comics endpoints
-│   ├── admin.ts            # /admin endpoints
-│   └── analytics.ts        # /analytics endpoints
+│   ├── stories.ts            # /api/stories, /api/chapters
+│   ├── comics.ts             # /api/comics
+│   ├── admin.ts              # /api/admin/* (privileged)
+│   ├── analytics.ts          # /api/analytics/* (Analytics Engine)
+│   ├── user.ts               # /api/user
+│   └── hyperdrive.ts         # /api/hyperdrive/* (Postgres proxy)
 └── utils/
-    └── supabase-client.ts  # Shared Supabase REST client
+    ├── supabase-client.ts    # Shared Supabase REST client + helpers
+    ├── encryption.ts         # ENC key helpers
+    └── validation.ts
 ```
 
-## Backward Compatibility
+Also exports `LightStoryWorkflow` (Workflows entrypoint) and a `queue()` consumer (Queues → KV invalidation / analytics / audit logs).
 
-All endpoints remain unchanged:
+## Bindings (`wrangler.jsonc`)
 
-| Route | Handler | Status |
-|-------|---------|--------|
-| `GET /api/stories` | stories.ts | ✅ |
-| `GET /api/stories/{id}` | stories.ts | ✅ |
-| `POST /api/stories` | stories.ts | ✅ |
-| `GET /api/chapters` | stories.ts | ✅ |
-| `GET /api/comics` | comics.ts | ✅ |
-| `POST /api/comics` | comics.ts | ✅ |
-| `GET /api/admin/*` | admin.ts | ✅ |
-| `GET /api/analytics/*` | analytics.ts | ✅ |
+| Binding | Type | Purpose |
+|---|---|---|
+| `R2_BUCKET` | R2 bucket `comic` | Covers & chapters media |
+| `APP_KV`, `COMIC_METADATA` | KV namespaces | Cache / metadata |
+| `LIGHTSTORY_QUEUE` | Queue `lightstory-queue` | Background processing (analytics, audit, cache invalidation) |
+| `LIGHTSTORY_WORKFLOW` | Workflow `lightstory-workflow` | Durable execution |
+| `HYPERDRIVE` | Hyperdrive | Postgres proxy to Supabase |
+| `ANALYTICS_DATA` | Analytics Engine `lightstory_analytics` | Analytics events |
 
-## Environment Variables
+## Routes
 
-All 5 workers' env vars are now in this single Worker:
+All API routes are mounted under `/api/*`. Public health endpoint: `GET /api/health`.
 
-```env
-SUPABASE_URL=<your-project-url>
-SUPABASE_ANON_KEY=<anon-key>
-SUPABASE_SERVICE_KEY=<service-role-key>  # For admin operations
-SUPABASE_JWKS_URL=<jwks-endpoint>         # For JWT validation
-R2_BUCKET=comic                       # For file uploads
-USE_NEW_UNIFIED_GATEWAY=true              # Feature flag (optional)
-```
+| Route | Handler | Notes |
+|---|---|---|
+| `GET /api/health` | index.ts | Health check (used by compose healthcheck + CI smoke test) |
+| `/api/stories`, `/api/chapters` | stories.ts | Novel & chapter domain |
+| `/api/comics` | comics.ts | Comic domain |
+| `/api/admin/*`, `/api/auth/*` | admin.ts / auth path | Privileged ops, JWT-gated |
+| `/api/analytics/*` | analytics.ts | Metrics aggregation |
+| `/api/user` | user.ts | User profile / history |
+| `/api/hyperdrive/*` | hyperdrive.ts | Postgres-backed proxy routes |
+| `/supabase/*` | index.ts proxy | Passthrough proxy to Supabase REST (anon key injected, CORS applied) |
 
-## Deployment
+## Environment Variables (vars / secrets)
 
-### Development
+Set via `wrangler.jsonc` `vars`, `.dev.vars` (local), or `wrangler secret put` (production secrets):
+
+- `SUPABASE_URL`, `SUPABASE_ANON_KEY` — Supabase REST client credentials
+- `SUPABASE_JWKS_URL` — JWKS endpoint for JWT validation
+- `ENC_KEY` — AES-256-GCM key for content field encryption (≥32 chars; generate with `openssl rand -base64 32`)
+- `USE_NEW_UNIFIED_GATEWAY` — feature flag (`true`; legacy 5-worker path is retired)
+- `CLOUDFLARE_ACCOUNT_ID` — set in `vars` for account-context operations
+
+## Development
+
 ```bash
-npm run dev
-# Runs on localhost:8787
+# From repo root — runs wrangler dev with remote bindings on :8787
+npm run dev:gateway
+
+# Local-only smoke checks
+curl http://localhost:8787/api/health
 ```
 
-### Production
+## Production Deployment
+
 ```bash
+# Manual deploy from repo root (uses wrangler.jsonc)
 npm run deploy
-# Deploys to production route
 ```
 
-### Staging
-```bash
-npm run deploy:staging
-# Deploys to staging route
-```
+Automatic deploy: push to `main` → `.github/workflows/production.yml` runs lint/typecheck/build/test, then `wrangler deploy --config workers/kv-worker/wrangler.jsonc` (secret `CLOUDFLARE_API_TOKEN`), then `supabase db push --include-all`, then a smoke test against `https://kv-worker.hhhuygiau.workers.dev/api/stories`.
 
-## Blue-Green Deployment
+### Routes (wrangler `env`)
 
-During rollout, keep old workers deployed with feature flag `USE_NEW_UNIFIED_GATEWAY`:
+| Env | Route |
+|---|---|
+| `production` | `api.lightstory.app/*` (zone `lightstory.app`) |
+| `staging` | `api-staging.lightstory.app/*` |
 
-```js
-// Old: if (USE_NEW_UNIFIED_GATEWAY !== 'true') { use old workers }
-// New: Always use unified gateway
-```
+Workers-dev preview URL: `https://kv-worker.hhhuygiau.workers.dev` — this URL is the hardcoded fallback in the frontend gateway URL contract (see `docs/decisions/ADR-001-gateway-url-fallback.md`).
 
-## Differences from Original Workers
+## Observability
 
-1. **No Service Bindings**: Routes handled within single Worker
-2. **Shared Utilities**: DRY principle - no duplicated sb*, json, err functions
-3. **Single Entry Point**: One `index.ts` instead of 5
-4. **Unified Middleware**: CORS + Auth handled once
-
-## Performance
-
-- **Latency**: ~1-2ms reduction (eliminated service binding RPC)
-- **Cold Start**: ~50ms (single Worker vs. 5)
-- **Memory**: ~5MB (combined utilities deduped)
+`observability.enabled: true` with head sampling 1: logs and invocation logs are persisted to Workers Logs. Analytics events go to the `lightstory_analytics` Analytics Engine dataset.
 
 ## Rollback
 
-To revert to Phase 1 (5 separate workers):
+Roll back to a previous deployment with:
 
-1. Redeploy old 5 workers:
-   ```bash
-   wrangler deploy --config workers/api-gateway/wrangler.jsonc
-   wrangler deploy --config workers/stories-worker/wrangler.jsonc
-   wrangler deploy --config workers/comics-worker/wrangler.jsonc
-   wrangler deploy --config workers/admin-worker/wrangler.jsonc
-   wrangler deploy --config workers/analytics-worker/wrangler.jsonc
-   ```
-2. Update routes to point to old api-gateway
-3. Delete unified-gateway
+```bash
+wrangler rollback --config workers/kv-worker/wrangler.jsonc
+```
 
-## Next Steps
-
-- [ ] Build & test unified gateway locally
-- [ ] Run integration tests
-- [ ] Deploy to staging
-- [ ] Verify all endpoints work
-- [ ] Enable feature flag in production
-- [ ] Monitor metrics
-- [ ] Archive old worker code (optional)
+The old 5-worker fleet is retired and **not** available for rollback; any revert is within this single Worker's deployment history.

@@ -235,7 +235,14 @@ describe('F4 x F6: worker R2 upload route and wrangler bindings', () => {
     );
     expect(adminRoutes).toContain('/admin/r2/upload');
     expect(adminRoutes).toContain('R2_NOT_CONFIGURED');
-    expect(adminRoutes).toContain("'covers'");
+    expect(adminRoutes).toContain('isAllowedUploadFolder(folder)');
+
+    // folder whitelist lives in utils/r2-keys.ts (covers/avatars/chapters/uploads)
+    const keysSource = fs.readFileSync(
+      path.join(process.cwd(), '..', 'workers', 'kv-worker', 'src', 'utils', 'r2-keys.ts'),
+      'utf8',
+    );
+    expect(keysSource).toContain("'covers'");
 
     const wrangler = fs.readFileSync(
       path.join(process.cwd(), '..', 'workers', 'kv-worker', 'wrangler.jsonc'),

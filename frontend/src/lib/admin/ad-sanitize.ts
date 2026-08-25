@@ -40,6 +40,8 @@ const ALLOWED_ATTR = [
   "style",
   "alt",
   "title",
+  "id",
+  "data-*",
   "data-ad-client",
   "data-ad-slot",
   "data-ad-format",

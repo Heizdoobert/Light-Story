@@ -97,6 +97,9 @@ export function LoginForm() {
         label={t("auth_email_address")}
         icon={Mail}
         type="email"
+        id="login-email"
+        name="email"
+        autoComplete="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="you@example.com"
@@ -105,6 +108,9 @@ export function LoginForm() {
         label={t("auth_password")}
         icon={Lock}
         type="password"
+        id="login-password"
+        name="password"
+        autoComplete="current-password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         placeholder="••••••••"

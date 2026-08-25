@@ -48,6 +48,15 @@ describe("sanitizeAdMarkup (f9)", () => {
     expect(out).not.toContain("iframe");
   });
 
+  it("keeps the container id and data-* attrs affiliate widgets bind to", () => {
+    const markup =
+      '<div id="shopee-widget-123" data-shopee-widget="banner"></div><script src="https://shope.ee/widget.js"></script>';
+    const out = sanitizeAdMarkup(markup, ["shope.ee"]);
+    expect(out).toContain('id="shopee-widget-123"');
+    expect(out).toContain('data-shopee-widget="banner"');
+    expect(out).toContain("shope.ee/widget.js");
+  });
+
   it("returns empty string for empty input", () => {
     expect(sanitizeAdMarkup("", ALLOWED_HOSTS)).toBe("");
   });

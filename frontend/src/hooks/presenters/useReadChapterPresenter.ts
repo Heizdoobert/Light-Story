@@ -9,28 +9,59 @@ import { Chapter } from "@/types/entities";
 import { toast } from "sonner";
 import { useTheme } from "@/context/ThemeContext";
 import { saveReadingProgress } from "@/actions/reading-history.actions";
-import { isCbzUrl, loadCbzPagesFromUrl } from "@/lib/cbz/cbz-reader";
+import { loadCbzPagesFromUrl } from "@/lib/cbz/cbz-reader";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { decryptFieldClient } from "@/lib/security/encryption";
+import { parseChapterContent } from "@/lib/r2/chapter-content";
 
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { supabase } from "@/lib/supabase/client";
 
-export function useReadChapterPresenter() {
+export interface ReaderChapterListItem {
+  id: string;
+  chapter_number?: number;
+  title?: string;
+  created_at?: string;
+}
+
+export interface ReaderInitialData {
+  comic: Comic | null;
+  allChapters: ReaderChapterListItem[];
+  currentChapter: Chapter | null;
+  images: string[];
+  requiresCbzUnpack: boolean;
+}
+
+export function useReadChapterPresenter(initialData?: ReaderInitialData | null) {
   const params = useParams();
   const router = useRouter();
 
   const comicId = params.comicId as string;
   const chapterId = params.chapterId as string;
 
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
-  const [allChapters, setAllChapters] = useState<Chapter[]>([]);
-  const [images, setImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comic, setComic] = useState<Comic | null>(initialData?.comic ?? null);
+  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(initialData?.currentChapter ?? null);
+  const [allChapters, setAllChapters] = useState<ReaderChapterListItem[]>(initialData?.allChapters ?? []);
+  const [images, setImages] = useState<string[]>(initialData?.images ?? []);
+  const [loading, setLoading] = useState(false);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [reseededChapterId, setReseededChapterId] = useState<string | null>(
+    initialData?.currentChapter?.id ?? null,
+  );
+
+  // Render-phase reseed: RSC navigation delivers new initialData; sync state
+  // during render (React derived-state pattern) so no spinner ever paints.
+  if (initialData && initialData.currentChapter?.id !== reseededChapterId) {
+    setReseededChapterId(initialData.currentChapter?.id ?? null);
+    setComic(initialData.comic);
+    setCurrentChapter(initialData.currentChapter);
+    setAllChapters(initialData.allChapters);
+    setImages(initialData.images);
+    setLoading(false);
+  }
+
+
   const [showToolbar, setShowToolbar] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [showChapterMenu, setShowChapterMenu] = useState(false);
@@ -65,6 +96,17 @@ export function useReadChapterPresenter() {
   }, [autoScrollSpeed]);
 
   useEffect(() => {
+    if (autoScrollSpeed === 0) return;
+    const stop = () => setAutoScrollSpeed(0);
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchmove', stop, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchmove', stop);
+    };
+  }, [autoScrollSpeed]);
+
+  useEffect(() => {
     try {
       const mode = localStorage.getItem('reader:readingMode');
       if (mode && ['webtoon', 'single', 'double'].includes(mode)) setReadingMode(mode as any);
@@ -86,8 +128,8 @@ export function useReadChapterPresenter() {
 
   const restoreDoneRef = useRef(false);
   const autoAdvanceRef = useRef(false);
-  const nextChapterRef = useRef<Chapter | null>(null);
-  const prevChapterRef = useRef<Chapter | null>(null);
+  const nextChapterRef = useRef<ReaderChapterListItem | null>(null);
+  const prevChapterRef = useRef<ReaderChapterListItem | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -105,6 +147,11 @@ export function useReadChapterPresenter() {
   }, [comicId, router]);
 
   useEffect(() => {
+    // RSC is the source of truth when initialData is present; fetch only when
+    // the server failed entirely (no initialData) to preserve client recovery.
+    if (initialData) return;
+
+    setLoading(true);
     const fetchReadingData = async () => {
       try {
         const [comicData, chaptersData] = await Promise.all([
@@ -151,48 +198,32 @@ export function useReadChapterPresenter() {
         }
 
         setCurrentChapter(currentData);
-        if (currentData) {
-          saveReadingProgress({ comicId: comicId, chapterId: chapterId, chapterNumber: currentData.chapter_number || 1 });
-        }
 
         let imgArray: string[] = [];
         if (currentData?.content) {
-          const rawText = typeof currentData.content === "string"
-            ? await decryptFieldClient(currentData.content)
-            : currentData.content;
+          const rawText =
+            typeof currentData.content === "string" &&
+            currentData.content.startsWith("ENCv1:")
+              ? await decryptFieldClient(currentData.content)
+              : currentData.content;
 
-          if (typeof rawText === "string") {
+          const parsed = parseChapterContent(rawText);
+          imgArray = parsed.imageUrls;
+
+          if (parsed.isCbz && parsed.cbzUrl) {
             try {
-              imgArray = JSON.parse(rawText);
-            } catch {
-              imgArray = rawText
-                .split(",")
-                .map((s: string) => s.trim());
+              toast.info("Đang giải nén tập tin .cbz...");
+              const proxiedUrl = proxiedR2ImageUrl(parsed.cbzUrl);
+              const unpackedBlobUrls = await loadCbzPagesFromUrl(proxiedUrl);
+              setImages(unpackedBlobUrls);
+            } catch (err) {
+              console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
+              toast.error("Không thể giải nén file .cbz của chương truyện.");
+              setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
             }
-          } else if (Array.isArray(rawText)) {
-            imgArray = rawText;
-          }
-        }
-
-        const cbzTargetUrl =
-          imgArray.find((item) => typeof item === "string" && isCbzUrl(item)) ||
-          (typeof currentData?.content === "string" && isCbzUrl(currentData.content)
-            ? currentData.content
-            : null);
-
-        if (cbzTargetUrl) {
-          try {
-            toast.info("Đang giải nén tập tin .cbz...");
-            const proxiedUrl = proxiedR2ImageUrl(cbzTargetUrl);
-            const unpackedBlobUrls = await loadCbzPagesFromUrl(proxiedUrl);
-            setImages(unpackedBlobUrls);
-          } catch (err) {
-            console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
-            toast.error("Không thể giải nén file .cbz của chương truyện.");
+          } else {
             setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
           }
-        } else {
-          setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
         }
       } catch {
         toast.error("Không thể tải nội dung chương truyện.");
@@ -202,7 +233,43 @@ export function useReadChapterPresenter() {
     };
 
     if (comicId && chapterId) fetchReadingData();
-  }, [comicId, chapterId]);
+  }, [comicId, chapterId, initialData]);
+
+  // Reading progress must persist on both the SSR-seeded and client-fetch paths.
+  useEffect(() => {
+    if (currentChapter && comicId && chapterId) {
+      saveReadingProgress({
+        comicId,
+        chapterId,
+        chapterNumber: currentChapter.chapter_number || 1,
+      });
+    }
+  }, [comicId, chapterId, currentChapter?.id]);
+
+  // CBZ chapters can't be unpacked server-side (blob URLs); unpack on the client
+  // only when SSR flagged requiresCbzUnpack, without refetching anything.
+  useEffect(() => {
+    if (!initialData?.requiresCbzUnpack) return;
+    if (!currentChapter || images.length > 0) return;
+    (async () => {
+      try {
+        const content =
+          typeof currentChapter.content === "string" &&
+          currentChapter.content.startsWith("ENCv1:")
+            ? await decryptFieldClient(currentChapter.content)
+            : currentChapter.content;
+        const parsed = parseChapterContent(content);
+        if (!parsed.cbzUrl) return;
+        toast.info("Đang giải nén tập tin .cbz...");
+        const proxiedUrl = proxiedR2ImageUrl(parsed.cbzUrl);
+        const unpackedBlobUrls = await loadCbzPagesFromUrl(proxiedUrl);
+        setImages(unpackedBlobUrls);
+      } catch (err) {
+        console.error("[ReadChapterPage] Failed to load CBZ chapter", err);
+        toast.error("Không thể giải nén file .cbz của chương truyện.");
+      }
+    })();
+  }, [currentChapter?.id, initialData]);
 
   useEffect(() => {
     autoAdvanceRef.current = autoAdvance;
@@ -322,8 +389,6 @@ export function useReadChapterPresenter() {
     allChapters,
     images,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
     showChapterMenu,

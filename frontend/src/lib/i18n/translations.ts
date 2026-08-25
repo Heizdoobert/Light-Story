@@ -85,10 +85,51 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_bookmarks: "THEO DÕI",
     nav_group: "GROUP",
     nav_fanpage: "FANPAGE",
+    header_open_menu: "Mở menu điều hướng",
+    header_more_menu: "Menu khác",
+    header_nav_drawer: "Menu điều hướng",
+    header_close_menu: "Đóng menu",
     category_list_title: "DANH SÁCH THỂ LOẠI",
     all_categories: "Tất cả thể loại",
     unnamed: "Không tên",
     see_all: "Xem tất cả »",
+
+    close: "Đóng",
+    error: "Đã xảy ra lỗi",
+
+    // Under Construction
+    under_construction_title: "ĐANG XÂY DỰNG",
+    under_construction_description: "Trang này đang được xây dựng và sẽ sớm ra mắt. Quay lại sau nhé!",
+
+    // Bookmarks
+    bookmarks_title: "Truyện Theo Dõi",
+    bookmarks_empty_title: "Bạn chưa theo dõi truyện nào",
+    bookmarks_empty_description: "Hãy khám phá kho truyện phong phú và bấm nút Theo dõi để dễ dàng xem lại tại đây!",
+    bookmarks_empty_cta: "Khám phá ngay",
+    bookmarks_following: "Theo dõi",
+    bookmarks_unfollow: "Bỏ theo dõi",
+
+    // Quick Search
+    quick_search_title: "Tìm kiếm nhanh",
+    quick_search_placeholder: "Nhập tên truyện, tác giả...",
+    quick_search_see_all: "Xem tất cả kết quả cho",
+    quick_search_no_results: "Không tìm thấy kết quả nào.",
+
+    // Search Input
+    search_input_placeholder: "Nhập từ khóa để tìm truyện...",
+    search_input_label: "Tìm kiếm truyện",
+
+    // Profile
+    profile_email: "Email",
+    profile_full_name: "Họ và tên",
+    profile_status: "Trạng thái",
+    profile_active: "Hoạt động",
+    profile_member_since: "Thành viên từ",
+    profile_edit: "Chỉnh sửa",
+    profile_not_signed_in: "Chưa đăng nhập",
+    profile_sign_in_prompt: "Đăng nhập để xem và quản lý hồ sơ của bạn.",
+    profile_sign_in: "Đăng nhập",
+
     footer_about: "Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.",
 
     // Homepage Sections
@@ -111,6 +152,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_operations_data: "Dữ liệu vận hành",
     nav_create_comic: "Quản lý Truyện & CMS",
     nav_categories: "Thể loại truyện",
+    nav_tags: "Thẻ Tag",
+    nav_descriptions: "Mô tả truyện",
     nav_authors: "Tác giả & Nhóm dịch",
     nav_users: "Quản lý người dùng",
     nav_ads: "Quảng cáo & Doanh thu",
@@ -258,6 +301,36 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     profanity_filter_saved: "Đã lưu bộ lọc từ ngữ",
     extracting_cbz: "Đang giải nén trang xem trước từ CBZ...",
     failed_unpack_cbz: "Không thể giải nén tệp .cbz để xem trước.",
+
+    // CBZ Batch Import
+    cbz_import_title: "Nhập Hàng Loạt Chương (.CBZ)",
+    cbz_import_subtitle: "Chọn nhiều tệp .cbz — mỗi tệp thành một chương, tên lấy tự động từ tên tệp",
+    cbz_import_pick: "Kéo thả hoặc chọn nhiều tệp .CBZ",
+    cbz_import_start: "Bắt Đầu Nhập",
+    cbz_import_cancel: "Hủy Bỏ",
+    cbz_import_close: "Đóng",
+    cbz_import_status_queued: "Chờ xử lý",
+    cbz_import_status_extracting: "Đang giải nén",
+    cbz_import_status_uploading: "Đang tải lên {current}/{total}",
+    cbz_import_status_upserting: "Đang lưu chương",
+    cbz_import_status_done: "Hoàn tất",
+    cbz_import_status_replaced: "Đã thay thế chương cũ",
+    cbz_import_status_failed: "Thất bại",
+    cbz_import_status_canceled: "Đã hủy",
+    cbz_import_status_skipped: "Bỏ qua",
+    cbz_import_summary: "{done} hoàn tất · {failed} thất bại · {replaced} thay thế · {skipped} bỏ qua",
+    cbz_import_no_number: "Tên tệp phải chứa số (vd: chapter-05.cbz)",
+    cbz_import_dup_number: "Số chương trùng trong batch",
+    cbz_import_too_large: "Tệp vượt quá giới hạn {mb}MB",
+    cbz_import_too_many_pages: "Vượt quá {n} trang/tệp",
+    cbz_import_page_too_large: "Trang vượt quá {mb}MB",
+    cbz_import_empty_archive: "Tệp không chứa ảnh hợp lệ",
+    cbz_import_corrupt: "Tệp .cbz hỏng hoặc không hợp lệ",
+    cbz_import_replacing: "Sẽ thay thế chương {n} hiện có",
+    cbz_import_pages_failed: "{n} trang tải lên thất bại, chương không được tạo",
+    cbz_import_upsert_error: "Không thể lưu chương: {error}",
+    cbz_import_quota_day: "Đã tải gần hết hạn mức 50.000 yêu cầu/ngày",
+    cbz_import_quota_month: "Đã tải gần hết hạn mức 500.000 yêu cầu/tháng",
   },
   EN: {
     // Shared / Common
@@ -343,10 +416,51 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_bookmarks: "BOOKMARKS",
     nav_group: "COMMUNITY",
     nav_fanpage: "FANPAGE",
+    header_open_menu: "Open navigation menu",
+    header_more_menu: "More menu",
+    header_nav_drawer: "Navigation menu",
+    header_close_menu: "Close menu",
     category_list_title: "CATEGORY LIST",
     all_categories: "All Categories",
     unnamed: "Untitled",
     see_all: "See all »",
+
+    close: "Close",
+    error: "An error occurred",
+
+    // Under Construction
+    under_construction_title: "UNDER CONSTRUCTION",
+    under_construction_description: "This page is under construction and coming soon. Check back later!",
+
+    // Bookmarks
+    bookmarks_title: "Followed Comics",
+    bookmarks_empty_title: "You haven't followed any comics yet",
+    bookmarks_empty_description: "Explore our rich collection and hit Follow to easily track your favorite comics here!",
+    bookmarks_empty_cta: "Explore now",
+    bookmarks_following: "Following",
+    bookmarks_unfollow: "Unfollow",
+
+    // Quick Search
+    quick_search_title: "Quick Search",
+    quick_search_placeholder: "Enter comic title or author...",
+    quick_search_see_all: "See all results for",
+    quick_search_no_results: "No results found.",
+
+    // Search Input
+    search_input_placeholder: "Enter keywords to find comics...",
+    search_input_label: "Search comics",
+
+    // Profile
+    profile_email: "Email",
+    profile_full_name: "Full Name",
+    profile_status: "Status",
+    profile_active: "Active",
+    profile_member_since: "Member Since",
+    profile_edit: "Edit",
+    profile_not_signed_in: "Not signed in",
+    profile_sign_in_prompt: "Sign in to view and manage your profile.",
+    profile_sign_in: "Sign In",
+
     footer_about: "A licensed comic reading platform. Published and managed by Administrators.",
 
     // Homepage Sections
@@ -369,6 +483,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     nav_operations_data: "Operations Data",
     nav_create_comic: "Comic & Story CMS",
     nav_categories: "Categories",
+    nav_tags: "Tags",
+    nav_descriptions: "Comic Descriptions",
     nav_authors: "Authors & Translators",
     nav_users: "User Management",
     nav_ads: "Ads & Revenue",
@@ -487,6 +603,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     switched_to_vi: "Switched to Vietnamese",
     switched_to_en: "Switched to English",
     logout_success: "Logged out successfully",
+    logout_failed: "Logout failed",
 
     // Comic Management Toast
     comic_updated: "Comic updated",
@@ -511,7 +628,37 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     restore_success: "Comic restored: {id}",
     permanently_deleted: "Permanently deleted data ID: {id}",
     profanity_filter_saved: "Profanity filter saved",
-    extracting_cbz: "Extracting CBZ archive preview pages...",
-    failed_unpack_cbz: "Failed to unpack .cbz archive for preview",
+    extracting_cbz: "Giải nén ảnh xem trước từ tệp .cbz...",
+    failed_unpack_cbz: "Không thể giải nén tệp .cbz để xem trước",
+
+    // CBZ Batch Import
+    cbz_import_title: "Batch Import Chapters (.CBZ)",
+    cbz_import_subtitle: "Pick multiple .cbz files — each file becomes a chapter, titled automatically from the filename",
+    cbz_import_pick: "Drag & drop or pick multiple .CBZ files",
+    cbz_import_start: "Start Import",
+    cbz_import_cancel: "Cancel",
+    cbz_import_close: "Close",
+    cbz_import_status_queued: "Queued",
+    cbz_import_status_extracting: "Extracting",
+    cbz_import_status_uploading: "Uploading {current}/{total}",
+    cbz_import_status_upserting: "Saving chapter",
+    cbz_import_status_done: "Done",
+    cbz_import_status_replaced: "Replaced existing chapter",
+    cbz_import_status_failed: "Failed",
+    cbz_import_status_canceled: "Canceled",
+    cbz_import_status_skipped: "Skipped",
+    cbz_import_summary: "{done} done · {failed} failed · {replaced} replaced · {skipped} skipped",
+    cbz_import_no_number: "Filename must contain a number (e.g. chapter-05.cbz)",
+    cbz_import_dup_number: "Duplicate chapter number in batch",
+    cbz_import_too_large: "File exceeds {mb}MB limit",
+    cbz_import_too_many_pages: "Exceeds {n} pages per file",
+    cbz_import_page_too_large: "Page exceeds {mb}MB limit",
+    cbz_import_empty_archive: "No valid images in archive",
+    cbz_import_corrupt: "Corrupt or invalid .cbz archive",
+    cbz_import_replacing: "Will replace existing chapter {n}",
+    cbz_import_pages_failed: "{n} pages failed to upload, chapter not created",
+    cbz_import_upsert_error: "Failed to save chapter: {error}",
+    cbz_import_quota_day: "Approaching 50,000 requests/day quota",
+    cbz_import_quota_month: "Approaching 500,000 requests/month quota",
   },
 };

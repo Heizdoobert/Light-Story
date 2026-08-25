@@ -20,7 +20,9 @@ import {
   Users,
   User,
   ChevronDown,
+  Ellipsis,
   X,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
@@ -33,6 +35,7 @@ import { fetchStoriesPage } from "@/services/comics/story.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { ROUTES } from "@/lib/constants/routes";
+import { QuickSearchModal } from "@/components/shared/ui/QuickSearchModal";
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 
@@ -41,7 +44,7 @@ function isStaffRole(role: string | null | undefined): boolean {
 }
 
 type HeaderProps = {
-  onLoginClick: () => void;
+  onLoginClick?: () => void;
 };
 
 export const Header: React.FC<HeaderProps> = ({
@@ -58,10 +61,13 @@ export const Header: React.FC<HeaderProps> = ({
   const [showResults, setShowResults] = useState(false);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
 
   const getComicCover = (comic: Story) => {
     const raw = comic.cover_url || "";
@@ -133,6 +139,9 @@ export const Header: React.FC<HeaderProps> = ({
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setIsUserMenuOpen(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -150,15 +159,18 @@ export const Header: React.FC<HeaderProps> = ({
     };
   }, [showMobileMenu]);
 
-  // Escape closes the mobile drawer
+  // Escape closes the mobile drawer and More menu
   useEffect(() => {
-    if (!showMobileMenu) return;
+    if (!showMobileMenu && !isMoreMenuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowMobileMenu(false);
+      if (e.key === "Escape") {
+        setShowMobileMenu(false);
+        setIsMoreMenuOpen(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [showMobileMenu]);
+  }, [showMobileMenu, isMoreMenuOpen]);
 
   const bounceClick = {
     whileTap: { scale: 0.92 },
@@ -178,6 +190,9 @@ export const Header: React.FC<HeaderProps> = ({
           <motion.button
             {...bounceClick}
             onClick={() => setShowMobileMenu(true)}
+            aria-label={t("header_open_menu")}
+            aria-expanded={showMobileMenu}
+            aria-controls="mobile-nav-drawer"
             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all duration-300 shrink-0"
           >
             <Menu size={22} />
@@ -190,7 +205,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-amber-600 dark:bg-primary rounded-full flex shrink-0 items-center justify-center text-white font-bold text-sm shadow-sm">
               L
             </div>
-            <span className="font-bold text-xl sm:text-2xl tracking-tight text-slate-800 dark:text-white">
+            <span className="hidden sm:inline font-bold text-xl sm:text-2xl tracking-tight text-slate-800 dark:text-white">
               Light<span className="text-orange-500 dark:text-accent">Story</span>
             </span>
           </Link>
@@ -199,9 +214,9 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Header Center Search Box with Live Dropdown */}
         {/* Mobile search icon */}
         <button
-          onClick={() => router.push(ROUTES.SEARCH)}
+          onClick={() => setQuickSearchOpen(true)}
           className="flex sm:hidden p-2.5 rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0"
-          title={t("search")}
+          aria-label={t("search")}
         >
           <Search size={18} />
         </button>
@@ -294,19 +309,8 @@ export const Header: React.FC<HeaderProps> = ({
           </AnimatePresence>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Language Switcher */}
-          <motion.button
-            {...bounceClick}
-            onClick={toggleLanguage}
-            className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
-            title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
-          >
-            <Globe size={14} className="text-orange-500 dark:text-accent" />
-            <span>{language}</span>
-          </motion.button>
-
-          {/* Theme Toggle Button (Light/Dark) */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Theme Toggle Button (Light/Dark) — always visible */}
           <motion.button
             {...bounceClick}
             onClick={toggleTheme}
@@ -323,6 +327,81 @@ export const Header: React.FC<HeaderProps> = ({
             }
           >
             {theme === "light" ? <Moon size={16} className="text-slate-700" /> : <Sun size={16} className="text-[#39ff14]" />}
+          </motion.button>
+
+          {/* More menu — secondary controls collapse here below md */}
+          <div className="relative md:hidden" ref={moreMenuRef}>
+            <motion.button
+              {...bounceClick}
+              onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+              aria-label={t("header_more_menu")}
+              aria-expanded={isMoreMenuOpen}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
+            >
+              <Ellipsis size={20} />
+            </motion.button>
+
+            <AnimatePresence>
+              {isMoreMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 py-2 z-50 overflow-hidden"
+                >
+                  <button
+                    onClick={toggleLanguage}
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                  >
+                    <Globe size={16} className="text-orange-500 dark:text-accent" />
+                    {language === "VI" ? "English (EN)" : "Tiếng Việt (VI)"}
+                  </button>
+
+                  <div className="px-4 py-2.5 flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                    <NotificationBell />
+                    {t("notifications")}
+                  </div>
+
+                  <div className="h-px bg-slate-100 dark:bg-white/10 my-1" />
+
+                  {user ? (
+                    <Link
+                      href={ROUTES.USER.PROFILE}
+                      onClick={() => setIsMoreMenuOpen(false)}
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                    >
+                      <Users size={16} />
+                      User Settings
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setIsMoreMenuOpen(false);
+                        router.push(ROUTES.LOGIN);
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange-500 dark:text-accent hover:bg-orange-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                    >
+                      <LogIn size={16} />
+                      {t("login")}
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop inline controls */}
+          <div className="hidden md:flex items-center gap-1.5 sm:gap-3">
+          {/* Language Switcher */}
+          <motion.button
+            {...bounceClick}
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 min-h-[44px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
+            title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
+          >
+            <Globe size={14} className="text-orange-500 dark:text-accent" />
+            <span className="hidden sm:inline">{language}</span>
           </motion.button>
 
           {/* Notification Bell with unread dot & dropdown */}
@@ -355,6 +434,7 @@ export const Header: React.FC<HeaderProps> = ({
                     className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-primary rounded-full overflow-hidden shadow-sm hover:shadow-sm transition-shadow"
                   >
                     <img
+                      // codeql[js/xss-through-dom] src sanitized by proxyAvatarUrl -> sanitizeImageUrl (rejects non-http(s))
                       src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                       alt="Avatar"
                       width={40}
@@ -408,8 +488,13 @@ export const Header: React.FC<HeaderProps> = ({
                         <button
                           onClick={async () => {
                             setIsUserMenuOpen(false);
-                            toast.success(t("logout_success"));
-                            await signOut();
+                            try {
+                              await signOut();
+                              toast.success(t("logout_success"));
+                              router.push(ROUTES.HOME);
+                            } catch {
+                              toast.error(t("logout_failed"));
+                            }
                           }}
                           className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
                         >
@@ -425,19 +510,20 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <motion.button
               {...bounceClick}
-              onClick={onLoginClick}
+              onClick={() => (onLoginClick ? onLoginClick() : router.push(ROUTES.LOGIN))}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 dark:bg-primary text-white rounded-full font-bold text-sm shadow-sm shadow-orange-500/20 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
             >
               <LogIn size={18} />
               <span className="hidden sm:inline">{t("login")}</span>
             </motion.button>
           )}
+          </div>
         </div>
       </nav>
 
       {/* TruyenQQ Style Navigation Bar */}
-      <div className="relative bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border-t border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-12 transition-colors" ref={categoryDropdownRef}>
-        <div className="flex items-center justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs uppercase tracking-wide py-1.5">
+      <div className="relative block bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border-t border-b border-slate-200 dark:border-white/10 px-4 sm:px-6 lg:px-12 transition-colors" ref={categoryDropdownRef}>
+        <div className="flex items-center justify-start md:justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs uppercase tracking-wide py-1.5 scroll-smooth">
           {/* Trang chủ */}
           <Link
             href="/"
@@ -461,6 +547,15 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             />
           </button>
+
+          {/* DANH SÁCH THỂ LOẠI */}
+          <Link
+            href={ROUTES.GENRES}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
+          >
+            <Tag size={16} />
+            <span>{t("category_list_title")}</span>
+          </Link>
 
           {/* XẾP HẠNG */}
           <Link
@@ -500,7 +595,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* GROUP */}
           <Link
-            href={ROUTES.HOME}
+            href={ROUTES.GROUP}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
           >
             <Users size={16} />
@@ -509,13 +604,16 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* FANPAGE */}
           <Link
-            href={ROUTES.HOME}
+            href={ROUTES.FANPAGE}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
           >
             <Globe size={16} />
             <span>{t("nav_fanpage")}</span>
           </Link>
         </div>
+
+        {/* Right scroll fade hint for mobile */}
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-slate-100 dark:from-slate-900 to-transparent pointer-events-none md:hidden" />
 
         {/* Mobile Nav Drawer */}
         <AnimatePresence>
@@ -535,7 +633,8 @@ export const Header: React.FC<HeaderProps> = ({
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Menu điều hướng"
+                id="mobile-nav-drawer"
+                aria-label={t("header_nav_drawer")}
                 className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-950 z-[90] shadow-lg flex flex-col"
               >
                 <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-white/10">
@@ -549,7 +648,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </div>
                   <button
                     onClick={() => setShowMobileMenu(false)}
-                    aria-label="Đóng menu"
+                    aria-label={t("header_close_menu")}
                     className="p-2 bg-slate-100 dark:bg-slate-900 text-slate-500 hover:text-red-500 rounded-full transition-colors"
                   >
                     <X size={20} />
@@ -557,6 +656,66 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
                 
                 <div className="p-4 flex-1 overflow-y-auto space-y-6">
+                  {user && (
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10">
+                    <img
+                      // codeql[js/xss-through-dom] src sanitized by proxyAvatarUrl -> sanitizeImageUrl (rejects non-http(s))
+                      src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
+                      alt="Avatar"
+                      width={40}
+                      height={40}
+                      decoding="async"
+                      className="w-10 h-10 rounded-full border-2 border-orange-500 dark:border-primary object-cover"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-slate-800 dark:text-white line-clamp-1">
+                          {profile?.full_name || user.email?.split("@")[0]}
+                        </div>
+                        <div className="text-[10px] font-bold text-orange-500 dark:text-accent uppercase tracking-wider">
+                          {role}
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          setShowMobileMenu(false);
+                          try {
+                            await signOut();
+                            toast.success(t("logout_success"));
+                            router.push(ROUTES.HOME);
+                          } catch {
+                            toast.error(t("logout_failed"));
+                          }
+                        }}
+                        className="p-2 rounded-full bg-red-50 dark:bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-colors"
+                        aria-label={t("logout")}
+                      >
+                        <LogOut size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Mobile Language + Theme Toggles */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={toggleLanguage}
+                      className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors"
+                    >
+                      <Globe size={14} className="text-orange-500 dark:text-accent" />
+                      {language}
+                    </button>
+                    <button
+                      onClick={toggleTheme}
+                      className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors"
+                    >
+                      {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-[#39ff14]" />}
+                      {theme === "light" ? "Dark" : "Light"}
+                    </button>
+                  </div>
+
                   {/* Mobile Navigation Links */}
                   <div className="flex flex-col gap-2">
                     <Link href={ROUTES.HOME} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
@@ -568,6 +727,9 @@ export const Header: React.FC<HeaderProps> = ({
                     <Link href={ROUTES.SEARCH} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Search size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_search_comics")}
                     </Link>
+                    <Link href={ROUTES.GENRES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                      <Tag size={20} className="text-slate-400 dark:text-slate-500" /> {t("category_list_title")}
+                    </Link>
                     <Link href={ROUTES.USER.FAVORITES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Bookmark size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_bookmarks")}
                     </Link>
@@ -578,9 +740,9 @@ export const Header: React.FC<HeaderProps> = ({
                   
                   {/* Mobile Categories Grid */}
                   <div>
-                    <h4 className="font-bold text-xs uppercase text-slate-400 dark:text-slate-500 mb-3 px-3">
+                    <h2 className="font-bold text-xs uppercase text-slate-400 dark:text-slate-500 mb-3 px-3">
                       {t("category_list_title")}
-                    </h4>
+                    </h2>
                     <div className="grid grid-cols-2 gap-2">
                       {categories.map(cat => (
                         <Link 
@@ -619,7 +781,7 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                 </div>
           <Link
-            href={ROUTES.SEARCH}
+            href={ROUTES.GENRES}
             onClick={() => setShowCategoryDropdown(false)}
             className="px-3 py-1 bg-orange-50 dark:bg-slate-950 text-orange-600 dark:text-accent rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-colors"
           >
@@ -647,6 +809,7 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </AnimatePresence>
       </div>
+      <QuickSearchModal isOpen={quickSearchOpen} onClose={() => setQuickSearchOpen(false)} />
     </header>
   );
 };

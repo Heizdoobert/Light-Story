@@ -29,6 +29,20 @@ function parseChapterPages(content: string | null): string[] {
   }
 }
 
+async function fetchMaxChapterNumber(storyId: string): Promise<number | null> {
+  const supabase = getSupabaseBrowserClient();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data } = await supabase
+      .from("chapters")
+      .select("chapter_number")
+      .eq("story_id", storyId)
+      .order("chapter_number", { ascending: false })
+      .limit(1);
+    if (data) return data[0]?.chapter_number ?? 0;
+  }
+  return null;
+}
+
 export function useAdminChapters(initialComicId: string = "all") {
   const [chapters, setChapters] = useState<ChapterItem[]>([]);
   const [comics, setComics] = useState<ComicSimple[]>([]);
@@ -53,22 +67,22 @@ export function useAdminChapters(initialComicId: string = "all") {
   const bulkQueue = useRef<Promise<void>>(Promise.resolve());
 
   const handleBulkCbzProcessed = (name: string, urls: string[]) => {
-    if (editingChapter || !targetComicId) return;
+    if (editingChapter) return;
+    const comicId = targetComicId;
+    if (!comicId) return;
     bulkQueue.current = bulkQueue.current
       .then(async () => {
-        if (!bulkCounter.current || bulkCounter.current.storyId !== targetComicId) {
-          const supabase = getSupabaseBrowserClient();
-          const { data } = await supabase
-            .from("chapters")
-            .select("chapter_number")
-            .eq("story_id", targetComicId)
-            .order("chapter_number", { ascending: false })
-            .limit(1);
-          bulkCounter.current = { storyId: targetComicId, next: (data?.[0]?.chapter_number ?? 0) + 1 };
+        if (!bulkCounter.current || bulkCounter.current.storyId !== comicId) {
+          const max = await fetchMaxChapterNumber(comicId);
+          if (max === null) {
+            toast.error(`Không thể xác định số chương kế tiếp cho ${name}. Hãy thử lại.`);
+            return;
+          }
+          bulkCounter.current = { storyId: comicId, next: max + 1 };
         }
         const num = bulkCounter.current.next++;
         const res = await createChapter({
-          story_id: targetComicId,
+          story_id: comicId,
           chapter_number: num,
           title: name || `Chương ${num}`,
           images: urls,
@@ -106,8 +120,8 @@ export function useAdminChapters(initialComicId: string = "all") {
       let query = supabase
         .from("chapters")
         .select("id, story_id, chapter_number, title, created_at, content")
-        .order("chapter_number", { ascending: false })
-        .limit(500);
+        .order("chapter_number", { ascending: true });
+      // ponytail: no pagination, PostgREST caps ~1000 rows; add real paging when a story exceeds that
 
       if (selectedComicId !== "all") {
         query = query.eq("story_id", selectedComicId);
@@ -134,17 +148,18 @@ export function useAdminChapters(initialComicId: string = "all") {
     loadInitialData();
   }, [selectedComicId, loadInitialData]);
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = async () => {
     setEditingChapter(null);
     bulkCounter.current = null;
-    setChapterNumber(chapters.length > 0 ? chapters[0].chapter_number + 1 : 1);
     setTitle("");
     setImages([]);
-    if (selectedComicId !== "all") {
-      setTargetComicId(selectedComicId);
-    } else if (comics.length > 0) {
-      setTargetComicId(comics[0].id);
+    const targetId = selectedComicId !== "all" ? selectedComicId : comics[0]?.id ?? "";
+    setTargetComicId(targetId);
+    const max = targetId ? await fetchMaxChapterNumber(targetId) : null;
+    if (max === null) {
+      toast.error("Không thể xác định số chương kế tiếp. Hãy nhập số chương thủ công.");
     }
+    setChapterNumber((max ?? 0) + 1);
     setIsModalOpen(true);
   };
 
@@ -235,5 +250,6 @@ export function useAdminChapters(initialComicId: string = "all") {
     handleOpenEditModal,
     handleSaveChapter,
     handleDeleteChapter,
+    refresh: loadInitialData,
   };
 }

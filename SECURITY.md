@@ -16,16 +16,14 @@ We take the security of Light Story seriously. If you discover a vulnerability o
 ### How to Report
 
 Please report security issues privately via email to:
-- **Security Contact**: `[security@yourdomain.com]`
-
-Alternatively, you may submit a **Private Security Advisory** directly through the GitHub repository's **Security > Advisories** tab.
+- **Security Contact**: open a **Private Security Advisory** via the GitHub repository's **Security > Advisories** tab (preferred).
 
 ### Report Details
 
 Please include as much of the following information as possible:
 - Type of issue (e.g., XSS, SQLi, Auth Bypass, CORS misconfiguration, R2 asset exposure)
 - Full step-by-step proof of concept (PoC) or reproduction steps
-- Affected component (`frontend`, `unified-gateway`, `backend-supabase`, `r2-signed-url`, etc.)
+- Affected component (`frontend`, `kv-worker` gateway, `backend-supabase`, R2, etc.)
 - Potential impact of the issue
 
 ### Disclosure & Response Timeline

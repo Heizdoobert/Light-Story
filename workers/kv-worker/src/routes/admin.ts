@@ -7,6 +7,7 @@ import {
   sbAdminPatch as sbPatch,
   sbAdminDelete as sbDelete,
   sbAdminGetCount as sbGetCount,
+  sbRpc,
   handleRes,
   json,
 } from '../utils/supabase-client';
@@ -17,6 +18,12 @@ import {
   requireRole,
   VALID_STATUSES,
 } from '../utils/validation';
+import {
+  buildUploadKey,
+  isAllowedUploadFolder,
+  validateUploadBatch,
+} from '../utils/r2-keys';
+import { getInfrastructurePayload } from '../utils/infra';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -117,10 +124,15 @@ export async function handleAdminRequest(
     return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
   }
 
-  // Granular check: site-settings are superadmin and admin only (except scope=public)
+  // Granular check: site-settings are superadmin only (except scope=public)
   const isPublicScope = path === '/admin/site-settings' && method === 'GET' && url.searchParams.get('scope') === 'public';
-  if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin', 'admin'])) {
-    return err('FORBIDDEN', 'Site settings require admin privileges', 403);
+  if (path.startsWith('/admin/site-settings') && !isPublicScope && !requireRole(userRole, ['superadmin'])) {
+    return err('FORBIDDEN', 'Site settings require superadmin privileges', 403);
+  }
+
+  // Granular check: dashboard overview — staff roles
+  if (method === 'GET' && path === '/admin/analytics/dashboard' && !requireRole(userRole, ['superadmin', 'admin', 'employee'])) {
+    return err('FORBIDDEN', 'Dashboard overview requires staff privileges', 403);
   }
 
   try {
@@ -263,12 +275,27 @@ export async function handleAdminRequest(
       const page = clamp(parseInt(url.searchParams.get('page') || '1') || 1, 1, 100000);
       const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50') || 50, 1, 200);
       const offset = (page - 1) * pageSize;
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
-      const res = await sbGet('audit_logs', q, env, token);
+      const q = `select=id,actor_user_id,target_email,metadata,created_at&action=in.(dashboard_access,user_create,user_delete)&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      const res = await sbGet('admin_audit_logs', q, env, token);
       if (!res.ok) return handleRes(res);
-      const items = await res.json();
-      const total = await sbGetCount('audit_logs', env, token);
-      return json({ items, total });
+      const items = (await res.json()) as any[];
+      const userIds = items.map((l: any) => l.actor_user_id).filter(Boolean);
+      const emailById = new Map<string, string>();
+      if (userIds.length > 0) {
+        const ids = userIds.map((id: string) => encodeURIComponent(id)).join(',');
+        const pRes = await sbGet('profiles', `select=id,email&id=in.(${ids})`, env, token);
+        if (pRes.ok) {
+          for (const p of (await pRes.json()) as any[]) emailById.set(p.id, p.email);
+        }
+      }
+      const mapped = items.map((l: any) => ({
+        id: l.id,
+        action: l.action,
+        target_email: l.target_email ?? ((l.metadata?.email as string) || '') ?? emailById.get(l.actor_user_id) ?? null,
+        created_at: l.created_at,
+      }));
+      const total = await sbGetCount('admin_audit_logs?action=in.(dashboard_access,user_create,user_delete)', env, token);
+      return json({ items: mapped, total });
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
@@ -340,6 +367,7 @@ export async function handleAdminRequest(
       const headers = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
       if (body.payload && Array.isArray(body.payload)) {
         const results = [];
+        const keys: string[] = [];
         for (const item of body.payload) {
           const upsertRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
             method: 'POST',
@@ -347,6 +375,15 @@ export async function handleAdminRequest(
             body: JSON.stringify({ key: item.key, value: item.value, updated_by: userId || null }),
           });
           results.push(await upsertRes.json().catch(() => ({})));
+          keys.push(item.key);
+        }
+        // Log settings change into private audit table
+        if (keys.length > 0 && userId) {
+          await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys } }),
+          }).catch(() => null);
         }
         return json({ success: true, results });
       }
@@ -355,6 +392,13 @@ export async function handleAdminRequest(
         headers: { ...headers, Prefer: 'return=representation' },
         body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
       });
+      if (res.ok && userId) {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
+        }).catch(() => null);
+      }
       return handleRes(res);
     }
 
@@ -476,24 +520,25 @@ export async function handleAdminRequest(
       method === 'GET' &&
       path === '/admin/analytics/dashboard'
     ) {
-      const range = url.searchParams.get('range') || '7d';
-      const storiesRes = await sbGet(
-        'stories',
-        'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
-        env,
-        token,
-      );
+      const [storiesRes, viewsRes] = await Promise.all([
+        sbGet(
+          'stories',
+          'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
+          env,
+          token,
+        ),
+        sbGet(
+          'stories',
+          'select=views&limit=10000',
+          env,
+          token,
+        ),
+      ]);
       const stories = storiesRes.ok
-        ? await storiesRes.json()
+        ? await storiesRes.json().catch(() => [])
         : [];
-      const viewsRes = await sbGet(
-        'stories',
-        'select=views&limit=10000',
-        env,
-        token,
-      );
       const views = viewsRes.ok
-        ? await viewsRes.json()
+        ? await viewsRes.json().catch(() => [])
         : [];
       const totalViews = Array.isArray(views)
         ? views.reduce(
@@ -502,21 +547,53 @@ export async function handleAdminRequest(
             0,
           )
         : 0;
-      const totalStories = await sbGetCount(
-        'stories?select=id',
+      const [totalStories, totalChapters, activeStories] = await Promise.all([
+        sbGetCount('stories?select=id', env, token),
+        sbGetCount('chapters?select=id', env, token),
+        sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token),
+      ]);
+
+      const [engagementRes, infrastructure] = await Promise.all([
+        sbRpc('get_user_engagement_summary', { p_time_range: '30d' }, env, token)
+          .then((res) => (res.ok ? res.json().catch(() => null) : null))
+          .catch(() => null),
+        getInfrastructurePayload(env).catch(() => null),
+      ]);
+
+      // Recent settings changes (last 10) with actor info
+      let recentSettingsChanges: Array<{ id: string; action: string; actor_email: string | null; actor_name: string | null; metadata: Record<string, unknown>; created_at: string }> = [];
+      const logsRes = await sbGet(
+        'admin_audit_logs',
+        'select=id,action,actor_user_id,metadata,created_at&action=eq.settings_update&order=created_at.desc&limit=10',
         env,
         token,
-      );
-      const totalChapters = await sbGetCount(
-        'chapters?select=id',
-        env,
-        token,
-      );
-      const activeStories = await sbGetCount(
-        'stories?select=id&status=neq.draft&status=neq.archived',
-        env,
-        token,
-      );
+      ).catch(() => null);
+      if (logsRes && logsRes.ok) {
+        const logs = (await logsRes.json().catch(() => [])) as Array<{ id: string; action: string; actor_user_id: string | null; metadata: Record<string, unknown>; created_at: string }>;
+        const actorIds = [...new Set(logs.map((l) => l.actor_user_id).filter(Boolean))] as string[];
+        const emailByName = new Map<string, { email: string; name: string | null }>();
+        if (actorIds.length > 0) {
+          const ids = actorIds.map((id) => encodeURIComponent(id)).join(',');
+          const pRes = await sbGet('profiles', `select=id,email,full_name&id=in.(${ids})`, env, token).catch(() => null);
+          if (pRes && pRes.ok) {
+            for (const p of (await pRes.json().catch(() => [])) as Array<{ id: string; email: string; full_name: string | null }>) {
+              emailByName.set(p.id, { email: p.email, name: p.full_name });
+            }
+          }
+        }
+        recentSettingsChanges = logs.map((l) => {
+          const actor = l.actor_user_id ? emailByName.get(l.actor_user_id) : undefined;
+          return {
+            id: l.id,
+            action: l.action,
+            actor_email: actor?.email ?? null,
+            actor_name: actor?.name ?? null,
+            metadata: l.metadata,
+            created_at: l.created_at,
+          };
+        });
+      }
+
       return json({
         stories,
         stats: {
@@ -525,7 +602,9 @@ export async function handleAdminRequest(
           activeStories,
           totalViews,
         },
-        range,
+        engagement: engagementRes,
+        infrastructure,
+        recentSettingsChanges,
       });
     }
 
@@ -722,29 +801,39 @@ export async function handleAdminRequest(
       }
 
       const folder = (formData.get('folder') as string) || 'uploads';
+      if (!isAllowedUploadFolder(folder)) {
+        return err('BAD_REQUEST', `Invalid folder: ${folder}`, 400);
+      }
       const comicId = formData.get('comicId') as string | null;
       const chapterNumber = formData.get('chapterNumber') as string | null;
+      const pageNumbers = formData.getAll('pageNumber') as string[];
       const userId = formData.get('userId') as string | null;
+
+      // Validate-then-write: reject the whole batch before any put, so a bad
+      // file can't leave earlier files orphaned in R2 (no rollback exists).
+      const validation = validateUploadBatch(fileEntries);
+      if (validation) {
+        return err(validation.code, validation.message, validation.status);
+      }
 
       const uploadedUrls: string[] = [];
       for (let i = 0; i < fileEntries.length; i++) {
         const file = fileEntries[i];
         const ext = (file.name.split('.').pop() || 'png').toLowerCase();
 
-        let key = `uploads/${crypto.randomUUID()}.${ext}`;
-        if (folder === 'covers') {
-          key = comicId ? `covers/${comicId}.${ext}` : `covers/${crypto.randomUUID()}.${ext}`;
-        } else if (folder === 'chapters') {
-          const cId = comicId || 'general';
-          const cNum = chapterNumber || '1';
-          key = `chapters/${cId}/chapter-${cNum}/page-${i + 1}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
-        } else if (folder === 'avatars') {
-          key = userId ? `avatars/${userId}.${ext}` : `avatars/${crypto.randomUUID()}.${ext}`;
-        }
+        const key = buildUploadKey({
+          folder,
+          ext,
+          comicId,
+          chapterNumber,
+          pageNumber: pageNumbers[i] ?? null,
+          loopIndex: i,
+          userId,
+        });
 
         await bucket.put(key, await file.arrayBuffer(), {
           httpMetadata: {
-            contentType: file.type || (ext === 'cbz' ? 'application/x-cbz' : 'application/octet-stream'),
+            contentType: file.type || 'application/octet-stream',
             cacheControl: 'public, max-age=31536000, immutable',
           },
           customMetadata: {
@@ -788,6 +877,13 @@ export async function handleAdminRequest(
         const r = object.range as { offset?: number; length?: number };
         const offset = r.offset ?? 0;
         const length = r.length ?? object.size;
+        const isFullRange = offset === 0 && length >= object.size;
+        if (isFullRange) {
+          // Full-body responses must be 200: a 206 with the whole object is
+          // ORB-blocked by Chrome (image load retries + layout shift).
+          headers.set('content-length', object.size.toString());
+          return new Response(object.body, { status: 200, headers });
+        }
         headers.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
         headers.set('content-length', length.toString());
         return new Response(object.body, { status: 206, headers });

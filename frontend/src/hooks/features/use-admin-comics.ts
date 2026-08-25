@@ -14,9 +14,12 @@ export interface ComicItem {
   translator?: string;
   translator_id?: string | null;
   category?: string;
+  tags?: string;
   cover_url?: string | null;
   status: string;
   created_at: string;
+  updated_at?: string;
+  description?: string;
   views?: number;
 }
 
@@ -36,7 +39,9 @@ export function useAdminComics() {
   const [authorId, setAuthorId] = useState("");
   const [translator, setTranslator] = useState("");
   const [translatorId, setTranslatorId] = useState("");
-  const [category, setCategory] = useState("");
+  const [categorySet, setCategorySet] = useState<Set<string>>(new Set());
+  const [tagSet, setTagSet] = useState<Set<string>>(new Set());
+  const [description, setDescription] = useState("");
   const [status, setStatus] = useState("published");
   const [coverUrl, setCoverUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +52,7 @@ export function useAdminComics() {
       const supabase = getSupabaseBrowserClient();
       const { data } = await supabase
         .from("stories")
-        .select("id, title, author, author_id, translator, translator_id, category, cover_url, status, created_at, views")
+        .select("id, title, author, author_id, translator, translator_id, category, tags, cover_url, status, created_at, updated_at, description, views")
         .order("created_at", { ascending: false })
         .limit(500);
 
@@ -73,7 +78,9 @@ export function useAdminComics() {
     setAuthorId("");
     setTranslator("");
     setTranslatorId("");
-    setCategory("");
+    setCategorySet(new Set());
+    setTagSet(new Set());
+    setDescription("");
     setStatus("published");
     setCoverUrl("");
     setIsModalOpen(true);
@@ -86,7 +93,9 @@ export function useAdminComics() {
     setAuthorId(comic.author_id || "");
     setTranslator(comic.translator || "");
     setTranslatorId(comic.translator_id || "");
-    setCategory(comic.category || "");
+    setCategorySet(new Set(comic.category ? comic.category.split(",").map(c => c.trim()).filter(Boolean) : []));
+    setTagSet(new Set(comic.tags ? comic.tags.split(",").map(t => t.trim()).filter(Boolean) : []));
+    setDescription(comic.description || "");
     setStatus(comic.status || "published");
     setCoverUrl(comic.cover_url || "");
     setIsModalOpen(true);
@@ -102,7 +111,7 @@ export function useAdminComics() {
       toast.error("Vui lòng chọn tác giả hoặc dịch giả");
       return;
     }
-    if (!category) {
+    if (categorySet.size === 0) {
       toast.error("Vui lòng chọn thể loại");
       return;
     }
@@ -110,7 +119,12 @@ export function useAdminComics() {
 
     setSubmitting(true);
     try {
-      const payload: CreateComicInput = { title, author, author_id: authorId, translator, translator_id: translatorId, category, status: status as CreateComicInput["status"], cover_url: coverUrl };
+      const payload: CreateComicInput = {
+        title, author, author_id: authorId, translator, translator_id: translatorId,
+        category: Array.from(categorySet).join(", "),
+        tags: Array.from(tagSet).join(", "),
+        description, status: status as CreateComicInput["status"], cover_url: coverUrl,
+      };
       const res = editingComic
         ? await updateComic(editingComic.id, payload)
         : await createComic(payload);
@@ -173,8 +187,12 @@ export function useAdminComics() {
     setTranslator,
     translatorId,
     setTranslatorId,
-    category,
-    setCategory,
+    categorySet,
+    setCategorySet,
+    tagSet,
+    setTagSet,
+    description,
+    setDescription,
     status,
     setStatus,
     coverUrl,

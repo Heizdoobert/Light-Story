@@ -53,8 +53,8 @@ export function AuthFormShell({
   children: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh] border border-white/20 p-8">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh] border border-white/20 p-5 sm:p-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             {title}

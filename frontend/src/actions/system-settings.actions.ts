@@ -4,14 +4,14 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SUPERADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { SITE_SETTING_KEYS } from '@/lib/admin/system-settings';
 import { saveAdminUiSettingsSchema } from '@/lib/schemas/system-settings-form';
 import type { SaveAdminUiSettingsInput, UpdateAdminUiSettingsInput } from '@/lib/schemas/system-settings-form';
 
 export async function saveSystemSettings(input: SaveAdminUiSettingsInput): Promise<ActionResult> {
   try {
-    await requireActionRole(SETTINGS_ADMIN_ROLES);
+    await requireActionRole(SUPERADMIN_ROLES);
   } catch {
     return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }

@@ -6,11 +6,14 @@ export const ROUTES = {
   RESET_PASSWORD: "/auth/reset-password",
   COMICS: "/comics",
   SEARCH: "/search",
+  GENRES: "/genres",
   COMIC_DETAIL: (id: string) => `/comics/${id}`,
   CHAPTER_READER: (comicId: string, chapterId: string) =>
     `/comics/${comicId}/chapter/${chapterId}`,
   PLACEHOLDER_COVER:
     "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Crect width='100%25' height='100%25' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' fill='%2364748b' font-family='sans-serif' font-size='18' text-anchor='middle' dominant-baseline='middle'%3ENo Cover%3C/text%3E%3C/svg%3E",
+  GROUP: "/group",
+  FANPAGE: "/fanpage",
   USER: {
     ROOT: "/user",
     PROFILE: "/user/profile",
@@ -28,13 +31,13 @@ export const ROUTES = {
     AUTHORS: "/admin/authors",
     GENRES: "/admin/genres",
     TAGS: "/admin/tags",
+    DESCRIPTIONS: "/admin/descriptions",
     SETTINGS: "/admin/settings",
     ADS: "/admin/ads",
     AUDIT: "/admin/audit",
     OPERATIONS: "/admin/operations",
     ANALYTICS: "/admin/analytics",
     PROFILE: "/admin/profile",
-    SENTRY: "/admin/sentry",
   },
   ERROR: {
     UNAUTHORIZED: "/handle-exception/401",
@@ -92,8 +95,6 @@ export const ROUTES = {
       R2_PRESIGNED_URLS: "/api/admin/r2/presigned-urls",
       R2_UPLOAD_GATEWAY: "/api/admin/r2/upload",
       R2_FILE_PREFIX: "/api/admin/r2/file/",
-      R2_PROXY_QUERY: (url: string) =>
-        `/api/admin/r2?url=${encodeURIComponent(url)}`,
       STORIES_FIELD_VALUES: (field: string) =>
         `/api/admin/stories/field-values?field=${encodeURIComponent(field)}`,
       SITE_METRICS: (type: string) => `/api/admin/site-metrics?type=${type}`,

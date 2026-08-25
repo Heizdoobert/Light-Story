@@ -33,8 +33,12 @@ export default function AdminComicsPage() {
     translatorId,
     setTranslatorId,
     setTranslator,
-    category,
-    setCategory,
+    categorySet,
+    setCategorySet,
+    tagSet,
+    setTagSet,
+    description,
+    setDescription,
     status,
     setStatus,
     coverUrl,
@@ -45,7 +49,7 @@ export default function AdminComicsPage() {
     handleSaveComic,
     handleDeleteComic,
   } = useAdminComics();
-  const { categories, authors, translators, loading: optionsLoading } = useAdminFormOptions();
+  const { categories, tags, authors, translators, loading: optionsLoading } = useAdminFormOptions();
   const optionsEmpty = authors.length === 0 && translators.length === 0;
   const canSaveComic = !submitting && !optionsLoading && !optionsEmpty && categories.length > 0;
 
@@ -106,6 +110,7 @@ export default function AdminComicsPage() {
                 <th className="p-4">Tên Truyện</th>
                 <th className="p-4">Tác Giả</th>
                 <th className="p-4">Thể Loại</th>
+                <th className="p-4">Tag</th>
                 <th className="p-4">Lượt Xem</th>
                 <th className="p-4">Trạng Thái</th>
                 <th className="p-4 text-right">Thao Tác</th>
@@ -135,6 +140,19 @@ export default function AdminComicsPage() {
                       <span className="px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium">
                         {comic.category || "Chưa cập nhật"}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      {comic.tags ? (
+                        <div className="flex flex-wrap gap-1">
+                          {comic.tags.split(",").map((tag, i) => (
+                            <span key={i} className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400">
+                              {tag.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-500 text-[10px]">—</span>
+                      )}
                     </td>
                     <td className="p-4 font-semibold text-orange-400">
                       {comic.views?.toLocaleString() || 0}
@@ -181,7 +199,7 @@ export default function AdminComicsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-8 text-center text-slate-500">
+                  <td colSpan={8} className="p-8 text-center text-slate-500">
                     {loading ? "Đang tải danh sách truyện..." : "Không tìm thấy bộ truyện nào."}
                   </td>
                 </tr>
@@ -257,23 +275,89 @@ export default function AdminComicsPage() {
               </div>
 
               <div>
-                <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại *</label>
-                <select
-                  id="comic-category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
-                >
-                  <option value="">Chọn thể loại...</option>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">Thể Loại *</label>
+                <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    <label
+                      key={cat.id}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                        categorySet.has(cat.name)
+                          ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={categorySet.has(cat.name)}
+                        onChange={(e) => {
+                          const newSet = new Set(categorySet);
+                          if (e.target.checked) {
+                            newSet.add(cat.name);
+                          } else {
+                            newSet.delete(cat.name);
+                          }
+                          setCategorySet(newSet);
+                        }}
+                      />
+                      {cat.name}
+                    </label>
                   ))}
-                </select>
+                </div>
                 {categories.length === 0 && (
                   <p className="text-[11px] text-orange-400 mt-1">
                     Chưa có thể loại. Vui lòng thêm thể loại trước khi tạo truyện.
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-2">Tag</label>
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <label
+                      key={tag.id}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium cursor-pointer transition-colors ${
+                        tagSet.has(tag.name)
+                          ? "bg-purple-500/20 border-purple-500 text-purple-400"
+                          : "bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={tagSet.has(tag.name)}
+                        onChange={(e) => {
+                          const newSet = new Set(tagSet);
+                          if (e.target.checked) {
+                            newSet.add(tag.name);
+                          } else {
+                            newSet.delete(tag.name);
+                          }
+                          setTagSet(newSet);
+                        }}
+                      />
+                      {tag.name}
+                    </label>
+                  ))}
+                </div>
+                {tags.length === 0 && (
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Chưa có tag. Bạn có thể thêm tag trong mục quản lý Tag.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="comic-description" className="block text-xs font-semibold text-slate-300 mb-1">Mô tả nội dung</label>
+                <textarea
+                  id="comic-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Nhập mô tả nội dung truyện..."
+                  rows={4}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500 resize-y"
+                />
               </div>
 
               <div>

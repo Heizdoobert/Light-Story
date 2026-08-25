@@ -2,17 +2,15 @@ import { NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
 import { supabaseWebhookSchema } from '@/lib/schemas/webhook';
 
-const WEBHOOK_SECRET = process.env.SUPABASE_WEBHOOK_SECRET || '';
-
 /**
  * Verify webhook request signature using HMAC-SHA256.
  * Supabase sends the signature in the `x-supabase-signature` header.
  */
-function verifySignature(payload: string, signature: string | null): boolean {
-  if (!WEBHOOK_SECRET || !signature) return false;
+function verifySignature(payload: string, signature: string | null, secret: string): boolean {
+  if (!secret || !signature) return false;
 
   try {
-    const expectedSignature = createHmac('sha256', WEBHOOK_SECRET)
+    const expectedSignature = createHmac('sha256', secret)
       .update(payload)
       .digest('hex');
 
@@ -39,10 +37,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 });
   }
 
+  // Read secret per-request so env vars injected after boot are picked up
+  const webhookSecret = process.env.SUPABASE_WEBHOOK_SECRET || '';
+
   // Verify webhook signature (skip in development if secret not set)
   const signature = request.headers.get('x-supabase-signature');
-  if (WEBHOOK_SECRET) {
-    if (!verifySignature(rawBody, signature)) {
+  if (webhookSecret) {
+    if (!verifySignature(rawBody, signature, webhookSecret)) {
       console.warn('[Supabase Webhook] Signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }

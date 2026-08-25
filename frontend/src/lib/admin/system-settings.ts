@@ -35,7 +35,6 @@ export type SidebarMenuVisibility = Record<UserRole, AdminMenuId[]>;
 export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
   superadmin: [...DASHBOARD_CONFIGURABLE_TABS],
   admin: [
-    "dashboard",
     "dashboard_access_logs",
     "operations",
     "operations_data",
@@ -50,7 +49,6 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
     "create_comic",
   ],
   internal: [
-    "dashboard",
     "dashboard_access_logs",
     "operations",
     "operations_data",
@@ -65,7 +63,6 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
     "create_comic",
   ],
   employee: [
-    "dashboard",
     "operations",
     "operations_data",
     "create_story",
@@ -82,7 +79,6 @@ export const DEFAULT_DASHBOARD_TAB_VISIBILITY: DashboardTabVisibility = {
 export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
   superadmin: [...ADMIN_MENU_IDS],
   admin: [
-    "dashboard",
     "operations",
     "create_story",
     "stories",
@@ -96,7 +92,6 @@ export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
     "create_comic",
   ],
   internal: [
-    "dashboard",
     "operations",
     "create_story",
     "stories",
@@ -110,7 +105,6 @@ export const DEFAULT_SIDEBAR_MENU_VISIBILITY: SidebarMenuVisibility = {
     "create_comic",
   ],
   employee: [
-    "dashboard",
     "operations",
     "create_story",
     "stories",

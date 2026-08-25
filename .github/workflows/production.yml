@@ -75,6 +75,7 @@ jobs:
         run: |
           supabase link --project-ref rwnzsmmfvsetfcnkjoxt
           supabase migration repair --status reverted 20260730000004 || true
+          supabase migration repair --status reverted 20260818041037 || true
           supabase db push --linked --include-all
         working-directory: backend-supabase
         env:

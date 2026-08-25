@@ -20,10 +20,14 @@ import {
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
-import { useReadChapterPresenter } from "@/hooks/presenters/useReadChapterPresenter";
+import { useReadChapterPresenter, type ReaderInitialData } from "@/hooks/presenters/useReadChapterPresenter";
 import { ROUTES } from "@/lib/constants/routes";
 
-export const ChapterReaderPageContent: React.FC = () => {
+export interface ChapterReaderPageContentProps {
+  initialData?: ReaderInitialData | null;
+}
+
+export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> = ({ initialData }) => {
   const {
     comicId,
     chapterId,
@@ -32,7 +36,6 @@ export const ChapterReaderPageContent: React.FC = () => {
     allChapters,
     images,
     loading,
-    setIsLoginModalOpen,
     showToolbar,
     setShowToolbar,
     showChapterMenu,
@@ -58,7 +61,7 @@ export const ChapterReaderPageContent: React.FC = () => {
     handleDownload,
     prevChapter,
     nextChapter,
-  } = useReadChapterPresenter();
+  } = useReadChapterPresenter(initialData);
 
   if (loading) {
     return (
@@ -133,6 +136,7 @@ export const ChapterReaderPageContent: React.FC = () => {
                   alt={`Trang ${idx + 1}`}
                   index={idx}
                   fitScreen={fitScreen}
+                  priority={idx === 0}
                 />
               </div>
               {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
@@ -354,7 +358,6 @@ export const ChapterReaderPageContent: React.FC = () => {
       <ChapterCommentsSection
         chapterId={chapterId}
         comicId={comicId}
-        onLoginClick={() => setIsLoginModalOpen(true)}
       />
 
       {showChapterMenu && (
