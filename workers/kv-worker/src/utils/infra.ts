@@ -48,18 +48,65 @@ export async function getInfrastructurePayload(env: Env) {
   let r2SizeBytes = 0;
 
   if (env.R2_BUCKET) {
-    let cursor: string | undefined = undefined;
-    try {
-      do {
-        const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
-        r2ObjectCount += listRes.objects.length;
-        for (const obj of listRes.objects) {
-          r2SizeBytes += obj.size || 0;
+    let fetchedFromGraphql = false;
+
+    // 1. Try Cloudflare GraphQL Analytics API first (O(1) fast path)
+    const token = (env as any).CLOUDFLARE_API_TOKEN as string | undefined;
+    const accountId = (env as any).CLOUDFLARE_ACCOUNT_ID as string | undefined;
+    
+    if (token && accountId) {
+      try {
+        const q = `
+          query {
+            viewer {
+              accounts(filter: { accountTag: "${accountId}" }) {
+                r2StorageAdaptiveGroups(
+                  filter: { bucketName: "lightstory-assets" }
+                  limit: 1
+                ) {
+                  sum {
+                    payloadSize
+                    objectCount
+                  }
+                }
+              }
+            }
+          }
+        `;
+        const gRes = await fetch('https://api.cloudflare.com/client/v4/graphql', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q }),
+        });
+        if (gRes.ok) {
+          const payload: any = await gRes.json();
+          const stats = payload?.data?.viewer?.accounts?.[0]?.r2StorageAdaptiveGroups?.[0]?.sum;
+          if (stats) {
+            r2ObjectCount = Number(stats.objectCount) || 0;
+            r2SizeBytes = Number(stats.payloadSize) || 0;
+            fetchedFromGraphql = true;
+          }
         }
-        cursor = listRes.truncated ? listRes.cursor : undefined;
-      } while (cursor);
-    } catch (e) {
-      console.error('[Infra] R2 metrics failed:', e);
+      } catch (e) {
+        console.error('[Infra] R2 GraphQL metrics failed:', e);
+      }
+    }
+
+    // 2. Fallback to iteration if GraphQL fails or token is unavailable
+    if (!fetchedFromGraphql) {
+      let cursor: string | undefined = undefined;
+      try {
+        do {
+          const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
+          r2ObjectCount += listRes.objects.length;
+          for (const obj of listRes.objects) {
+            r2SizeBytes += obj.size || 0;
+          }
+          cursor = listRes.truncated ? listRes.cursor : undefined;
+        } while (cursor);
+      } catch (e) {
+        console.error('[Infra] R2 metrics failed:', e);
+      }
     }
   }
 

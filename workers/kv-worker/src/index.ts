@@ -217,7 +217,6 @@ export default {
         },
       );
     }
-
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
 
     const authHeader = request.headers.get('Authorization') ?? '';
