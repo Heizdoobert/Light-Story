@@ -4,7 +4,7 @@ import React from "react";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
-import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/auth/security-utils";
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { AdZone } from "@/components/shared/ads/AdZone";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
@@ -89,6 +89,9 @@ export const ProfilePageContent: React.FC = () => {
                   <img
                     src={proxyAvatarUrl(profile.avatar_url) || undefined}
                     alt="Avatar"
+                    width={80}
+                    height={80}
+                    decoding="async"
                     className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
                     onError={(e) => {
                       e.currentTarget.onerror = null;

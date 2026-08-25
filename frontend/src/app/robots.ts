@@ -11,7 +11,8 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: [ROUTES.ADMIN.ROOT, ROUTES.USER.ROOT, '/dashboard', '/profile', '/api/'],
+        // ponytail: '/profile' kept — public-by-design redirect, intentional
+        disallow: [ROUTES.ADMIN.ROOT, ROUTES.USER.ROOT, '/profile', '/api/'],
       },
     ],
     ...(BASE_URL ? { sitemap: `${BASE_URL}/sitemap.xml` } : {}),

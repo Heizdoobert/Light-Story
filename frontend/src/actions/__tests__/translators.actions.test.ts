@@ -17,6 +17,18 @@ describe('translators.actions server actions', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     vi.clearAllMocks();
+    vi.mocked(serverApi.createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+          error: null,
+        }),
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { access_token: 'test-token' } },
+          error: null,
+        }),
+      },
+    } as any);
   });
 
   afterEach(() => {
@@ -26,14 +38,6 @@ describe('translators.actions server actions', () => {
 
   describe('createTranslator / addTranslator', () => {
     it('creates translator and calls revalidateTag when valid input and backend succeeds', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ id: 'trans-1' }), { status: 200 })
       );
@@ -61,14 +65,6 @@ describe('translators.actions server actions', () => {
     });
 
     it('addTranslator alias works identically to createTranslator', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ id: 'trans-2' }), { status: 200 })
       );
@@ -89,14 +85,6 @@ describe('translators.actions server actions', () => {
     });
 
     it('returns error message when backend responds with error status', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: null },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ message: 'Unauthorized' }), { status: 401 })
       );
@@ -112,14 +100,6 @@ describe('translators.actions server actions', () => {
 
   describe('updateTranslator', () => {
     it('updates translator and calls revalidateTag when valid input and backend succeeds', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ id: 'trans-1' }), { status: 200 })
       );
@@ -156,14 +136,6 @@ describe('translators.actions server actions', () => {
 
   describe('deleteTranslator / removeTranslator', () => {
     it('deletes translator and calls revalidateTag when valid input and backend succeeds', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ success: true }), { status: 200 })
       );
@@ -180,14 +152,6 @@ describe('translators.actions server actions', () => {
     });
 
     it('removeTranslator alias works identically to deleteTranslator', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ success: true }), { status: 200 })
       );

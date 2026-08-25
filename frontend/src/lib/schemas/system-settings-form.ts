@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
-export const saveSystemSettingsSchema = z.object({
+export const saveAdminUiSettingsSchema = z.object({
   compactMode: z.boolean(),
   showSyncBadge: z.boolean(),
   dashboardTabVisibility: z.record(z.string(), z.array(z.string())),
   sidebarMenuVisibility: z.record(z.string(), z.array(z.string())),
 });
 
-export const updateSystemSettingsSchema = saveSystemSettingsSchema;
+export const updateAdminUiSettingsSchema = saveAdminUiSettingsSchema;
 
-export type SaveSystemSettingsInput = z.infer<typeof saveSystemSettingsSchema>;
-export type UpdateSystemSettingsInput = z.infer<typeof updateSystemSettingsSchema>;
+export type SaveAdminUiSettingsInput = z.infer<typeof saveAdminUiSettingsSchema>;
+export type UpdateAdminUiSettingsInput = z.infer<typeof updateAdminUiSettingsSchema>;

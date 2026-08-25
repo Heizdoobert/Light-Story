@@ -9,6 +9,21 @@ import {
   handleRes,
   json,
 } from '../utils/supabase-client';
+import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
+
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(env: Env, token: string | null, base: string): Promise<string> {
+  let candidate = base || 'story';
+  for (let i = 2; ; i++) {
+    const res = await sbGet('stories', `select=id&slug=eq.${encodeURIComponent(candidate)}`, env, token);
+    if (!res.ok) return candidate;
+    const rows = (await res.json()) as Array<{ id: string }>;
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
 
 export async function handleStoriesRequest(
   request: Request,
@@ -77,28 +92,43 @@ export async function handleStoriesRequest(
 
     if (method === 'GET' && pathname.match(/^\/stories\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
+      if (!isValidUuid(id))
+        return err('VALIDATION_ERROR', 'Invalid story id', 400);
       const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
       const data = await res.json();
       if (!res.ok)
-        return err('SUPABASE_ERROR', await res.text(), res.status);
+        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
       return json(
         Array.isArray(data) ? data[0] || null : data,
       );
     }
 
     if (method === 'POST' && pathname === '/stories') {
-      const body = (await request.json()) as any;
-      const payload: Record<string, unknown> = {
-        title: body.title,
-        author: body.author,
-        description: body.description || null,
-        cover_url: body.cover_url || null,
-        status: body.status || 'draft',
-      };
-      if (body.category)
-        payload.category = Array.isArray(body.category)
-          ? body.category.join(', ')
-          : body.category;
+      const body = (await request.json()) as Record<string, unknown>;
+      const rules = [
+        { field: 'title', type: 'required-string', maxLength: 200 },
+        { field: 'author', type: 'required-string', maxLength: 120 },
+        { field: 'description', type: 'optional-string', maxLength: 5000 },
+        { field: 'cover_url', type: 'optional-string', maxLength: 2000 },
+        { field: 'category', type: 'optional-string', maxLength: 200 },
+        { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
+      ] as const;
+      const errors = validateBody(body, rules as any);
+      if (errors.length > 0) {
+        return err(
+          'VALIDATION_ERROR',
+          errors.map((e) => e.message).join('; '),
+          422,
+        );
+      }
+      const payload = sanitizeBody(body, rules as any) as Record<string, unknown>;
+      if (Array.isArray(body.category)) {
+        payload.category = (body.category as string[]).join(', ');
+      }
+      if (payload.cover_url === '') payload.cover_url = null;
+      if (payload.description === '') payload.description = null;
+      if (!payload.status) payload.status = 'draft';
+      payload.slug = await uniqueSlug(env, token, slugify(String(payload.title)));
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }
@@ -107,6 +137,8 @@ export async function handleStoriesRequest(
       const id = url.searchParams.get('id');
       const storyId = url.searchParams.get('storyId');
       if (id) {
+        if (!isValidUuid(id))
+          return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
         const res = await sbGet(
           'chapters',
           `id=eq.${id}&select=*`,
@@ -115,12 +147,14 @@ export async function handleStoriesRequest(
         );
         const data = await res.json();
         if (!res.ok)
-          return err('SUPABASE_ERROR', await res.text(), res.status);
+          return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
         return json(
           Array.isArray(data) ? data[0] || null : data,
         );
       }
       if (storyId) {
+        if (!isValidUuid(storyId))
+          return err('VALIDATION_ERROR', 'Invalid storyId', 400);
         const res = await sbGet(
           'chapters',
           `story_id=eq.${storyId}&select=*&order=chapter_number.asc`,
@@ -138,6 +172,8 @@ export async function handleStoriesRequest(
 
     if (method === 'GET' && pathname.match(/^\/chapters\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
+      if (!isValidUuid(id))
+        return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
       const res = await sbGet(
         'chapters',
         `id=eq.${id}&select=*`,
@@ -154,6 +190,8 @@ export async function handleStoriesRequest(
 
     if (method === 'PUT' && pathname.match(/^\/chapters\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
+      if (!isValidUuid(id))
+        return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
       const body = (await request.json()) as any;
       const payload: Record<string, unknown> = {};
       if (body.title !== undefined) payload.title = body.title;
@@ -175,6 +213,8 @@ export async function handleStoriesRequest(
 
     if (method === 'DELETE' && pathname.match(/^\/chapters\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
+      if (!isValidUuid(id))
+        return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
       const res = await sb(
         `/rest/v1/chapters?id=eq.${id}`,
         { method: 'DELETE' },
@@ -187,7 +227,10 @@ export async function handleStoriesRequest(
     }
 
     if (method === 'POST' && pathname === '/stories/views') {
-      const body = (await request.json()) as any;
+      const body = (await request.json()) as Record<string, unknown>;
+      if (typeof body.storyId !== 'string' || !body.storyId.trim()) {
+        return err('VALIDATION_ERROR', 'storyId is required', 422);
+      }
       const res = await sb(
         '/rest/v1/rpc/increment_story_views',
         {

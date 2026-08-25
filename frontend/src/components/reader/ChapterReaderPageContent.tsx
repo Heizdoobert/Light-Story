@@ -62,8 +62,21 @@ export const ChapterReaderPageContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-[#111] flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!currentChapter) {
+    return (
+      <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">
+          Không tìm thấy chương truyện
+        </h1>
+        <Link href={ROUTES.HOME} className="px-6 py-2 bg-primary text-white rounded-full">
+          Quay lại trang chủ
+        </Link>
       </div>
     );
   }
@@ -76,7 +89,7 @@ export const ChapterReaderPageContent: React.FC = () => {
     }`;
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#111] transition-colors flex flex-col">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors flex flex-col">
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="h-1 bg-slate-200 dark:bg-slate-800">
           <div className="h-full bg-primary transition-all duration-150" style={{ width: `${progress}%` }} />
@@ -85,10 +98,10 @@ export const ChapterReaderPageContent: React.FC = () => {
 
       <div className="max-w-4xl mx-auto w-full px-4 py-8 text-center flex-shrink-0">
         <Link
-          href={`/comics/${comicId}`}
+          href={ROUTES.COMIC_DETAIL(comicId)}
           className="inline-block text-xl sm:text-2xl font-black text-slate-900 dark:text-white hover:text-primary transition-colors mb-2"
         >
-          {comic?.title || "Tên Truyện Đang Cập Nhật"}
+          <h1 className="inline">{comic?.title || "Tên Truyện Đang Cập Nhật"}</h1>
         </Link>
         <div className="text-slate-500 dark:text-zinc-400 font-medium text-sm sm:text-base">
           {currentChapter?.chapter_number
@@ -137,7 +150,7 @@ export const ChapterReaderPageContent: React.FC = () => {
       <div className="w-full max-w-[800px] mx-auto px-2 sm:px-4 py-6 sm:py-8 flex items-center justify-between gap-3 sm:gap-4 border-t border-slate-200 dark:border-white/5 mt-4">
         <Link
           href={
-            prevChapter ? `/comics/${comicId}/chapter/${prevChapter.id}` : "#"
+            prevChapter ? ROUTES.CHAPTER_READER(comicId, prevChapter.id) : "#"
           }
           className={chapterNavClass(prevChapter)}
         >
@@ -146,7 +159,7 @@ export const ChapterReaderPageContent: React.FC = () => {
         </Link>
         <Link
           href={
-            nextChapter ? `/comics/${comicId}/chapter/${nextChapter.id}` : "#"
+            nextChapter ? ROUTES.CHAPTER_READER(comicId, nextChapter.id) : "#"
           }
           className={chapterNavClass(nextChapter)}
         >
@@ -167,8 +180,11 @@ export const ChapterReaderPageContent: React.FC = () => {
                 <img
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
+                  width={64}
+                  height={96}
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
                 />
               </button>
             ))}
@@ -202,7 +218,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 prevChapter
-                  ? `/comics/${comicId}/chapter/${prevChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, prevChapter.id)
                   : "#"
               }
               className={
@@ -253,7 +269,7 @@ export const ChapterReaderPageContent: React.FC = () => {
             <Link
               href={
                 nextChapter
-                  ? `/comics/${comicId}/chapter/${nextChapter.id}`
+                  ? ROUTES.CHAPTER_READER(comicId, nextChapter.id)
                   : "#"
               }
               className={

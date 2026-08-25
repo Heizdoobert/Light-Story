@@ -14,7 +14,6 @@ export type SaveSiteSettingsInput = z.input<typeof saveSiteSettingsSchema>;
 
 export const createCategorySchema = z.object({
   name: z.string().min(1, 'Tên thể loại không được để trống'),
-  slug: z.string().optional().default(''),
 });
 
 export const updateCategorySchema = createCategorySchema.partial();

@@ -2,13 +2,15 @@ export const ROUTES = {
   HOME: "/",
   LOGIN: "/auth/login",
   REGISTER: "/auth/register",
+  FORGET_PASSWORD: "/auth/forgetPassword",
   RESET_PASSWORD: "/auth/reset-password",
   COMICS: "/comics",
   SEARCH: "/search",
   COMIC_DETAIL: (id: string) => `/comics/${id}`,
   CHAPTER_READER: (comicId: string, chapterId: string) =>
     `/comics/${comicId}/chapter/${chapterId}`,
-  PLACEHOLDER_COVER: "/placeholder-cover.jpg",
+  PLACEHOLDER_COVER:
+    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400'%3E%3Crect width='100%25' height='100%25' fill='%231e293b'/%3E%3Ctext x='50%25' y='50%25' fill='%2364748b' font-family='sans-serif' font-size='18' text-anchor='middle' dominant-baseline='middle'%3ENo Cover%3C/text%3E%3C/svg%3E",
   USER: {
     ROOT: "/user",
     PROFILE: "/user/profile",
@@ -24,12 +26,15 @@ export const ROUTES = {
     USERS: "/admin/users",
     CATEGORIES: "/admin/categories",
     AUTHORS: "/admin/authors",
+    GENRES: "/admin/genres",
+    TAGS: "/admin/tags",
     SETTINGS: "/admin/settings",
     ADS: "/admin/ads",
     AUDIT: "/admin/audit",
     OPERATIONS: "/admin/operations",
     ANALYTICS: "/admin/analytics",
     PROFILE: "/admin/profile",
+    SENTRY: "/admin/sentry",
   },
   ERROR: {
     UNAUTHORIZED: "/handle-exception/401",
@@ -63,6 +68,7 @@ export const ROUTES = {
     MEDIA_PREFIX: "/api/media/",
     USER: {
       BOOKMARKS: "/api/user/bookmarks",
+      BOOKMARK: (comicId: string) => `/api/user/bookmarks/${encodeURIComponent(comicId)}`,
       BOOKMARKS_TOGGLE: "/api/user/bookmarks/toggle",
       HISTORY: "/api/user/history",
     },
@@ -76,7 +82,8 @@ export const ROUTES = {
       CHAPTER_IMAGES: (chapterId: string) =>
         `/api/admin/chapters/${chapterId}/images`,
       AUDIT: "/api/admin/audit",
-      AUDIT_LOGS: (limit: number) => `/api/admin/audit?limit=${limit}`,
+      AUDIT_LOGS: (page: number, pageSize: number) => `/api/admin/audit?page=${page}&pageSize=${pageSize}`,
+      ANALYTICS_DASHBOARD: "/api/admin/analytics/dashboard",
       TAXONOMY: (entity: string) => `/api/admin/taxonomy?entity=${entity}`,
       TRANSLATORS: "/api/admin/translators",
       SITE_SETTINGS: "/api/admin/site-settings",
@@ -94,7 +101,10 @@ export const ROUTES = {
       PROFILES: "/api/admin/profiles?page=1&pageSize=500",
       PROFILES_BY_IDS: (ids: string) =>
         `/api/admin/profiles/by-ids?ids=${encodeURIComponent(ids)}`,
-      NOTIFICATIONS: "/api/admin/notifications?limit=20",
+      NOTIFICATIONS: "/api/admin/notifications?pageSize=20",
+      MANAGE_STORY: "/api/admin/stories",
+      MANAGE_CHAPTER: "/api/admin/chapters",
+      MANAGE_USER: "/api/admin/users",
     },
   },
 } as const;

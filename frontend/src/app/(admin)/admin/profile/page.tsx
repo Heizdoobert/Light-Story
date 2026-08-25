@@ -8,7 +8,7 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
   ssr: false,
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
-import { useAdminProfile } from "@/lib/hooks/use-admin-profile";
+import { useAdminProfile } from "@/hooks/features/use-admin-profile";
 import { toast } from "sonner";
 
 export default function AdminProfilePage() {
@@ -66,6 +66,9 @@ export default function AdminProfilePage() {
               <img
                 src={getR2ImageUrl(avatarUrl)}
                 alt={fullName || "Admin Avatar"}
+                width={112}
+                height={112}
+                decoding="async"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";
@@ -80,7 +83,7 @@ export default function AdminProfilePage() {
 
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-white">{fullName || "Admin User"}</h2>
-            <p className="text-xs text-slate-400 font-mono">{user?.email || "admin@lightstory.app"}</p>
+            <p className="text-xs text-slate-400 font-mono">{user?.email || "Chưa có email"}</p>
             <div className="pt-2">
               <Badge variant={role === "superadmin" ? "danger" : "warning"}>
                 {role ? role.toUpperCase() : "ADMIN"}
@@ -106,8 +109,9 @@ export default function AdminProfilePage() {
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên *</label>
+              <label htmlFor="profile-full-name" className="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên *</label>
               <input
+                id="profile-full-name"
                 type="text"
                 required
                 value={fullName}
@@ -133,8 +137,9 @@ export default function AdminProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
+              <label htmlFor="profile-email" className="block text-xs font-semibold text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
               <input
+                id="profile-email"
                 type="email"
                 disabled
                 value={user?.email || ""}
@@ -143,8 +148,9 @@ export default function AdminProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
+              <label htmlFor="profile-role" className="block text-xs font-semibold text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
               <input
+                id="profile-role"
                 type="text"
                 disabled
                 value={role || "user"}

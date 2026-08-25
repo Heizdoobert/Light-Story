@@ -57,7 +57,10 @@ async function testRLSForRole(roleName, token) {
       .from('chapters')
       .select('id, title')
       .limit(1);
-    await assert(!error && chapters?.length >= 0, `${roleName}: Can read published chapters`);
+    const detail = error
+      ? ` (API error: ${error.message} status=${error.status} code=${error.code} details=${JSON.stringify(error.details)} count=${chapters?.length})`
+      : ` (rows=${chapters?.length})`;
+    await assert(!error && chapters?.length >= 0, `${roleName}: Can read published chapters${detail}`);
   } catch (e) {
     await assert(false, `${roleName}: Can read published chapters (error: ${e.message})`);
   }

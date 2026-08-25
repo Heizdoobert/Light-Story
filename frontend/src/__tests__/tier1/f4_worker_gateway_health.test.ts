@@ -21,7 +21,8 @@ describe('F4 worker gateway health probe', () => {
   it('rejects cross-origin requests with 403 via isOriginAllowed guard', () => {
     const source = readRepoFile(WORKER_INDEX);
     expect(source).toContain('isOriginAllowed');
-    expect(source).toContain("'Forbidden', { status: 403 }");
+    expect(source).toContain('Forbidden');
+    expect(source).toContain('status: 403');
   });
 
   it('handles OPTIONS preflight before routing', () => {

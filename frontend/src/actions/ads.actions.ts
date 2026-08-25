@@ -4,7 +4,7 @@ import { revalidateTag } from 'next/cache';
 import { act } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
-import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
+import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
 import { AD_CONTROL_KEYS } from '@/lib/admin/ad-policy';
 import {
   updateAdConfigSchema,
@@ -17,7 +17,7 @@ export async function updateAdConfig(input: {
   value: unknown;
 }): Promise<ActionResult> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SETTINGS_ADMIN_ROLES);
   } catch {
     return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }
@@ -47,7 +47,7 @@ export async function updateAdSlot(input: {
   code: string;
 }): Promise<ActionResult> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SETTINGS_ADMIN_ROLES);
   } catch {
     return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }
@@ -70,7 +70,7 @@ export async function toggleAdSlot(input: {
   enabled: boolean;
 }): Promise<ActionResult> {
   try {
-    await requireActionRole(ACTION_ADMIN_ROLES);
+    await requireActionRole(SETTINGS_ADMIN_ROLES);
   } catch {
     return { success: false, error: 'Bạn không có quyền thực hiện thao tác này' };
   }

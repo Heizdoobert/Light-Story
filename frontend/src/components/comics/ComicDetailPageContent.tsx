@@ -17,9 +17,23 @@ import {
 import { RecommendedComics } from "@/components/comics/RecommendedComics";
 import { BookmarkButton } from "@/components/user/bookmark-button";
 import { useComicDetailPresenter } from "@/hooks/presenters/useComicDetailPresenter";
+import type { ComicContext as Comic } from "@/services/comics/comic.service";
+import type { Chapter, Category } from "@/types/entities";
 import { ROUTES } from "@/lib/constants/routes";
 
-export const ComicDetailPageContent: React.FC = () => {
+type ComicDetailPageContentProps = {
+  initialComic?: Comic | null;
+  initialChapters?: Chapter[];
+  initialCategories?: Category[];
+  hydrated?: boolean;
+};
+
+export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
+  initialComic = null,
+  initialChapters = [],
+  initialCategories = [],
+  hydrated = false,
+}) => {
   const {
     comicId,
     comic,
@@ -33,7 +47,7 @@ export const ComicDetailPageContent: React.FC = () => {
     latestChapter,
     firstChapter,
     categoryArray,
-  } = useComicDetailPresenter();
+  } = useComicDetailPresenter({ initialComic, initialChapters, initialCategories, hydrated });
 
   if (loading) {
     return (
@@ -91,7 +105,7 @@ export const ComicDetailPageContent: React.FC = () => {
               <Link
                 href={
                   firstChapter
-                    ? `/comics/${comicId}/chapter/${firstChapter.id}`
+                    ? ROUTES.CHAPTER_READER(comicId, firstChapter.id)
                     : "#"
                 }
                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all shadow-lg ${firstChapter ? "bg-primary text-white hover:bg-primary/90 hover:-translate-y-1" : "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"}`}
@@ -102,7 +116,7 @@ export const ComicDetailPageContent: React.FC = () => {
               <Link
                 href={
                   latestChapter
-                    ? `/comics/${comicId}/chapter/${latestChapter.id}`
+                    ? ROUTES.CHAPTER_READER(comicId, latestChapter.id)
                     : "#"
                 }
                 className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-bold transition-all border-2 ${latestChapter ? "border-primary text-primary hover:bg-primary hover:text-white" : "border-slate-300 dark:border-slate-700 text-slate-500 cursor-not-allowed"}`}
@@ -201,7 +215,7 @@ export const ComicDetailPageContent: React.FC = () => {
               {chapters.map((chapter) => (
                 <Link
                   key={chapter.id}
-                  href={`/comics/${comicId}/chapter/${chapter.id}`}
+                  href={ROUTES.CHAPTER_READER(comicId, chapter.id)}
                   className="group flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-800 hover:border-primary/50 transition-all hover:shadow-md"
                 >
                   <div className="flex-1 min-w-0">
@@ -219,9 +233,9 @@ export const ComicDetailPageContent: React.FC = () => {
                     <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
-                        {new Date(
-                          chapter.created_at || Date.now(),
-                        ).toLocaleDateString("vi-VN")}
+                        {chapter.created_at
+                          ? new Date(chapter.created_at).toLocaleDateString("vi-VN")
+                          : null}
                       </span>
                     </div>
                   </div>

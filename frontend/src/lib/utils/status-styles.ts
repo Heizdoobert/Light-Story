@@ -7,3 +7,11 @@ const STATUS_STYLES: Record<string, string> = {
 
 export const getStatusStyles = (status: string): string =>
   STATUS_STYLES[status] ?? "bg-indigo-500 text-white dark:bg-indigo-600";
+
+export function getVietnameseStatus(status: string): string {
+  if (status === "completed") return "Hoàn thành";
+  if (status === "ongoing") return "Đang cập nhật";
+  if (status === "published") return "Đã xuất bản";
+  if (status === "draft") return "Bản nháp";
+  return "Đang cập nhật";
+}

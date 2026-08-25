@@ -26,12 +26,16 @@ const normalizeRole = (value: unknown): UserRole | null => {
 };
 
 const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
-  // Prefer role from profiles table to avoid stale app_metadata causing false 403.
-  const resolvedProfileRole = normalizeRole(profileRole);
-  if (resolvedProfileRole) return resolvedProfileRole;
-
+  // Mirror middleware/use-user: app_metadata.role preferred (synced by the DB
+  // trigger), user_metadata fallback, profiles table last.
   const resolvedAppRole = normalizeRole(user?.app_metadata?.role);
   if (resolvedAppRole) return resolvedAppRole;
+
+  const resolvedMetaRole = normalizeRole(user?.user_metadata?.role);
+  if (resolvedMetaRole) return resolvedMetaRole;
+
+  const resolvedProfileRole = normalizeRole(profileRole);
+  if (resolvedProfileRole) return resolvedProfileRole;
 
   return null;
 };
@@ -100,6 +104,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
   const queryClient = useQueryClient();
 
+  const ensureProfileExists = async (authUser: User) => {
+    if (!supabase) return;
+    try {
+      await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: authUser.id,
+            email: authUser.email ?? "",
+            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
+            avatar_url: authUser.user_metadata?.avatar_url ?? null,
+            role: "user",
+          },
+          {
+            onConflict: "id",
+            ignoreDuplicates: true,
+          },
+        );
+    } catch (err) {
+      console.warn("Could not auto-create profile:", getErrorMessage(err));
+    }
+  };
+
+  const fetchProfile = async (authUser: User) => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    try {
+      await ensureProfileExists(authUser);
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select(PROFILE_SELECT)
+        .eq("id", authUser.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
+    } catch (error) {
+      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
+      setProfile(buildProfile(authUser));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isActive = true;
 
@@ -159,54 +210,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       window.clearTimeout(loadingFallback);
       subscription.unsubscribe();
     };
+    // ponytail: bootstrap runs once; fetchProfile identity changes per render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const ensureProfileExists = async (authUser: User) => {
-    if (!supabase) return;
-    try {
-      await supabase
-        .from("profiles")
-        .upsert(
-          {
-            id: authUser.id,
-            email: authUser.email ?? "",
-            full_name: authUser.user_metadata?.full_name ?? authUser.email ?? "User",
-            avatar_url: authUser.user_metadata?.avatar_url ?? null,
-            role: "user",
-          },
-          {
-            onConflict: "id",
-            ignoreDuplicates: true,
-          },
-        );
-    } catch (err) {
-      console.warn("Could not auto-create profile:", getErrorMessage(err));
-    }
-  };
-
-  const fetchProfile = async (authUser: User) => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    try {
-      await ensureProfileExists(authUser);
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(PROFILE_SELECT)
-        .eq("id", authUser.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
-    } catch (error) {
-      console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
-      setProfile(buildProfile(authUser));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const signIn = async () => {
     if (!supabase) return;
@@ -296,19 +302,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setUser(null);
       setProfile(null);
       queryClient.clear();
-
-      if (typeof window !== "undefined") {
-        try {
-          for (let i = localStorage.length - 1; i >= 0; i--) {
-            const key = localStorage.key(i);
-            if (key && (key.startsWith("sb-") || key.includes("supabase"))) {
-              localStorage.removeItem(key);
-            }
-          }
-        } catch (e) {
-          console.error("Error clearing local storage auth tokens:", e);
-        }
-      }
     }
   };
 

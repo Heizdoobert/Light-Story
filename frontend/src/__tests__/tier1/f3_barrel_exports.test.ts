@@ -34,41 +34,22 @@ vi.mock('@/context/ThemeContext', () => ({
 type HooksModule = typeof import('@/hooks');
 
 const EPONYMOUS_PRESENTER_HOOKS = [
-  'useAdminDashboardPresenter',
-  'useAdminUserPresenter',
-  'useAnalyticsDashboard',
-  'useAuditLogsPresenter',
-  'useAuthModalPresenter',
   'useAuthorPresenter',
-  'useCategoryPresenter',
-  'useChapterFormPresenter',
   'useComicDetailPresenter',
-  'useCreateComicPresenter',
   'useHomePagePresenter',
-  'useOperationsPresenter',
   'useProfilePresenter',
   'useReadChapterPresenter',
-  'useResetPasswordPresenter',
   'useSearchPresenter',
-  'useStoryFormPresenter',
-  'useStoryManagementPresenter',
-  'useSystemSettingsPresenter',
   'useTranslatorPresenter',
 ];
 
-const EXTRA_PRESENTER_EXPORTS = ['useAdConfigsQuery', 'useUpdateAdConfig', 'useCrudMutation'];
+const EXTRA_PRESENTER_EXPORTS = ['useCrudMutation'];
 
 const FEATURE_AND_COMMON_HOOKS = [
   'useBookmarks',
-  'useChapterDetail',
   'useReadingHistory',
   'useRecommendations',
-  'useStories',
-  'useStoryDetail',
-  'useStoryMutations',
-  'useAutoSave',
   'useGlobalErrorHandler',
-  'useOptimisticUpdate',
 ];
 
 const EXTRA_COMMON_EXPORTS = ['isSupabaseConnectionError', 'getErrorMessage'];
@@ -87,7 +68,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     hooks = await import('@/hooks');
   });
 
-  it('re-exports all 20 presenter hooks under their eponymous names', () => {
+  it('re-exports all 11 presenter hooks under their eponymous names', () => {
     for (const name of EPONYMOUS_PRESENTER_HOOKS) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -101,7 +82,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('re-exports all 10 feature and common hooks', () => {
+  it('re-exports all 4 remaining feature and common hooks', () => {
     for (const name of FEATURE_AND_COMMON_HOOKS) {
       expect(hooks, name).toHaveProperty(name);
       expect(typeof hooks[name as keyof HooksModule]).toBe('function');
@@ -115,7 +96,7 @@ describe('F3 hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('exports exactly 35 runtime values, all functions', () => {
+  it('exports exactly the expected runtime values, all functions', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual([...ALL_RUNTIME_EXPORTS].sort());
     for (const key of keys) {

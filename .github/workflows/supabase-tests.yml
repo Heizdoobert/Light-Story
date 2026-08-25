@@ -28,18 +28,20 @@ jobs:
 
       - name: Start Supabase Local Stack
         working-directory: backend-supabase
+        timeout-minutes: 15
         run: |
-          supabase start || echo "Supabase local stack start skipped in runner"
+          supabase start
 
       - name: Run pgTAP SQL Tests
         working-directory: backend-supabase
+        timeout-minutes: 10
         run: |
-          supabase db test || echo "pgTAP tests completed"
+          supabase test db
 
       - name: Setup Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: package-lock.json
 
@@ -48,6 +50,20 @@ jobs:
 
       - name: Run Node.js RLS Integration Tests
         run: |
-          node backend-supabase/supabase/tests/rls-integration.test.js || echo "RLS integration test completed (no active Supabase daemon on runner)"
-        env:
-          SUPABASE_URL: http://localhost:54321
+          cd backend-supabase
+          # supabase test db stops non-DB services; restart them for the API
+          supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector > /dev/null 2>&1
+          # poll until the API is back up; ANON_KEY is empty while services are starting
+          for _ in $(seq 1 30); do
+            eval "$(supabase status -o env 2>/dev/null)"
+            [ -n "${ANON_KEY:-}" ] && break
+            sleep 2
+          done
+          if [ -z "${ANON_KEY:-}" ]; then
+            echo "::error::supabase status did not export ANON_KEY"
+            supabase status -o env
+            exit 1
+          fi
+          export SUPABASE_URL="$API_URL"
+          export SUPABASE_ANON_KEY="$ANON_KEY"
+          node supabase/tests/rls-integration.test.js

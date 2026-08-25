@@ -66,10 +66,31 @@ export async function fetchStoryById(id: string): Promise<Story | null> {
   return null;
 }
 
+export async function fetchStoriesByIds(ids: string[]): Promise<Story[]> {
+  if (!ids.length) return [];
+  if (supabase) {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .in('id', ids);
+      if (data) {
+        const byId = new Map((data as Story[]).map((story) => [story.id, story]));
+        return ids
+          .map((id) => byId.get(id))
+          .filter((story): story is Story => story != null);
+      }
+    } catch {}
+  }
+  // ponytail: total failure returns [] silently — acceptable for current callers; add error
+  // propagation when a caller needs to distinguish "no rows" from "fetch failed".
+  return [];
+}
+
 export async function incrementViews(storyId: string): Promise<void> {
   try {
     await apiClient.post(ROUTES.API.STORIES_VIEWS, { storyId });
-  } catch (err) {
+  } catch {
     if (supabase) {
       try {
         await supabase.rpc('increment_story_views', { story_id: storyId });

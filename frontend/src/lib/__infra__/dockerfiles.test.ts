@@ -12,8 +12,8 @@ describe('Dockerfile (root, combined frontend build)', () => {
   const content = readFile('Dockerfile');
 
   it('builds from a slim base image instead of alpine', () => {
-    expect(content).toMatch(/FROM node:\$\{NODE_VERSION\}-slim AS build/);
-    expect(content).not.toMatch(/FROM node:\$\{NODE_VERSION\}-alpine AS build/);
+    expect(content).toMatch(/FROM node:22-slim AS (gateway|frontend)-build/);
+    expect(content).not.toMatch(/FROM node:22-alpine AS (gateway|frontend)-build/);
   });
 
   it('removes committed lockfiles before installing', () => {
@@ -35,19 +35,24 @@ describe('Dockerfile (root, combined frontend build)', () => {
     expect(runBlockMatch).not.toBeNull();
   });
 
-  it('still uses the alpine image for the final production stage', () => {
-    expect(content).toMatch(/FROM node:\$\{NODE_VERSION\}-alpine AS final/);
+  it('still uses a slim image for the final production stage (no alpine)', () => {
+    expect(content).toMatch(/FROM node:22-slim(?! AS)/);
+    expect(content).not.toMatch(/alpine/);
   });
 });
 
 describe('Dockerfile.backend', () => {
-  const content = readFile('Dockerfile.backend');
+  // backend is now Supabase; Dockerfile.backend removed from repo — skip when absent
+  const backendExists = fs.existsSync(path.join(REPO_ROOT, 'Dockerfile.backend'));
+  const itIf = (name: string, fn: () => void) => (backendExists ? it(name, fn) : it.skip(name, fn));
 
-  it('installs dependencies with --legacy-peer-deps', () => {
+  itIf('installs dependencies with --legacy-peer-deps', () => {
+    const content = readFile('Dockerfile.backend');
     expect(content).toMatch(/npm install --legacy-peer-deps/);
   });
 
-  it('removes committed lockfiles before installing', () => {
+  itIf('removes committed lockfiles before installing', () => {
+    const content = readFile('Dockerfile.backend');
     expect(content).toMatch(/rm -f package-lock\.json/);
   });
 });

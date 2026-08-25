@@ -1,5 +1,14 @@
 import { ROUTES } from "@/lib/constants/routes";
 
+const COVER_FALLBACK_URL = "https://placehold.co/400x600/png?text=No+Cover";
+
+export function applyComicCoverFallback(
+  event: React.SyntheticEvent<HTMLImageElement>,
+): void {
+  if (event.currentTarget.src !== COVER_FALLBACK_URL)
+    event.currentTarget.src = COVER_FALLBACK_URL;
+}
+
 export function resolveR2Url(keyOrUrl: string): string {
   if (
     keyOrUrl.startsWith("http://") ||
@@ -23,14 +32,4 @@ export function getR2ImageUrl(
 ): string {
   if (!url || url.trim() === "") return fallback;
   return resolveR2Url(url);
-}
-
-export function formatImageWithCacheBuster(
-  url: string,
-  version?: string | number,
-): string {
-  if (!url) return url;
-  const delimiter = url.includes("?") ? "&" : "?";
-  const v = version || Date.now();
-  return `${url}${delimiter}v=${v}`;
 }

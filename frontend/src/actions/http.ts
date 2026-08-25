@@ -1,18 +1,5 @@
 import { createClient } from '@/lib/api/server';
-
-// ponytail: mirrors apiClient getBaseUrl (apiClient is browser-only); keep in sync when env sources change
-const getBaseUrl = (): string => {
-  const rawUrl =
-    process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
-      : process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (!rawUrl) {
-    throw new Error(
-      `Missing ${process.env.NODE_ENV === 'production' ? 'NEXT_PUBLIC_GATEWAY_URL_PRODUCTION or ' : ''}NEXT_PUBLIC_GATEWAY_URL`,
-    );
-  }
-  return rawUrl.replace(/\/+$/, '');
-};
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
 
 export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
   const supabase = await createClient();
@@ -24,7 +11,15 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
   if (!(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  return fetch(`${getBaseUrl()}${path}`, { ...init, headers });
+  const res = await fetch(`${getGatewayUrl()}${path}`, { ...init, headers });
+  if (!res.ok) {
+    // ponytail: console sink matches repo convention; fields bounded (no user/url values)
+    console.warn(
+      { event: 'gateway_request_failed', path, status: res.status, statusText: res.statusText },
+      'gateway request failed',
+    );
+  }
+  return res;
 }
 
 // ponytail: mirrors apiClient's inline error chain; shared by all action modules

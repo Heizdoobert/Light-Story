@@ -20,6 +20,21 @@ import {
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
+const slugify = (value: string) =>
+  value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
+
+async function uniqueSlug(env: Env, token: string | null, base: string, excludeId?: string): Promise<string> {
+  let candidate = base || 'comic';
+  for (let i = 2; ; i++) {
+    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${excludeId ? `&id=neq.${excludeId}` : ''}`;
+    const res = await sbGet('stories', q, env, token);
+    if (!res.ok) return candidate;
+    const rows = (await res.json()) as Array<{ id: string }>;
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${i}`;
+  }
+}
+
 async function okRes(res: Response): Promise<Response> {
   return res.ok ? json({ success: true }) : await handleRes(res);
 }
@@ -61,7 +76,18 @@ const COMIC_SCHEMA = [
   { field: 'description', type: 'optional-string', maxLength: 2000 },
   { field: 'status', type: 'enum', enumValues: VALID_STATUSES },
   { field: 'coverUrl', type: 'optional-string', maxLength: 1000 },
+  { field: 'slug', type: 'optional-string', maxLength: 200 },
 ] as const;
+
+// ponytail: legacy verb paths (/admin/manage-*) kept as aliases for old clients;
+// new REST-style noun paths are canonical. Drop aliases once all callers migrate.
+export function isAdminResourcePath(
+  path: string,
+  legacy: string,
+  canonical: string,
+): boolean {
+  return path === legacy || path === canonical;
+}
 
 export async function handleAdminRequest(
   request: Request,
@@ -85,8 +111,9 @@ export async function handleAdminRequest(
     return err('FORBIDDEN', 'Insufficient permissions to access admin routes', 403);
   }
 
-  // Granular check: audit routes are superadmin only
-  if (path.startsWith('/admin/audit') && !requireRole(userRole, ['superadmin'])) {
+  // Granular check: audit reads are superadmin only; writes stay open to
+  // staff roles so editors/admins can log their own actions
+  if (method === 'GET' && path.startsWith('/admin/audit') && !requireRole(userRole, ['superadmin'])) {
     return err('FORBIDDEN', 'Audit logs require superadmin privileges', 403);
   }
 
@@ -97,7 +124,7 @@ export async function handleAdminRequest(
   }
 
   try {
-    if (method === 'POST' && path === '/admin/manage-story') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-story', '/admin/stories')) {
       const body = (await request.json()) as any;
       const { action } = body;
 
@@ -174,7 +201,7 @@ export async function handleAdminRequest(
       );
     }
 
-    if (method === 'POST' && path === '/admin/manage-chapter') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-chapter', '/admin/chapters')) {
       const body = (await request.json()) as any;
       const { action } = body;
 
@@ -233,21 +260,26 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path === '/admin/audit') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '200'), 1, 500);
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
+      const page = clamp(parseInt(url.searchParams.get('page') || '1') || 1, 1, 100000);
+      const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50') || 50, 1, 200);
+      const offset = (page - 1) * pageSize;
+      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       const res = await sbGet('audit_logs', q, env, token);
-      return handleRes(res);
+      if (!res.ok) return handleRes(res);
+      const items = await res.json();
+      const total = await sbGetCount('audit_logs', env, token);
+      return json({ items, total });
     }
 
     if (method === 'GET' && path === '/admin/notifications') {
-      const limit = clamp(parseInt(url.searchParams.get('limit') || '20'), 1, 50);
-      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${limit}`;
+      const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '20') || 20, 1, 50);
+      const q = `select=id,user_id,action,entity_type,entity_id,metadata,created_at&order=created_at.desc&limit=${pageSize}`;
       const res = await sbGet('audit_logs', q, env, token);
       if (!res.ok) {
         return json({ success: true, data: { notifications: [] } });
       }
       const rawLogs = (await res.json().catch(() => [])) as any[];
-      const notifications = rawLogs.map((log: any) => {
+      const notifications = (Array.isArray(rawLogs) ? rawLogs : []).map((log: any) => {
         const title = log.action ? log.action.replace(/_/g, ' ').toUpperCase() : 'SYSTEM NOTIFICATION';
         const entity = log.entity_type ? `${log.entity_type}: ` : '';
         const metaStr = log.metadata && typeof log.metadata === 'object' ? JSON.stringify(log.metadata) : '';
@@ -329,6 +361,8 @@ export async function handleAdminRequest(
     const TAXONOMY_ENTITIES: Record<string, { table: string; select: string }> = {
       category: { table: 'categories', select: 'id,name,description,created_at,updated_at' },
       author: { table: 'authors', select: 'id,name,bio,created_at,updated_at' },
+      genre: { table: 'genres', select: 'id,name,description,created_at,updated_at' },
+      tag: { table: 'tags', select: 'id,name,description,created_at,updated_at' },
     };
 
     if (method === 'GET' && path === '/admin/taxonomy') {
@@ -545,7 +579,7 @@ export async function handleAdminRequest(
       );
     }
 
-    if (method === 'POST' && path === '/admin/manage-user') {
+    if (method === 'POST' && isAdminResourcePath(path, '/admin/manage-user', '/admin/users')) {
       const body = (await request.json()) as any;
       const { action } = body;
       const svcKey = env.SUPABASE_SERVICE_KEY;
@@ -849,6 +883,7 @@ export async function handleAdminRequest(
         status: s.status || 'draft',
       };
       if (s.coverUrl) payload.cover_url = s.coverUrl;
+      payload.slug = await uniqueSlug(env, token, (s.slug as string) || slugify(String(s.title)));
       const res = await sbPost('stories', payload, env, token);
       return handleRes(res);
     }
@@ -890,6 +925,9 @@ export async function handleAdminRequest(
       if (s.description !== undefined) payload.description = (s.description as string) || null;
       if (s.status !== undefined) payload.status = s.status as string;
       if (s.coverUrl !== undefined) payload.cover_url = s.coverUrl as string;
+      if (s.slug !== undefined && (s.slug as string)) {
+        payload.slug = await uniqueSlug(env, token, slugify(String(s.slug)), id);
+      }
       const res = await sbPatch('stories', `id=eq.${id}`, payload, env, token);
       return handleRes(res);
     }

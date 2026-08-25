@@ -1,37 +1,49 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants/routes";
 import {
-  LayoutDashboard,
-  BarChart3,
-  BookOpen,
-  Layers,
-  Tags,
-  Users,
-  Megaphone,
-  Settings,
-  ShieldAlert,
-  Home,
-  UserCircle,
-} from "lucide-react";
-
-const ADMIN_NAV_ITEMS = [
-  { label: "Tổng quan", href: ROUTES.ADMIN.DASHBOARD, icon: LayoutDashboard },
-  { label: "Thống kê & R2", href: ROUTES.ADMIN.ANALYTICS, icon: BarChart3 },
-  { label: "Quản lý Truyện", href: ROUTES.ADMIN.COMICS, icon: BookOpen },
-  { label: "Quản lý Chương", href: ROUTES.ADMIN.CHAPTERS, icon: Layers },
-  { label: "Thể loại", href: ROUTES.ADMIN.CATEGORIES, icon: Tags },
-  { label: "Người dùng", href: ROUTES.ADMIN.USERS, icon: Users },
-  { label: "Quảng cáo", href: ROUTES.ADMIN.ADS, icon: Megaphone },
-  { label: "Cài đặt", href: ROUTES.ADMIN.SETTINGS, icon: Settings },
-  { label: "Hồ sơ cá nhân", href: ROUTES.ADMIN.PROFILE, icon: UserCircle },
-  { label: "Audit Log", href: ROUTES.ADMIN.AUDIT, icon: ShieldAlert },
-];
+  DEFAULT_SIDEBAR_CONTROL,
+  SIDEBAR_CONTROL_KEY,
+  isCategoryMenuVisibleForRole,
+  isSidebarEnabledForRole,
+  parseSidebarControl,
+  type SidebarControl,
+} from "@/lib/admin/sidebar-settings";
+import { ADMIN_MENU_ITEMS } from "@/lib/admin/admin-navigation";
+import { Home } from "lucide-react";
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { role } = useAuth();
+  const [control, setControl] = useState<SidebarControl>(DEFAULT_SIDEBAR_CONTROL);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", SIDEBAR_CONTROL_KEY)
+      .maybeSingle()
+      .then(
+        ({ data }) => {
+          if (data) setControl(parseSidebarControl(data.value));
+        },
+        () => {},
+      );
+  }, []);
+
+  if (!isSidebarEnabledForRole(control, role)) return null;
+
+  const visibleItems = ADMIN_MENU_ITEMS.filter((item) => {
+    if (!item.roles.includes(role as (typeof item.roles)[number])) return false;
+    if (item.id === "categories") return isCategoryMenuVisibleForRole(control, role);
+    return true;
+  });
 
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 text-white min-h-screen p-4 flex flex-col justify-between shrink-0">
@@ -46,7 +58,7 @@ export function AdminSidebar() {
           <Home size={16} className="text-slate-500 group-hover:text-white transition-colors" />
         </Link>
         <nav className="space-y-1">
-          {ADMIN_NAV_ITEMS.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (

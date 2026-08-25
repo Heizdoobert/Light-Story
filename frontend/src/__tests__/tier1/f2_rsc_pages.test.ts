@@ -1,5 +1,5 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import fs, { readFileSync } from 'fs';
+import path, { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
 const APP_DIR = join(__dirname, '..', '..', 'app');
@@ -8,8 +8,6 @@ const readPage = (rel: string): string =>
   readFileSync(join(APP_DIR, ...rel.split('/')), 'utf-8').replace(/^\uFEFF/, '');
 
 const findPages = (): string[] => {
-  const fs = require('fs');
-  const path = require('path');
   const results: string[] = [];
   const walk = (dir: string): void => {
     for (const entry of fs.readdirSync(dir).sort()) {
@@ -23,14 +21,32 @@ const findPages = (): string[] => {
 };
 
 const EXPECTED_SERVER_PAGES = [
-  '(public)/page.tsx',
+  '(admin)/admin/page.tsx',
+  '(admin)/admin/genres/page.tsx',
+  '(admin)/admin/tags/page.tsx',
+'(admin)/admin/sentry/page.tsx',
   '(errors)/forbidden/page.tsx',
+  '(errors)/handle-exception/400/page.tsx',
+  '(errors)/handle-exception/401/page.tsx',
+  '(errors)/handle-exception/403/page.tsx',
+  '(errors)/handle-exception/404/page.tsx',
+  '(errors)/handle-exception/503/page.tsx',
   '(errors)/unauthorized/page.tsx',
   '(public)/auth/forgetPassword/page.tsx',
   '(public)/auth/login/page.tsx',
   '(public)/auth/register/page.tsx',
   '(public)/auth/reset-password/page.tsx',
+  '(public)/comics/[comicId]/chapter/[chapterId]/page.tsx',
+  '(public)/comics/[comicId]/page.tsx',
+  '(public)/comics/page.tsx',
+  '(public)/genres/[genreSlug]/page.tsx',
+  '(public)/page.tsx',
   '(public)/profile/page.tsx',
+  '(public)/search/page.tsx',
+  '(user)/user/bookmarks/page.tsx',
+  '(user)/user/history/page.tsx',
+  '(user)/user/page.tsx',
+  '(user)/user/profile/page.tsx',
 ];
 
 const THIN_WRAPPERS: Record<string, string> = {
@@ -40,6 +56,7 @@ const THIN_WRAPPERS: Record<string, string> = {
   '(errors)/handle-exception/403/page.tsx': 'ForbiddenPage',
   '(errors)/handle-exception/404/page.tsx': 'NotFoundPage',
   '(errors)/handle-exception/503/page.tsx': 'ServiceUnavailablePage',
+  '(user)/user/profile/page.tsx': 'ProfilePageContent',
 };
 
 describe('F2 RSC page files under src/app', () => {
@@ -68,8 +85,8 @@ describe('F2 RSC page files under src/app', () => {
     const unauthorized = readPage('(errors)/unauthorized/page.tsx');
     expect(forbidden).not.toContain('use client');
     expect(unauthorized).not.toContain('use client');
-    expect(forbidden).toContain("redirect('/handle-exception/403')");
-    expect(unauthorized).toContain("redirect('/handle-exception/401')");
+    expect(forbidden).toContain('redirect(ROUTES.ERROR.FORBIDDEN)');
+    expect(unauthorized).toContain('redirect(ROUTES.ERROR.UNAUTHORIZED)');
   });
 
   it('marks remaining interactive pages as client components', () => {
@@ -80,10 +97,10 @@ describe('F2 RSC page files under src/app', () => {
     }
   });
 
-  it('wraps dense feature pages in the admin route with a role guard', () => {
+  it('redirects the legacy /admin page to the dashboard route without a client directive', () => {
     const admin = readPage('(admin)/admin/page.tsx');
-    expect(admin).toContain('RoleProtectedRoute');
-    expect(admin).toContain('use client');
+    expect(admin).not.toContain('use client');
+    expect(admin).toContain('redirect(ROUTES.ADMIN.DASHBOARD)');
   });
 
   it('gives thin wrappers component imports from @/components', () => {

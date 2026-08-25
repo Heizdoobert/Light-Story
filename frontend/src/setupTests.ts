@@ -87,7 +87,7 @@ if (typeof originalFetch === 'function') {
         if (typeof input === 'string') input = newUrl;
         else input = new Request(newUrl, input as RequestInit);
       }
-    } catch (e) {
+    } catch {
       // ignore and proceed to original fetch
     }
 

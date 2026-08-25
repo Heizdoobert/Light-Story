@@ -1,5 +1,6 @@
 /** CORS and request handling middleware */
 
+import { applySecurityHeaders } from './securityHeaders';
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -51,9 +52,11 @@ export function handleCorsPreflightRequest(
 ): Response {
   const origin = request.headers.get('Origin');
   const reqHeaders = request.headers.get('Access-Control-Request-Headers');
+  const headers = new Headers(corsHeaders(origin, reqHeaders));
+  applySecurityHeaders(headers);
   return new Response(null, {
     status: 204,
-    headers: corsHeaders(origin, reqHeaders),
+    headers,
   });
 }
 

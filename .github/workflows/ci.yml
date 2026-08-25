@@ -36,8 +36,23 @@ jobs:
       - name: Clean Next cache
         run: rm -rf .next
 
-      - name: Verify frontend
-        run: npm run ci:verify
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://lightstory.app
+          NEXT_PUBLIC_GATEWAY_URL_PRODUCTION: https://kv-worker.hhhuygiau.workers.dev
+
+      - name: Test
+        run: npm run test:run
+
+      - name: Security audit
+        run: npm audit --audit-level=high
 
   worker:
     name: Worker Type-Check (${{ matrix.worker }})
@@ -97,34 +112,25 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run Prism mock and smoke-check
+      - name: Validate OpenAPI spec loads
         run: |
-          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 &
-          sleep 5
-          curl -f http://localhost:4010/comics || curl -f http://localhost:4010/stories || echo "Mock server smoke test completed."
-
-  worker-preview:
-    name: Worker Preview Deploy
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: 22
-
-      - name: Install Wrangler
-        run: npm install -g wrangler
-
-      - name: Deploy Unified Gateway (preview)
-        working-directory: workers/kv-worker
-        run: |
-          wrangler deploy --env preview || echo "Preview deploy skipped (no preview env configured)"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 > /tmp/prism.log 2>&1 &
+          PRISM_PID=$!
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:4010/stories > /tmp/mock-response.json && break
+            sleep 2
+          done
+          if ! curl -sf http://localhost:4010/stories > /tmp/mock-response.json; then
+            echo "::error::Prism mock did not respond with 200"
+            cat /tmp/prism.log
+            exit 1
+          fi
+          if ! grep -q '"id"' /tmp/mock-response.json; then
+            echo "::error::Mock response does not match OpenAPI shape (missing id field)"
+            exit 1
+          fi
+          kill $PRISM_PID 2>/dev/null || true
+          echo "OpenAPI spec mock validated."
 
   contract-tests:
     name: Contract Tests
@@ -145,13 +151,24 @@ jobs:
 
       - name: Run Prism mock server
         run: |
-          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 &
-          sleep 2
+          npx @stoplight/prism-cli mock packages/api-types/openapi.yaml --port 4010 > /tmp/prism-contract.log 2>&1 &
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:4010/chapters > /dev/null 2>&1 && break
+            sleep 2
+          done
 
-      - name: Validate response against spec
+      - name: Validate chapters response against spec
         run: |
-          curl -s http://localhost:4010/comics/test-comic/chapters | head -c 1000
-          echo "--- Response schema validated against OpenAPI spec ---"
+          if ! curl -sf "http://localhost:4010/chapters" > /tmp/chapters.json; then
+            echo "::error::Chapters endpoint did not respond"
+            exit 1
+          fi
+          if ! grep -qE '"(id|chapter_number|title)"' /tmp/chapters.json; then
+            echo "::error::Chapters response missing expected fields"
+            cat /tmp/chapters.json
+            exit 1
+          fi
+          echo "Chapters response validated against OpenAPI spec."
 
   auto-pull-request:
     name: Auto Pull Request to main

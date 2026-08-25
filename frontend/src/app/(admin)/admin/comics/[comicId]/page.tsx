@@ -1,11 +1,12 @@
 "use client";
 
-import { use, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { FormEditor } from '@/components/admin/form-editor';
 import { Input } from '@/components/ui/input';
 import { updateComic } from '@/lib/actions/comic.actions';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { fetchStoryById } from '@/services/comics/story.service';
 import { ROUTES } from '@/lib/constants/routes';
 
 export default function AdminEditComicPage({ params }: { params: Promise<{ comicId: string }> }) {
@@ -14,30 +15,73 @@ export default function AdminEditComicPage({ params }: { params: Promise<{ comic
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [description, setDescription] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function loadComic() {
-      const supabase = getSupabaseBrowserClient();
-      const { data } = await supabase.from('stories').select('*').eq('id', comicId).maybeSingle();
-      if (data) {
-        setTitle(data.title || '');
-        setAuthor(data.author || '');
-        setDescription(data.description || '');
+  const loadComic = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const story = await fetchStoryById(comicId);
+      if (!story) {
+        setError('Không tìm thấy truyện');
+        return;
       }
+      setTitle(story.title || '');
+      setAuthor(story.author || '');
+      setDescription(story.description || '');
+    } catch (err) {
+      setError((err as Error).message || 'Không thể tải thông tin truyện');
+    } finally {
+      setIsLoading(false);
     }
-    loadComic();
   }, [comicId]);
+
+  useEffect(() => {
+    loadComic();
+  }, [loadComic]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const res = await updateComic(comicId, { title, author });
-    if (res.success) {
-      router.push(ROUTES.ADMIN.COMICS);
+    try {
+      const res = await updateComic(comicId, { title, author, description });
+      if (res.success) {
+        toast.success('Lưu truyện thành công');
+        router.push(ROUTES.ADMIN.COMICS);
+        return;
+      }
+      toast.error(res.error || 'Lưu truyện thất bại');
+    } catch (err) {
+      toast.error((err as Error).message || 'Lưu truyện thất bại');
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-3xl mx-auto py-6">
+        <p className="text-sm font-semibold animate-pulse">Đang tải thông tin truyện...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-3xl mx-auto py-6 text-center space-y-4">
+        <p className="text-sm font-semibold text-rose-500">{error}</p>
+        <button
+          type="button"
+          onClick={loadComic}
+          className="px-4 py-2 text-sm rounded-xl bg-orange-500 text-white font-semibold hover:bg-orange-600"
+        >
+          Thử Lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto py-6">

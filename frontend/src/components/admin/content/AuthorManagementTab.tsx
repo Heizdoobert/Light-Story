@@ -1,4 +1,7 @@
+"use client";
+
 import React, { useState } from 'react';
+import { Modal } from '@/components/ui/modal';
 import { createAuthor, updateAuthor, deleteAuthor } from '@/actions/taxonomy.actions';
 import { createTranslator, updateTranslator, deleteTranslator } from '@/actions/translators.actions';
 import { useAuthorPresenter } from '@/hooks/presenters/useAuthorPresenter';
@@ -96,12 +99,14 @@ const AuthorsSection: React.FC = () => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Author name"
+          aria-label="Author name"
           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-bold"
         />
         <textarea
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           placeholder="Short bio (optional)"
+          aria-label="Short bio (optional)"
           rows={4}
           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-bold resize-none"
         />
@@ -135,12 +140,14 @@ const AuthorsSection: React.FC = () => {
                           type="text"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
+                          aria-label="Author name"
                           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm font-bold"
                         />
                         <textarea
                           value={editBio}
                           onChange={(e) => setEditBio(e.target.value)}
                           rows={3}
+                          aria-label="Author bio"
                           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-3 py-2 text-sm resize-none"
                         />
                         <div className="flex items-center gap-2">
@@ -298,6 +305,7 @@ const TranslatorsSection: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search translators..."
+            aria-label="Search translators"
             className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-2.5 text-sm"
           />
         </div>
@@ -378,21 +386,17 @@ const TranslatorsSection: React.FC = () => {
         </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4">
-              {editingId ? 'Edit Translator' : 'Add Translator'}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
+      <Modal isOpen={showModal} onClose={closeModal} title={editingId ? 'Edit Translator' : 'Add Translator'}>
+        <form onSubmit={handleSubmit} className="space-y-4">
               {formError && (
                 <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-xs text-rose-600 dark:text-rose-400 font-medium">
                   {formError}
                 </div>
               )}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Name *</label>
+                <label htmlFor="translator-name" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Name *</label>
                 <input
+                  id="translator-name"
                   type="text"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
@@ -400,8 +404,9 @@ const TranslatorsSection: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Contact</label>
+                <label htmlFor="translator-contact" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Contact</label>
                 <input
+                  id="translator-contact"
                   type="text"
                   value={formContact}
                   onChange={(e) => setFormContact(e.target.value)}
@@ -409,8 +414,9 @@ const TranslatorsSection: React.FC = () => {
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Status</label>
+                <label htmlFor="translator-status" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Status</label>
                 <select
+                  id="translator-status"
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 px-4 py-3 text-sm"
@@ -420,8 +426,9 @@ const TranslatorsSection: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Notes</label>
+                <label htmlFor="translator-notes" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Notes</label>
                 <textarea
+                  id="translator-notes"
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
                   rows={3}
@@ -446,9 +453,7 @@ const TranslatorsSection: React.FC = () => {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 };

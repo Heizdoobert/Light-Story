@@ -9,22 +9,29 @@ import { Chapter, Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 
 import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
+import { applyComicCoverFallback } from "@/lib/utils/image-url";
 import { supabase } from "@/lib/supabase/client";
 
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
 
-export function useHomePagePresenter(initialComics: Comic[] = []) {
+export function useHomePagePresenter(
+  initialComics: Comic[] = [],
+  initialTrending: Comic[] = [],
+  initialLatestChapters: Record<string, Chapter> = {},
+  hydrated = false,
+) {
   const { t } = useLanguage();
-  const [_categories, setCategories] = useState<Category[]>([]);
+  const [, setCategories] = useState<Category[]>([]);
   const [comics, setComics] = useState<Comic[]>(initialComics);
-  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>({});
-  const [trendingComics, setTrendingComics] = useState<Comic[]>([]);
-  const [trendingLoaded, setTrendingLoaded] = useState(false);
-  const [loading, setLoading] = useState(initialComics.length === 0);
+  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(initialLatestChapters);
+  const [trendingComics, setTrendingComics] = useState<Comic[]>(initialTrending);
+  const [trendingLoaded, setTrendingLoaded] = useState(hydrated);
+  const [loading, setLoading] = useState(!hydrated && initialComics.length === 0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [historyComics, setHistoryComics] = useState<HistoryComic[]>([]);
 
   useEffect(() => {
+    if (hydrated) return;
     const loadInitData = async () => {
       try {
         let cats: Category[] = [];
@@ -43,7 +50,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
       }
     };
     loadInitData();
-  }, []);
+  }, [hydrated]);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +82,7 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
   }, []);
 
   useEffect(() => {
+    if (hydrated) return;
     let isMounted = true;
     async function loadComics() {
       if (initialComics.length === 0) setLoading(true);
@@ -123,22 +131,13 @@ export function useHomePagePresenter(initialComics: Comic[] = []) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [hydrated, initialComics]);
 
   const getComicCover = useCallback((comic: any): string => {
     const raw = comic.coverUrl || comic.cover_url || "";
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   }, []);
-
-  const applyComicCoverFallback = useCallback(
-    (event: React.SyntheticEvent<HTMLImageElement>) => {
-      const fallback = `https://placehold.co/400x600/png?text=No+Cover`;
-      if (event.currentTarget.src !== fallback)
-        event.currentTarget.src = fallback;
-    },
-    [],
-  );
 
   return {
     t,

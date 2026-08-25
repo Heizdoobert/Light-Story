@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X,
@@ -13,7 +13,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useUser } from "@/lib/hooks/use-user";
+import { useUser } from "@/hooks/features/use-user";
+import { useLanguage } from "@/context/LanguageContext";
+import { resetPasswordSchema, signInPasswordSchema } from "@/lib/schemas/auth";
 
 type AuthMode = "signin" | "register" | "forgot";
 
@@ -25,6 +27,7 @@ export default function LoginModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLanguage();
   const {
     signIn,
     signInWithEmail,
@@ -53,13 +56,25 @@ export default function LoginModal({
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // ponytail: handleClose identity changes per render; isOpen gate keeps it fresh
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       if (mode === "signin") {
-        if (!password) {
-          toast.error("Please enter your password");
+        const pw = signInPasswordSchema.safeParse(password);
+        if (!pw.success) {
+          toast.error(pw.error.issues[0].message);
           return;
         }
         await signInWithPassword(email, password);
@@ -71,12 +86,9 @@ export default function LoginModal({
           toast.error("Please enter your full name");
           return;
         }
-        if (password.length < 6) {
-          toast.error("Password must be at least 6 characters");
-          return;
-        }
-        if (password !== confirmPassword) {
-          toast.error("Password confirmation does not match");
+        const pw = resetPasswordSchema.safeParse({ password, confirmPassword });
+        if (!pw.success) {
+          toast.error(pw.error.issues[0].message);
           return;
         }
         await register(email, password, fullName.trim());
@@ -132,20 +144,19 @@ export default function LoginModal({
     { title: string; subtitle: string; submit: string }
   > = {
     signin: {
-      title: "Welcome back",
-      subtitle: "Sign in to continue your experience.",
-      submit: "Sign In",
+      title: t("auth_welcome_back"),
+      subtitle: t("auth_sign_in_subtitle"),
+      submit: t("auth_sign_in"),
     },
     register: {
-      title: "Create account",
-      subtitle:
-        "Register as a user account. Admin roles are assigned by superadmin.",
-      submit: "Create Account",
+      title: t("auth_create_account"),
+      subtitle: t("auth_create_account_subtitle"),
+      submit: t("auth_create_account"),
     },
     forgot: {
-      title: "Reset password",
-      subtitle: "Enter your email to receive a password reset link.",
-      submit: "Send Reset Link",
+      title: t("auth_reset_password_title"),
+      subtitle: t("auth_reset_password_subtitle"),
+      submit: t("auth_send_reset_link"),
     },
   };
 
@@ -172,7 +183,7 @@ export default function LoginModal({
             <div className="p-8">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                     {current.title}
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mt-1">
@@ -191,10 +202,11 @@ export default function LoginModal({
               <form onSubmit={handleSubmit} className="space-y-6">
                 {mode === "register" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Full Name
+                    <label htmlFor="modal-full-name" className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
+                      {t("auth_full_name")}
                     </label>
                     <input
+                      id="modal-full-name"
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
@@ -205,8 +217,8 @@ export default function LoginModal({
                 )}
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                    Email Address
+                  <label htmlFor="modal-email" className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
+                    {t("auth_email_address")}
                   </label>
                   <div className="relative mt-2">
                     <Mail
@@ -214,6 +226,7 @@ export default function LoginModal({
                       className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                     />
                     <input
+                      id="modal-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -225,8 +238,8 @@ export default function LoginModal({
 
                 {mode !== "forgot" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Password
+                    <label htmlFor="modal-password" className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
+                      {t("auth_password")}
                     </label>
                     <div className="relative mt-2">
                       <Lock
@@ -234,6 +247,7 @@ export default function LoginModal({
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                       />
                       <input
+                        id="modal-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -246,8 +260,8 @@ export default function LoginModal({
 
                 {mode === "register" && (
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-                      Confirm Password
+                    <label htmlFor="modal-confirm-password" className="text-[10px] font-bold uppercase tracking-wide text-slate-400 ml-1">
+                      {t("auth_confirm_password")}
                     </label>
                     <div className="relative mt-2">
                       <KeyRound
@@ -255,6 +269,7 @@ export default function LoginModal({
                         className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                       />
                       <input
+                        id="modal-confirm-password"
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -268,7 +283,7 @@ export default function LoginModal({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-slate-900/10 dark:shadow-cyan-400/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full bg-slate-900 dark:bg-cyan-400 py-4 rounded-2xl text-white dark:text-slate-950 font-bold text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmitting ? (
                     <Loader2 size={18} className="animate-spin" />
@@ -290,7 +305,7 @@ export default function LoginModal({
                       </div>
                       <div className="relative flex justify-center text-xs">
                         <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-bold">
-                          or
+                          {t("auth_or")}
                         </span>
                       </div>
                     </div>
@@ -300,7 +315,7 @@ export default function LoginModal({
                       disabled={isSubmitting}
                       className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
                     >
-                      Continue with Google
+                      {t("auth_continue_google")}
                     </button>
                     <button
                       type="button"
@@ -308,7 +323,7 @@ export default function LoginModal({
                       disabled={isSubmitting}
                       className="w-full border border-slate-200 dark:border-slate-700 py-3 rounded-2xl text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
                     >
-                      Send Magic Link
+                      {t("auth_send_magic_link")}
                     </button>
                   </>
                 )}
@@ -321,7 +336,7 @@ export default function LoginModal({
                       onClick={() => setMode("signin")}
                       className="text-slate-500 hover:text-primary transition-colors"
                     >
-                      Sign in
+                      {t("auth_sign_in_link")}
                     </button>
                   )}
                   {mode !== "register" && (
@@ -329,7 +344,7 @@ export default function LoginModal({
                       onClick={() => setMode("register")}
                       className="text-slate-500 hover:text-primary transition-colors"
                     >
-                      Register
+                      {t("auth_register")}
                     </button>
                   )}
                   {mode !== "forgot" && (
@@ -337,7 +352,7 @@ export default function LoginModal({
                       onClick={() => setMode("forgot")}
                       className="text-slate-500 hover:text-primary transition-colors"
                     >
-                      Forgot password
+                      {t("auth_forgot_password")}
                     </button>
                   )}
                 </div>

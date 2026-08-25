@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5MB ceiling for avatar images
+
 /**
  * GET /api/avatar?url=...
  * Proxies Supabase Storage avatar images with immutable cache headers.
@@ -30,7 +32,14 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(parsedUrl.toString());
+    const response = await fetch(parsedUrl.toString(), { redirect: 'manual' });
+    if (response.redirected || response.type === 'opaqueredirect') {
+      return NextResponse.json({ error: 'Redirects not allowed' }, { status: 400 });
+    }
+    if (response.status >= 300 && response.status < 400) {
+      console.error(`[Avatar Proxy] Upstream redirect ${response.status} for ${parsedUrl.pathname}`);
+      return NextResponse.json({ error: 'Upstream redirect not allowed' }, { status: 502 });
+    }
     if (!response.ok) {
       console.error(`[Avatar Proxy] Upstream returned ${response.status} for ${parsedUrl.pathname}`);
       return NextResponse.json({ error: 'Failed to fetch image' }, { status: response.status });
@@ -41,6 +50,11 @@ export async function GET(request: Request) {
     // Validate that upstream returns an image
     if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'Upstream returned non-image content' }, { status: 502 });
+    }
+
+    const contentLength = Number(response.headers.get('content-length'));
+    if (Number.isFinite(contentLength) && contentLength > MAX_AVATAR_BYTES) {
+      return NextResponse.json({ error: 'Image exceeds size limit' }, { status: 503 });
     }
 
     const buffer = await response.arrayBuffer();

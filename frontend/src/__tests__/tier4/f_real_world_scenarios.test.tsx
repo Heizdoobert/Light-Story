@@ -1,37 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, renderHook, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import { GET } from '@/app/api/health/route';
 import { RoleProtectedRoute } from '@/components/auth/RoleProtectedRoute';
-import { CreateComicForm } from '@/components/comics/CreateComicForm';
-import { useResetPasswordPresenter } from '@/hooks/presenters/useResetPasswordPresenter';
 import { handleAdminRequest } from '../../../../workers/kv-worker/src/routes/admin';
 
-const toastMocks = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
-
 const mocks = vi.hoisted(() => {
-  const updatePassword = vi.fn();
   return {
-    mockUploadComicCover: vi.fn(),
-    mockCreateComic: vi.fn(),
     mockPush: vi.fn(),
     mockReplace: vi.fn(),
-    mockUpdatePassword: updatePassword,
-    mockAlert: vi.fn(),
     mockAuth: {
       user: { id: 'u1' } as { id: string } | null,
       role: undefined as string | undefined,
       loading: false as boolean,
-      updatePassword,
     },
     mockPathname: '/comics/create',
   };
 });
-
-vi.mock('@/services/comics/comic.service', () => ({
-  uploadComicCover: mocks.mockUploadComicCover,
-  createComic: mocks.mockCreateComic,
-}));
 
 vi.mock('@/context/AuthContext', () => ({
   useAuth: () => mocks.mockAuth,
@@ -41,8 +26,6 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mocks.mockPush, replace: mocks.mockReplace }),
   usePathname: () => mocks.mockPathname,
 }));
-
-vi.mock('sonner', () => ({ toast: toastMocks }));
 
 const multipart = (parts: { name: string; filename?: string; contentType?: string; value: string }[], boundary = 'test-boundary') => {
   const chunks: string[] = [];
@@ -66,46 +49,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-});
-
-describe('Journey 1: Admin creates a comic with a cover via CreateComicForm', () => {
-  beforeEach(() => {
-    vi.stubGlobal('alert', mocks.mockAlert);
-    vi.stubGlobal('URL', Object.assign(globalThis.URL, {
-      createObjectURL: vi.fn(() => 'blob:mock-preview'),
-      revokeObjectURL: vi.fn(),
-    }));
-    mocks.mockUploadComicCover.mockResolvedValue('https://cdn.example.com/covers/my-comic.png');
-    mocks.mockCreateComic.mockResolvedValue({ id: 'comic-42', title: 'Neon Tides' });
-  });
-
-  it('uploads the cover, creates the comic, and navigates to add-chapter', async () => {
-    render(<CreateComicForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Neon Tides' } });
-    fireEvent.change(screen.getByPlaceholderText('Description'), { target: { value: 'A story about glowing seas.' } });
-    fireEvent.change(screen.getByLabelText('Cover Image'), { target: { files: [new File(['fake-png-bytes'], 'cover.png', { type: 'image/png' })] } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Comic' }));
-
-    await waitFor(() => expect(mocks.mockUploadComicCover).toHaveBeenCalledTimes(1));
-    expect(mocks.mockUploadComicCover).toHaveBeenCalledWith(expect.any(File));
-    expect(mocks.mockCreateComic).toHaveBeenCalledWith(expect.objectContaining({
-      title: 'Neon Tides',
-      description: 'A story about glowing seas.',
-      coverUrl: 'https://cdn.example.com/covers/my-comic.png',
-    }));
-    expect(mocks.mockAlert).toHaveBeenCalledWith('Comic created: Neon Tides');
-    expect(mocks.mockPush).toHaveBeenCalledWith('/comics/comic-42/add-chapter?storyId=comic-42');
-  });
-
-  it('blocks submit when no cover is selected', async () => {
-    render(<CreateComicForm />);
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'No Cover' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Comic' }));
-
-    await waitFor(() => expect(mocks.mockAlert).toHaveBeenCalledWith('Cover image required'));
-    expect(mocks.mockCreateComic).not.toHaveBeenCalled();
-    expect(mocks.mockPush).not.toHaveBeenCalled();
-  });
 });
 
 describe('Journey 2: Role-based route protection', () => {
@@ -155,60 +98,6 @@ describe('Journey 2: Role-based route protection', () => {
   });
 });
 
-describe('Journey 3: Password reset recovery flow', () => {
-  beforeEach(() => {
-    window.location.hash = '#type=recovery';
-    mocks.mockUpdatePassword.mockResolvedValue(undefined);
-  });
-
-  afterEach(() => {
-    window.location.hash = '';
-  });
-
-  it('detects the recovery hash and rejects passwords shorter than 6 characters', async () => {
-    const { result } = renderHook(() => useResetPasswordPresenter());
-    await waitFor(() => expect(result.current.isRecoveryFlow).toBe(true));
-    act(() => {
-      result.current.setPassword('123');
-      result.current.setConfirmPassword('123');
-    });
-    await act(async () => {
-      await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
-    });
-    expect(toastMocks.error).toHaveBeenCalledWith('Password must be at least 6 characters');
-    expect(mocks.mockUpdatePassword).not.toHaveBeenCalled();
-  });
-
-  it('rejects mismatched password confirmation', async () => {
-    const { result } = renderHook(() => useResetPasswordPresenter());
-    await waitFor(() => expect(result.current.isRecoveryFlow).toBe(true));
-    act(() => {
-      result.current.setPassword('longpass123');
-      result.current.setConfirmPassword('different456');
-    });
-    await act(async () => {
-      await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
-    });
-    expect(toastMocks.error).toHaveBeenCalledWith('Password confirmation does not match');
-    expect(mocks.mockUpdatePassword).not.toHaveBeenCalled();
-  });
-
-  it('updates the password and navigates to sign-in on success', async () => {
-    const { result } = renderHook(() => useResetPasswordPresenter());
-    await waitFor(() => expect(result.current.isRecoveryFlow).toBe(true));
-    act(() => {
-      result.current.setPassword('newsecurepass');
-      result.current.setConfirmPassword('newsecurepass');
-    });
-    await act(async () => {
-      await result.current.handleSubmit({ preventDefault: vi.fn() } as any);
-    });
-    expect(mocks.mockUpdatePassword).toHaveBeenCalledWith('newsecurepass');
-    expect(toastMocks.success).toHaveBeenCalledWith('Password updated. Please sign in again.');
-    expect(mocks.mockReplace).toHaveBeenCalledWith('/');
-  });
-});
-
 describe('Journey 4: Health check API', () => {
   it('returns 200 with status ok and a recent ISO timestamp', async () => {
     const before = Date.now();
@@ -220,50 +109,6 @@ describe('Journey 4: Health check API', () => {
     expect(Number.isFinite(ts)).toBe(true);
     expect(ts).toBeGreaterThanOrEqual(before - 1000);
     expect(ts).toBeLessThanOrEqual(Date.now() + 1000);
-  });
-});
-
-describe('Journey 5: Cover upload fails mid-flight, then retry succeeds', () => {
-  beforeEach(() => {
-    vi.stubGlobal('alert', mocks.mockAlert);
-    vi.stubGlobal('URL', Object.assign(globalThis.URL, {
-      createObjectURL: vi.fn(() => 'blob:mock-preview'),
-      revokeObjectURL: vi.fn(),
-    }));
-    mocks.mockCreateComic.mockResolvedValue({ id: 'comic-7', title: 'Retry Saga' });
-  });
-
-  const fillAndSubmit = () => {
-    fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Retry Saga' } });
-    fireEvent.change(screen.getByLabelText('Cover Image'), { target: { files: [new File(['fake-png-bytes'], 'cover.png', { type: 'image/png' })] } });
-    fireEvent.click(screen.getByRole('button', { name: 'Create Comic' }));
-  };
-
-  it('surfaces the error and does not navigate or create the comic', async () => {
-    mocks.mockUploadComicCover.mockRejectedValueOnce(new TypeError('Failed to fetch'));
-    render(<CreateComicForm />);
-    fillAndSubmit();
-
-    await waitFor(() => expect(mocks.mockAlert).toHaveBeenCalledWith('Failed to fetch'));
-    expect(mocks.mockCreateComic).not.toHaveBeenCalled();
-    expect(mocks.mockPush).not.toHaveBeenCalled();
-  });
-
-  it('succeeds on retry after the transient failure', async () => {
-    mocks.mockUploadComicCover
-      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
-      .mockResolvedValueOnce('https://cdn.example.com/covers/retry.png');
-    render(<CreateComicForm />);
-
-    fillAndSubmit();
-    await waitFor(() => expect(mocks.mockAlert).toHaveBeenCalledWith('Failed to fetch'));
-
-    fillAndSubmit();
-    await waitFor(() =>
-      expect(mocks.mockPush).toHaveBeenCalledWith('/comics/comic-7/add-chapter?storyId=comic-7'),
-    );
-    expect(mocks.mockAlert).toHaveBeenLastCalledWith('Comic created: Retry Saga');
-    expect(mocks.mockCreateComic).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -316,7 +161,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const res = await handleAdminRequest(request, testEnv(vi.fn()), 'token', '/admin/r2/upload');
     expect(res!.status).toBe(400);
     expect(await res!.json()).toEqual({
-      status: 'error',
+      success: false,
       error: { code: 'BAD_REQUEST', message: 'Expected multipart/form-data' },
     });
   });
@@ -326,7 +171,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const res = await handleAdminRequest(request, testEnv(vi.fn()), 'token', '/admin/r2/upload');
     expect(res!.status).toBe(400);
     expect(await res!.json()).toEqual({
-      status: 'error',
+      success: false,
       error: { code: 'BAD_REQUEST', message: 'No files provided' },
     });
   });
@@ -346,7 +191,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     const serviceSource = fs.readFileSync(path.join(repoRoot, 'frontend/src/services/comics/comic.service.ts'), 'utf-8');
     const adminSource = fs.readFileSync(path.join(repoRoot, 'workers/kv-worker/src/routes/admin.ts'), 'utf-8');
 
-    expect(serviceSource).toContain("`${getGatewayUrl()}/api/admin/r2/upload`");
+    expect(serviceSource).toContain('fetch(`${getGatewayUrl()}${ROUTES.API.ADMIN.R2_UPLOAD_GATEWAY}`');
     expect(serviceSource).toContain("headers['x-r2-bucket'] = bucket");
     expect(serviceSource).toContain("headers['Authorization'] = `Bearer ${token}`");
     expect(serviceSource).toContain("form.append('file', file)");

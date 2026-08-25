@@ -1,48 +1,51 @@
--- Smoke tests for RPC (Remote Procedure Call) database functions
--- Verifies that critical functions are registered and accessible
+-- RPC smoke tests: core helper functions must exist and behave
+select plan(10);
 
--- increment_story_views: idempotent view counting via request_id deduplication
-select tests.ok(
-  exists(
-    select 1 from pg_proc where proname = 'increment_story_views'
-  ),
-  'increment_story_views function should exist'
+select ok(
+  exists(select 1 from pg_proc where proname = 'is_superadmin' and pronamespace = 'public'::regnamespace),
+  'is_superadmin function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'is_admin_or_higher' and pronamespace = 'public'::regnamespace),
+  'is_admin_or_higher function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'can_read_chapter' and pronamespace = 'public'::regnamespace),
+  'can_read_chapter function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'increment_story_views' and pronamespace = 'public'::regnamespace),
+  'increment_story_views function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'toggle_story_like' and pronamespace = 'public'::regnamespace),
+  'toggle_story_like function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'get_operations_table_counts' and pronamespace = 'public'::regnamespace),
+  'get_operations_table_counts function exists'
+);
+select ok(
+  exists(select 1 from pg_proc where proname = 'set_user_role_service' and pronamespace = 'app_private'::regnamespace),
+  'app_private.set_user_role_service function exists'
 );
 
--- toggle_story_like: authenticated users can like/unlike stories
-select tests.ok(
-  exists(
-    select 1 from pg_proc where proname = 'toggle_story_like'
-  ),
-  'toggle_story_like function should exist'
+-- is_superadmin returns false for a non-existent user
+select is(
+  public.is_superadmin('ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid),
+  false,
+  'is_superadmin returns false for non-existent user'
+);
+-- is_admin_or_higher returns false for a non-existent user
+select is(
+  public.is_admin_or_higher('ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid),
+  false,
+  'is_admin_or_higher returns false for non-existent user'
+);
+-- get_operations_table_counts returns a rowset without erroring
+select ok(
+  (select count(*) > 0 from public.get_operations_table_counts()),
+  'get_operations_table_counts returns rows'
 );
 
--- handle_new_user: trigger function that provisions profile on signup
-select tests.ok(
-  exists(
-    select 1 from pg_proc
-    where proname = 'handle_new_user'
-      and pronamespace = (select oid from pg_namespace where nspname = 'app_private')
-  ),
-  'app_private.handle_new_user trigger function should exist'
-);
-
--- get_current_profile: security-definer function to return authenticated user profile
-select tests.ok(
-  exists(
-    select 1 from pg_proc
-    where proname = 'get_current_profile'
-      and pronamespace = (select oid from pg_namespace where nspname = 'app_private')
-  ),
-  'app_private.get_current_profile function should exist'
-);
-
--- set_user_role: privileged function for role management restricted to service role
-select tests.ok(
-  exists(
-    select 1 from pg_proc
-    where proname = 'set_user_role'
-      and pronamespace = (select oid from pg_namespace where nspname = 'app_private')
-  ),
-  'app_private.set_user_role function should exist'
-);
+select * from finish();

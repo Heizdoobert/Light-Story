@@ -3,9 +3,12 @@
 import { Megaphone, Save, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { validateAdMarkup } from "@/lib/admin/ad-policy";
-import { useAdminAds } from "@/lib/hooks/use-admin-ads";
+import { useAdminAds } from "@/hooks/features/use-admin-ads";
+import { useRoleGuard } from "@/hooks/common/use-role-guard";
+import { ROUTES } from "@/lib/constants/routes";
 
 export default function AdminAdsPage() {
+  useRoleGuard(["superadmin", "admin"], ROUTES.ADMIN.COMICS);
   const {
     ads,
     saving,
@@ -59,10 +62,11 @@ export default function AdminAdsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label htmlFor={`ad-markup-${ad.key}`} className="block text-xs font-semibold text-slate-400 mb-1.5">
                   Mã nhúng HTML / Banner Markup:
                 </label>
                 <textarea
+                  id={`ad-markup-${ad.key}`}
                   rows={3}
                   value={ad.markup}
                   onChange={(e) => handleMarkupChange(ad.key, e.target.value)}

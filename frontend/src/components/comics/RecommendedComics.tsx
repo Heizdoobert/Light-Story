@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Sparkles, Eye } from 'lucide-react';
 import { useRecommendations } from '@/hooks/features/useRecommendations';
 import { getStatusStyles } from '@/lib/utils/status-styles';
+import { ROUTES } from '@/lib/constants/routes';
 import { proxiedR2ImageUrl } from '@/services/comics/comicCms.service';
 
 type RecommendedComicsProps = {
@@ -36,13 +37,17 @@ export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId })
         ) : recommendations.map((comic) => (
           <Link
             key={comic.id}
-            href={`/comics/${comic.id}`}
+            href={ROUTES.COMIC_DETAIL(comic.id)}
             className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 border border-slate-100 dark:border-slate-800/80"
           >
             <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
               <img
                 src={proxiedR2ImageUrl(comic.coverUrl || '') || 'https://placehold.co/300x400?text=No+Cover'}
                 alt={comic.title}
+                width={300}
+                height={400}
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <span className={`absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-black uppercase shadow-sm ${getStatusStyles(comic.status)}`}>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, Edit, Trash2, Search, BookOpen, Layers, X } from "lucide-react";
+import { Plus, Edit, Trash2, Search, BookOpen, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
@@ -10,7 +10,9 @@ const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"),
 });
 import { getR2ImageUrl } from "@/lib/utils/image-url";
 import { ROUTES } from "@/lib/constants/routes";
-import { useAdminComics } from "@/lib/hooks/use-admin-comics";
+import { useAdminComics } from "@/hooks/features/use-admin-comics";
+import { useAdminFormOptions } from "@/hooks/features/use-admin-form-options";
+import { Modal } from "@/components/ui/modal";
 
 export default function AdminComicsPage() {
   const {
@@ -25,8 +27,12 @@ export default function AdminComicsPage() {
     editingComic,
     title,
     setTitle,
-    author,
+    authorId,
+    setAuthorId,
     setAuthor,
+    translatorId,
+    setTranslatorId,
+    setTranslator,
     category,
     setCategory,
     status,
@@ -39,6 +45,9 @@ export default function AdminComicsPage() {
     handleSaveComic,
     handleDeleteComic,
   } = useAdminComics();
+  const { categories, authors, translators, loading: optionsLoading } = useAdminFormOptions();
+  const optionsEmpty = authors.length === 0 && translators.length === 0;
+  const canSaveComic = !submitting && !optionsLoading && !optionsEmpty && categories.length > 0;
 
   return (
     <div className="space-y-6">
@@ -65,13 +74,16 @@ export default function AdminComicsPage() {
           <input
             type="text"
             placeholder="Tìm kiếm tên truyện, tác giả..."
+            aria-label="Tìm kiếm truyện"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
           />
         </div>
 
+        <label className="sr-only" htmlFor="comic-status-filter">Lọc theo trạng thái</label>
         <select
+          id="comic-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer shrink-0"
@@ -107,6 +119,10 @@ export default function AdminComicsPage() {
                       <img
                         src={getR2ImageUrl(comic.cover_url)}
                         alt={comic.title}
+                        width={48}
+                        height={64}
+                        loading="lazy"
+                        decoding="async"
                         className="w-12 h-16 rounded-lg object-cover border border-slate-800 bg-slate-950"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;
@@ -117,7 +133,7 @@ export default function AdminComicsPage() {
                     <td className="p-4 text-slate-300">{comic.author || "Chưa cập nhật"}</td>
                     <td className="p-4">
                       <span className="px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium">
-                        {comic.category || "Fantasy"}
+                        {comic.category || "Chưa cập nhật"}
                       </span>
                     </td>
                     <td className="p-4 font-semibold text-orange-400">
@@ -176,22 +192,18 @@ export default function AdminComicsPage() {
       </div>
 
       {/* Create / Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold">
-                {editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveComic} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        variant="dark"
+        className="max-w-xl"
+        title={editingComic ? "Chỉnh Sửa Bộ Truyện" : "Thêm Bộ Truyện Mới"}
+      >
+        <form onSubmit={handleSaveComic} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
+                <label htmlFor="comic-title" className="block text-xs font-semibold text-slate-300 mb-1">Tên Truyện *</label>
                 <input
+                  id="comic-title"
                   type="text"
                   required
                   value={title}
@@ -201,40 +213,73 @@ export default function AdminComicsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tác Giả</label>
-                  <input
-                    type="text"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Tên tác giả..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại</label>
+              <div>
+                <label htmlFor="comic-author" className="block text-xs font-semibold text-slate-300 mb-1">
+                  Tác Giả / Dịch Giả * <span className="text-slate-500 font-normal">(bắt buộc chọn 1)</span>
+                </label>
+                <div className="grid grid-cols-2 gap-4">
                   <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
+                    id="comic-author"
+                    value={authorId}
+                    onChange={(e) => {
+                      const opt = authors.find((a) => a.id === e.target.value);
+                      setAuthorId(e.target.value);
+                      setAuthor(opt?.name ?? "");
+                    }}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
                   >
-                    <option value="Action">Action</option>
-                    <option value="Fantasy">Fantasy</option>
-                    <option value="Romance">Romance</option>
-                    <option value="Comedy">Comedy</option>
-                    <option value="Drama">Drama</option>
-                    <option value="Horror">Horror</option>
-                    <option value="Mystery">Mystery</option>
-                    <option value="Science Fiction">Science Fiction</option>
-                    <option value="Slice of Life">Slice of Life</option>
+                    <option value="">Tác giả...</option>
+                    {authors.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
+                  <select
+                    id="comic-translator"
+                    value={translatorId}
+                    onChange={(e) => {
+                      const opt = translators.find((tr) => tr.id === e.target.value);
+                      setTranslatorId(e.target.value);
+                      setTranslator(opt?.name ?? "");
+                    }}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="">Dịch giả (đội dịch)...</option>
+                    {translators.map((tr) => (
+                      <option key={tr.id} value={tr.id}>{tr.name}</option>
+                    ))}
                   </select>
                 </div>
+                {optionsEmpty && (
+                  <p className="text-[11px] text-orange-400 mt-1">
+                    Chưa có tác giả hoặc dịch giả. Vui lòng thêm tác giả / dịch giả trước khi tạo truyện.
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Trạng Thái</label>
+                <label htmlFor="comic-category" className="block text-xs font-semibold text-slate-300 mb-1">Thể Loại *</label>
                 <select
+                  id="comic-category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                >
+                  <option value="">Chọn thể loại...</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                  ))}
+                </select>
+                {categories.length === 0 && (
+                  <p className="text-[11px] text-orange-400 mt-1">
+                    Chưa có thể loại. Vui lòng thêm thể loại trước khi tạo truyện.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="comic-status" className="block text-xs font-semibold text-slate-300 mb-1">Trạng Thái</label>
+                <select
+                  id="comic-status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
@@ -265,14 +310,16 @@ export default function AdminComicsPage() {
                 <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                   Hủy
                 </Button>
-                <Button type="submit" disabled={submitting} className="bg-orange-500 hover:bg-orange-600">
+                <Button
+                  type="submit"
+                  disabled={!canSaveComic}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
                   {submitting ? "Đang lưu..." : "Lưu Thay Đổi"}
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

@@ -1,14 +1,39 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import "@fontsource-variable/plus-jakarta-sans";
 import "./globals.css";
 import { Providers } from "./providers";
-import { AdZoneColumns } from "@/components/shared/ads/AdZoneColumns";
+import { getGatewayUrl } from "@/lib/utils/gateway-url";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
+
+function toAbsoluteUrl(value: string): URL {
+  try {
+    const trimmed = value.trim();
+    return new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    return new URL("https://lightstory.app");
+  }
+}
+
+function resolveMetadataBase(): URL {
+  if (process.env.NODE_ENV !== "production") {
+    return new URL("http://localhost:3000");
+  }
+  if (siteUrl) {
+    return toAbsoluteUrl(siteUrl);
+  }
+  const fallback =
+    process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN ||
+    process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION ||
+    "https://lightstory.app";
+  return toAbsoluteUrl(fallback);
+}
 
 export const metadata: Metadata = {
-  ...(siteUrl ? { metadataBase: new URL(siteUrl) } : {}),
+  metadataBase: resolveMetadataBase(),
   title: {
     default: "Light Story - Read Manga, Manhua & Light Novels Online",
     template: "%s | Light Story",
@@ -29,10 +54,12 @@ export const metadata: Metadata = {
   },
 };
 
-const gatewayUrl =
-  process.env.NODE_ENV === "production"
-    ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION
-    : process.env.NEXT_PUBLIC_GATEWAY_URL;
+let gatewayUrl: string | null = null;
+try {
+  gatewayUrl = getGatewayUrl();
+} catch {
+  // preconnect is optional; missing env must not crash the layout
+}
 
 export default function RootLayout({
   children,
@@ -41,20 +68,21 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="en"
+      lang="vi"
       style={{ "--font-sans": '"Plus Jakarta Sans Variable"' } as React.CSSProperties}
       suppressHydrationWarning
     >
       <head>
-        {/* Inject theme-setting script to prevent dark mode FOUC */}
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
                   const saved = localStorage.getItem('theme');
-                  const theme = (saved === 'light' || saved === 'dark') 
-                    ? saved 
+                  const theme = (saved === 'light' || saved === 'dark')
+                    ? saved
                     : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                   document.documentElement.classList.add(theme);
                 } catch (e) {
@@ -68,7 +96,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
-          <AdZoneColumns />
           <main className="flex-grow">{children}</main>
           <Analytics />
         </Providers>

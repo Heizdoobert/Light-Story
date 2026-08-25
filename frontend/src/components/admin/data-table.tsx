@@ -30,7 +30,7 @@ export function DataTable<T extends Record<string, any>>({ columns, data }: Data
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
           {data.map((item, rowIdx) => (
-            <tr key={rowIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
+            <tr key={(item as { id?: string | number }).id ?? rowIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
               {columns.map((col) => (
                 <td key={col.key} className="px-6 py-4">
                   {col.render ? col.render(item) : item[col.key]}

@@ -13,19 +13,10 @@ export class ApiError extends Error {
 }
 
 import { supabase } from '@/lib/supabase/client';
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
+import { decodeJwtPayload } from '@/lib/utils/jwt';
 
-const getBaseUrl = (): string => {
-  const url =
-    process.env.NODE_ENV === 'production'
-      ? process.env.NEXT_PUBLIC_GATEWAY_URL_PRODUCTION || process.env.NEXT_PUBLIC_GATEWAY_URL
-      : process.env.NEXT_PUBLIC_GATEWAY_URL;
-  if (!url) {
-    throw new Error('NEXT_PUBLIC_GATEWAY_URL is not configured');
-  }
-  return url.replace(/\/+$/, '');
-};
-
-const BASE_URL = getBaseUrl();
+const BASE_URL = getGatewayUrl();
 
 // Tolerated error-envelope shapes across gateway/workers (superset of ApiResponse:
 // some workers return plain {message} or {error_description} instead of the envelope).
@@ -55,48 +46,28 @@ function serializeBody(body: unknown): BodyInit | undefined {
   return JSON.stringify(body);
 }
 
+// ponytail: token comes from the supabase-js session (cookie-backed by
+// @supabase/ssr). No localStorage scanning: session storage is cookie-only.
 function isTokenExpired(token: string): boolean {
-  try {
-    const parts = token.split('.');
-    if (parts.length < 2) return true;
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const now = Math.floor(Date.now() / 1000);
-    return payload.exp ? now >= payload.exp - 10 : true;
-  } catch {
-    return true;
-  }
-}
-
-function getAccessToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const sbKeys = Object.keys(localStorage).filter((k) =>
-      k.startsWith('sb-') && k.endsWith('-auth-token'),
-    );
-    if (sbKeys.length > 0) {
-      const raw = localStorage.getItem(sbKeys[0]);
-      if (raw) {
-        const session = JSON.parse(raw);
-        if (session?.access_token && !isTokenExpired(session.access_token)) {
-          return session.access_token;
-        }
-      }
-    }
-  } catch {
-  }
-  return null;
+  const payload = decodeJwtPayload(token);
+  if (!payload) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp ? now >= payload.exp - 10 : true;
 }
 
 let _pendingToken: Promise<string | null> | null = null;
-async function getAccessTokenAsync(): Promise<string | null> {
+async function getAccessToken(): Promise<string | null> {
   if (_pendingToken) return _pendingToken;
   _pendingToken = (async () => {
-    const sync = getAccessToken();
-    if (sync) return sync;
     if (!supabase) return null;
     try {
       const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
+      let token = data?.session?.access_token ?? null;
+      if (token && isTokenExpired(token)) {
+        const { data: refreshed } = await supabase.auth.refreshSession();
+        token = refreshed?.session?.access_token ?? null;
+      }
+      return token;
     } catch {
       return null;
     }
@@ -112,7 +83,7 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
-  const token = await getAccessTokenAsync();
+  const token = await getAccessToken();
   const headers = new Headers(options.headers);
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

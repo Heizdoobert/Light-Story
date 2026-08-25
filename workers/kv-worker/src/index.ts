@@ -5,6 +5,7 @@ import {
   err,
   json,
   authToken,
+  recordAnalyticsEngineEvent,
 } from './utils/supabase-client';
 import {
   corsHeaders,
@@ -26,18 +27,31 @@ import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 
+function detectDevice(ua: string): string {
+  if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
+  if (/iPad|Tablet|PlayBook|Silk|Kindle/i.test(ua)) return 'tablet';
+  if (/Mobi|Android|iPhone|BlackBerry|Windows Phone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
 async function handleSupabaseProxy(
   pathname: string,
   request: Request,
   origin: string | null,
   env: Env,
 ): Promise<Response> {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+  const respond = (body: unknown, init: { status: number; headers?: HeadersInit }) => {
+    const headers = new Headers(init.headers);
+    applySecurityHeaders(headers);
     return new Response(
-      JSON.stringify({
-        status: 'error',
-        error: { code: 'SUPABASE_NOT_CONFIGURED' },
-      }),
+      typeof body === 'string' ? body : JSON.stringify(body),
+      { ...init, headers },
+    );
+  };
+
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    return respond(
+      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED' } },
       {
         status: 500,
         headers: {
@@ -50,11 +64,8 @@ async function handleSupabaseProxy(
 
   const sbPath = supabaseProxyPath(pathname);
   if (!sbPath) {
-    return new Response(
-      JSON.stringify({
-        status: 'error',
-        error: { code: 'INVALID_SUPABASE_PATH' },
-      }),
+    return respond(
+      { success: false, error: { code: 'INVALID_SUPABASE_PATH' } },
       {
         status: 400,
         headers: {
@@ -99,6 +110,7 @@ async function handleSupabaseProxy(
   const c = corsHeaders(origin);
   for (const [k, v] of Object.entries(c))
     responseHeaders.set(k, v as string);
+  applySecurityHeaders(responseHeaders);
 
   if (contentType.includes('application/json')) {
     const bodyText = await res.text();
@@ -157,10 +169,33 @@ export default {
     }
 
     if (origin && !isOriginAllowed(origin)) {
-      return new Response('Forbidden', { status: 403 });
+      return new Response('Forbidden', {
+        status: 403,
+        headers: (() => {
+          const h = new Headers();
+          applySecurityHeaders(h);
+          return h;
+        })(),
+      });
     }
 
     const pathname = url.pathname;
+
+    // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
+    // blobs: [hostname, device, pathname]; index: 'request'.
+    // NOTE: blob ORDER is the read contract with /analytics/infrastructure —
+    // read via aliased SQL columns (blob1=host, blob2=device, blob3=pathname).
+    // cf-cache-status is a response header; edge hits bypass the worker, so
+    // a cache-hit ratio from request headers would be structurally wrong.
+    recordAnalyticsEngineEvent(env, {
+      indexes: ['request'],
+      blobs: [
+        url.hostname,
+        detectDevice(request.headers.get('User-Agent') || ''),
+        pathname,
+      ],
+      doubles: [Date.now()],
+    });
 
     if (request.method === 'GET' && pathname === '/api/health') {
       return new Response(
@@ -171,10 +206,14 @@ export default {
         }),
         {
           status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders(origin),
-          },
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }
@@ -192,27 +231,31 @@ export default {
           if (e instanceof UnauthorizedError) {
             return new Response(
               JSON.stringify({
-                status: 'error',
-                error: {
+                success: false,
+        error: {
                   code: 'UNAUTHORIZED',
                   message: e.message,
                 },
               }),
               {
                 status: 401,
-                headers: {
-                  'Content-Type': 'application/json',
-                  ...corsHeaders(origin),
-                },
+                headers: (() => {
+                  const h = new Headers({
+                    'Content-Type': 'application/json',
+                    ...corsHeaders(origin),
+                  });
+                  applySecurityHeaders(h);
+                  return h;
+                })(),
               },
             );
           }
           return new Response(
             JSON.stringify({
-              status: 'error',
-              error: { code: 'INTERNAL_ERROR' },
+              success: false,
+        error: { code: 'INTERNAL_ERROR' },
             }),
-            { status: 500 },
+            { status: 500, headers: (() => { const h = new Headers(); applySecurityHeaders(h); return h; })() },
           );
         }
         // For public GET requests, log warning and allow unauthenticated fallback
@@ -235,8 +278,8 @@ export default {
       applySecurityHeaders(headers);
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+          success: false,
+        error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
         }),
         { status: 429, headers },
       );
@@ -248,15 +291,19 @@ export default {
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
       return new Response(
         JSON.stringify({
-          status: 'error',
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+          success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
         }),
         {
           status: 401,
-          headers: {
-            'Content-Type': 'application/json',
-            ...corsHeaders(origin),
-          },
+          headers: (() => {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }
@@ -327,6 +374,10 @@ export default {
     } else if (method === 'GET' && strippedPath.startsWith('/media/')) {
       const bucket = env.R2_BUCKET;
       if (!bucket) {
+        console.error('[Media] R2 binding missing', {
+          event: 'media_r2_not_configured',
+          requestId: downstreamHeaders.get('x-request-id'),
+        });
         res = err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
       } else {
         // Security: decode and sanitize against path traversal attacks (..)
@@ -339,6 +390,11 @@ export default {
         rawKey = rawKey.replace(/\\/g, '/').replace(/\/\//g, '/');
 
         if (rawKey.includes('..') || rawKey.startsWith('/')) {
+          console.warn('[Media] rejected key', {
+            event: 'media_key_rejected',
+            key: rawKey.slice(0, 500),
+            requestId: downstreamHeaders.get('x-request-id'),
+          });
           res = err('BAD_REQUEST', 'Invalid key path', 400);
         } else {
           const rangeHeader = request.headers.get('range');
@@ -350,6 +406,11 @@ export default {
 
           const object = await bucket.get(rawKey, options);
           if (!object) {
+            console.warn('[Media] object not found', {
+              event: 'media_not_found',
+              key: rawKey.slice(0, 500),
+              requestId: downstreamHeaders.get('x-request-id'),
+            });
             if (ifNoneMatch) {
               res = new Response(null, { status: 304 });
             } else {
@@ -367,6 +428,7 @@ export default {
             mediaHeaders.set('accept-ranges', 'bytes');
             mediaHeaders.set('x-content-type-options', 'nosniff');
             mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
+            mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
 
             if (object.range) {
               const r = object.range as { offset?: number; length?: number };
@@ -463,7 +525,7 @@ export default {
         });
       }
       const obj = parsed as Record<string, unknown>;
-      if (obj && (typeof obj.success === 'boolean' || obj.status === 'error')) {
+      if (obj && typeof obj.success === 'boolean') {
         return new Response(bodyText, {
           status: res.status,
           headers: resHeaders,

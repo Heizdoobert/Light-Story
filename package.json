@@ -9,24 +9,35 @@
   ],
   "scripts": {
     "dev": "npm --prefix frontend run dev",
-    "dev:gateway": "npx wrangler dev --port 8787 --config workers/kv-worker/wrangler.jsonc",
+    "dev:gateway": "npx wrangler dev --port 8787 --remote --config workers/kv-worker/wrangler.jsonc",
     "dev:all": "concurrently -n fe,gw \"npm run dev\" \"npm run dev:gateway\"",
     "build": "npm --prefix frontend run build",
     "check": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
+      "typecheck": "npm --prefix frontend run typecheck",
     "preview": "npm --prefix frontend run preview",
-    "deploy": "wrangler deploy",
+    "deploy": "wrangler deploy --config workers/kv-worker/wrangler.jsonc",
     "test:run": "npm --prefix frontend run test:run",
+      "postinstall": "node -e \"try{require('fs').rmSync('node_modules/light-story-workspace',{recursive:true,force:true})}catch(e){}\"",
     "generate:types": "npm --prefix packages/api-types run generate",
-    "docker:build": "docker compose build --no-cache",
-    "docker:up": "docker compose up -d",
-    "docker:rebuild": "docker compose down && docker compose build --no-cache && docker compose up -d"
+    "docker:build": "docker compose --env-file docker-local.env down --rmi all --volumes && docker system prune -af --volumes && docker compose --env-file docker-local.env build --no-cache && docker compose --env-file docker-local.env up -d",
+    "docker:up": "docker compose --env-file docker-local.env up -d",
+    "docker:local": "powershell -ExecutionPolicy Bypass -File docker-local.ps1",
+    "docker:local:emulator": "powershell -ExecutionPolicy Bypass -File docker-local.ps1 -Local",
+    "docker:local:fast": "powershell -ExecutionPolicy Bypass -File docker-local.ps1 -Fast",
+    "docker:rebuild": "npm run docker:build"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260625.1",
     "@supabase/supabase-js": "^2.106.1",
+    "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "concurrently": "^9.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.0",
     "husky": "^9.1.7",
+    "typescript": "^6.0.3",
     "wrangler": "4.105.0"
   },
   "optionalDependencies": {
@@ -36,7 +47,6 @@
     "@tailwindcss/oxide-linux-x64-gnu": "4.3.3"
   },
   "overrides": {
-    "brace-expansion": "^5.0.8",
     "shell-quote": "1.10.0",
     "fast-uri": "4.1.2",
     "body-parser": "2.3.0",
@@ -54,6 +64,15 @@
     }
   },
   "dependencies": {
-    "@sentry/nextjs": "^10.69.0"
+    "@sentry/nextjs": "^10.69.0",
+    "next": "^16.3.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "allowScripts": {
+    "@sentry/cli@2.58.6": true,
+    "esbuild@0.28.1": true,
+    "unrs-resolver@1.12.2": true,
+    "workerd@1.20260625.1": true
   }
 }

@@ -1,6 +1,7 @@
 {
   "name": "kv-worker",
   "main": "src/index.ts",
+  "account_id": "8ee8907819b5859d9543d68380ab6c1a",
   "compatibility_date": "2026-07-02",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
@@ -8,21 +9,22 @@
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",
-      "bucket_name": "lightstory-assets"
+      "bucket_name": "comic"
     }
   ],
   "vars": {
     "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
-    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json"
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json",
+    "CLOUDFLARE_ACCOUNT_ID": "8ee8907819b5859d9543d68380ab6c1a"
   },
   "kv_namespaces": [
     {
       "binding": "APP_KV",
-      "id": "bde008a5d4b54e53af699933f366dabe"
+      "id": "478819101386406ab6d14b2d45d48c45"
     },
     {
       "binding": "COMIC_METADATA",
-      "id": "dcedc9ebb0d846838d4be79df5a2698c"
+      "id": "be1064d42006414fb6cb67f1e337a9c9"
     }
   ],
   "queues": {
@@ -43,12 +45,12 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "e34fbae0b4a94fd48007b217837c00cb",
+      "id": "5a02e4b848144795b7532d1b6140660b",
       "localConnectionString": "postgres://postgres:password@localhost:5432/postgres"
     }
   ],
   "observability": {
-    "enabled": false,
+    "enabled": true,
     "head_sampling_rate": 1,
     "logs": {
       "enabled": true,
@@ -65,7 +67,7 @@
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS_DATA",
-      "dataset": "analytic"
+      "dataset": "lightstory_analytics"
     }
   ],
   "env": {

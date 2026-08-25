@@ -2,8 +2,7 @@
  * Client-Side AES-256-GCM Decryption & Encryption Utility
  */
 
-const DEFAULT_SECRET = process.env.NEXT_PUBLIC_ENC_KEY as string;
-if (!DEFAULT_SECRET) throw new Error('Missing NEXT_PUBLIC_ENC_KEY');
+const DEFAULT_SECRET = process.env.NEXT_PUBLIC_ENC_KEY || "";
 
 async function getKey(secret: string): Promise<CryptoKey> {
   const enc = new TextEncoder();

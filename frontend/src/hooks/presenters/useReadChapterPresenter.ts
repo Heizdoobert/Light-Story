@@ -194,7 +194,7 @@ export function useReadChapterPresenter() {
         } else {
           setImages(imgArray.map((url) => proxiedR2ImageUrl(url)));
         }
-      } catch (error) {
+      } catch {
         toast.error("Không thể tải nội dung chương truyện.");
       } finally {
         setLoading(false);
@@ -287,13 +287,12 @@ export function useReadChapterPresenter() {
       const cached = new Set<string>();
       const toCache = images.filter(u => !cached.has(u));
       if (toCache.length === 0) { toast.info("Đã lưu offline."); return; }
-      let ok = 0, fail = 0;
+      let ok = 0;
       for (const url of toCache) {
         try {
           const res = await fetch(url, { cache: "force-cache" });
           if (res.ok) { await cache.put(url, res); cached.add(url); ok++; }
-          else fail++;
-        } catch { fail++; }
+        } catch { /* skip failed page */ }
       }
       toast.success(`Đã lưu ${ok}/${images.length} trang offline.`);
     } catch { toast.error("Lỗi lưu offline."); }
@@ -309,8 +308,11 @@ export function useReadChapterPresenter() {
     currentIndex < allChapters.length - 1
       ? allChapters[currentIndex + 1]
       : null;
-  nextChapterRef.current = nextChapter;
-  prevChapterRef.current = prevChapter;
+
+  useEffect(() => {
+    nextChapterRef.current = nextChapter;
+    prevChapterRef.current = prevChapter;
+  }, [nextChapter, prevChapter]);
 
   return {
     comicId,

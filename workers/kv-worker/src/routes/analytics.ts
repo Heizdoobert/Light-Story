@@ -9,6 +9,44 @@ import {
   recordAnalyticsEngineEvent,
 } from '../utils/supabase-client';
 
+type SqlRow = Record<string, string | number>;
+
+// Single source of truth for the Analytics Engine dataset name used in SQL.
+// Must match the wrangler.jsonc analytics_engine_datasets entry.
+const ANALYTICS_DATASET = 'lightstory_analytics';
+
+async function queryAnalyticsSql(env: Env, sql: string): Promise<SqlRow[] | null> {
+  const token = (env as any).CLOUDFLARE_API_TOKEN as string | undefined;
+  const accountId = (env as any).CLOUDFLARE_ACCOUNT_ID as string | undefined;
+  if (!token || !accountId) return null;
+  try {
+    const res = await fetch(
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/analytics_engine/sql`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'text/plain' },
+        body: sql,
+      },
+    );
+    if (!res.ok) {
+      // Distinguish "no traffic" from "query broken" — never log the token.
+      console.error(`[AnalyticsSql] status ${res.status}: ${sql.slice(0, 120)}`);
+      return null;
+    }
+    const payload: { data?: SqlRow[] } = await res.json();
+    return Array.isArray(payload.data) ? payload.data : null;
+  } catch (err) {
+    console.error('[AnalyticsSql] failed:', err);
+    return null;
+  }
+}
+
+function rowNum(row: SqlRow | undefined, key: string): number {
+  if (!row) return 0;
+  const value = row[key];
+  return typeof value === 'number' ? value : Number(value ?? 0) || 0;
+}
+
 export async function handleAnalyticsRequest(
   request: Request,
   env: Env,
@@ -54,9 +92,10 @@ export async function handleAnalyticsRequest(
       const daysBack = parseInt(
         url.searchParams.get('days') || '30',
       );
+      const timeRange = daysBack <= 1 ? '24h' : daysBack <= 7 ? '7d' : '30d';
       const res = await sbRpc(
         'get_user_engagement_summary',
-        { p_days_back: daysBack },
+        { p_time_range: timeRange },
         env,
         token,
       );
@@ -96,76 +135,78 @@ export async function handleAnalyticsRequest(
         } while (cursor);
       }
 
-      const r2UsageGb = Number((r2SizeBytes / (1024 * 1024 * 1024)).toFixed(4));
-      const r2AllocatedGb = 10; // Default 10GB tier benchmark
-
-      // Check if cached in KV Namespace
-      let kvCachedStats: Record<string, any> = {};
-      if (env.APP_KV) {
+      let queueBacklog = 0;
+      if (env.LIGHTSTORY_QUEUE) {
         try {
-          const rawKv = await env.APP_KV.get('analytics_infrastructure');
-          if (rawKv) kvCachedStats = JSON.parse(rawKv);
+          const qm = await env.LIGHTSTORY_QUEUE.metrics();
+          queueBacklog = Number(qm.backlogCount ?? 0);
         } catch (_) {}
       }
 
-      const responsePayload = {
+      const r2UsageGb = Number((r2SizeBytes / (1024 * 1024 * 1024)).toFixed(4));
+      // ponytail: R2 free tier cap (10 GB) is the real plan constant, not telemetry.
+      const r2AllocatedGb = 10;
+      const storageEfficiencyPct =
+        r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0;
+
+      // Real traffic stats from Analytics Engine (dataset lightstory_analytics).
+      // One aliased GROUP BY scan: named columns (host/device/cnt) — no positional
+      // blob coupling with the index.ts write. Zero until traffic flows — honest.
+      const since = "timestamp > NOW() - INTERVAL '30' DAY";
+      const rows = await queryAnalyticsSql(
+        env,
+        `SELECT blob1 AS host, blob2 AS device, count() AS cnt FROM ${ANALYTICS_DATASET} WHERE ${since} GROUP BY blob1, blob2`,
+      );
+
+      let pageViews = 0;
+      const deviceCounts = new Map<string, number>();
+      const zoneCounts = new Map<string, number>();
+      for (const row of rows ?? []) {
+        const count = rowNum(row, 'cnt');
+        pageViews += count;
+        const device = String(row['device'] ?? 'unknown');
+        deviceCounts.set(device, (deviceCounts.get(device) ?? 0) + count);
+        const host = String(row['host'] ?? '');
+        if (host) zoneCounts.set(host, (zoneCounts.get(host) ?? 0) + count);
+      }
+      const totalDevices = [...deviceCounts.values()].reduce((s, n) => s + n, 0) || 1;
+      const devicePct = (key: string) => Math.round(((deviceCounts.get(key) ?? 0) / totalDevices) * 1000) / 10;
+
+      const topZones = [...zoneCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([zone, requests]) => ({ zone, requests }));
+
+      return json({
         r2_usage_gb: r2UsageGb,
         r2_allocated_gb: r2AllocatedGb,
         r2_object_count: r2ObjectCount,
-        r2_egress_gb: kvCachedStats.r2_egress_gb ?? 0.05,
-        d1_queries_count: kvCachedStats.d1_queries_count ?? 125,
-        d1_avg_latency_ms: kvCachedStats.d1_avg_latency_ms ?? 4.2,
-        page_views: kvCachedStats.page_views ?? 1250,
-        bandwidth_gb: Number((r2UsageGb * 1.5).toFixed(4)),
-        cache_hit_ratio_pct: 98.5,
-        storage_efficiency_pct: Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)),
-        device_mobile: 65,
-        device_desktop: 30,
-        device_tablet: 5,
-        top_zones: [
-          { zone: 'api.lightstory.app', requests: 12500, cache_hit_ratio_pct: 99.1 },
-          { zone: 'lightstory.app', requests: 8400, cache_hit_ratio_pct: 97.8 },
-        ],
-        // ponytail: include queue & workflow status telemetry metrics
+        storage_efficiency_pct: storageEfficiencyPct,
+        page_views: pageViews,
+        device_mobile: devicePct('mobile'),
+        device_desktop: devicePct('desktop'),
+        device_tablet: devicePct('tablet'),
+        top_zones: topZones,
         queue_binding: env.LIGHTSTORY_QUEUE ? 'bound' : 'unbound',
-        queue_messages_processed: kvCachedStats.queue_messages_processed ?? 1420,
-        queue_backlog: kvCachedStats.queue_backlog ?? 3,
-        queue_latency_ms: kvCachedStats.queue_latency_ms ?? 18.5,
+        queue_backlog: queueBacklog,
         workflow_binding: env.LIGHTSTORY_WORKFLOW ? 'bound' : 'unbound',
-        workflow_instances_active: kvCachedStats.workflow_instances_active ?? 12,
-        workflow_instances_completed: kvCachedStats.workflow_instances_completed ?? 850,
-        workflow_avg_duration_ms: kvCachedStats.workflow_avg_duration_ms ?? 145,
-        analytics_engine: env.ANALYTICS_DATA ? 'bound' : 'unbound',
         kv_binding: env.APP_KV ? 'bound' : 'unbound',
         recorded_at: new Date().toISOString(),
-      };
-
-      // Persist latest infrastructure snapshot in KV Namespace
-      if (env.APP_KV) {
-        try {
-          await env.APP_KV.put('analytics_infrastructure', JSON.stringify(responsePayload), { expirationTtl: 86400 });
-        } catch (_) {}
-      }
-
-      // Record telemetry data point to Cloudflare Analytics Engine
-      recordAnalyticsEngineEvent(env, {
-        indexes: ['infrastructure_check'],
-        blobs: ['unified-gateway', env.ANALYTICS_DATA ? 'engine_active' : 'engine_idle'],
-        doubles: [r2ObjectCount, r2SizeBytes, Date.now()],
       });
-
-      return json(responsePayload);
     }
 
     if (
       method === 'POST' &&
-      pathname === '/analytics/record-view'
+      (pathname === '/analytics/record-view' || pathname === '/analytics/views')
     ) {
-      const body = (await request.json()) as any;
+      const body = (await request.json()) as Record<string, unknown>;
+      if (typeof body.storyId !== 'string' || !body.storyId.trim()) {
+        return err('VALIDATION_ERROR', 'storyId is required', 422);
+      }
 
       recordAnalyticsEngineEvent(env, {
         indexes: ['story_view'],
-        blobs: [String(body.storyId || ''), request.headers.get('User-Agent') || ''],
+        blobs: [body.storyId, request.headers.get('User-Agent') || ''],
         doubles: [Date.now()],
       });
 

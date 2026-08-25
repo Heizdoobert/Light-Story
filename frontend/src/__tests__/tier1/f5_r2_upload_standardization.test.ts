@@ -40,8 +40,10 @@ function makeFile(name: string): File {
 describe('F5 R2 upload standardization', () => {
   beforeEach(() => {
     localStorage.clear();
+    process.env.NEXT_PUBLIC_GATEWAY_URL = 'http://localhost:8787';
+    process.env.NEXT_PUBLIC_R2_BUCKET_COVERS = 'covers';
+    process.env.NEXT_PUBLIC_R2_BUCKET_CHAPTERS = 'chapters';
     delete process.env.NEXT_PUBLIC_ENABLE_LOCAL_DEV_FALLBACK;
-    delete process.env.NEXT_PUBLIC_GATEWAY_URL;
   });
 
   afterEach(() => {
@@ -129,10 +131,9 @@ describe('F5 R2 upload standardization', () => {
     );
   });
 
-  it('DEVIATION: upload uses raw fetch (not apiClient) and path /api/admin/r2/upload (not spec /api/admin/upload-to-r2)', () => {
+  it('DEVIATION: upload uses raw fetch (not apiClient) against the gateway R2 route via ROUTES (not spec /api/admin/upload-to-r2)', () => {
     const source = readRepoFile(COMIC_SERVICE);
-    expect(source).toContain('/api/admin/r2/upload');
-    expect(source).toContain('fetch(`${getGatewayUrl()}/api/admin/r2/upload`');
+    expect(source).toContain('fetch(`${getGatewayUrl()}${ROUTES.API.ADMIN.R2_UPLOAD_GATEWAY}`');
     expect(source).not.toContain('/api/admin/upload-to-r2');
   });
 });

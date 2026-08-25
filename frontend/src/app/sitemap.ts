@@ -7,11 +7,16 @@ const BASE_URL =
   process.env.NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (!BASE_URL) {
+    console.warn(
+      "[sitemap] NEXT_PUBLIC_SITE_URL / NEXT_PUBLIC_CUSTOM_GATEWAY_DOMAIN unset; returning empty sitemap."
+    );
+    return [];
+  }
+
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE_URL}`, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
     { url: `${BASE_URL}${ROUTES.COMICS}`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-    { url: `${BASE_URL}${ROUTES.LOGIN}`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
-    { url: `${BASE_URL}${ROUTES.REGISTER}`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
   ];
 
   let comicRoutes: MetadataRoute.Sitemap = [];

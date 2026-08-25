@@ -7,6 +7,7 @@ import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/lib/constants/routes";
+import { apiClient } from "@/lib/api/apiClient";
 
 type SortOption = "newest" | "most_viewed" | "oldest";
 
@@ -28,7 +29,24 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const [searchInput, setSearchInput] = useState("");
   const [category, setCategory] = useState("all");
   const [sort, setSort] = useState<SortOption>("newest");
-  const [categories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load genres from the gateway API, not a hardcoded list
+  useEffect(() => {
+    let active = true;
+    apiClient
+      .get<{ id: string; name: string }[]>(ROUTES.API.CATEGORIES)
+      .then((rows) => {
+        if (!active || !Array.isArray(rows)) return;
+        setCategories(rows.map((row) => ({ ...row, created_at: "", updated_at: "" })));
+      })
+      .catch(() => {
+        if (active) setCategories([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -102,6 +120,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
           {searchInput && (
             <button
               onClick={() => setSearchInput("")}
+              aria-label="Clear search"
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
             >
               <XCircle size={16} />
@@ -170,7 +189,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
 
                   {filteredCategories.length > 0 ? (
                     filteredCategories.map((cat, index) => {
-                      const catName = cat.name || cat.id || "Không tên";
+                      const catName = cat.name || cat.id || t("unnamed");
                       const isSelected = category === catName;
                       return (
                         <div
@@ -188,7 +207,7 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
                     })
                   ) : (
                     <div className="px-4 py-3 text-sm text-center text-slate-500">
-                      No results for "{categorySearchTerm}"
+                      No results for &quot;{categorySearchTerm}&quot;
                     </div>
                   )}
                 </div>

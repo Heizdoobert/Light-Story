@@ -1,13 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Layers, Plus, Edit, Trash2, Search, X, BookOpen } from "lucide-react";
+import { Layers, Plus, Edit, Trash2, Search, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
 });
-import { useAdminChapters } from "@/lib/hooks/use-admin-chapters";
+import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
+import { Modal } from "@/components/ui/modal";
 
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();
@@ -33,6 +34,7 @@ export default function AdminChaptersPage() {
     images,
     setImages,
     submitting,
+    handleBulkCbzProcessed,
     handleOpenCreateModal,
     handleOpenEditModal,
     handleSaveChapter,
@@ -62,7 +64,9 @@ export default function AdminChaptersPage() {
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           <BookOpen size={16} className="text-orange-500" />
           <span className="text-xs font-semibold text-slate-300">Chọn Truyện:</span>
+          <label className="sr-only" htmlFor="chapter-comic-select">Chọn bộ truyện</label>
           <select
+            id="chapter-comic-select"
             value={selectedComicId}
             onChange={(e) => setSelectedComicId(e.target.value)}
             className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer max-w-xs"
@@ -81,6 +85,7 @@ export default function AdminChaptersPage() {
           <input
             type="text"
             placeholder="Tìm kiếm số chương, tên chương..."
+            aria-label="Tìm kiếm chương"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
@@ -128,7 +133,7 @@ export default function AdminChaptersPage() {
                         <Button
                           size="sm"
                           variant="danger"
-                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number)}
+                          onClick={() => handleDeleteChapter(ch.id, ch.chapter_number, ch.story_id)}
                           title="Xóa chương"
                         >
                           <Trash2 size={14} />
@@ -150,22 +155,18 @@ export default function AdminChaptersPage() {
       </div>
 
       {/* Create / Edit Chapter Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h2 className="text-lg font-bold">
-                {editingChapter ? "Chỉnh Sửa Chương" : "Thêm Chương Mới"}
-              </h2>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
-                <X size={20} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveChapter} className="space-y-4">
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        variant="dark"
+        className="max-w-xl"
+        title={editingChapter ? "Chỉnh Sửa Chương" : "Thêm Chương Mới"}
+      >
+        <form onSubmit={handleSaveChapter} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Chọn Bộ Truyện *</label>
+                <label htmlFor="chapter-comic" className="block text-xs font-semibold text-slate-300 mb-1">Chọn Bộ Truyện *</label>
                 <select
+                  id="chapter-comic"
                   disabled={!!editingChapter}
                   value={targetComicId}
                   onChange={(e) => setTargetComicId(e.target.value)}
@@ -181,8 +182,9 @@ export default function AdminChaptersPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Số Chương *</label>
+                  <label htmlFor="chapter-number" className="block text-xs font-semibold text-slate-300 mb-1">Số Chương *</label>
                   <input
+                    id="chapter-number"
                     type="number"
                     required
                     min={1}
@@ -192,8 +194,9 @@ export default function AdminChaptersPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Tên Chương</label>
+                  <label htmlFor="chapter-title" className="block text-xs font-semibold text-slate-300 mb-1">Tên Chương</label>
                   <input
+                    id="chapter-title"
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
@@ -209,8 +212,13 @@ export default function AdminChaptersPage() {
                 </label>
                 <ImageUploader
                   folder="chapters"
+                  bulkChapters={!editingChapter}
+                  onCbzName={(name) => {
+                    if (!editingChapter) setTitle(name);
+                  }}
+                  onCbzProcessed={handleBulkCbzProcessed}
                   onImagesUploaded={(urls) => {
-                    setImages((prev) => [...prev, ...urls]);
+                    if (!editingChapter) setImages((prev) => [...prev, ...urls]);
                   }}
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Đã chọn: {images.length} trang ảnh</p>
@@ -225,9 +233,7 @@ export default function AdminChaptersPage() {
                 </Button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

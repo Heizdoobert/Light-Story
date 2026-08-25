@@ -10,9 +10,15 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-zinc-100 dark:bg-zinc-950 transition-colors duration-500 flex flex-col">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg"
+      >
+        Bỏ qua điều hướng
+      </a>
       <Header onLoginClick={() => setIsLoginModalOpen(true)} />
       <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
-      <main className="flex-grow w-full">{children}</main>
+      <main id="main-content" className="flex-grow w-full">{children}</main>
       <PublicFooter />
     </div>
   );

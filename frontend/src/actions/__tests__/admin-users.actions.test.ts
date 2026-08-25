@@ -26,6 +26,18 @@ describe('admin-users.actions server actions', () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     vi.clearAllMocks();
+    vi.mocked(serverApi.createClient).mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-1', app_metadata: { role: 'superadmin' } } },
+          error: null,
+        }),
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: { access_token: 'test-token' } },
+          error: null,
+        }),
+      },
+    } as any);
   });
 
   afterEach(() => {
@@ -35,14 +47,6 @@ describe('admin-users.actions server actions', () => {
 
   describe('updateProfileRole / updateUserRole', () => {
     it('updates role and calls revalidateTag("profiles", "max") when valid', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -69,14 +73,6 @@ describe('admin-users.actions server actions', () => {
 
   describe('updateProfileName / updateUserName', () => {
     it('updates name and calls revalidateTag("profiles", "max") when valid', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -94,14 +90,6 @@ describe('admin-users.actions server actions', () => {
     });
 
     it('supports updateProfileName directly', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -115,14 +103,6 @@ describe('admin-users.actions server actions', () => {
 
   describe('updateUserStatus', () => {
     it('updates status and calls revalidateTag("profiles", "max") when valid', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -137,14 +117,6 @@ describe('admin-users.actions server actions', () => {
 
   describe('deleteUser & createUser & manageAdminUser', () => {
     it('deletes user successfully', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -157,14 +129,6 @@ describe('admin-users.actions server actions', () => {
     });
 
     it('creates user successfully via createUser and manageAdminUser', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
@@ -182,14 +146,6 @@ describe('admin-users.actions server actions', () => {
     });
 
     it('calls manageAdminUser directly', async () => {
-      vi.mocked(serverApi.createClient).mockResolvedValue({
-        auth: {
-          getSession: vi.fn().mockResolvedValue({
-            data: { session: { access_token: 'valid-token' } },
-          }),
-        },
-      } as any);
-
       const mockFetch = vi.fn().mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
