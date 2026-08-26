@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { apiClient } from "@/lib/api/apiClient";
+import { ROUTES } from "@/lib/constants/routes";
 
 export type AnalyticsData = {
   r2_usage_gb: number;
@@ -23,16 +24,19 @@ export type AnalyticsData = {
 export function useAdminAnalytics() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<AnalyticsData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const res = await apiClient.get<AnalyticsData>("/api/analytics/infrastructure", { signal: AbortSignal.timeout(20000) }).catch(() => null);
+      const res = await apiClient.get<AnalyticsData>(ROUTES.API.ANALYTICS_INFRASTRUCTURE, { signal: AbortSignal.timeout(20000) });
       if (res) {
         setData(res);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load analytics data", err);
+      setError(err?.message || "Failed to fetch analytics data");
     } finally {
       setLoading(false);
     }
@@ -47,6 +51,7 @@ export function useAdminAnalytics() {
   return {
     loading,
     data,
+    error,
     usagePct,
     refresh: fetchAnalytics,
   };
