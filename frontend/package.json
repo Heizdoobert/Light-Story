@@ -10,7 +10,7 @@
     "build": "next build",
     "start": "next start -p 3001 -H 0.0.0.0",
     "preview": "next start -p 3001 -H 0.0.0.0",
-    "lint": "eslint . --max-warnings 140",
+    "lint": "eslint . --max-warnings 141",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",

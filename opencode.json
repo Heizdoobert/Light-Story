@@ -1,5 +1,20 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "opencode": {
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "baseURL": "https://api.trouter.cloud/v1"
+      }
+    },
+    "codex": {
+      "npm": "@ai-sdk/openai",
+      "options": {
+        "baseURL": "https://api.trouter.cloud/v1",
+	"apiKey": "sk-trouterai-824c548f86d04a3cd4ea330435c992f579400ff63012209be767fdfb931437d3"
+      }
+    }
+  },
   "compaction": {
     "auto": true,
     "prune": true
