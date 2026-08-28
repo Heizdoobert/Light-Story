@@ -95,6 +95,8 @@ export async function getInfrastructurePayload(env: Env) {
     // 2. Fallback to list() if GraphQL fails
     if (!fetchedFromGraphql) {
       let cursor: string | undefined = undefined;
+      const MAX_PAGES = 15;
+      let pages = 0;
       try {
         do {
           const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
@@ -103,7 +105,8 @@ export async function getInfrastructurePayload(env: Env) {
             r2SizeBytes += obj.size || 0;
           }
           cursor = listRes.truncated ? listRes.cursor : undefined;
-        } while (cursor);
+          pages++;
+        } while (cursor && pages < MAX_PAGES);
       } catch (e) {
         console.error('[Infra] R2 metrics failed:', e);
       }
