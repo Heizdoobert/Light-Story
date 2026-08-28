@@ -529,7 +529,7 @@ export async function handleAdminRequest(
         ).catch(() => null),
         sbGet(
           'stories',
-          'select=views&limit=10000',
+          'select=views&limit=100000',
           env,
           token,
         ).catch(() => null),

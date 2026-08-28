@@ -48,67 +48,24 @@ export async function getInfrastructurePayload(env: Env) {
   let r2SizeBytes = 0;
 
   if (env.R2_BUCKET) {
-    let fetchedFromGraphql = false;
-
-    // 1. Try Cloudflare GraphQL Analytics API first (O(1) fast path)
     const token = (env as any).CLOUDFLARE_API_TOKEN as string | undefined;
     const accountId = (env as any).CLOUDFLARE_ACCOUNT_ID as string | undefined;
-    
+
     if (token && accountId) {
       try {
-        const q = `
-          query {
-            viewer {
-              accounts(filter: { accountTag: "${accountId}" }) {
-                r2StorageAdaptiveGroups(
-                  filter: { bucketName: "comic" }
-                  limit: 1
-                ) {
-                  sum {
-                    payloadSize
-                    objectCount
-                  }
-                }
-              }
-            }
-          }
-        `;
-        const gRes = await fetch('https://api.cloudflare.com/client/v4/graphql', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: q }),
-        });
-        if (gRes.ok) {
-          const payload: any = await gRes.json();
-          const stats = payload?.data?.viewer?.accounts?.[0]?.r2StorageAdaptiveGroups?.[0]?.sum;
-          if (stats) {
-            r2ObjectCount = Number(stats.objectCount) || 0;
-            r2SizeBytes = Number(stats.payloadSize) || 0;
-            fetchedFromGraphql = true;
+        const res = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/r2/buckets/comic/usage`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (res.ok) {
+          const { result } = await res.json() as any;
+          if (result) {
+            r2ObjectCount = Number(result.objectCount) || 0;
+            r2SizeBytes = Number(result.payloadSize) || 0;
           }
         }
       } catch (err) {
-        console.error('[Infra] GraphQL R2 stats failed:', err);
-      }
-    }
-
-    // 2. Fallback to list() if GraphQL fails
-    if (!fetchedFromGraphql) {
-      let cursor: string | undefined = undefined;
-      const MAX_PAGES = 15;
-      let pages = 0;
-      try {
-        do {
-          const listRes: any = await env.R2_BUCKET.list({ cursor, limit: 1000 });
-          r2ObjectCount += listRes.objects.length;
-          for (const obj of listRes.objects) {
-            r2SizeBytes += obj.size || 0;
-          }
-          cursor = listRes.truncated ? listRes.cursor : undefined;
-          pages++;
-        } while (cursor && pages < MAX_PAGES);
-      } catch (e) {
-        console.error('[Infra] R2 metrics failed:', e);
+        console.error('[Infra] R2 usage API failed:', err);
       }
     }
   }
@@ -130,10 +87,11 @@ export async function getInfrastructurePayload(env: Env) {
     r2AllocatedGb > 0 ? Number(((r2UsageGb / r2AllocatedGb) * 100).toFixed(2)) : 0;
 
   // Real traffic stats from Analytics Engine (dataset lightstory_analytics).
+  // blob1=host, blob2=device, blob3=path — filter out API/health to count page views only.
   const since = "timestamp > NOW() - INTERVAL '30' DAY";
   const rows = await queryAnalyticsSql(
     env,
-    `SELECT blob1 AS host, blob2 AS device, count() AS cnt FROM ${ANALYTICS_DATASET} WHERE ${since} GROUP BY blob1, blob2`,
+    `SELECT blob1 AS host, blob2 AS device, count() AS cnt FROM ${ANALYTICS_DATASET} WHERE ${since} AND blob3 NOT LIKE '/api/%' AND blob3 != '/health' GROUP BY blob1, blob2`,
   );
 
   let pageViews = 0;
