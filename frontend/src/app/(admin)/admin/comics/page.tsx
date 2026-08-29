@@ -62,7 +62,7 @@ export default function AdminComicsPage() {
             <BookOpen className="text-orange-500" size={28} />
             Quản Lý Danh Sách Truyện
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Quản lý, thêm mới, cập nhật ảnh bìa R2 và xóa các bộ truyện trên hệ thống
           </p>
         </div>
@@ -72,7 +72,7 @@ export default function AdminComicsPage() {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
         <div className="relative flex-1 w-full">
           <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -81,7 +81,7 @@ export default function AdminComicsPage() {
             aria-label="Tìm kiếm truyện"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500"
           />
         </div>
 
@@ -90,7 +90,7 @@ export default function AdminComicsPage() {
           id="comic-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer shrink-0"
+          className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 cursor-pointer shrink-0"
         >
           <option value="all">Tất cả trạng thái</option>
           <option value="published">Đã xuất bản (Published)</option>
@@ -101,10 +101,10 @@ export default function AdminComicsPage() {
       </div>
 
       {/* Comics Table */}
-      <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-4">Ảnh Bìa R2</th>
                 <th className="p-4">Tên Truyện</th>
@@ -116,10 +116,10 @@ export default function AdminComicsPage() {
                 <th className="p-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {comics.length > 0 ? (
                 comics.map((comic) => (
-                  <tr key={comic.id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={comic.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-4">
                       <img
                         src={getR2ImageUrl(comic.cover_url)}
@@ -128,16 +128,16 @@ export default function AdminComicsPage() {
                         height={64}
                         loading="lazy"
                         decoding="async"
-                        className="w-12 h-16 rounded-lg object-cover border border-slate-800 bg-slate-950"
+                        className="w-12 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;
                         }}
                       />
                     </td>
-                    <td className="p-4 font-bold text-white max-w-xs truncate">{comic.title}</td>
-                    <td className="p-4 text-slate-300">{comic.author || "Chưa cập nhật"}</td>
+                    <td className="p-4 font-bold text-slate-900 dark:text-white max-w-xs truncate">{comic.title}</td>
+                    <td className="p-4 text-slate-600 dark:text-slate-300">{comic.author || "Chưa cập nhật"}</td>
                     <td className="p-4">
-                      <span className="px-2 py-1 rounded bg-slate-800 text-slate-300 font-medium">
+                      <span className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium">
                         {comic.category || "Chưa cập nhật"}
                       </span>
                     </td>
@@ -151,7 +151,7 @@ export default function AdminComicsPage() {
                           ))}
                         </div>
                       ) : (
-                        <span className="text-slate-500 text-[10px]">—</span>
+                        <span className="text-slate-400 dark:text-slate-500 text-[10px]">—</span>
                       )}
                     </td>
                     <td className="p-4 font-semibold text-orange-400">
@@ -199,7 +199,7 @@ export default function AdminComicsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500">
+                  <td colSpan={8} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     {loading ? "Đang tải danh sách truyện..." : "Không tìm thấy bộ truyện nào."}
                   </td>
                 </tr>
@@ -342,7 +342,7 @@ export default function AdminComicsPage() {
                   ))}
                 </div>
                 {tags.length === 0 && (
-                  <p className="text-[11px] text-slate-500 mt-1">
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                     Chưa có tag. Bạn có thể thêm tag trong mục quản lý Tag.
                   </p>
                 )}

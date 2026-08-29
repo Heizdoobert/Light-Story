@@ -29,17 +29,17 @@ export default function AdminCategoriesPage() {
             <Tags className="text-orange-500" size={28} />
             Quản Lý Thể Loại Truyện
           </h1>
-          <p className="text-sm text-slate-500 mt-1">Danh mục các thể loại phân loại nội dung truyện</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Danh mục các thể loại phân loại nội dung truyện</p>
         </div>
         <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
           <Plus size={18} /> Thêm Thể Loại
         </Button>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <thead className="bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-4">STT</th>
                 <th className="p-4">Tên Thể Loại</th>
@@ -47,12 +47,12 @@ export default function AdminCategoriesPage() {
                 <th className="p-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {categories.length > 0 ? (
                 categories.map((cat, index) => (
-                  <tr key={cat.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 text-slate-400 font-mono">{index + 1}</td>
-                    <td className="p-4 font-bold text-white">{cat.name}</td>
+                  <tr key={cat.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="p-4 text-slate-500 dark:text-slate-400 font-mono">{index + 1}</td>
+                    <td className="p-4 font-bold text-slate-900 dark:text-white">{cat.name}</td>
                     <td className="p-4 font-mono text-cyan-400">{cat.slug || cat.name.toLowerCase()}</td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -68,7 +68,7 @@ export default function AdminCategoriesPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={4} className="p-8 text-center text-slate-500">
+                  <td colSpan={4} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     {loading ? "Đang tải thể loại..." : "Chưa có thể loại nào."}
                   </td>
                 </tr>

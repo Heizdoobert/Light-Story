@@ -27,7 +27,7 @@ export default function AdminProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-slate-400 animate-pulse">
+      <div className="p-8 text-center text-slate-500 dark:text-slate-400 animate-pulse">
         Đang tải thông tin tài khoản admin...
       </div>
     );
@@ -60,7 +60,7 @@ export default function AdminProfilePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card Summary */}
-        <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-6 text-center">
+        <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl p-6 shadow-xl space-y-6 text-center">
           <div className="relative w-28 h-28 mx-auto rounded-full overflow-hidden border-2 border-orange-500/50 bg-slate-950 flex items-center justify-center">
             {avatarUrl ? (
               <img
@@ -82,8 +82,8 @@ export default function AdminProfilePage() {
           </div>
 
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-white">{fullName || "Admin User"}</h2>
-            <p className="text-xs text-slate-400 font-mono">{user?.email || "Chưa có email"}</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{fullName || "Admin User"}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">{user?.email || "Chưa có email"}</p>
             <div className="pt-2">
               <Badge variant={role === "superadmin" ? "danger" : "warning"}>
                 {role ? role.toUpperCase() : "ADMIN"}
@@ -91,25 +91,25 @@ export default function AdminProfilePage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-800 pt-4 space-y-2 text-left text-xs text-slate-400">
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2 text-left text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
-              <Mail size={14} className="text-slate-500" />
-              <span>Email: <strong className="text-slate-200">{user?.email}</strong></span>
+              <Mail size={14} className="text-slate-500 dark:text-slate-400" />
+              <span>Email: <strong className="text-slate-700 dark:text-slate-200">{user?.email}</strong></span>
             </div>
             <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-slate-500" />
-              <span>Đăng nhập gần nhất: <strong className="text-slate-200">{user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></span>
+              <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+              <span>Đăng nhập gần nhất: <strong className="text-slate-700 dark:text-slate-200">{user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString("vi-VN") : "Hôm nay"}</strong></span>
             </div>
           </div>
         </div>
 
         {/* Edit Profile Form */}
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-6">
-          <h3 className="font-bold text-lg border-b border-slate-800 pb-3">Cập Nhật Thông Tin Cá Nhân</h3>
+        <div className="lg:col-span-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl p-6 shadow-xl space-y-6">
+          <h3 className="font-bold text-lg border-b border-slate-200 dark:border-slate-800 pb-3">Cập Nhật Thông Tin Cá Nhân</h3>
 
           <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div>
-              <label htmlFor="profile-full-name" className="block text-xs font-semibold text-slate-300 mb-1">Họ và Tên *</label>
+              <label htmlFor="profile-full-name" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Họ và Tên *</label>
               <input
                 id="profile-full-name"
                 type="text"
@@ -117,12 +117,12 @@ export default function AdminProfilePage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Nhập họ và tên admin..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-orange-500"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
                 Tải Lên Ảnh Đại Diện Mới (Cloudflare R2 Storage)
               </label>
               <ImageUploader
@@ -137,24 +137,24 @@ export default function AdminProfilePage() {
             </div>
 
             <div>
-              <label htmlFor="profile-email" className="block text-xs font-semibold text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
+              <label htmlFor="profile-email" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Địa Chỉ Email (Cố định)</label>
               <input
                 id="profile-email"
                 type="email"
                 disabled
                 value={user?.email || ""}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-500 cursor-not-allowed"
+                className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
               />
             </div>
 
             <div>
-              <label htmlFor="profile-role" className="block text-xs font-semibold text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
+              <label htmlFor="profile-role" className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Vai Trò Hệ Thống (Role)</label>
               <input
                 id="profile-role"
                 type="text"
                 disabled
                 value={role || "user"}
-                className="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-500 cursor-not-allowed capitalize"
+                className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed capitalize"
               />
             </div>
 

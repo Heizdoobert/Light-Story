@@ -41,15 +41,15 @@ export default function AdminAdsPage() {
           return (
             <div
               key={ad.key}
-              className="bg-slate-900 border border-slate-800 text-white rounded-2xl p-6 shadow-xl space-y-4"
+              className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl p-6 shadow-xl space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
                 <div className="flex items-center gap-3">
-                  <span className="font-bold text-base text-white">{ad.label}</span>
+                  <span className="font-bold text-base text-slate-900 dark:text-white">{ad.label}</span>
                   <span className="text-xs font-mono text-cyan-400">({ad.key})</span>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-xs text-slate-400 font-semibold">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
                     {ad.active ? "Hiển thị" : "Ẩn vị trí"}
                   </span>
                   <input
@@ -62,7 +62,7 @@ export default function AdminAdsPage() {
               </div>
 
               <div>
-                <label htmlFor={`ad-markup-${ad.key}`} className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label htmlFor={`ad-markup-${ad.key}`} className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
                   Mã nhúng HTML / Banner Markup:
                 </label>
                 <textarea
@@ -71,7 +71,7 @@ export default function AdminAdsPage() {
                   value={ad.markup}
                   onChange={(e) => handleMarkupChange(ad.key, e.target.value)}
                   placeholder="Nhập thẻ <a>, <img> hoặc <iframe> quảng cáo..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-orange-500"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-mono text-slate-900 dark:text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
 
