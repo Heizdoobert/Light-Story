@@ -22,6 +22,8 @@ export default function AdminComicsPage() {
     setSearch,
     statusFilter,
     setStatusFilter,
+    categoryFilter,
+    setCategoryFilter,
     isModalOpen,
     setIsModalOpen,
     editingComic,
@@ -98,7 +100,39 @@ export default function AdminComicsPage() {
           <option value="completed">Đã hoàn thành (Completed)</option>
           <option value="draft">Bản nháp (Draft)</option>
         </select>
+
+        {categoryFilter.size > 0 && (
+          <button
+            onClick={() => setCategoryFilter(new Set())}
+            className="text-[10px] font-bold text-red-400 hover:text-red-500 shrink-0 transition-colors"
+          >
+            Xóa bộ lọc
+          </button>
+        )}
       </div>
+
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 bg-slate-100 dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 -mt-3">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => {
+                const newSet = new Set(categoryFilter);
+                if (newSet.has(cat.name)) newSet.delete(cat.name);
+                else newSet.add(cat.name);
+                setCategoryFilter(newSet);
+              }}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                categoryFilter.has(cat.name)
+                  ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                  : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Comics Table */}
       <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl overflow-hidden shadow-xl">

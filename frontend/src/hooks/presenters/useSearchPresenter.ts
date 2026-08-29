@@ -15,8 +15,7 @@ export function useSearchPresenter(initialCategory?: string) {
   const keyword = searchParams.get("keyword") || "";
 
   const categoryParam = searchParams.get("category") || initialCategory || "all";
-  const category =
-    categoryParam !== "all" ? decodeURIComponent(categoryParam) : "all";
+  const category = categoryParam !== "all" ? categoryParam : "all";
 
   const tagParam = searchParams.get("tag") || "all";
   const tag =
