@@ -35,32 +35,32 @@ export default function AdminUsersPage() {
             <Users className="text-orange-500" size={28} />
             Quản Lý Người Dùng & Vai Trò
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Phân quyền vai trò (Superadmin, Admin, Employee, User) và quản lý tài khoản người dùng
           </p>
         </div>
       </div>
 
       {/* Search Input */}
-      <div className="flex items-center gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
           <input
             type="text"
             placeholder="Tìm kiếm người dùng theo email, tên, vai trò..."
             aria-label="Tìm kiếm người dùng"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500"
           />
         </div>
       </div>
 
       {/* Users Table */}
-      <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <thead className="bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-4">Người Dùng</th>
                 <th className="p-4">Email</th>
@@ -69,17 +69,17 @@ export default function AdminUsersPage() {
                 <th className="p-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {users.length > 0 ? (
                 users.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-4 font-bold text-white flex items-center gap-3">
+                  <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 font-bold flex items-center justify-center border border-orange-500/30">
                         {u.full_name ? u.full_name[0].toUpperCase() : u.email ? u.email[0].toUpperCase() : "U"}
                       </div>
                       <span>{u.full_name || "Chưa cập nhật tên"}</span>
                     </td>
-                    <td className="p-4 font-mono text-slate-300">{u.email || "-"}</td>
+                    <td className="p-4 font-mono text-slate-600 dark:text-slate-300">{u.email || "-"}</td>
                     <td className="p-4">
                       <Badge
                         variant={
@@ -95,7 +95,7 @@ export default function AdminUsersPage() {
                         {u.role || "user"}
                       </Badge>
                     </td>
-                    <td className="p-4 text-slate-400">
+                    <td className="p-4 text-slate-500 dark:text-slate-400">
                       {u.created_at ? new Date(u.created_at).toLocaleDateString("vi-VN") : "-"}
                     </td>
                     <td className="p-4 text-right">
@@ -112,7 +112,7 @@ export default function AdminUsersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     {loading ? "Đang tải danh sách người dùng..." : "Không tìm thấy người dùng phù hợp."}
                   </td>
                 </tr>
