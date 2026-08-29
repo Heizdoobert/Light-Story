@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
-import { Search, Filter, XCircle, ChevronDown, Check } from "lucide-react";
+import { motion } from "motion/react";
+import { Search, Filter, XCircle, X, ChevronDown } from "lucide-react";
 import { Category } from "@/types/entities";
 import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/lib/constants/routes";
@@ -27,11 +27,10 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
   const router = useRouter();
   const { t } = useLanguage();
   const [searchInput, setSearchInput] = useState("");
-  const [category, setCategory] = useState("all");
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<SortOption>("newest");
   const [categories, setCategories] = useState<Category[]>([]);
 
-  // Load genres from the gateway API, not a hardcoded list
   useEffect(() => {
     let active = true;
     apiClient
@@ -48,26 +47,13 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
     };
   }, []);
 
-  // States quản lý trạng thái mở của Dropdown Tùy Chỉnh
-  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-
-  // State để người dùng gõ tìm kiếm thể loại bên trong Dropdown
   const [categorySearchTerm, setCategorySearchTerm] = useState("");
-
-  // Refs để xử lý click ra ngoài thì tự đóng Dropdown
-  const categoryRef = useRef<HTMLDivElement>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
 
-  // Xử lý Click Outside để đóng menu
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        categoryRef.current &&
-        !categoryRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryOpen(false);
-      }
       if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
         setIsSortOpen(false);
       }
@@ -76,30 +62,49 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleApply = () => {
-    if (onFilterChange) {
-      onFilterChange({ keyword: searchInput.trim(), category, sort });
-    } else {
-      const queryParams = new URLSearchParams();
-      if (searchInput.trim()) queryParams.append("keyword", searchInput.trim());
-      if (category !== "all") queryParams.append("category", category);
-      queryParams.append("sort", sort);
-
-      router.push(`${ROUTES.SEARCH}?${queryParams.toString()}`);
-    }
-    if (onClose) onClose();
+  const toggleCategory = (catName: string) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(catName)) {
+        next.delete(catName);
+      } else {
+        next.add(catName);
+      }
+      return next;
+    });
   };
 
-  // Lọc danh sách thể loại theo ô tìm kiếm bên trong
+  const clearCategories = () => setSelectedCategories(new Set());
+
   const filteredCategories = categories.filter((cat) =>
     (cat.name || cat.id || "")
       .toLowerCase()
       .includes(categorySearchTerm.toLowerCase()),
   );
 
+  const visibleCategories = showAllCategories ? filteredCategories : filteredCategories.slice(0, 12);
+  const hasMore = filteredCategories.length > 12;
+
+  const handleApply = () => {
+    const categoryStr = selectedCategories.size > 0
+      ? Array.from(selectedCategories).join(",")
+      : "all";
+
+    if (onFilterChange) {
+      onFilterChange({ keyword: searchInput.trim(), category: categoryStr, sort });
+    } else {
+      const queryParams = new URLSearchParams();
+      if (searchInput.trim()) queryParams.append("keyword", searchInput.trim());
+      if (categoryStr !== "all") queryParams.append("category", categoryStr);
+      queryParams.append("sort", sort);
+      router.push(`${ROUTES.SEARCH}?${queryParams.toString()}`);
+    }
+    if (onClose) onClose();
+  };
+
   return (
     <div className="flex flex-col gap-5 w-full">
-      {/* 1. Ô TÌM KIẾM CHUNG */}
+      {/* 1. Search Input */}
       <div className="space-y-1.5">
         <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
           {t("search_label")}
@@ -130,93 +135,80 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
       </div>
 
       <div className="flex flex-col gap-4 border-t border-slate-100 dark:border-slate-800/60 pt-4">
-        {/* 2. CUSTOM DROPDOWN THỂ LOẠI (Có thanh tìm kiếm) */}
-        <div className="space-y-1.5 relative" ref={categoryRef}>
-          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
-            {t("category_label")}
-          </label>
-          <div
-            onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-            className="w-full flex items-center justify-between py-3.5 px-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
-          >
-            <span className="truncate">
-              {category === "all" ? t("all_categories") : category}
-            </span>
-            <ChevronDown
-              size={18}
-              className={`text-slate-400 transition-transform duration-300 ${isCategoryOpen ? "rotate-180" : ""}`}
+        {/* 2. Multi-Select Category Chips */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between ml-1">
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {t("category_label")}
+            </label>
+            {selectedCategories.size > 0 && (
+              <button
+                onClick={clearCategories}
+                className="text-[10px] font-bold text-red-400 hover:text-red-500 transition-colors flex items-center gap-1"
+              >
+                <X size={10} />
+                {t("clear_selection") || "Xóa"}
+              </button>
+            )}
+          </div>
+
+          {/* Search inside categories */}
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              size={14}
+            />
+            <input
+              type="text"
+              placeholder={t("quick_search_category")}
+              value={categorySearchTerm}
+              onChange={(e) => setCategorySearchTerm(e.target.value)}
+              className="w-full pl-9 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none text-slate-800 dark:text-white"
             />
           </div>
 
-          <AnimatePresence>
-            {isCategoryOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden"
-              >
-                {/* Thanh tìm kiếm thể loại */}
-                <div className="p-2 border-b border-slate-100 dark:border-slate-700">
-                  <div className="relative">
-                    <Search
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                      size={14}
-                    />
-                    <input
-                      type="text"
-                      placeholder={t("quick_search_category")}
-                      value={categorySearchTerm}
-                      onChange={(e) => setCategorySearchTerm(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full pl-9 pr-3 py-2 bg-slate-100 dark:bg-slate-900/50 border-none rounded-xl text-sm focus:ring-1 focus:ring-primary outline-none text-slate-800 dark:text-white"
-                    />
-                  </div>
-                </div>
-
-                {/* Danh sách thể loại có thanh cuộn */}
-                <div className="max-h-60 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-600">
-                  <div
-                    onClick={() => {
-                      setCategory("all");
-                      setIsCategoryOpen(false);
-                    }}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${category === "all" ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
+          {/* Category chips */}
+          <div className="flex flex-wrap gap-2">
+            {visibleCategories.length > 0 ? (
+              visibleCategories.map((cat) => {
+                const catName = cat.name || cat.id || t("unnamed");
+                const isSelected = selectedCategories.has(catName);
+                return (
+                  <motion.button
+                    key={cat.id}
+                    type="button"
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => toggleCategory(catName)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                      isSelected
+                        ? "bg-blue-500/20 border-blue-500 text-blue-600 dark:text-blue-400 shadow-sm"
+                        : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600"
+                    }`}
                   >
-                    {t("all_categories")}
-                    {category === "all" && <Check size={16} />}
-                  </div>
-
-                  {filteredCategories.length > 0 ? (
-                    filteredCategories.map((cat, index) => {
-                      const catName = cat.name || cat.id || t("unnamed");
-                      const isSelected = category === catName;
-                      return (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            setCategory(catName);
-                            setIsCategoryOpen(false);
-                          }}
-                          className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors mt-1 ${isSelected ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
-                        >
-                          {catName}
-                          {isSelected && <Check size={16} />}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="px-4 py-3 text-sm text-center text-slate-500">
-                      No results for &quot;{categorySearchTerm}&quot;
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+                    {catName}
+                  </motion.button>
+                );
+              })
+            ) : (
+              <div className="px-3 py-2 text-xs text-center text-slate-500 w-full">
+                {t("filter_no_results_for") || "No results for"} &quot;{categorySearchTerm}&quot;
+              </div>
             )}
-          </AnimatePresence>
+          </div>
+
+          {hasMore && (
+            <button
+              onClick={() => setShowAllCategories(!showAllCategories)}
+              className="text-xs font-bold text-primary hover:underline flex items-center gap-1 ml-1"
+            >
+              {showAllCategories
+                ? t("show_less") || "Thu gọn"
+                : `${t("see_all")} (${filteredCategories.length})`}
+            </button>
+          )}
         </div>
 
-        {/* 3. CUSTOM DROPDOWN SẮP XẾP */}
+        {/* 3. Sort Dropdown */}
         <div className="space-y-1.5 relative" ref={sortRef}>
           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 uppercase tracking-wider">
             {t("sort_by_label")}
@@ -238,37 +230,35 @@ export const FilterMenu: React.FC<FilterMenuProps> = ({
             />
           </div>
 
-          <AnimatePresence>
-            {isSortOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden p-2"
-              >
-                {[
-                  { value: "newest", label: t("sort_newest") },
-                  { value: "most_viewed", label: t("sort_most_viewed") },
-                  { value: "oldest", label: t("sort_oldest") },
-                ].map((option) => (
-                  <div
-                    key={option.value}
-                    onClick={() => {
-                      setSort(option.value as SortOption);
-                      setIsSortOpen(false);
-                    }}
-                    className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${sort === option.value ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
-                  >
-                    {option.label}
-                    {sort === option.value && <Check size={16} />}
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isSortOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="absolute z-50 w-full mt-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl overflow-hidden p-2"
+            >
+              {[
+                { value: "newest", label: t("sort_newest") },
+                { value: "most_viewed", label: t("sort_most_viewed") },
+                { value: "oldest", label: t("sort_oldest") },
+              ].map((option) => (
+                <div
+                  key={option.value}
+                  onClick={() => {
+                    setSort(option.value as SortOption);
+                    setIsSortOpen(false);
+                  }}
+                  className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer text-sm font-medium transition-colors ${sort === option.value ? "bg-blue-50 dark:bg-slate-700/50 text-blue-600 dark:text-blue-400" : "text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30"}`}
+                >
+                  {option.label}
+                  {sort === option.value && <span className="text-blue-500">✓</span>}
+                </div>
+              ))}
+            </motion.div>
+          )}
         </div>
 
-        {/* 4. NÚT ÁP DỤNG */}
+        {/* 4. Apply Button */}
         <motion.button
           whileTap={{ scale: 0.96 }}
           whileHover={{ scale: 1.02 }}

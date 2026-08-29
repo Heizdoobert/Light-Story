@@ -76,6 +76,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     empty_search_description: "Không tìm thấy bộ truyện nào khớp với bộ lọc của bạn. Hãy thử thay đổi từ khóa hoặc thể loại.",
     reset_filter: "Đặt lại bộ lọc",
     read_now: "Đọc ngay",
+    clear_selection: "Xóa lựa chọn",
+    filter_no_results_for: "Không có kết quả cho",
 
     // Header & Sub Navigation
     nav_home: "TRANG CHỦ",
@@ -455,6 +457,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     empty_search_description: "No comics match your filters. Try changing your keyword or category.",
     reset_filter: "Reset filters",
     read_now: "Read now",
+    clear_selection: "Clear selection",
+    filter_no_results_for: "No results for",
 
     // Header & Sub Navigation
     nav_home: "HOME",

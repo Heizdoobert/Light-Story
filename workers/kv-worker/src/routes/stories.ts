@@ -58,11 +58,13 @@ export async function handleStoriesRequest(
         Math.max(1, parseInt(url.searchParams.get('pageSize') || '10')),
       );
       const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
-      const category = (url.searchParams.get('category') || '').replace(/[\(\),&]/g, '').trim();
+      const rawCategory = url.searchParams.get('category') || '';
+      const categories = rawCategory.split(',').map(c => c.replace(/[\(\)&]/g, '').trim()).filter(Boolean);
       const tag = (url.searchParams.get('tag') || '').replace(/[\(\),&]/g, '').trim();
       const sort = url.searchParams.get('sort') || 'newest';
 
-      const cacheKey = buildCacheKey('stories:list', { keyword, category, tag, sort, page, pageSize });
+      const normalizedCategory = categories.sort().join(',');
+      const cacheKey = buildCacheKey('stories:list', { keyword, category: normalizedCategory, tag, sort, page, pageSize });
       const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 60 }, async () => {
         const offset = (page - 1) * pageSize;
         const allowedStatuses = ['published', 'ongoing', 'completed'];
@@ -76,11 +78,16 @@ export async function handleStoriesRequest(
         const order = sortMap[sort] || 'created_at.desc';
 
         let q = `select=id,title,author,description,cover_url,category,tags,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
+        const orParts: string[] = [];
         if (keyword) {
-          q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+          orParts.push(`title.ilike.*${encodeURIComponent(keyword)}*`);
+          orParts.push(`author.ilike.*${encodeURIComponent(keyword)}*`);
         }
-        if (category) {
-          q += `&category=ilike.*${encodeURIComponent(category)}*`;
+        if (categories.length > 0) {
+          categories.forEach(c => orParts.push(`category.ilike.*${encodeURIComponent(c)}*`));
+        }
+        if (orParts.length > 0) {
+          q += `&or=(${orParts.join(',')})`;
         }
         if (tag) {
           q += `&tags=ilike.*${encodeURIComponent(tag)}*`;
@@ -90,11 +97,16 @@ export async function handleStoriesRequest(
         const items = await res.json();
 
         let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
+        const countOrParts: string[] = [];
         if (keyword) {
-          countQ += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+          countOrParts.push(`title.ilike.*${encodeURIComponent(keyword)}*`);
+          countOrParts.push(`author.ilike.*${encodeURIComponent(keyword)}*`);
         }
-        if (category) {
-          countQ += `&category=ilike.*${encodeURIComponent(category)}*`;
+        if (categories.length > 0) {
+          categories.forEach(c => countOrParts.push(`category.ilike.*${encodeURIComponent(c)}*`));
+        }
+        if (countOrParts.length > 0) {
+          countQ += `&or=(${countOrParts.join(',')})`;
         }
         if (tag) {
           countQ += `&tags=ilike.*${encodeURIComponent(tag)}*`;
