@@ -10,6 +10,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
+import { withCache, buildCacheKey, invalidateCache } from '../middleware/cache';
 
 const slugify = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -36,13 +37,15 @@ export async function handleStoriesRequest(
 
   try {
     if (method === 'GET' && pathname === '/categories') {
-      const res = await sbGet(
-        'categories',
-        'select=id,name&order=name.asc',
-        env,
-        token,
-      );
-      return handleRes(res);
+      return withCache(env.APP_KV, 'categories', { ttlSec: 600 }, async () => {
+        const res = await sbGet(
+          'categories',
+          'select=id,name&order=name.asc',
+          env,
+          token,
+        );
+        return handleRes(res);
+      });
     }
 
     if (method === 'GET' && pathname === '/stories') {
@@ -58,56 +61,62 @@ export async function handleStoriesRequest(
       const category = (url.searchParams.get('category') || '').replace(/[\(\),&]/g, '').trim();
       const tag = (url.searchParams.get('tag') || '').replace(/[\(\),&]/g, '').trim();
       const sort = url.searchParams.get('sort') || 'newest';
-      const offset = (page - 1) * pageSize;
-      const allowedStatuses = ['published', 'ongoing', 'completed'];
 
-      const sortMap: Record<string, string> = {
-        newest: 'created_at.desc',
-        popular: 'views.desc',
-        alphabet: 'title.asc',
-        newest_update: 'updated_at.desc',
-      };
-      const order = sortMap[sort] || 'created_at.desc';
+      const cacheKey = buildCacheKey('stories:list', { keyword, category, tag, sort, page, pageSize });
+      const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 60 }, async () => {
+        const offset = (page - 1) * pageSize;
+        const allowedStatuses = ['published', 'ongoing', 'completed'];
 
-      let q = `select=id,title,author,description,cover_url,category,tags,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
-      if (keyword) {
-        q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
-      }
-      if (category) {
-        q += `&category=ilike.*${encodeURIComponent(category)}*`;
-      }
-      if (tag) {
-        q += `&tags=ilike.*${encodeURIComponent(tag)}*`;
-      }
-      const res = await sbGet('stories', q, env, token);
-      if (!res.ok) return handleRes(res);
-      const items = await res.json();
+        const sortMap: Record<string, string> = {
+          newest: 'created_at.desc',
+          popular: 'views.desc',
+          alphabet: 'title.asc',
+          newest_update: 'updated_at.desc',
+        };
+        const order = sortMap[sort] || 'created_at.desc';
 
-      let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
-      if (keyword) {
-        countQ += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
-      }
-      if (category) {
-        countQ += `&category=ilike.*${encodeURIComponent(category)}*`;
-      }
-      if (tag) {
-        countQ += `&tags=ilike.*${encodeURIComponent(tag)}*`;
-      }
-      const total = await sbGetCount(countQ, env, token);
-      return json({ items, total });
+        let q = `select=id,title,author,description,cover_url,category,tags,status,views,like_count,created_at,updated_at&status=in.(${allowedStatuses.join(',')})&order=${order}&limit=${pageSize}&offset=${offset}`;
+        if (keyword) {
+          q += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+        }
+        if (category) {
+          q += `&category=ilike.*${encodeURIComponent(category)}*`;
+        }
+        if (tag) {
+          q += `&tags=ilike.*${encodeURIComponent(tag)}*`;
+        }
+        const res = await sbGet('stories', q, env, token);
+        if (!res.ok) return handleRes(res);
+        const items = await res.json();
+
+        let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
+        if (keyword) {
+          countQ += `&or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+        }
+        if (category) {
+          countQ += `&category=ilike.*${encodeURIComponent(category)}*`;
+        }
+        if (tag) {
+          countQ += `&tags=ilike.*${encodeURIComponent(tag)}*`;
+        }
+        const total = await sbGetCount(countQ, env, token);
+        return { items, total };
+      });
+      return json(data);
     }
 
     if (method === 'GET' && pathname.match(/^\/stories\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
       if (!isValidUuid(id))
         return err('VALIDATION_ERROR', 'Invalid story id', 400);
-      const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
-      const data = await res.json();
-      if (!res.ok)
-        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
-      return json(
-        Array.isArray(data) ? data[0] || null : data,
-      );
+      const data = await withCache(env.APP_KV, `story:${id}`, { ttlSec: 300 }, async () => {
+        const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
+        const data = await res.json();
+        if (!res.ok)
+          return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+        return Array.isArray(data) ? data[0] || null : data;
+      });
+      return json(data);
     }
 
     if (method === 'POST' && pathname === '/stories') {
@@ -137,6 +146,7 @@ export async function handleStoriesRequest(
       if (!payload.status) payload.status = 'draft';
       payload.slug = await uniqueSlug(env, token, slugify(String(payload.title)));
       const res = await sbPost('stories', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:stories:list:*', 'cache:categories']);
       return handleRes(res);
     }
 
@@ -215,6 +225,9 @@ export async function handleStoriesRequest(
         env,
         token,
       );
+      if (res.ok && body.storyId) {
+        await invalidateCache(env.APP_KV, [`cache:chapters:${body.storyId}`]);
+      }
       return handleRes(res);
     }
 
@@ -222,12 +235,24 @@ export async function handleStoriesRequest(
       const id = pathname.split('/')[2];
       if (!isValidUuid(id))
         return err('VALIDATION_ERROR', 'Invalid chapter id', 400);
+      // Look up story_id before delete for cache invalidation
+      let storyId: string | null = null;
+      try {
+        const lookup = await sbGet('chapters', `id=eq.${id}&select=story_id`, env, token);
+        if (lookup.ok) {
+          const rows = await lookup.json() as Array<{ story_id: string }>;
+          if (rows.length > 0) storyId = rows[0].story_id;
+        }
+      } catch { /* ignore */ }
       const res = await sb(
         `/rest/v1/chapters?id=eq.${id}`,
         { method: 'DELETE' },
         env,
         token,
       );
+      if (res.ok && storyId) {
+        await invalidateCache(env.APP_KV, [`cache:chapters:${storyId}`]);
+      }
       return res.ok
         ? json({ success: true })
         : handleRes(res);
