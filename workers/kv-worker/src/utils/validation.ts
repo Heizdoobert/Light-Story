@@ -127,3 +127,11 @@ export function getAuthRole(request: Request): string | null {
 export function requireRole(role: string | null, allowed: string[]): boolean {
   return role !== null && allowed.includes(role);
 }
+
+export const APP_ROLES = ['superadmin', 'admin', 'employee', 'user', 'haunt'] as const;
+
+export type AppRole = (typeof APP_ROLES)[number];
+
+export function isAppRole(value: unknown): value is AppRole {
+  return typeof value === 'string' && (APP_ROLES as readonly string[]).includes(value);
+}

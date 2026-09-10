@@ -17,6 +17,8 @@ import {
   getAuthRole,
   requireRole,
   VALID_STATUSES,
+  APP_ROLES,
+  isAppRole,
 } from '../utils/validation';
 import {
   buildUploadKey,
@@ -607,6 +609,16 @@ export async function handleAdminRequest(
       const body = (await request.json()) as any;
       const { action, id } = body;
 
+      // Role and identity mutation is superadmin-only. The blanket gate at the
+      // top of this function admits `employee`, which would otherwise be enough
+      // to self-promote via action: 'updateRole'.
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'Profile mutation requires superadmin privileges', 403);
+      }
+      if (action === 'updateRole' && !isAppRole(body.role)) {
+        return err('VALIDATION_ERROR', 'role must be one of: ' + APP_ROLES.join(', '), 400);
+      }
+
       if (action === 'updateRole') {
         const svcKey = env.SUPABASE_SERVICE_KEY || (env as any).SUPABASE_SERVICE_ROLE_KEY;
         if (svcKey) {
@@ -657,6 +669,15 @@ export async function handleAdminRequest(
       const body = (await request.json()) as any;
       const { action } = body;
       const svcKey = env.SUPABASE_SERVICE_KEY;
+
+      // Account creation and deletion run against the Supabase admin API with
+      // the service key. Superadmin only.
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'User management requires superadmin privileges', 403);
+      }
+      if (action === 'create' && body.role !== undefined && !isAppRole(body.role)) {
+        return err('VALIDATION_ERROR', 'role must be one of: ' + APP_ROLES.join(', '), 400);
+      }
 
       if (!svcKey) {
         return err(
@@ -768,6 +789,9 @@ export async function handleAdminRequest(
       method === 'DELETE' &&
       path.match(/^\/admin\/profiles\/[^\/]+$/)
     ) {
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'Profile deletion requires superadmin privileges', 403);
+      }
       const id = pathSegment(path, 3);
       const res = await sbDelete(
         'profiles',
