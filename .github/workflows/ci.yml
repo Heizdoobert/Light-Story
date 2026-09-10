@@ -79,6 +79,9 @@ jobs:
             npx tsc --noEmit -p workers/kv-worker/tsconfig.json
           fi
 
+      - name: Test worker
+        run: npx vitest run --root workers/${{ matrix.worker }}
+
   backend-supabase:
     name: Backend Structure Validation
     runs-on: ubuntu-latest
