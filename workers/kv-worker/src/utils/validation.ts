@@ -177,3 +177,15 @@ export function uuidInFilter(column: string, values: unknown): string {
   const checked = values.map((v) => assertUuid(v, column));
   return `${column}=in.(${checked.join(',')})`;
 }
+
+/**
+ * Builds a PostgREST equality filter for an identifier-shaped column (setting
+ * keys, not UUIDs). Same contract as uuidFilter: the interpolation happens
+ * inside the guard, never at the call site.
+ */
+export function identifierFilter(column: string, value: unknown): string {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_]+$/.test(value)) {
+    throw new ValidationFailure(column, `${column} must be an alphanumeric identifier`);
+  }
+  return `${column}=eq.${value}`;
+}

@@ -19,6 +19,11 @@ import {
   VALID_STATUSES,
   APP_ROLES,
   isAppRole,
+  assertUuid,
+  uuidFilter,
+  uuidInFilter,
+  identifierFilter,
+  ValidationFailure,
 } from '../utils/validation';
 import {
   buildUploadKey,
@@ -35,7 +40,8 @@ const slugify = (value: string) =>
 async function uniqueSlug(env: Env, token: string | null, base: string, excludeId?: string): Promise<string> {
   let candidate = base || 'comic';
   for (let i = 2; ; i++) {
-    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${excludeId ? `&id=neq.${excludeId}` : ''}`;
+    const exclude = excludeId ? `&id=neq.${assertUuid(excludeId, 'id')}` : '';
+    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${exclude}`;
     const res = await sbGet('stories', q, env, token);
     if (!res.ok) return candidate;
     const rows = (await res.json()) as Array<{ id: string }>;
@@ -158,34 +164,20 @@ export async function handleAdminRequest(
       }
 
       if (action === 'update') {
-        const res = await sbPatch(
-          'stories',
-          `id=eq.${body.id}`,
-          body.payload,
-          env,
-          token,
-        );
+        const res = await sbPatch('stories', uuidFilter('id', body.id), body.payload, env, token);
         return handleRes(res);
       }
 
       if (action === 'delete') {
-        const res = await sbDelete(
-          'stories',
-          `id=eq.${body.id}`,
-          env,
-          token,
-        );
+        const res = await sbDelete('stories', uuidFilter('id', body.id), env, token);
         return okRes(res);
       }
 
       if (action === 'bulkUpdateStatus') {
         const { ids, status: newStatus } = body;
-        const queries = ids
-          .map((id: string) => `id=eq.${id}`)
-          .join(',');
         const res = await sbPatch(
           'stories',
-          `or=(${queries})`,
+          uuidInFilter('id', ids),
           { status: newStatus },
           env,
           token,
@@ -194,15 +186,7 @@ export async function handleAdminRequest(
       }
 
       if (action === 'bulkDelete') {
-        const queries = body.ids
-          .map((id: string) => `id=eq.${id}`)
-          .join(',');
-        const res = await sbDelete(
-          'stories',
-          `or=(${queries})`,
-          env,
-          token,
-        );
+        const res = await sbDelete('stories', uuidInFilter('id', body.ids), env, token);
         return res.ok
           ? json({ success: true })
           : handleRes(res);
@@ -232,23 +216,12 @@ export async function handleAdminRequest(
       }
 
       if (action === 'update') {
-        const res = await sbPatch(
-          'chapters',
-          `id=eq.${body.id}`,
-          body.payload,
-          env,
-          token,
-        );
+        const res = await sbPatch('chapters', uuidFilter('id', body.id), body.payload, env, token);
         return handleRes(res);
       }
 
       if (action === 'delete') {
-        const res = await sbDelete(
-          'chapters',
-          `id=eq.${body.id}`,
-          env,
-          token,
-        );
+        const res = await sbDelete('chapters', uuidFilter('id', body.id), env, token);
         return okRes(res);
       }
 
@@ -335,7 +308,10 @@ export async function handleAdminRequest(
           .split(',')
           .map((k) => k.trim())
           .filter(Boolean)
-          .map((k) => `key.eq.${k}`)
+          // Setting keys are identifiers, not UUIDs; identifierFilter keeps the
+          // interpolation inside a guard so nothing can smuggle a PostgREST
+          // operator into the or=() filter.
+          .map((k) => identifierFilter('key', k))
           .join(',');
         if (keyList) {
           q += `&or=(${keyList})`;
@@ -447,11 +423,11 @@ export async function handleAdminRequest(
         return handleRes(res);
       }
       if (taxAction === 'update') {
-        const res = await sbPatch(tax.table, `id=eq.${taxId}`, taxPayload, env, token);
+        const res = await sbPatch(tax.table, uuidFilter('id', taxId), taxPayload, env, token);
         return handleRes(res);
       }
       if (taxAction === 'delete') {
-        const res = await sbDelete(tax.table, `id=eq.${taxId}`, env, token);
+        const res = await sbDelete(tax.table, uuidFilter('id', taxId), env, token);
         return okRes(res);
       }
 
@@ -629,7 +605,7 @@ export async function handleAdminRequest(
               Authorization: `Bearer ${svcKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ target_user_id: id, new_role: body.role }),
+            body: JSON.stringify({ target_user_id: assertUuid(id, 'id'), new_role: body.role }),
           }).catch(() => null);
 
           if (rpcRes && rpcRes.ok) {
@@ -637,24 +613,12 @@ export async function handleAdminRequest(
           }
         }
 
-        const res = await sbPatch(
-          'profiles',
-          `id=eq.${id}`,
-          { role: body.role },
-          env,
-          token,
-        );
+        const res = await sbPatch('profiles', uuidFilter('id', id), { role: body.role }, env, token);
         return okRes(res);
       }
 
       if (action === 'updateName') {
-        const res = await sbPatch(
-          'profiles',
-          `id=eq.${id}`,
-          { full_name: body.full_name },
-          env,
-          token,
-        );
+        const res = await sbPatch('profiles', uuidFilter('id', id), { full_name: body.full_name }, env, token);
         return okRes(res);
       }
 
@@ -723,7 +687,7 @@ export async function handleAdminRequest(
         if (createdUser?.id) {
           await sbPatch(
             'profiles',
-            `id=eq.${createdUser.id}`,
+            uuidFilter('id', createdUser.id),
             { role: targetRole, full_name: fullName },
             env,
             token,
@@ -735,7 +699,7 @@ export async function handleAdminRequest(
 
       if (action === 'delete') {
         const adminRes = await fetch(
-          `${env.SUPABASE_URL}/auth/v1/admin/users/${body.id}`,
+          `${env.SUPABASE_URL}/auth/v1/admin/users/${assertUuid(body.id, 'id')}`,
           {
             method: 'DELETE',
             headers: {
@@ -792,13 +756,7 @@ export async function handleAdminRequest(
       if (!requireRole(userRole, ['superadmin'])) {
         return err('FORBIDDEN', 'Profile deletion requires superadmin privileges', 403);
       }
-      const id = pathSegment(path, 3);
-      const res = await sbDelete(
-        'profiles',
-        `id=eq.${id}`,
-        env,
-        token,
-      );
+      const res = await sbDelete('profiles', uuidFilter('id', pathSegment(path, 3)), env, token);
       return okRes(res);
     }
 
@@ -1014,13 +972,13 @@ export async function handleAdminRequest(
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbGet('stories', `id=eq.${id}&select=*,chapters(*)`, env, token);
+      const res = await sbGet('stories', `${uuidFilter('id', id)}&select=*,chapters(*)`, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
       const comicId = pathSegment(path, 3);
-      const res = await sbGet('chapters', `story_id=eq.${comicId}&order=chapter_number.asc`, env, token);
+      const res = await sbGet('chapters', `${uuidFilter('story_id', comicId)}&order=chapter_number.asc`, env, token);
       return handleRes(res);
     }
 
@@ -1043,13 +1001,13 @@ export async function handleAdminRequest(
       if (s.slug !== undefined && (s.slug as string)) {
         payload.slug = await uniqueSlug(env, token, slugify(String(s.slug)), id);
       }
-      const res = await sbPatch('stories', `id=eq.${id}`, payload, env, token);
+      const res = await sbPatch('stories', uuidFilter('id', id), payload, env, token);
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbDelete('stories', `id=eq.${id}`, env, token);
+      const res = await sbDelete('stories', uuidFilter('id', id), env, token);
       return okRes(res);
     }
 
@@ -1086,7 +1044,7 @@ export async function handleAdminRequest(
       // Check if chapter already exists for this comic & chapter number
       const existingRes = await sbGet(
         'chapters',
-        `story_id=eq.${targetComicId}&chapter_number=eq.${validCn}&select=id`,
+        `${uuidFilter('story_id', targetComicId)}&chapter_number=eq.${validCn}&select=id`,
         env,
         token,
       );
@@ -1097,7 +1055,7 @@ export async function handleAdminRequest(
           const existingId = existingData[0].id;
           const patchRes = await sbPatch(
             'chapters',
-            `id=eq.${existingId}`,
+            uuidFilter('id', existingId),
             { title: payload.title, content: payload.content },
             env,
             token,
@@ -1112,7 +1070,7 @@ export async function handleAdminRequest(
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+\/chapters\/[^\/]+$/)) {
       const chapterId = pathSegment(path, 5);
-      const res = await sbDelete('chapters', `id=eq.${chapterId}`, env, token);
+      const res = await sbDelete('chapters', uuidFilter('id', chapterId), env, token);
       return okRes(res);
     }
 
@@ -1174,22 +1132,28 @@ export async function handleAdminRequest(
       if (body.contact !== undefined) payload.contact = String(body.contact).trim();
       if (body.notes !== undefined) payload.notes = String(body.notes).trim();
       if (body.status !== undefined) payload.status = body.status;
-      const res = await sbPatch('translators', `id=eq.${id}`, payload, env, token);
+      const res = await sbPatch('translators', uuidFilter('id', id), payload, env, token);
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbDelete('translators', `id=eq.${id}`, env, token);
+      const res = await sbDelete('translators', uuidFilter('id', id), env, token);
       return okRes(res);
     }
 
     return null;
-  } catch (e: any) {
-    return err(
-      'INTERNAL_ERROR',
-      e.message || 'Unknown error',
-      500,
-    );
+  } catch (e: unknown) {
+    if (e instanceof ValidationFailure) {
+      return err('VALIDATION_ERROR', e.message, 400);
+    }
+    // Upstream messages carry table, column, and constraint names. Log them,
+    // do not return them.
+    console.error('[admin] unhandled error', {
+      path: pathname,
+      method,
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return err('INTERNAL_ERROR', 'Request failed', 500);
   }
 }
