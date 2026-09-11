@@ -807,7 +807,10 @@ export async function handleAdminRequest(
       const comicId = formData.get('comicId') as string | null;
       const chapterNumber = formData.get('chapterNumber') as string | null;
       const pageNumbers = formData.getAll('pageNumber') as string[];
-      const userId = formData.get('userId') as string | null;
+      // The avatars key scheme is `avatars/<userId>.<ext>`, so a client-supplied
+      // userId let any staff member overwrite any user's avatar. Use the
+      // gateway-set identity instead; it comes from the verified JWT.
+      const userId = request.headers.get('x-user-id');
 
       // Validate-then-write: reject the whole batch before any put, so a bad
       // file can't leave earlier files orphaned in R2 (no rollback exists).
@@ -849,6 +852,9 @@ export async function handleAdminRequest(
 
     // ── GET R2 Object directly via Gateway ──────────────────
     if (method === 'GET' && path.startsWith('/admin/r2/file/')) {
+      if (!requireRole(userRole, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Direct bucket reads require admin privileges', 403);
+      }
       const bucket = env.R2_BUCKET;
       if (!bucket) return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
 
@@ -909,6 +915,9 @@ export async function handleAdminRequest(
     }
 
     if (method === 'GET' && path === '/admin/r2/list') {
+      if (!requireRole(userRole, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Bucket listing requires admin privileges', 403);
+      }
       const bucket = env.R2_BUCKET;
       if (!bucket) {
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);

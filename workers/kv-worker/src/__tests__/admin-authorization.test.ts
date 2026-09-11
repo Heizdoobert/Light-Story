@@ -178,3 +178,48 @@ describe('removed endpoints', () => {
     expect(res).toBeNull();
   });
 });
+
+describe('R2 route authorization', () => {
+  const r2Env = { ...env, R2_BUCKET: {} } as unknown as Env;
+
+  it('rejects employee listing the bucket', async () => {
+    const res = await handleAdminRequest(
+      new Request('https://gateway.test/api/admin/r2/list?prefix=covers/', {
+        headers: { 'x-user-role': 'employee' },
+      }),
+      r2Env,
+      null,
+      '/admin/r2/list',
+    );
+    expect(res?.status).toBe(403);
+  });
+
+  it('rejects employee reading an arbitrary object', async () => {
+    const path = '/admin/r2/file/covers/secret.png';
+    const res = await handleAdminRequest(
+      new Request(`https://gateway.test/api${path}`, {
+        headers: { 'x-user-role': 'employee' },
+      }),
+      r2Env,
+      null,
+      path,
+    );
+    expect(res?.status).toBe(403);
+  });
+
+  it('allows admin to list', async () => {
+    const listEnv = {
+      ...env,
+      R2_BUCKET: { list: async () => ({ objects: [], truncated: false }) },
+    } as unknown as Env;
+    const res = await handleAdminRequest(
+      new Request('https://gateway.test/api/admin/r2/list?prefix=covers/', {
+        headers: { 'x-user-role': 'admin' },
+      }),
+      listEnv,
+      null,
+      '/admin/r2/list',
+    );
+    expect(res?.status).toBe(200);
+  });
+});
