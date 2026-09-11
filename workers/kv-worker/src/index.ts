@@ -26,6 +26,7 @@ import { handleUserRequest } from './routes/user';
 import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimit';
 import { applySecurityHeaders } from './middleware/securityHeaders';
+import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -396,44 +397,39 @@ export default {
           });
           res = err('BAD_REQUEST', 'Invalid key path', 400);
         } else {
-          const rangeHeader = request.headers.get('range');
           const ifNoneMatch = request.headers.get('if-none-match');
 
           // ponytail: images are served as full 200s, Range ignored on purpose.
           // Chrome's sniff probes (Range: bytes=0-…) get ORB-blocked when the
           // worker answers 206 partials (truncated image sniff fails -> retry
           // storm -> CLS). The admin r2/file route keeps range support.
-          const options: R2GetOptions = {};
-          if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
+          const object = await bucket.get(rawKey, conditionalGetOptions(ifNoneMatch));
+          const outcome = classifyR2Get(object);
 
-          const object = await bucket.get(rawKey, options);
-          if (!object) {
+          if (outcome.kind === 'missing') {
             console.warn('[Media] object not found', {
               event: 'media_not_found',
               key: rawKey.slice(0, 500),
               requestId: downstreamHeaders.get('x-request-id'),
             });
-            if (ifNoneMatch) {
-              res = new Response(null, { status: 304 });
-            } else {
-              res = err('NOT_FOUND', 'File not found', 404);
-            }
+            res = err('NOT_FOUND', 'File not found', 404);
+          } else if (outcome.kind === 'not-modified') {
+            const notModified = new Headers();
+            if (outcome.etag) notModified.set('etag', outcome.etag);
+            notModified.set('cache-control', 'public, max-age=31536000, immutable');
+            res = new Response(null, { status: 304, headers: notModified });
           } else {
+            const body = object as R2ObjectBody;
             const mediaHeaders = new Headers();
-            mediaHeaders.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=31536000, immutable');
-            if (object.httpMetadata?.contentType) {
-              mediaHeaders.set('content-type', object.httpMetadata.contentType);
-            } else {
-              mediaHeaders.set('content-type', 'application/octet-stream');
-            }
-            mediaHeaders.set('etag', object.httpEtag);
+            mediaHeaders.set('cache-control', body.httpMetadata?.cacheControl || 'public, max-age=31536000, immutable');
+            mediaHeaders.set('content-type', body.httpMetadata?.contentType || 'application/octet-stream');
+            mediaHeaders.set('etag', body.httpEtag);
             mediaHeaders.set('accept-ranges', 'bytes');
             mediaHeaders.set('x-content-type-options', 'nosniff');
             mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
             mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
-
-            mediaHeaders.set('content-length', object.size.toString());
-            res = new Response(object.body, { status: 200, headers: mediaHeaders });
+            mediaHeaders.set('content-length', body.size.toString());
+            res = new Response(body.body, { status: 200, headers: mediaHeaders });
           }
         }
       }

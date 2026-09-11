@@ -31,6 +31,7 @@ import {
   validateUploadBatch,
 } from '../utils/r2-keys';
 import { getInfrastructurePayload } from '../utils/infra';
+import { classifyR2Get, conditionalGetOptions } from '../utils/r2-conditional';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -851,20 +852,35 @@ export async function handleAdminRequest(
       const bucket = env.R2_BUCKET;
       if (!bucket) return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
 
-      const rawKey = path.replace('/admin/r2/file/', '');
-      if (rawKey.includes('..')) return err('FORBIDDEN', 'Path traversal detected', 403);
+      // Decode before the traversal check: the public media route decodes
+      // first, and %2e%2e would otherwise slip past this one.
+      let rawKey = path.replace('/admin/r2/file/', '');
+      try {
+        rawKey = decodeURIComponent(rawKey);
+      } catch {
+        return err('BAD_REQUEST', 'Malformed key', 400);
+      }
+      if (rawKey.includes('..') || rawKey.startsWith('/')) {
+        return err('FORBIDDEN', 'Path traversal detected', 403);
+      }
+
       const rangeHeader = request.headers.get('range');
       const ifNoneMatch = request.headers.get('if-none-match');
 
-      const options: R2GetOptions = {};
+      const options: R2GetOptions = conditionalGetOptions(ifNoneMatch);
       if (rangeHeader) options.range = request.headers;
-      if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
 
-      const object = await bucket.get(rawKey, options);
-      if (!object) {
-        if (ifNoneMatch) return new Response(null, { status: 304 });
+      const fetched = await bucket.get(rawKey, options);
+      const outcome = classifyR2Get(fetched);
+      if (outcome.kind === 'missing') {
         return err('NOT_FOUND', 'R2 object not found', 404);
       }
+      if (outcome.kind === 'not-modified') {
+        const notModified = new Headers();
+        if (outcome.etag) notModified.set('etag', outcome.etag);
+        return new Response(null, { status: 304, headers: notModified });
+      }
+      const object = fetched as R2ObjectBody;
 
       const headers = new Headers();
       headers.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=86400');
