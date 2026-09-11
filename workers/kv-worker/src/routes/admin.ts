@@ -56,29 +56,51 @@ async function okRes(res: Response): Promise<Response> {
 
 async function handlePromote(request: Request, env: Env, token: string | null): Promise<Response> {
   if (!token) return err('UNAUTHORIZED', 'Authentication required', 401);
-  const userInfo = JSON.parse(atob(token.split('.')[1]));
-  const userId = userInfo.sub;
+
+  // The gateway has already verified this token's signature before routing
+  // here (index.ts rejects /admin with no auth context), so decoding the
+  // payload for `sub` is safe. Prefer the header the gateway set.
+  const headerUserId = request.headers.get('x-user-id');
+  let userId: string;
+  try {
+    userId = assertUuid(headerUserId ?? JSON.parse(atob(token.split('.')[1])).sub, 'userId');
+  } catch {
+    return err('UNAUTHORIZED', 'Could not determine caller identity', 401);
+  }
+
   const h = new Headers();
   h.set('apikey', env.SUPABASE_SERVICE_KEY);
   h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
   h.set('Content-Type', 'application/json');
   h.set('Accept', 'application/json');
+
   const countRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/profiles?select=id&role=in.(superadmin,admin,employee)&limit=1`,
     { method: 'HEAD', headers: { ...Object.fromEntries((h as any).entries()), Prefer: 'count=exact' } },
   );
-  if (countRes.ok) {
-    const r = countRes.headers.get('content-range');
-    const existing = r ? parseInt(r.split('/')[1], 10) : 0;
-    if (existing > 0) return err('FORBIDDEN', 'An admin already exists; ask them to promote you', 403);
+
+  // Fail closed. Previously this check sat inside `if (countRes.ok)`, so any
+  // upstream 5xx skipped it and promoted the caller.
+  if (!countRes.ok) {
+    return err('UPSTREAM_UNAVAILABLE', 'Cannot verify bootstrap state; promotion refused', 503);
   }
+
+  const range = countRes.headers.get('content-range');
+  const existing = range ? parseInt(range.split('/')[1], 10) : NaN;
+  if (!Number.isFinite(existing)) {
+    return err('UPSTREAM_UNAVAILABLE', 'Cannot verify bootstrap state; promotion refused', 503);
+  }
+  if (existing > 0) {
+    return err('FORBIDDEN', 'An admin already exists; ask them to promote you', 403);
+  }
+
   const rpcRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`,
     { method: 'POST', headers: h, body: JSON.stringify({ target_user_id: userId, new_role: 'admin' }) },
   );
   if (!rpcRes.ok) {
-    const text = await rpcRes.text();
-    return err('SUPABASE_ERROR', text, rpcRes.status);
+    console.error('[admin] promote rpc failed', { status: rpcRes.status });
+    return err('SUPABASE_ERROR', 'Promotion failed', rpcRes.status);
   }
   return json({ success: true });
 }
