@@ -162,7 +162,7 @@ export async function handleStoriesRequest(
       if (!payload.status) payload.status = 'draft';
       payload.slug = await uniqueSlug(env, token, slugify(String(payload.title)));
       const res = await sbPost('stories', payload, env, token);
-      if (res.ok) await invalidateCache(env.APP_KV, ['cache:stories:list:*', 'cache:categories']);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:stories:list', 'cache:categories']);
       return handleRes(res);
     }
 

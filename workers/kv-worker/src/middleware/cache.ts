@@ -49,19 +49,30 @@ export async function withCache<T>(
 }
 
 /**
- * Invalidate cache keys matching a prefix pattern.
- * KV doesn't support wildcard delete, so we track keys via a Set.
- * For simplicity, delete known key patterns directly.
+ * Delete every cache key under each given prefix.
+ *
+ * The previous version passed its arguments straight to kv.delete, which takes
+ * an exact key, while call sites passed globs like 'cache:stories:list:*'. The
+ * real keys are 'cache:stories:list:<hash>' from buildCacheKey, so nothing was
+ * ever deleted and list caches only ever expired by TTL. KV does support
+ * prefix listing, which is what this needs.
+ *
+ * An exact key still works: a key is a prefix of itself.
  */
 export async function invalidateCache(
   kv: KVNamespace | undefined,
-  keys: string[],
+  prefixes: string[],
 ): Promise<void> {
-  if (!kv || keys.length === 0) return;
+  if (!kv || prefixes.length === 0) return;
 
-  await Promise.allSettled(
-    keys.map((k) => kv.delete(k)),
-  );
+  for (const prefix of prefixes) {
+    let cursor: string | undefined;
+    do {
+      const page = await kv.list({ prefix, cursor });
+      await Promise.allSettled(page.keys.map((k) => kv.delete(k.name)));
+      cursor = page.list_complete ? undefined : page.cursor;
+    } while (cursor);
+  }
 }
 
 /**

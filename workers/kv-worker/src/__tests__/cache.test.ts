@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { publicCache, withCache } from '../middleware/cache';
+import { invalidateCache, publicCache, withCache } from '../middleware/cache';
 import { fakeKV } from './helpers/fake-kv';
 
 describe('withCache', () => {
@@ -45,5 +45,30 @@ describe('publicCache', () => {
     const kv = fakeKV();
     const env = { APP_KV: kv } as unknown as Env;
     expect(publicCache(env, 'eyJhbGciOi.stub.sig')).toBeUndefined();
+  });
+});
+
+describe('invalidateCache', () => {
+  it('deletes every key under a prefix', async () => {
+    const kv = fakeKV();
+    kv.store.set('cache:stories:list:abc', '{"items":[]}');
+    kv.store.set('cache:stories:list:def', '{"items":[]}');
+    kv.store.set('cache:story:1', '{}');
+
+    await invalidateCache(kv, ['cache:stories:list']);
+
+    expect(kv.store.has('cache:stories:list:abc')).toBe(false);
+    expect(kv.store.has('cache:stories:list:def')).toBe(false);
+    // Unrelated keys survive.
+    expect(kv.store.has('cache:story:1')).toBe(true);
+  });
+
+  it('deletes an exact key, which is a prefix of itself', async () => {
+    const kv = fakeKV();
+    kv.store.set('cache:categories', '[]');
+
+    await invalidateCache(kv, ['cache:categories']);
+
+    expect(kv.store.has('cache:categories')).toBe(false);
   });
 });

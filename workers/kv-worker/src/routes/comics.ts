@@ -147,7 +147,7 @@ export async function handleComicsRequest(
           ? (body.category as string[]).join(', ')
           : String(body.category);
       const res = await sbPost('stories', payload, env, token);
-      if (res.ok) await invalidateCache(env.APP_KV, ['cache:comics:list:*', 'cache:stories:list:*', 'cache:categories']);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:comics:list', 'cache:stories:list', 'cache:categories']);
       return handleRes(res);
     }
 
