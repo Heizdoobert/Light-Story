@@ -30,6 +30,11 @@ export async function withCache<T>(
 
   const result = await fn();
 
+  // A Response cannot survive JSON.stringify — it serializes to "{}". Callers
+  // return one on the upstream-error path, and caching that would serve an
+  // empty object under a 200 for the whole TTL. Pass it through uncached.
+  if (result instanceof Response) return result;
+
   try {
     await kv.put(cacheKey, JSON.stringify(result), {
       expirationTtl: opts.ttlSec,
