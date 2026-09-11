@@ -49,16 +49,17 @@
   },
   "overrides": {
     "shell-quote": "1.10.0",
-    "fast-uri": "4.1.2",
+    "fast-uri": "4.1.4",
     "body-parser": "2.3.0",
     "postcss": "8.5.25",
     "hono": "4.12.34",
+    "js-yaml": "4.3.2",
     "undici": "7.29.0",
-    "sharp": "0.35.3",
+    "sharp": "0.35.4",
     "@hono/node-server": "2.0.11",
     "next": {
       "postcss": "8.5.25",
-      "sharp": "0.35.3"
+      "sharp": "0.35.4"
     },
     "@modelcontextprotocol/sdk": {
       "@hono/node-server": "2.0.11"
