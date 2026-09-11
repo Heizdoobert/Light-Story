@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invalidateCache, publicCache, withCache } from '../middleware/cache';
+import { invalidateCache, publicCache, storyCachePrefixes, withCache } from '../middleware/cache';
 import { fakeKV } from './helpers/fake-kv';
 
 describe('withCache', () => {
@@ -70,5 +70,22 @@ describe('invalidateCache', () => {
     await invalidateCache(kv, ['cache:categories']);
 
     expect(kv.store.has('cache:categories')).toBe(false);
+  });
+});
+
+describe('storyCachePrefixes', () => {
+  it('always covers both list caches', () => {
+    expect(storyCachePrefixes()).toEqual(['cache:stories:list', 'cache:comics:list']);
+  });
+
+  it('covers the detail caches for a known story', () => {
+    const prefixes = storyCachePrefixes('11111111-1111-4111-8111-111111111111');
+    expect(prefixes).toContain('cache:story:11111111-1111-4111-8111-111111111111');
+    expect(prefixes).toContain('cache:comic:11111111-1111-4111-8111-111111111111');
+    expect(prefixes).toContain('cache:chapters:11111111-1111-4111-8111-111111111111');
+  });
+
+  it('ignores a missing id rather than emitting an undefined key', () => {
+    expect(storyCachePrefixes(null).some((p) => p.includes('undefined') || p.includes('null'))).toBe(false);
   });
 });

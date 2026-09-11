@@ -123,3 +123,22 @@ export function cachedJson(result: unknown): Response {
 export function publicCache(env: Env, token: string | null): KVNamespace | undefined {
   return token ? undefined : env.APP_KV;
 }
+
+/**
+ * Cache prefixes a story or chapter mutation invalidates.
+ *
+ * Both list caches always go, because a mutation can change what appears on any
+ * page of either listing. The three detail prefixes only go when the caller
+ * knows which story changed.
+ */
+export function storyCachePrefixes(storyId?: string | null): string[] {
+  const prefixes = ['cache:stories:list', 'cache:comics:list'];
+  if (storyId) {
+    prefixes.push(
+      `cache:story:${storyId}`,
+      `cache:comic:${storyId}`,
+      `cache:chapters:${storyId}`,
+    );
+  }
+  return prefixes;
+}
