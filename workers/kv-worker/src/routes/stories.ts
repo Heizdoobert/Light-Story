@@ -10,7 +10,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
-import { withCache, buildCacheKey, invalidateCache } from '../middleware/cache';
+import { withCache, buildCacheKey, invalidateCache, cachedJson } from '../middleware/cache';
 
 const slugify = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -37,15 +37,19 @@ export async function handleStoriesRequest(
 
   try {
     if (method === 'GET' && pathname === '/categories') {
-      return withCache(env.APP_KV, 'categories', { ttlSec: 600 }, async () => {
+      const data = await withCache(env.APP_KV, 'categories', { ttlSec: 600 }, async () => {
         const res = await sbGet(
           'categories',
           'select=id,name&order=name.asc',
           env,
           token,
         );
-        return handleRes(res);
+        // Only decoded rows are cacheable. handleRes returns a Response, which
+        // withCache passes through uncached — correct for the error path.
+        if (!res.ok) return handleRes(res);
+        return await res.json();
       });
+      return cachedJson(data);
     }
 
     if (method === 'GET' && pathname === '/stories') {

@@ -1,5 +1,7 @@
 /** KV-backed cache utility for read endpoints */
 
+import { json } from '../utils/supabase-client';
+
 export type CacheOptions = {
   ttlSec: number;
   prefix?: string;
@@ -83,4 +85,13 @@ function hashString(str: string): string {
     h = Math.imul(h, 0x01000193);
   }
   return (h >>> 0).toString(36);
+}
+
+/**
+ * Cached handlers return decoded data on the happy path and a Response on the
+ * upstream-error path (which withCache deliberately does not cache). This turns
+ * either into the Response the route must return.
+ */
+export function cachedJson(result: unknown): Response {
+  return result instanceof Response ? result : json(result);
 }

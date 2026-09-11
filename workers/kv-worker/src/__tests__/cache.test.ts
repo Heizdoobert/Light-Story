@@ -1,27 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { withCache } from '../middleware/cache';
-
-/** Minimal in-memory stand-in for a KVNamespace. Exported for the other cache tests. */
-export function fakeKV(): KVNamespace & { store: Map<string, string> } {
-  const store = new Map<string, string>();
-  return {
-    store,
-    get: async (key: string) => {
-      const raw = store.get(key);
-      return raw === undefined ? null : JSON.parse(raw);
-    },
-    put: async (key: string, value: string) => {
-      store.set(key, value);
-    },
-    delete: async (key: string) => {
-      store.delete(key);
-    },
-    list: async ({ prefix }: { prefix?: string; cursor?: string } = {}) => {
-      const names = [...store.keys()].filter((k) => !prefix || k.startsWith(prefix));
-      return { keys: names.map((name) => ({ name })), list_complete: true, cursor: undefined };
-    },
-  } as unknown as KVNamespace & { store: Map<string, string> };
-}
+import { fakeKV } from './helpers/fake-kv';
 
 describe('withCache', () => {
   it('does not cache a Response', async () => {
