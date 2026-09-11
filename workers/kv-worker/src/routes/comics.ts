@@ -261,6 +261,14 @@ export async function handleComicRecommendations(
   const limitStr = url.searchParams.get('limit') || '6';
   const limit = parseInt(limitStr, 10) || 6;
 
+  // comicId is interpolated into id=eq. and id=neq. filters below, and into the
+  // cache key on the next line. Guard before either, so a junk id neither
+  // reaches PostgREST nor becomes a cache key. Absent is allowed — that is the
+  // generic-recommendations path.
+  if (comicId !== null && !isValidUuid(comicId)) {
+    return err('VALIDATION_ERROR', 'Invalid comicId', 400);
+  }
+
   const cacheKey = `recs:${comicId || 'generic'}:${limit}`;
   const data = await withCache(publicCache(env, token), cacheKey, { ttlSec: 300 }, async () => {
 

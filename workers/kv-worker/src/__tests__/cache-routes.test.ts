@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleStoriesRequest } from '../routes/stories';
+import { handleComicRecommendations } from '../routes/comics';
 import { fakeKV } from './helpers/fake-kv';
 
 function envWith(kv: KVNamespace): Env {
@@ -62,5 +63,38 @@ describe('cache isolation between callers', () => {
     const staff = await handleStoriesRequest(req, env, 'staff-token', '/categories');
     expect(await staff!.json()).toEqual(bodies[1]);
     expect(call).toBe(2);
+  });
+});
+
+describe('GET /comics/recommendations', () => {
+  it('rejects a comicId that is not a UUID', async () => {
+    const kv = fakeKV();
+    const env = envWith(kv);
+    let upstreamCalls = 0;
+    vi.stubGlobal('fetch', async () => {
+      upstreamCalls++;
+      return Response.json([]);
+    });
+
+    const url = new URL('https://gateway.test/api/comics/recommendations?comicId=abc&select=*');
+    const res = await handleComicRecommendations(url, env, null);
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: { code: 'VALIDATION_ERROR' } });
+    // The rejected id must not have reached Supabase...
+    expect(upstreamCalls).toBe(0);
+    // ...nor become a cache key.
+    expect(kv.store.size).toBe(0);
+  });
+
+  it('still serves generic recommendations when no comicId is given', async () => {
+    const kv = fakeKV();
+    const env = envWith(kv);
+    vi.stubGlobal('fetch', async () => Response.json([{ id: '1', title: 'Top' }]));
+
+    const url = new URL('https://gateway.test/api/comics/recommendations');
+    const res = await handleComicRecommendations(url, env, null);
+
+    expect(res.status).toBe(200);
   });
 });
