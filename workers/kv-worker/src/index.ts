@@ -169,7 +169,12 @@ export default {
       return handleCorsPreflightRequest(request);
     }
 
-    if (origin && !isOriginAllowed(origin)) {
+    const allowedSuffixes = ((env as any).ALLOWED_ORIGIN_SUFFIXES ?? '')
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+
+    if (origin && !isOriginAllowed(origin, allowedSuffixes)) {
       return new Response('Forbidden', {
         status: 403,
         headers: (() => {
