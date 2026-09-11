@@ -32,6 +32,7 @@ import {
 } from '../utils/r2-keys';
 import { getInfrastructurePayload } from '../utils/infra';
 import { classifyR2Get, conditionalGetOptions } from '../utils/r2-conditional';
+import { invalidateCache, storyCachePrefixes } from '../middleware/cache';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -127,6 +128,12 @@ export function isAdminResourcePath(
   return path === legacy || path === canonical;
 }
 
+/** Cache prefixes for a bulk story mutation: the list caches plus each story's details. */
+function bulkStoryCachePrefixes(ids: unknown): string[] {
+  const list = Array.isArray(ids) ? ids : [];
+  return [...new Set([...storyCachePrefixes(), ...list.flatMap((id) => storyCachePrefixes(String(id)))])];
+}
+
 export async function handleAdminRequest(
   request: Request,
   env: Env,
@@ -183,16 +190,19 @@ export async function handleAdminRequest(
           author_id: s.author_id || null,
         };
         const res = await sbPost('stories', payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes());
         return handleRes(res);
       }
 
       if (action === 'update') {
         const res = await sbPatch('stories', uuidFilter('id', body.id), body.payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.id));
         return handleRes(res);
       }
 
       if (action === 'delete') {
         const res = await sbDelete('stories', uuidFilter('id', body.id), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.id));
         return okRes(res);
       }
 
@@ -205,11 +215,13 @@ export async function handleAdminRequest(
           env,
           token,
         );
+        if (res.ok) await invalidateCache(env.APP_KV, bulkStoryCachePrefixes(ids));
         return okRes(res);
       }
 
       if (action === 'bulkDelete') {
         const res = await sbDelete('stories', uuidInFilter('id', body.ids), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, bulkStoryCachePrefixes(body.ids));
         return res.ok
           ? json({ success: true })
           : handleRes(res);
@@ -235,16 +247,25 @@ export async function handleAdminRequest(
           content: c.content || '',
         };
         const res = await sbPost('chapters', payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(c.story_id));
         return handleRes(res);
       }
 
       if (action === 'update') {
         const res = await sbPatch('chapters', uuidFilter('id', body.id), body.payload, env, token);
+        // ponytail: body.id is the chapter id, so the chapter-list key can only
+        // be targeted when the caller also sent the story id. Without it the
+        // chapter list falls back to its 120s TTL. Look up story_id here if that
+        // ever becomes a complaint.
+        if (res.ok) {
+          await invalidateCache(env.APP_KV, storyCachePrefixes(body.payload?.story_id ?? body.storyId));
+        }
         return handleRes(res);
       }
 
       if (action === 'delete') {
         const res = await sbDelete('chapters', uuidFilter('id', body.id), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.storyId));
         return okRes(res);
       }
 
@@ -986,6 +1007,7 @@ export async function handleAdminRequest(
       if (s.coverUrl) payload.cover_url = s.coverUrl;
       payload.slug = await uniqueSlug(env, token, (s.slug as string) || slugify(String(s.title)));
       const res = await sbPost('stories', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes());
       return handleRes(res);
     }
 
@@ -1030,12 +1052,14 @@ export async function handleAdminRequest(
         payload.slug = await uniqueSlug(env, token, slugify(String(s.slug)), id);
       }
       const res = await sbPatch('stories', uuidFilter('id', id), payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(id));
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
       const res = await sbDelete('stories', uuidFilter('id', id), env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(id));
       return okRes(res);
     }
 
@@ -1088,17 +1112,21 @@ export async function handleAdminRequest(
             env,
             token,
           );
+          if (patchRes.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(targetComicId));
           return handleRes(patchRes);
         }
       }
 
       const res = await sbPost('chapters', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(targetComicId));
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+\/chapters\/[^\/]+$/)) {
       const chapterId = pathSegment(path, 5);
+      const comicId = pathSegment(path, 3);
       const res = await sbDelete('chapters', uuidFilter('id', chapterId), env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(comicId));
       return okRes(res);
     }
 
@@ -1130,6 +1158,7 @@ export async function handleAdminRequest(
         cover_url: s.cover_url ?? null,
       };
       const res = await sbPost('chapters', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(payload.story_id));
       return handleRes(res);
     }
 
