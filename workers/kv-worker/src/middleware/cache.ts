@@ -95,3 +95,20 @@ function hashString(str: string): string {
 export function cachedJson(result: unknown): Response {
   return result instanceof Response ? result : json(result);
 }
+
+/**
+ * Selects the namespace a read path may cache into.
+ *
+ * Rows are fetched with the caller's Supabase token, so PostgREST applies that
+ * caller's row-level security and two callers see different rows for the same
+ * query. Every cache key here is derived from the URL alone, so caching an
+ * authenticated result publishes it to everyone until the TTL expires — an
+ * author reading their own unpublished story would populate the key that
+ * anonymous readers then hit.
+ *
+ * Cache anonymous reads only. Authenticated callers always reach Supabase,
+ * which also means staff see their own edits immediately.
+ */
+export function publicCache(env: Env, token: string | null): KVNamespace | undefined {
+  return token ? undefined : env.APP_KV;
+}

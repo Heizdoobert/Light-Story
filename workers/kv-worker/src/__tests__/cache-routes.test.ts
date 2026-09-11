@@ -39,3 +39,28 @@ describe('GET /categories', () => {
     expect(upstreamCalls).toBe(1);
   });
 });
+
+describe('cache isolation between callers', () => {
+  it('does not serve an authenticated caller rows from the anonymous cache', async () => {
+    const kv = fakeKV();
+    const env = envWith(kv);
+    const bodies = [
+      [{ id: '1', name: 'Public' }],
+      [{ id: '1', name: 'Public' }, { id: '2', name: 'Staff only' }],
+    ];
+    let call = 0;
+
+    vi.stubGlobal('fetch', async () => Response.json(bodies[Math.min(call++, 1)]));
+
+    const req = new Request('https://gateway.test/api/categories');
+
+    // Anonymous caller populates the cache.
+    const anon = await handleStoriesRequest(req, env, null, '/categories');
+    expect(await anon!.json()).toEqual(bodies[0]);
+
+    // Authenticated caller must reach Supabase, not the anonymous cache entry.
+    const staff = await handleStoriesRequest(req, env, 'staff-token', '/categories');
+    expect(await staff!.json()).toEqual(bodies[1]);
+    expect(call).toBe(2);
+  });
+});

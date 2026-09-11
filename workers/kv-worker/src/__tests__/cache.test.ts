@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withCache } from '../middleware/cache';
+import { publicCache, withCache } from '../middleware/cache';
 import { fakeKV } from './helpers/fake-kv';
 
 describe('withCache', () => {
@@ -31,5 +31,19 @@ describe('withCache', () => {
     expect(first).toEqual({ items: [1, 2], total: 2 });
     expect(second).toEqual({ items: [1, 2], total: 2 });
     expect(calls).toBe(1);
+  });
+});
+
+describe('publicCache', () => {
+  it('returns the namespace for an anonymous caller', () => {
+    const kv = fakeKV();
+    const env = { APP_KV: kv } as unknown as Env;
+    expect(publicCache(env, null)).toBe(kv);
+  });
+
+  it('returns undefined when the caller presented a token', () => {
+    const kv = fakeKV();
+    const env = { APP_KV: kv } as unknown as Env;
+    expect(publicCache(env, 'eyJhbGciOi.stub.sig')).toBeUndefined();
   });
 });
