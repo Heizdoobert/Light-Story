@@ -165,3 +165,16 @@ describe('id validation — sites beyond the plan enumeration', () => {
     expect(res?.status).toBe(400);
   });
 });
+
+describe('removed endpoints', () => {
+  it('no longer mints unverified R2 signed URLs', async () => {
+    const res = await handleAdminRequest(
+      post('/admin/r2/signed-url', 'superadmin', { key: 'covers/x.png' }),
+      env,
+      null,
+      '/admin/r2/signed-url',
+    );
+    // Unhandled admin paths fall through to null; index.ts turns that into 404.
+    expect(res).toBeNull();
+  });
+});

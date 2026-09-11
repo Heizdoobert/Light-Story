@@ -908,25 +908,6 @@ export async function handleAdminRequest(
       return new Response(object.body, { status: 200, headers });
     }
 
-    // ── Generate Presigned HMAC URL for R2 ─────────────────
-    if (method === 'POST' && path === '/admin/r2/signed-url') {
-      const body = (await request.json().catch(() => ({}))) as { key?: string; expiresInSeconds?: number };
-      if (!body.key) return err('BAD_REQUEST', 'Missing key parameter', 400);
-
-      const secret = (env as any).SUPABASE_JWT_SECRET || env.SUPABASE_ANON_KEY;
-      if (!secret) return err('CONFIG_ERROR', 'No signing secret configured', 500);
-      const expires = Math.floor(Date.now() / 1000) + (body.expiresInSeconds || 3600);
-      const payload = `GET:${body.key}:${expires}`;
-
-      const enc = new TextEncoder();
-      const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const sigBuffer = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(payload));
-      const sigHex = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      const signedUrl = `/api/admin/r2/file/${body.key}?expires=${expires}&signature=${sigHex}`;
-      return json({ success: true, data: { key: body.key, expires, signature: sigHex, signedUrl } });
-    }
-
     if (method === 'GET' && path === '/admin/r2/list') {
       const bucket = env.R2_BUCKET;
       if (!bucket) {
