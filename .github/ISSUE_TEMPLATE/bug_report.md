@@ -13,8 +13,7 @@ A clear and concise description of what the bug is.
 **Component Affected**
 Select the affected area:
 - [ ] Frontend (Next.js / UI)
-- [ ] API Gateway (`workers/unified-gateway`)
-- [ ] Domain Workers (`stories-worker`, `comics-worker`, `admin-worker`, `analytics-worker`, `r2-signed-url`)
+- [ ] API Gateway (`workers/kv-worker` — unified gateway)
 - [ ] Supabase (Database / RLS / Auth)
 - [ ] Docker / Deployment
 

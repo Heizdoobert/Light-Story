@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Layers, Plus, Edit, Trash2, Search, BookOpen } from "lucide-react";
+import { Layers, Plus, Edit, Trash2, Search, BookOpen, FileArchive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
+  ssr: false,
+});
+const CbzBatchImportModal = dynamic(() => import("@/components/admin/cbz-batch-import"), {
   ssr: false,
 });
 import { useAdminChapters } from "@/hooks/features/use-admin-chapters";
@@ -13,6 +17,7 @@ import { Modal } from "@/components/ui/modal";
 export default function AdminChaptersPage() {
   const searchParams = useSearchParams();
   const initialComicId = searchParams.get("comicId") || "all";
+  const [importOpen, setImportOpen] = useState(false);
 
   const {
     chapters,
@@ -34,10 +39,12 @@ export default function AdminChaptersPage() {
     images,
     setImages,
     submitting,
+    handleBulkCbzProcessed,
     handleOpenCreateModal,
     handleOpenEditModal,
     handleSaveChapter,
     handleDeleteChapter,
+    refresh,
   } = useAdminChapters(initialComicId);
 
   return (
@@ -49,26 +56,37 @@ export default function AdminChaptersPage() {
             <Layers className="text-orange-500" size={28} />
             Quản Lý Các Chương Truyện
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Quản lý, tạo chương mới và tải ảnh trang đọc trực tiếp lên Cloudflare R2
           </p>
         </div>
-        <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
-          <Plus size={18} /> Thêm Chương Mới
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setImportOpen(true)}
+            disabled={selectedComicId === "all"}
+            title={selectedComicId === "all" ? "Chọn một bộ truyện trước khi nhập hàng loạt" : undefined}
+            variant="outline"
+            className="gap-2 font-bold shrink-0"
+          >
+            <FileArchive size={18} /> Nhập CBZ Hàng Loạt
+          </Button>
+          <Button onClick={handleOpenCreateModal} className="gap-2 bg-orange-500 hover:bg-orange-600 font-bold shrink-0">
+            <Plus size={18} /> Thêm Chương Mới
+          </Button>
+        </div>
       </div>
 
       {/* Comic Selector & Search Filter */}
-      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row items-center gap-3 bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
           <BookOpen size={16} className="text-orange-500" />
-          <span className="text-xs font-semibold text-slate-300">Chọn Truyện:</span>
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Chọn Truyện:</span>
           <label className="sr-only" htmlFor="chapter-comic-select">Chọn bộ truyện</label>
           <select
             id="chapter-comic-select"
             value={selectedComicId}
             onChange={(e) => setSelectedComicId(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 cursor-pointer max-w-xs"
+            className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-orange-500 cursor-pointer max-w-xs"
           >
             <option value="all">Tất cả bộ truyện ({comics.length})</option>
             {comics.map((c) => (
@@ -80,23 +98,23 @@ export default function AdminChaptersPage() {
         </div>
 
         <div className="relative flex-1 w-full">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
           <input
             type="text"
             placeholder="Tìm kiếm số chương, tên chương..."
             aria-label="Tìm kiếm chương"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-orange-500"
+            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-orange-500"
           />
         </div>
       </div>
 
       {/* Chapters Table */}
-      <div className="bg-slate-900 border border-slate-800 text-white rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <thead className="bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-4">Số Chương</th>
                 <th className="p-4">Tên Chương</th>
@@ -105,18 +123,18 @@ export default function AdminChaptersPage() {
                 <th className="p-4 text-right">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
               {chapters.length > 0 ? (
                 chapters.map((ch) => (
-                  <tr key={ch.id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={ch.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-4 font-bold text-orange-400">Chapter {ch.chapter_number}</td>
-                    <td className="p-4 font-semibold text-white">{ch.title || `Chương ${ch.chapter_number}`}</td>
+                    <td className="p-4 font-semibold text-slate-900 dark:text-white">{ch.title || `Chương ${ch.chapter_number}`}</td>
                     <td className="p-4">
-                      <span className="px-2.5 py-1 rounded bg-slate-800 text-cyan-400 font-mono font-bold">
+                      <span className="px-2.5 py-1 rounded bg-slate-200 dark:bg-slate-800 text-cyan-400 font-mono font-bold">
                         {ch.images?.length || 0} trang ảnh
                       </span>
                     </td>
-                    <td className="p-4 text-slate-400">
+                    <td className="p-4 text-slate-500 dark:text-slate-400">
                       {ch.created_at ? new Date(ch.created_at).toLocaleDateString("vi-VN") : "-"}
                     </td>
                     <td className="p-4 text-right">
@@ -143,7 +161,7 @@ export default function AdminChaptersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-slate-500">
+                  <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
                     {loading ? "Đang tải danh sách chương..." : "Chưa có chương nào cho bộ truyện này."}
                   </td>
                 </tr>
@@ -211,8 +229,13 @@ export default function AdminChaptersPage() {
                 </label>
                 <ImageUploader
                   folder="chapters"
+                  bulkChapters={!editingChapter}
+                  onCbzName={(name) => {
+                    if (!editingChapter) setTitle(name);
+                  }}
+                  onCbzProcessed={handleBulkCbzProcessed}
                   onImagesUploaded={(urls) => {
-                    setImages((prev) => [...prev, ...urls]);
+                    if (!editingChapter) setImages((prev) => [...prev, ...urls]);
                   }}
                 />
                 <p className="text-[11px] text-slate-400 mt-1">Đã chọn: {images.length} trang ảnh</p>
@@ -228,6 +251,14 @@ export default function AdminChaptersPage() {
               </div>
             </form>
       </Modal>
+
+      {/* CBZ Batch Import Modal */}
+      <CbzBatchImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        comicId={selectedComicId === "all" ? null : selectedComicId}
+        onComplete={() => void refresh()}
+      />
     </div>
   );
 }

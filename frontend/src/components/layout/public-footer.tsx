@@ -20,9 +20,14 @@ export default function PublicFooter() {
               Light<span className="text-primary">Story</span>
             </h3>
           </Link>
-          <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-zinc-500 max-w-sm leading-relaxed mt-2">
             {t("footer_about")}
           </p>
+          <div className="mt-3 sm:mt-4">
+            <Link href={ROUTES.GENRES} className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-primary transition-colors">
+              {t("category_list_title")}
+            </Link>
+          </div>
         </div>
         <p className="text-xs text-slate-400 dark:text-zinc-600">© 2026 LightStory. All rights reserved.</p>
       </div>

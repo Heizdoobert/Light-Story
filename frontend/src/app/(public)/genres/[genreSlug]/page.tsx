@@ -6,17 +6,7 @@ type Props = {
   params: Promise<{ genreSlug: string }>;
 };
 
-function normalizeName(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-{2,}/g, '-');
-}
+import { normalizeName } from '@/lib/utils/slug';
 
 export default async function GenreDetailPage({ params }: Props) {
   const { genreSlug } = await params;

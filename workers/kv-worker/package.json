@@ -8,12 +8,14 @@
     "build": "wrangler build",
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260625.1",
     "@types/pg": "^8.20.0",
     "typescript": "^5.0.0",
+    "vitest": "^4.1.10",
     "wrangler": "^4.92.0"
   },
   "dependencies": {

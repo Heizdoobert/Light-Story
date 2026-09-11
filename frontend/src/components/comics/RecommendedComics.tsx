@@ -24,7 +24,7 @@ export const RecommendedComics: React.FC<RecommendedComicsProps> = ({ comicId })
         <h3 className="text-xl font-bold text-slate-900 dark:text-white">Truyện đề xuất cho bạn</h3>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={`rec-sk-${i}`} className="flex flex-col bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800/80">

@@ -15,6 +15,16 @@ export default defineConfig({
     exclude: ["node_modules", ".next", ".opencode", "dist", "**/__integration__/**"],
     maxWorkers: 1,
     fileParallelism: false,
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary"],
+      thresholds: {
+        lines: 55,
+        statements: 53,
+        functions: 50,
+        branches: 43,
+      },
+    },
   },
   resolve: {
     alias: {

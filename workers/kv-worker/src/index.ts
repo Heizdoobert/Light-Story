@@ -24,7 +24,7 @@ import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
 import { handleUserRequest } from './routes/user';
 import { handleHyperdriveRequest } from './routes/hyperdrive';
-import { checkRateLimit } from './middleware/rateLimit';
+import { checkRateLimit } from './middleware/rateLimitKV';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 
 function detectDevice(ua: string): string {
@@ -217,7 +217,6 @@ export default {
         },
       );
     }
-
     const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
 
     const authHeader = request.headers.get('Authorization') ?? '';
@@ -265,7 +264,7 @@ export default {
     }
 
     const userRole = authCtx?.role;
-    const rateLimit = checkRateLimit(request, isAuthOrAdmin, userRole, pathname);
+    const rateLimit = await checkRateLimit(request, isAuthOrAdmin, userRole, pathname, env.APP_KV);
 
     if (!rateLimit.allowed) {
       const headers = new Headers({
@@ -400,8 +399,11 @@ export default {
           const rangeHeader = request.headers.get('range');
           const ifNoneMatch = request.headers.get('if-none-match');
 
+          // ponytail: images are served as full 200s, Range ignored on purpose.
+          // Chrome's sniff probes (Range: bytes=0-…) get ORB-blocked when the
+          // worker answers 206 partials (truncated image sniff fails -> retry
+          // storm -> CLS). The admin r2/file route keeps range support.
           const options: R2GetOptions = {};
-          if (rangeHeader) options.range = request.headers;
           if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
 
           const object = await bucket.get(rawKey, options);
@@ -430,17 +432,8 @@ export default {
             mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
             mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
 
-            if (object.range) {
-              const r = object.range as { offset?: number; length?: number };
-              const offset = r.offset ?? 0;
-              const length = r.length ?? object.size;
-              mediaHeaders.set('content-range', `bytes ${offset}-${offset + length - 1}/${object.size}`);
-              mediaHeaders.set('content-length', length.toString());
-              res = new Response(object.body, { status: 206, headers: mediaHeaders });
-            } else {
-              mediaHeaders.set('content-length', object.size.toString());
-              res = new Response(object.body, { status: 200, headers: mediaHeaders });
-            }
+            mediaHeaders.set('content-length', object.size.toString());
+            res = new Response(object.body, { status: 200, headers: mediaHeaders });
           }
         }
       }
@@ -450,7 +443,7 @@ export default {
         res = err('NOT_CONFIGURED', 'Service key not configured', 500);
       } else {
         try {
-          let q = 'select=key,value&key=like.public_%';
+          let q = 'select=key,value&or=(key.like.public_%,key.like.ad_%)';
           const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
             headers: {
               apikey: svcKey,

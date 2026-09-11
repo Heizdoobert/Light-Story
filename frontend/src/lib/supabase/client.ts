@@ -22,7 +22,7 @@ export function createClient(): SupabaseClient {
     cookieOptions: {
       path: "/",
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production",
     },
   }) as unknown as SupabaseClient;
   return clientInstance;

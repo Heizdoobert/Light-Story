@@ -9,6 +9,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { encryptField, decryptField } from '../utils/encryption';
+import { withCache, buildCacheKey, invalidateCache } from '../middleware/cache';
 import {
   validateBody,
   sanitizeBody,
@@ -58,46 +59,52 @@ export async function handleComicsRequest(
       );
       const keyword = (url.searchParams.get('keyword') || '').replace(/[\(\),&]/g, '').trim();
       const sort = url.searchParams.get('sort') || 'newest';
-      const offset = (page - 1) * pageSize;
 
-      const sortMap: Record<string, string> = {
-        newest: 'created_at.desc',
-        popular: 'views.desc',
-        most_viewed: 'views.desc',
-        alphabet: 'title.asc',
-        newest_update: 'updated_at.desc',
-      };
-      const order = sortMap[sort] || 'created_at.desc';
+      const cacheKey = buildCacheKey('comics:list', { keyword, sort, page, pageSize });
+      const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 60 }, async () => {
+        const offset = (page - 1) * pageSize;
 
-      let q = `select=id,title,author,description,cover_url,category,status,views,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
-      let countQ = 'stories?status=neq.archived';
-      if (keyword) {
-        const filter = `or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
-        q += `&${filter}`;
-        countQ += `&${filter}`;
-      }
-      const res = await sbGet('stories', q, env, token);
-      if (!res.ok) return handleRes(res);
-      const items = await res.json();
-      const total = await sbGetCount(countQ, env, token);
-      return json({ items, total });
+        const sortMap: Record<string, string> = {
+          newest: 'created_at.desc',
+          popular: 'views.desc',
+          most_viewed: 'views.desc',
+          alphabet: 'title.asc',
+          newest_update: 'updated_at.desc',
+        };
+        const order = sortMap[sort] || 'created_at.desc';
+
+        let q = `select=id,title,author,description,cover_url,category,status,views,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
+        let countQ = 'stories?status=neq.archived';
+        if (keyword) {
+          const filter = `or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
+          q += `&${filter}`;
+          countQ += `&${filter}`;
+        }
+        const res = await sbGet('stories', q, env, token);
+        if (!res.ok) return handleRes(res);
+        const items = await res.json();
+        const total = await sbGetCount(countQ, env, token);
+        return { items, total };
+      });
+      return json(data);
     }
 
     if (method === 'GET' && pathname.match(/^\/comics\/[^\/]+$/)) {
       const id = pathname.split('/')[2];
       if (!isValidUuid(id))
         return err('VALIDATION_ERROR', 'Invalid comic id', 400);
-      const res = await sbGet(
-        'stories',
-        `id=eq.${id}&select=*`,
-        env,
-        token,
-      );
-      const data = await res.json();
-      if (!res.ok) return handleRes(res);
-      return json(
-        Array.isArray(data) ? data[0] || null : data,
-      );
+      const data = await withCache(env.APP_KV, `comic:${id}`, { ttlSec: 300 }, async () => {
+        const res = await sbGet(
+          'stories',
+          `id=eq.${id}&select=*`,
+          env,
+          token,
+        );
+        const data = await res.json();
+        if (!res.ok) return handleRes(res);
+        return Array.isArray(data) ? data[0] || null : data;
+      });
+      return json(data);
     }
 
     if (method === 'POST' && pathname === '/comics') {
@@ -140,6 +147,7 @@ export async function handleComicsRequest(
           ? (body.category as string[]).join(', ')
           : String(body.category);
       const res = await sbPost('stories', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:comics:list:*', 'cache:stories:list:*', 'cache:categories']);
       return handleRes(res);
     }
 
@@ -165,20 +173,23 @@ export async function handleComicsRequest(
       const comicId = pathname.split('/')[2];
       if (!isValidUuid(comicId))
         return err('VALIDATION_ERROR', 'Invalid comic id', 400);
-      const res = await sbGet(
-        'chapters',
-        `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,created_at,updated_at&order=chapter_number.asc`,
-        env,
-        token,
-      );
-      if (!res.ok) return handleRes(res);
-      const items = (await res.json()) as any[];
-      if (Array.isArray(items)) {
-        for (const item of items) {
-          if (item.content) item.content = await decryptField(item.content, ENC_KEY);
+      const data = await withCache(env.APP_KV, `chapters:${comicId}`, { ttlSec: 120 }, async () => {
+        const res = await sbGet(
+          'chapters',
+          `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,created_at,updated_at&order=chapter_number.asc`,
+          env,
+          token,
+        );
+        if (!res.ok) return handleRes(res);
+        const items = (await res.json()) as any[];
+        if (Array.isArray(items)) {
+          for (const item of items) {
+            if (item.content) item.content = await decryptField(item.content, ENC_KEY);
+          }
         }
-      }
-      return json(items);
+        return items;
+      });
+      return json(data);
     }
 
     if (
@@ -222,6 +233,7 @@ export async function handleComicsRequest(
       };
       const res = await sbPost('chapters', payload, env, token);
       if (!res.ok) return handleRes(res);
+      await invalidateCache(env.APP_KV, [`cache:chapters:${comicId}`]);
       const created = await res.json();
       const item = Array.isArray(created) ? created[0] || created : created;
       if (item && item.content) {
@@ -248,6 +260,9 @@ export async function handleComicRecommendations(
   const comicId = url.searchParams.get('comicId');
   const limitStr = url.searchParams.get('limit') || '6';
   const limit = parseInt(limitStr, 10) || 6;
+
+  const cacheKey = `recs:${comicId || 'generic'}:${limit}`;
+  const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 300 }, async () => {
 
   if (!comicId) {
     // Return generic recommendations (top viewed/liked) if no comicId is provided
@@ -297,5 +312,7 @@ export async function handleComicRecommendations(
   });
 
   const recommendations = scored.slice(0, limit).map(({ _score, ...rest }) => rest);
-  return json({ success: true, data: recommendations });
+  return { success: true, data: recommendations };
+  });
+  return json(data);
 }

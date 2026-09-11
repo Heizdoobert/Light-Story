@@ -13,8 +13,7 @@ Provide a clear and concise summary of the changes made in this Pull Request.
 ## Component(s) Modified
 
 - [ ] `frontend/` (Next.js Application)
-- [ ] `workers/unified-gateway/` (API Gateway)
-- [ ] `workers/` (`stories`, `comics`, `admin`, `analytics`, `r2-signed-url`)
+- [ ] `workers/kv-worker/` (API Gateway)
 - [ ] `backend-supabase/` (Supabase DB, RLS, Migrations)
 - [ ] `packages/api-types/` (OpenAPI Spec & Generated DTO Types)
 

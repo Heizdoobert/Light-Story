@@ -6,6 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+docker-local.env
 .dev.vars
 .agents/
 agents/
@@ -19,6 +20,8 @@ agent/
 *.agent.md
 *.agent.original.md
 !.github/agents/*.agent.md
+downloads/
+.mcp.json
 
 # Frontend generated artifacts
 frontend/.next/
@@ -145,10 +148,16 @@ AGENTS.md
 HUONG_DAN_SETUP.md
 deploy_key*
 
-
-
 .vercel
 
-# Sentry Config File
-.env.sentry-build-plugin
 backend-supabase/supabase/.branches/
+
+# CocoIndex artifacts
+.cocoindex/
+*.cocoindex
+cocoindex.db
+
+# Agent task plans
+tasks/
+
+.worktrees/

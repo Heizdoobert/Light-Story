@@ -1,0 +1,70 @@
+// DEV-ONLY config for `wrangler dev --remote`.
+// Same as wrangler.jsonc EXCEPT the queue producer binding is removed:
+// "Queues are not yet supported in wrangler dev remote mode" (wrangler 4.x)
+// — the binding breaks preview activation and every request 503s.
+// Keep in sync with wrangler.jsonc when bindings change.
+{
+  "name": "kv-worker",
+  "main": "src/index.ts",
+  "account_id": "8ee8907819b5859d9543d68380ab6c1a",
+  "compatibility_date": "2026-07-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "minify": true,
+  "r2_buckets": [
+    {
+      "binding": "R2_BUCKET",
+      "bucket_name": "comic"
+    }
+  ],
+  "vars": {
+    "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json",
+    "CLOUDFLARE_ACCOUNT_ID": "8ee8907819b5859d9543d68380ab6c1a"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "APP_KV",
+      "id": "478819101386406ab6d14b2d45d48c45"
+    },
+    {
+      "binding": "COMIC_METADATA",
+      "id": "be1064d42006414fb6cb67f1e337a9c9"
+    }
+  ],
+  "workflows": [
+    {
+      "name": "lightstory-workflow",
+      "binding": "LIGHTSTORY_WORKFLOW",
+      "class_name": "LightStoryWorkflow"
+    }
+  ],
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "5a02e4b848144795b7532d1b6140660b",
+      "localConnectionString": "postgres://postgres:password@localhost:5432/postgres"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false,
+      "persist": true,
+      "head_sampling_rate": 1
+    }
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS_DATA",
+      "dataset": "lightstory_analytics"
+    }
+  ]
+}

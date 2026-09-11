@@ -12,10 +12,10 @@ All contributors must adhere to our [Code of Conduct](CODE_OF_CONDUCT.md). Pleas
 
 ## 2. Tech Stack Overview
 
-- **Frontend**: Next.js 14 (App Router), React 19, TypeScript, Tailwind CSS
-- **API Gateway & Workers**: Cloudflare Workers (`wrangler`), Hono, Service Bindings
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4
+- **API Gateway**: Single Cloudflare Worker (`kv-worker`, Hono / Wrangler) — unified gateway
 - **Database & Auth**: Supabase PostgreSQL (`@supabase/ssr`, RLS policies, JWKS)
-- **Containerization**: Docker & Docker Compose (`node:22-alpine`)
+- **Containerization**: Docker & Docker Compose (`node:22-slim`)
 
 ---
 
@@ -56,8 +56,9 @@ All contributors must adhere to our [Code of Conduct](CODE_OF_CONDUCT.md). Pleas
 
 5. **Run via Docker (Optional)**:
    ```bash
-   docker compose up --build
+   npm run docker:up
    ```
+   Requires `docker-local.env` at the repo root. See [README.Docker.md](README.Docker.md).
 
 ---
 

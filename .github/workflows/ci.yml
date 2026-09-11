@@ -31,7 +31,7 @@ jobs:
           cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Clean Next cache
         run: rm -rf .next
@@ -39,14 +39,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Type check
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://lightstory.app
           NEXT_PUBLIC_GATEWAY_URL_PRODUCTION: https://kv-worker.hhhuygiau.workers.dev
 
-      - name: Test
-        run: npm run test:run
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Security audit
         run: npm audit --audit-level=high
@@ -68,7 +71,7 @@ jobs:
           node-version: 22
 
       - name: Install root dependencies
-        run: npm install
+        run: npm ci
 
       - name: Type-check worker
         run: |
@@ -107,7 +110,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Validate OpenAPI spec loads
         run: |
@@ -144,7 +147,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run Prism mock server
         run: |

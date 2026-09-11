@@ -7,6 +7,8 @@
 **/.classpath
 **/.dockerignore
 **/.env
+**/.env.local
+**/.env.*
 **/.git
 **/.gitignore
 **/.project
@@ -53,3 +55,8 @@ README.md
 **/eslint.config.mjs
 **/scripts
 **/.gemini
+**/.wrangler
+**/.vercel
+**/.temp
+**/out.html
+gateway.log

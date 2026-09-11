@@ -23,9 +23,15 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
   }
 
+  // Reject path traversal sequences before checking prefix
+  const normalizedPath = decodeURIComponent(parsedUrl.pathname).replace(/\/+/g, '/');
+  if (normalizedPath.includes('..')) {
+    return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
+  }
+
   const isValidSupabaseAvatar =
     parsedUrl.hostname.endsWith('.supabase.co') &&
-    parsedUrl.pathname.startsWith('/storage/v1/object/public/avatars/');
+    normalizedPath.startsWith('/storage/v1/object/public/avatars/');
 
   if (!isValidSupabaseAvatar) {
     return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });

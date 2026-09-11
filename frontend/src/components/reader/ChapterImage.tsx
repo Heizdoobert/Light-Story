@@ -9,17 +9,19 @@ type ChapterImageProps = {
   index: number;
   className?: string;
   fitScreen?: boolean;
+  priority?: boolean;
 };
 
-export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, className = '', fitScreen }) => {
+export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, className = '', fitScreen, priority = false }) => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(priority);
   const [retryCount, setRetryCount] = useState(0);
   const [imgKey, setImgKey] = useState(src);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (priority) return;
     const el = containerRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -33,7 +35,7 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [priority]);
 
   const handleRetry = () => {
     setError(false);
@@ -43,7 +45,12 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
   };
 
   return (
-    <div ref={containerRef} className={`relative min-h-[100px] w-full flex items-center justify-center bg-slate-900/10 dark:bg-slate-950/40 overflow-hidden my-2 ${fitScreen ? 'max-h-screen' : 'rounded-xl'} ${className}`}>
+    <div
+      ref={containerRef}
+      data-testid="chapter-image-container"
+      style={fitScreen ? undefined : { aspectRatio: '3/4' }}
+      className={`relative w-full flex items-center justify-center overflow-hidden my-2 ${fitScreen ? 'max-h-screen bg-transparent' : 'aspect-[3/4] rounded-xl bg-slate-900/10 dark:bg-slate-950/40'} ${className}`}
+    >
       {!visible && (
         <div className="absolute inset-0 bg-slate-200 dark:bg-slate-800/60 flex items-center justify-center">
           <span className="text-xs font-semibold text-slate-400">&nbsp;</span>
@@ -74,9 +81,14 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
             src={src}
             alt={alt}
             decoding="async"
+            fetchPriority={priority ? 'high' : 'auto'}
             onLoad={() => setLoaded(true)}
             onError={() => setError(true)}
-            className={`transition-opacity duration-300 ${fitScreen ? 'w-auto h-full max-w-full object-contain' : 'w-full h-auto'} ${loaded ? 'opacity-100' : 'opacity-0'}`}
+            className={`transition-opacity duration-300 ${
+              fitScreen
+                ? 'w-auto h-full max-w-full object-contain'
+                : 'h-full w-full object-contain'
+            } ${loaded ? 'opacity-100' : 'opacity-0'}`}
           />
         )
       )}

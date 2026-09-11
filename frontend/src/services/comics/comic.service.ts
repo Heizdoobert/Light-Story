@@ -14,10 +14,15 @@ export type ComicContext = {
   author: string;
   status: 'ongoing' | 'completed';
   category: string[];
+  tags?: string;
   viewCount: number;
   coverUrl: string;
+  /** @deprecated Bridge for raw gateway snake_case rows. Remove once presenters map to camelCase. */
+  cover_url?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** @deprecated Bridge for raw gateway snake_case rows. Remove once presenters map to camelCase. */
+  updated_at?: string;
 };
 
 type CreateComicInput = {

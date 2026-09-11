@@ -17,8 +17,12 @@ const DEFAULT_RUNTIME = {
   enabled: true,
   minHeight: 120,
   refreshSeconds: 120,
-  allowedHosts: ["pagead2.googlesyndication.com"],
-  blockedTerms: ["adult", "porn", "casino"],
+  allowedHosts: [
+    "pagead2.googlesyndication.com",
+    "shope.ee",
+    "affiliate.shopee.vn",
+  ],
+  blockedTerms: ["adult", "xxx", "porn", "casino", "betting", "violence", "hate"],
 };
 
 const AD_SLOTS_DEF: Array<{ key: AdSlotKey; label: string }> = [

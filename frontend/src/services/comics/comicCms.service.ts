@@ -48,7 +48,12 @@ export function proxiedR2ImageUrl(url: string): string {
     hostname === "cloudflare.com" || hostname.endsWith(".cloudflare.com");
 
   if (isR2Host || isCloudflareHost) {
-    return `${gateway}${ROUTES.API.ADMIN.R2_PROXY_QUERY(url)}`;
+    const key = url
+      .split("?")[0]
+      .split("#")[0]
+      .replace(/^https?:\/\/[^/]+/, "")
+      .replace(/^\//, "");
+    return `${gateway}${ROUTES.API.MEDIA_PREFIX}${encodeURIComponent(key)}`;
   }
   return url;
 }

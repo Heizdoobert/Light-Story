@@ -10,7 +10,7 @@ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
-import { supabase } from "@/lib/supabase/client";
+import { apiClient } from "@/lib/api/apiClient";
 import { getVietnameseStatus } from "@/lib/utils/status-styles";
 
 type ComicDetailProps = {
@@ -34,7 +34,6 @@ export function useComicDetailPresenter({
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [loading, setLoading] = useState(!hydrated);
 
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -52,16 +51,14 @@ export function useComicDetailPresenter({
         }
 
         const sortedChapters = (chaptersData || []).sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime(),
+          (a, b) => (a.chapter_number ?? 0) - (b.chapter_number ?? 0),
         );
         setChapters(sortedChapters);
 
-        if (supabase) {
-          const { data } = await supabase.from("categories").select("*");
-          if (data) setCategories(data as Category[]);
-        }
+        try {
+          const data = await apiClient.get<Category[]>("/api/categories");
+          if (data) setCategories(data);
+        } catch {}
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
         toast.error("Không thể tải thông tin truyện.");
@@ -93,8 +90,8 @@ export function useComicDetailPresenter({
     ? proxiedR2ImageUrl(rawCover)
     : "https://placehold.co/400x600/png?text=No+Cover";
 
-  const latestChapter = chapters.length > 0 ? chapters[0] : null;
-  const firstChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
+  const latestChapter = chapters.length > 0 ? chapters[chapters.length - 1] : null;
+  const firstChapter = chapters.length > 0 ? chapters[0] : null;
 
   let categoryArray: string[] = [];
   if (comic?.category) {
@@ -112,14 +109,24 @@ export function useComicDetailPresenter({
     }
   }
 
+  let tagArray: string[] = [];
+  if (comic?.tags) {
+    if (Array.isArray(comic.tags)) {
+      tagArray = comic.tags;
+    } else if (typeof comic.tags === "string") {
+      tagArray = (comic.tags as string)
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+  }
+
   return {
     comicId,
     comic,
     chapters,
     categories,
     loading,
-    isLoginModalOpen,
-    setIsLoginModalOpen,
     readChapters,
     handleImageError,
     getVietnameseStatus,
@@ -127,5 +134,6 @@ export function useComicDetailPresenter({
     latestChapter,
     firstChapter,
     categoryArray,
+    tagArray,
   };
 }

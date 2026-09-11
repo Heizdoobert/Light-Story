@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { parseSiteSettingsRows, type AdSlotKey, validateAdMarkup } from '@/lib/admin/ad-policy';
 import { sanitizeAdMarkup } from '@/lib/admin/ad-sanitize';
+import { ROUTES } from '@/lib/constants/routes';
+import { getGatewayUrl } from '@/lib/utils/gateway-url';
 
 type SiteSettingItem = { key: string; value: unknown };
 
@@ -28,7 +30,20 @@ const slotKeyByPosition: Record<AdRendererProps['position'], AdSlotKey> = {
   right_side: 'ad_right_side',
 };
 
-const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => [] as SiteSettingItem[];
+// ponytail: tokenless fetch on purpose - an Authorization header can hit the
+// gateway's JWT-401 gate; the public scope branch serves anon without auth.
+export const fetchAdRuntime = async (): Promise<SiteSettingItem[]> => {
+  try {
+    const url = `${getGatewayUrl()}${ROUTES.API.ADMIN.SITE_SETTINGS}?scope=public`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { success?: boolean; data?: SiteSettingItem[] };
+    if (!body.success || !Array.isArray(body.data)) return [];
+    return body.data;
+  } catch {
+    return [];
+  }
+};
 
 const injectMarkup = (container: HTMLDivElement, markup: string): void => {
   container.innerHTML = '';
