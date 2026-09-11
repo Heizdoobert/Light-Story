@@ -10,7 +10,7 @@ import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
-import { supabase } from "@/lib/supabase/client";
+import { apiClient } from "@/lib/api/apiClient";
 import { getVietnameseStatus } from "@/lib/utils/status-styles";
 
 type ComicDetailProps = {
@@ -55,10 +55,10 @@ export function useComicDetailPresenter({
         );
         setChapters(sortedChapters);
 
-        if (supabase) {
-          const { data } = await supabase.from("categories").select("*");
-          if (data) setCategories(data as Category[]);
-        }
+        try {
+          const data = await apiClient.get<Category[]>("/api/categories");
+          if (data) setCategories(data);
+        } catch {}
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
         toast.error("Không thể tải thông tin truyện.");

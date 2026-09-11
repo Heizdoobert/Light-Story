@@ -92,12 +92,32 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                   {t("search_keyword_label")}{" "}<strong className="text-primary">&quot;{keyword}&quot;</strong>
                 </span>
               )}
-              {category !== "all" && (
-                <span>
-                  {t("search_category_label")}{" "}
-                  <strong className="text-primary">{category}</strong>
-                </span>
-              )}
+              {category !== "all" &&
+                category.split(",").map((c) => c.trim()).filter(Boolean).map((cat) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold"
+                  >
+                    {cat}
+                    <button
+                      onClick={() => {
+                        const currentCats = category.split(",").map((x) => x.trim()).filter((x) => x !== cat);
+                        const params = new URLSearchParams(window.location.search);
+                        if (currentCats.length === 0) {
+                          params.delete("category");
+                        } else {
+                          params.set("category", currentCats.join(","));
+                        }
+                        params.delete("page");
+                        router.push(`${ROUTES.SEARCH}?${params.toString()}`);
+                      }}
+                      className="hover:text-red-500 transition-colors ml-0.5"
+                      aria-label={`Remove ${cat}`}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
               <span className="ml-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
                 {totalItems} {t("results_count")}
               </span>

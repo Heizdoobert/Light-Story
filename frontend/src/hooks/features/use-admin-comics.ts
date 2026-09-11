@@ -28,6 +28,7 @@ export function useAdminComics() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState<Set<string>>(new Set());
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -164,7 +165,10 @@ export function useAdminComics() {
       comic.title.toLowerCase().includes(search.toLowerCase()) ||
       (comic.author && comic.author.toLowerCase().includes(search.toLowerCase()));
     const matchStatus = statusFilter === "all" || comic.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchCategory =
+      categoryFilter.size === 0 ||
+      (comic.category?.split(",").map((c) => c.trim()) || []).some((c) => categoryFilter.has(c));
+    return matchSearch && matchStatus && matchCategory;
   });
 
   return {
@@ -174,6 +178,8 @@ export function useAdminComics() {
     setSearch,
     statusFilter,
     setStatusFilter,
+    categoryFilter,
+    setCategoryFilter,
     isModalOpen,
     setIsModalOpen,
     editingComic,

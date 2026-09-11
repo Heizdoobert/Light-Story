@@ -10,7 +10,6 @@ import { useLanguage } from "@/context/LanguageContext";
 
 import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
 import { applyComicCoverFallback } from "@/lib/utils/image-url";
-import { supabase } from "@/lib/supabase/client";
 
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
 
@@ -34,10 +33,10 @@ export function useHomePagePresenter(
     const loadInitData = async () => {
       try {
         let cats: Category[] = [];
-        if (supabase) {
-          const { data } = await supabase.from("categories").select("*");
-          if (data) cats = data as Category[];
-        }
+        try {
+          const data = await apiClient.get<Category[]>("/api/categories");
+          if (data) cats = data;
+        } catch {}
         setCategories(cats);
 
         const { items: trendingData } = await fetchStoriesPage({ page: 1, pageSize: 6, sort: "most_viewed" });
@@ -102,11 +101,7 @@ export function useHomePagePresenter(
               const batchRes = await apiClient.get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
               chapters = Array.isArray(batchRes) ? batchRes : batchRes?.chapters || [];
             } catch {
-              if (supabase) {
-                const ids = comicsData.map((c: any) => c.id);
-                const { data } = await supabase.from("chapters").select("*").in("story_id", ids);
-                if (data) chapters = data;
-              }
+              // Chapters fetch failed silently
             }
             const chapterMap: Record<string, Chapter> = {};
             for (const ch of chapters) {

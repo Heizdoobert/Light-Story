@@ -24,7 +24,7 @@ import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
 import { handleUserRequest } from './routes/user';
 import { handleHyperdriveRequest } from './routes/hyperdrive';
-import { checkRateLimit } from './middleware/rateLimit';
+import { checkRateLimit } from './middleware/rateLimitKV';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 
@@ -270,7 +270,7 @@ export default {
     }
 
     const userRole = authCtx?.role;
-    const rateLimit = checkRateLimit(request, isAuthOrAdmin, userRole, pathname);
+    const rateLimit = await checkRateLimit(request, isAuthOrAdmin, userRole, pathname, env.APP_KV);
 
     if (!rateLimit.allowed) {
       const headers = new Headers({

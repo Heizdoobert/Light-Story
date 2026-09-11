@@ -16,14 +16,10 @@ describe('F12 Analytics Infrastructure & Production Gateway', () => {
     expect(analyticsRoute).toContain('getInfrastructurePayload');
   });
 
-  it('GraphQL bucket filter matches wrangler.jsonc R2 binding', () => {
+  it('R2 usage endpoint targets correct bucket', () => {
     const infra = readRepoFile('workers/kv-worker/src/utils/infra.ts');
     const wrangler = readRepoFile('workers/kv-worker/wrangler.jsonc');
-    
-    // Check that infra.ts uses the correct bucket name "comic" instead of literal
-    expect(infra).toContain('filter: { bucketName: "comic" }');
-    
-    // Ensure wrangler.jsonc has the bucket "comic"
+    expect(infra).toContain('r2/buckets/comic/usage');
     expect(wrangler).toContain('"bucket_name": "comic"');
   });
 
