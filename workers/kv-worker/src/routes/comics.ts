@@ -9,7 +9,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { encryptField, decryptField } from '../utils/encryption';
-import { withCache, buildCacheKey, invalidateCache } from '../middleware/cache';
+import { withCache, buildCacheKey, invalidateCache, publicCache } from '../middleware/cache';
 import {
   validateBody,
   sanitizeBody,
@@ -61,7 +61,7 @@ export async function handleComicsRequest(
       const sort = url.searchParams.get('sort') || 'newest';
 
       const cacheKey = buildCacheKey('comics:list', { keyword, sort, page, pageSize });
-      const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 60 }, async () => {
+      const data = await withCache(publicCache(env, token), cacheKey, { ttlSec: 60 }, async () => {
         const offset = (page - 1) * pageSize;
 
         const sortMap: Record<string, string> = {
@@ -93,7 +93,7 @@ export async function handleComicsRequest(
       const id = pathname.split('/')[2];
       if (!isValidUuid(id))
         return err('VALIDATION_ERROR', 'Invalid comic id', 400);
-      const data = await withCache(env.APP_KV, `comic:${id}`, { ttlSec: 300 }, async () => {
+      const data = await withCache(publicCache(env, token), `comic:${id}`, { ttlSec: 300 }, async () => {
         const res = await sbGet(
           'stories',
           `id=eq.${id}&select=*`,
@@ -147,7 +147,7 @@ export async function handleComicsRequest(
           ? (body.category as string[]).join(', ')
           : String(body.category);
       const res = await sbPost('stories', payload, env, token);
-      if (res.ok) await invalidateCache(env.APP_KV, ['cache:comics:list:*', 'cache:stories:list:*', 'cache:categories']);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:comics:list', 'cache:stories:list', 'cache:categories']);
       return handleRes(res);
     }
 
@@ -173,7 +173,7 @@ export async function handleComicsRequest(
       const comicId = pathname.split('/')[2];
       if (!isValidUuid(comicId))
         return err('VALIDATION_ERROR', 'Invalid comic id', 400);
-      const data = await withCache(env.APP_KV, `chapters:${comicId}`, { ttlSec: 120 }, async () => {
+      const data = await withCache(publicCache(env, token), `chapters:${comicId}`, { ttlSec: 120 }, async () => {
         const res = await sbGet(
           'chapters',
           `story_id=eq.${comicId}&select=id,story_id,chapter_number,title,content,created_at,updated_at&order=chapter_number.asc`,
@@ -261,8 +261,16 @@ export async function handleComicRecommendations(
   const limitStr = url.searchParams.get('limit') || '6';
   const limit = parseInt(limitStr, 10) || 6;
 
+  // comicId is interpolated into id=eq. and id=neq. filters below, and into the
+  // cache key on the next line. Guard before either, so a junk id neither
+  // reaches PostgREST nor becomes a cache key. Absent is allowed — that is the
+  // generic-recommendations path.
+  if (comicId !== null && !isValidUuid(comicId)) {
+    return err('VALIDATION_ERROR', 'Invalid comicId', 400);
+  }
+
   const cacheKey = `recs:${comicId || 'generic'}:${limit}`;
-  const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 300 }, async () => {
+  const data = await withCache(publicCache(env, token), cacheKey, { ttlSec: 300 }, async () => {
 
   if (!comicId) {
     // Return generic recommendations (top viewed/liked) if no comicId is provided

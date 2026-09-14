@@ -17,6 +17,13 @@ import {
   getAuthRole,
   requireRole,
   VALID_STATUSES,
+  APP_ROLES,
+  isAppRole,
+  assertUuid,
+  uuidFilter,
+  uuidInFilter,
+  identifierFilter,
+  ValidationFailure,
 } from '../utils/validation';
 import {
   buildUploadKey,
@@ -24,6 +31,8 @@ import {
   validateUploadBatch,
 } from '../utils/r2-keys';
 import { getInfrastructurePayload } from '../utils/infra';
+import { classifyR2Get, conditionalGetOptions } from '../utils/r2-conditional';
+import { invalidateCache, storyCachePrefixes } from '../middleware/cache';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -33,7 +42,8 @@ const slugify = (value: string) =>
 async function uniqueSlug(env: Env, token: string | null, base: string, excludeId?: string): Promise<string> {
   let candidate = base || 'comic';
   for (let i = 2; ; i++) {
-    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${excludeId ? `&id=neq.${excludeId}` : ''}`;
+    const exclude = excludeId ? `&id=neq.${assertUuid(excludeId, 'id')}` : '';
+    const q = `select=id&slug=eq.${encodeURIComponent(candidate)}${exclude}`;
     const res = await sbGet('stories', q, env, token);
     if (!res.ok) return candidate;
     const rows = (await res.json()) as Array<{ id: string }>;
@@ -48,29 +58,51 @@ async function okRes(res: Response): Promise<Response> {
 
 async function handlePromote(request: Request, env: Env, token: string | null): Promise<Response> {
   if (!token) return err('UNAUTHORIZED', 'Authentication required', 401);
-  const userInfo = JSON.parse(atob(token.split('.')[1]));
-  const userId = userInfo.sub;
+
+  // The gateway has already verified this token's signature before routing
+  // here (index.ts rejects /admin with no auth context), so decoding the
+  // payload for `sub` is safe. Prefer the header the gateway set.
+  const headerUserId = request.headers.get('x-user-id');
+  let userId: string;
+  try {
+    userId = assertUuid(headerUserId ?? JSON.parse(atob(token.split('.')[1])).sub, 'userId');
+  } catch {
+    return err('UNAUTHORIZED', 'Could not determine caller identity', 401);
+  }
+
   const h = new Headers();
   h.set('apikey', env.SUPABASE_SERVICE_KEY);
   h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
   h.set('Content-Type', 'application/json');
   h.set('Accept', 'application/json');
+
   const countRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/profiles?select=id&role=in.(superadmin,admin,employee)&limit=1`,
     { method: 'HEAD', headers: { ...Object.fromEntries((h as any).entries()), Prefer: 'count=exact' } },
   );
-  if (countRes.ok) {
-    const r = countRes.headers.get('content-range');
-    const existing = r ? parseInt(r.split('/')[1], 10) : 0;
-    if (existing > 0) return err('FORBIDDEN', 'An admin already exists; ask them to promote you', 403);
+
+  // Fail closed. Previously this check sat inside `if (countRes.ok)`, so any
+  // upstream 5xx skipped it and promoted the caller.
+  if (!countRes.ok) {
+    return err('UPSTREAM_UNAVAILABLE', 'Cannot verify bootstrap state; promotion refused', 503);
   }
+
+  const range = countRes.headers.get('content-range');
+  const existing = range ? parseInt(range.split('/')[1], 10) : NaN;
+  if (!Number.isFinite(existing)) {
+    return err('UPSTREAM_UNAVAILABLE', 'Cannot verify bootstrap state; promotion refused', 503);
+  }
+  if (existing > 0) {
+    return err('FORBIDDEN', 'An admin already exists; ask them to promote you', 403);
+  }
+
   const rpcRes = await fetch(
     `${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`,
     { method: 'POST', headers: h, body: JSON.stringify({ target_user_id: userId, new_role: 'admin' }) },
   );
   if (!rpcRes.ok) {
-    const text = await rpcRes.text();
-    return err('SUPABASE_ERROR', text, rpcRes.status);
+    console.error('[admin] promote rpc failed', { status: rpcRes.status });
+    return err('SUPABASE_ERROR', 'Promotion failed', rpcRes.status);
   }
   return json({ success: true });
 }
@@ -94,6 +126,12 @@ export function isAdminResourcePath(
   canonical: string,
 ): boolean {
   return path === legacy || path === canonical;
+}
+
+/** Cache prefixes for a bulk story mutation: the list caches plus each story's details. */
+function bulkStoryCachePrefixes(ids: unknown): string[] {
+  const list = Array.isArray(ids) ? ids : [];
+  return [...new Set([...storyCachePrefixes(), ...list.flatMap((id) => storyCachePrefixes(String(id)))])];
 }
 
 export async function handleAdminRequest(
@@ -152,55 +190,38 @@ export async function handleAdminRequest(
           author_id: s.author_id || null,
         };
         const res = await sbPost('stories', payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes());
         return handleRes(res);
       }
 
       if (action === 'update') {
-        const res = await sbPatch(
-          'stories',
-          `id=eq.${body.id}`,
-          body.payload,
-          env,
-          token,
-        );
+        const res = await sbPatch('stories', uuidFilter('id', body.id), body.payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.id));
         return handleRes(res);
       }
 
       if (action === 'delete') {
-        const res = await sbDelete(
-          'stories',
-          `id=eq.${body.id}`,
-          env,
-          token,
-        );
+        const res = await sbDelete('stories', uuidFilter('id', body.id), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.id));
         return okRes(res);
       }
 
       if (action === 'bulkUpdateStatus') {
         const { ids, status: newStatus } = body;
-        const queries = ids
-          .map((id: string) => `id=eq.${id}`)
-          .join(',');
         const res = await sbPatch(
           'stories',
-          `or=(${queries})`,
+          uuidInFilter('id', ids),
           { status: newStatus },
           env,
           token,
         );
+        if (res.ok) await invalidateCache(env.APP_KV, bulkStoryCachePrefixes(ids));
         return okRes(res);
       }
 
       if (action === 'bulkDelete') {
-        const queries = body.ids
-          .map((id: string) => `id=eq.${id}`)
-          .join(',');
-        const res = await sbDelete(
-          'stories',
-          `or=(${queries})`,
-          env,
-          token,
-        );
+        const res = await sbDelete('stories', uuidInFilter('id', body.ids), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, bulkStoryCachePrefixes(body.ids));
         return res.ok
           ? json({ success: true })
           : handleRes(res);
@@ -226,27 +247,25 @@ export async function handleAdminRequest(
           content: c.content || '',
         };
         const res = await sbPost('chapters', payload, env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(c.story_id));
         return handleRes(res);
       }
 
       if (action === 'update') {
-        const res = await sbPatch(
-          'chapters',
-          `id=eq.${body.id}`,
-          body.payload,
-          env,
-          token,
-        );
+        const res = await sbPatch('chapters', uuidFilter('id', body.id), body.payload, env, token);
+        // ponytail: body.id is the chapter id, so the chapter-list key can only
+        // be targeted when the caller also sent the story id. Without it the
+        // chapter list falls back to its 120s TTL. Look up story_id here if that
+        // ever becomes a complaint.
+        if (res.ok) {
+          await invalidateCache(env.APP_KV, storyCachePrefixes(body.payload?.story_id ?? body.storyId));
+        }
         return handleRes(res);
       }
 
       if (action === 'delete') {
-        const res = await sbDelete(
-          'chapters',
-          `id=eq.${body.id}`,
-          env,
-          token,
-        );
+        const res = await sbDelete('chapters', uuidFilter('id', body.id), env, token);
+        if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(body.storyId));
         return okRes(res);
       }
 
@@ -333,7 +352,10 @@ export async function handleAdminRequest(
           .split(',')
           .map((k) => k.trim())
           .filter(Boolean)
-          .map((k) => `key.eq.${k}`)
+          // Setting keys are identifiers, not UUIDs; identifierFilter keeps the
+          // interpolation inside a guard so nothing can smuggle a PostgREST
+          // operator into the or=() filter.
+          .map((k) => identifierFilter('key', k))
           .join(',');
         if (keyList) {
           q += `&or=(${keyList})`;
@@ -445,11 +467,11 @@ export async function handleAdminRequest(
         return handleRes(res);
       }
       if (taxAction === 'update') {
-        const res = await sbPatch(tax.table, `id=eq.${taxId}`, taxPayload, env, token);
+        const res = await sbPatch(tax.table, uuidFilter('id', taxId), taxPayload, env, token);
         return handleRes(res);
       }
       if (taxAction === 'delete') {
-        const res = await sbDelete(tax.table, `id=eq.${taxId}`, env, token);
+        const res = await sbDelete(tax.table, uuidFilter('id', taxId), env, token);
         return okRes(res);
       }
 
@@ -607,6 +629,16 @@ export async function handleAdminRequest(
       const body = (await request.json()) as any;
       const { action, id } = body;
 
+      // Role and identity mutation is superadmin-only. The blanket gate at the
+      // top of this function admits `employee`, which would otherwise be enough
+      // to self-promote via action: 'updateRole'.
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'Profile mutation requires superadmin privileges', 403);
+      }
+      if (action === 'updateRole' && !isAppRole(body.role)) {
+        return err('VALIDATION_ERROR', 'role must be one of: ' + APP_ROLES.join(', '), 400);
+      }
+
       if (action === 'updateRole') {
         const svcKey = env.SUPABASE_SERVICE_KEY || (env as any).SUPABASE_SERVICE_ROLE_KEY;
         if (svcKey) {
@@ -617,7 +649,7 @@ export async function handleAdminRequest(
               Authorization: `Bearer ${svcKey}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ target_user_id: id, new_role: body.role }),
+            body: JSON.stringify({ target_user_id: assertUuid(id, 'id'), new_role: body.role }),
           }).catch(() => null);
 
           if (rpcRes && rpcRes.ok) {
@@ -625,24 +657,12 @@ export async function handleAdminRequest(
           }
         }
 
-        const res = await sbPatch(
-          'profiles',
-          `id=eq.${id}`,
-          { role: body.role },
-          env,
-          token,
-        );
+        const res = await sbPatch('profiles', uuidFilter('id', id), { role: body.role }, env, token);
         return okRes(res);
       }
 
       if (action === 'updateName') {
-        const res = await sbPatch(
-          'profiles',
-          `id=eq.${id}`,
-          { full_name: body.full_name },
-          env,
-          token,
-        );
+        const res = await sbPatch('profiles', uuidFilter('id', id), { full_name: body.full_name }, env, token);
         return okRes(res);
       }
 
@@ -657,6 +677,15 @@ export async function handleAdminRequest(
       const body = (await request.json()) as any;
       const { action } = body;
       const svcKey = env.SUPABASE_SERVICE_KEY;
+
+      // Account creation and deletion run against the Supabase admin API with
+      // the service key. Superadmin only.
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'User management requires superadmin privileges', 403);
+      }
+      if (action === 'create' && body.role !== undefined && !isAppRole(body.role)) {
+        return err('VALIDATION_ERROR', 'role must be one of: ' + APP_ROLES.join(', '), 400);
+      }
 
       if (!svcKey) {
         return err(
@@ -702,7 +731,7 @@ export async function handleAdminRequest(
         if (createdUser?.id) {
           await sbPatch(
             'profiles',
-            `id=eq.${createdUser.id}`,
+            uuidFilter('id', createdUser.id),
             { role: targetRole, full_name: fullName },
             env,
             token,
@@ -714,7 +743,7 @@ export async function handleAdminRequest(
 
       if (action === 'delete') {
         const adminRes = await fetch(
-          `${env.SUPABASE_URL}/auth/v1/admin/users/${body.id}`,
+          `${env.SUPABASE_URL}/auth/v1/admin/users/${assertUuid(body.id, 'id')}`,
           {
             method: 'DELETE',
             headers: {
@@ -768,13 +797,10 @@ export async function handleAdminRequest(
       method === 'DELETE' &&
       path.match(/^\/admin\/profiles\/[^\/]+$/)
     ) {
-      const id = pathSegment(path, 3);
-      const res = await sbDelete(
-        'profiles',
-        `id=eq.${id}`,
-        env,
-        token,
-      );
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'Profile deletion requires superadmin privileges', 403);
+      }
+      const res = await sbDelete('profiles', uuidFilter('id', pathSegment(path, 3)), env, token);
       return okRes(res);
     }
 
@@ -802,7 +828,10 @@ export async function handleAdminRequest(
       const comicId = formData.get('comicId') as string | null;
       const chapterNumber = formData.get('chapterNumber') as string | null;
       const pageNumbers = formData.getAll('pageNumber') as string[];
-      const userId = formData.get('userId') as string | null;
+      // The avatars key scheme is `avatars/<userId>.<ext>`, so a client-supplied
+      // userId let any staff member overwrite any user's avatar. Use the
+      // gateway-set identity instead; it comes from the verified JWT.
+      const userId = request.headers.get('x-user-id');
 
       // Validate-then-write: reject the whole batch before any put, so a bad
       // file can't leave earlier files orphaned in R2 (no rollback exists).
@@ -844,23 +873,41 @@ export async function handleAdminRequest(
 
     // ── GET R2 Object directly via Gateway ──────────────────
     if (method === 'GET' && path.startsWith('/admin/r2/file/')) {
+      if (!requireRole(userRole, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Direct bucket reads require admin privileges', 403);
+      }
       const bucket = env.R2_BUCKET;
       if (!bucket) return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
 
-      const rawKey = path.replace('/admin/r2/file/', '');
-      if (rawKey.includes('..')) return err('FORBIDDEN', 'Path traversal detected', 403);
+      // Decode before the traversal check: the public media route decodes
+      // first, and %2e%2e would otherwise slip past this one.
+      let rawKey = path.replace('/admin/r2/file/', '');
+      try {
+        rawKey = decodeURIComponent(rawKey);
+      } catch {
+        return err('BAD_REQUEST', 'Malformed key', 400);
+      }
+      if (rawKey.includes('..') || rawKey.startsWith('/')) {
+        return err('FORBIDDEN', 'Path traversal detected', 403);
+      }
+
       const rangeHeader = request.headers.get('range');
       const ifNoneMatch = request.headers.get('if-none-match');
 
-      const options: R2GetOptions = {};
+      const options: R2GetOptions = conditionalGetOptions(ifNoneMatch);
       if (rangeHeader) options.range = request.headers;
-      if (ifNoneMatch) options.onlyIf = { etagMatches: ifNoneMatch };
 
-      const object = await bucket.get(rawKey, options);
-      if (!object) {
-        if (ifNoneMatch) return new Response(null, { status: 304 });
+      const fetched = await bucket.get(rawKey, options);
+      const outcome = classifyR2Get(fetched);
+      if (outcome.kind === 'missing') {
         return err('NOT_FOUND', 'R2 object not found', 404);
       }
+      if (outcome.kind === 'not-modified') {
+        const notModified = new Headers();
+        if (outcome.etag) notModified.set('etag', outcome.etag);
+        return new Response(null, { status: 304, headers: notModified });
+      }
+      const object = fetched as R2ObjectBody;
 
       const headers = new Headers();
       headers.set('cache-control', object.httpMetadata?.cacheControl || 'public, max-age=86400');
@@ -888,26 +935,10 @@ export async function handleAdminRequest(
       return new Response(object.body, { status: 200, headers });
     }
 
-    // ── Generate Presigned HMAC URL for R2 ─────────────────
-    if (method === 'POST' && path === '/admin/r2/signed-url') {
-      const body = (await request.json().catch(() => ({}))) as { key?: string; expiresInSeconds?: number };
-      if (!body.key) return err('BAD_REQUEST', 'Missing key parameter', 400);
-
-      const secret = (env as any).SUPABASE_JWT_SECRET || env.SUPABASE_ANON_KEY;
-      if (!secret) return err('CONFIG_ERROR', 'No signing secret configured', 500);
-      const expires = Math.floor(Date.now() / 1000) + (body.expiresInSeconds || 3600);
-      const payload = `GET:${body.key}:${expires}`;
-
-      const enc = new TextEncoder();
-      const cryptoKey = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-      const sigBuffer = await crypto.subtle.sign('HMAC', cryptoKey, enc.encode(payload));
-      const sigHex = Array.from(new Uint8Array(sigBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-      const signedUrl = `/api/admin/r2/file/${body.key}?expires=${expires}&signature=${sigHex}`;
-      return json({ success: true, data: { key: body.key, expires, signature: sigHex, signedUrl } });
-    }
-
     if (method === 'GET' && path === '/admin/r2/list') {
+      if (!requireRole(userRole, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Bucket listing requires admin privileges', 403);
+      }
       const bucket = env.R2_BUCKET;
       if (!bucket) {
         return err('R2_NOT_CONFIGURED', 'R2 bucket not bound', 500);
@@ -976,6 +1007,7 @@ export async function handleAdminRequest(
       if (s.coverUrl) payload.cover_url = s.coverUrl;
       payload.slug = await uniqueSlug(env, token, (s.slug as string) || slugify(String(s.title)));
       const res = await sbPost('stories', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes());
       return handleRes(res);
     }
 
@@ -990,13 +1022,13 @@ export async function handleAdminRequest(
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbGet('stories', `id=eq.${id}&select=*,chapters(*)`, env, token);
+      const res = await sbGet('stories', `${uuidFilter('id', id)}&select=*,chapters(*)`, env, token);
       return handleRes(res);
     }
 
     if (method === 'GET' && path.match(/^\/admin\/comics\/[^\/]+\/chapters$/)) {
       const comicId = pathSegment(path, 3);
-      const res = await sbGet('chapters', `story_id=eq.${comicId}&order=chapter_number.asc`, env, token);
+      const res = await sbGet('chapters', `${uuidFilter('story_id', comicId)}&order=chapter_number.asc`, env, token);
       return handleRes(res);
     }
 
@@ -1019,13 +1051,15 @@ export async function handleAdminRequest(
       if (s.slug !== undefined && (s.slug as string)) {
         payload.slug = await uniqueSlug(env, token, slugify(String(s.slug)), id);
       }
-      const res = await sbPatch('stories', `id=eq.${id}`, payload, env, token);
+      const res = await sbPatch('stories', uuidFilter('id', id), payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(id));
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbDelete('stories', `id=eq.${id}`, env, token);
+      const res = await sbDelete('stories', uuidFilter('id', id), env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(id));
       return okRes(res);
     }
 
@@ -1062,7 +1096,7 @@ export async function handleAdminRequest(
       // Check if chapter already exists for this comic & chapter number
       const existingRes = await sbGet(
         'chapters',
-        `story_id=eq.${targetComicId}&chapter_number=eq.${validCn}&select=id`,
+        `${uuidFilter('story_id', targetComicId)}&chapter_number=eq.${validCn}&select=id`,
         env,
         token,
       );
@@ -1073,22 +1107,26 @@ export async function handleAdminRequest(
           const existingId = existingData[0].id;
           const patchRes = await sbPatch(
             'chapters',
-            `id=eq.${existingId}`,
+            uuidFilter('id', existingId),
             { title: payload.title, content: payload.content },
             env,
             token,
           );
+          if (patchRes.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(targetComicId));
           return handleRes(patchRes);
         }
       }
 
       const res = await sbPost('chapters', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(targetComicId));
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/comics\/[^\/]+\/chapters\/[^\/]+$/)) {
       const chapterId = pathSegment(path, 5);
-      const res = await sbDelete('chapters', `id=eq.${chapterId}`, env, token);
+      const comicId = pathSegment(path, 3);
+      const res = await sbDelete('chapters', uuidFilter('id', chapterId), env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(comicId));
       return okRes(res);
     }
 
@@ -1120,6 +1158,7 @@ export async function handleAdminRequest(
         cover_url: s.cover_url ?? null,
       };
       const res = await sbPost('chapters', payload, env, token);
+      if (res.ok) await invalidateCache(env.APP_KV, storyCachePrefixes(payload.story_id));
       return handleRes(res);
     }
 
@@ -1150,22 +1189,28 @@ export async function handleAdminRequest(
       if (body.contact !== undefined) payload.contact = String(body.contact).trim();
       if (body.notes !== undefined) payload.notes = String(body.notes).trim();
       if (body.status !== undefined) payload.status = body.status;
-      const res = await sbPatch('translators', `id=eq.${id}`, payload, env, token);
+      const res = await sbPatch('translators', uuidFilter('id', id), payload, env, token);
       return handleRes(res);
     }
 
     if (method === 'DELETE' && path.match(/^\/admin\/translators\/[^\/]+$/)) {
       const id = pathSegment(path, 3);
-      const res = await sbDelete('translators', `id=eq.${id}`, env, token);
+      const res = await sbDelete('translators', uuidFilter('id', id), env, token);
       return okRes(res);
     }
 
     return null;
-  } catch (e: any) {
-    return err(
-      'INTERNAL_ERROR',
-      e.message || 'Unknown error',
-      500,
-    );
+  } catch (e: unknown) {
+    if (e instanceof ValidationFailure) {
+      return err('VALIDATION_ERROR', e.message, 400);
+    }
+    // Upstream messages carry table, column, and constraint names. Log them,
+    // do not return them.
+    console.error('[admin] unhandled error', {
+      path: pathname,
+      method,
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return err('INTERNAL_ERROR', 'Request failed', 500);
   }
 }

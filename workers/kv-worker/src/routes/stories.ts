@@ -10,7 +10,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
-import { withCache, buildCacheKey, invalidateCache } from '../middleware/cache';
+import { withCache, buildCacheKey, invalidateCache, cachedJson, publicCache } from '../middleware/cache';
 
 const slugify = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -37,15 +37,19 @@ export async function handleStoriesRequest(
 
   try {
     if (method === 'GET' && pathname === '/categories') {
-      return withCache(env.APP_KV, 'categories', { ttlSec: 600 }, async () => {
+      const data = await withCache(publicCache(env, token), 'categories', { ttlSec: 600 }, async () => {
         const res = await sbGet(
           'categories',
           'select=id,name&order=name.asc',
           env,
           token,
         );
-        return handleRes(res);
+        // Only decoded rows are cacheable. handleRes returns a Response, which
+        // withCache passes through uncached — correct for the error path.
+        if (!res.ok) return handleRes(res);
+        return await res.json();
       });
+      return cachedJson(data);
     }
 
     if (method === 'GET' && pathname === '/stories') {
@@ -65,7 +69,7 @@ export async function handleStoriesRequest(
 
       const normalizedCategory = categories.sort().join(',');
       const cacheKey = buildCacheKey('stories:list', { keyword, category: normalizedCategory, tag, sort, page, pageSize });
-      const data = await withCache(env.APP_KV, cacheKey, { ttlSec: 60 }, async () => {
+      const data = await withCache(publicCache(env, token), cacheKey, { ttlSec: 60 }, async () => {
         const offset = (page - 1) * pageSize;
         const allowedStatuses = ['published', 'ongoing', 'completed'];
 
@@ -121,7 +125,7 @@ export async function handleStoriesRequest(
       const id = pathname.split('/')[2];
       if (!isValidUuid(id))
         return err('VALIDATION_ERROR', 'Invalid story id', 400);
-      const data = await withCache(env.APP_KV, `story:${id}`, { ttlSec: 300 }, async () => {
+      const data = await withCache(publicCache(env, token), `story:${id}`, { ttlSec: 300 }, async () => {
         const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
         const data = await res.json();
         if (!res.ok)
@@ -158,7 +162,7 @@ export async function handleStoriesRequest(
       if (!payload.status) payload.status = 'draft';
       payload.slug = await uniqueSlug(env, token, slugify(String(payload.title)));
       const res = await sbPost('stories', payload, env, token);
-      if (res.ok) await invalidateCache(env.APP_KV, ['cache:stories:list:*', 'cache:categories']);
+      if (res.ok) await invalidateCache(env.APP_KV, ['cache:stories:list', 'cache:categories']);
       return handleRes(res);
     }
 

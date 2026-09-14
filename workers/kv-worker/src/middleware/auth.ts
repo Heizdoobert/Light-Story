@@ -4,6 +4,29 @@ export interface AuthContext {
   email?: string;
 }
 
+/** Bounded role cache. Previously an unbounded set of globalThis properties keyed on an unverified `sub`. */
+export const MAX_CACHED_ROLES = 5_000;
+const ROLE_CACHE_TTL_MS = 60_000;
+const roleCache = new Map<string, { role: string; fetchedAt: number }>();
+
+function cachedRole(userId: string): string | null {
+  const hit = roleCache.get(userId);
+  if (!hit) return null;
+  if (Date.now() - hit.fetchedAt >= ROLE_CACHE_TTL_MS) {
+    roleCache.delete(userId);
+    return null;
+  }
+  return hit.role;
+}
+
+function cacheRole(userId: string, role: string): void {
+  if (roleCache.size >= MAX_CACHED_ROLES) {
+    const oldest = roleCache.keys().next();
+    if (!oldest.done) roleCache.delete(oldest.value);
+  }
+  roleCache.set(userId, { role, fetchedAt: Date.now() });
+}
+
 export class UnauthorizedError extends Error {
   status = 401;
   constructor(message = "Unauthorized") {
@@ -140,55 +163,14 @@ export async function validateJWT(
   const userId = payload.sub ?? payload.user_id ?? payload.uid;
   if (!userId) throw new UnauthorizedError("Missing subject (sub) in token");
 
-  let role =
-    payload.app_metadata?.role ??
-    payload.user_metadata?.role ??
-    payload.role ??
-    "user";
   const email = payload.email ?? undefined;
-
-  const APP_ROLES = ["superadmin", "admin", "employee", "user", "haunt"];
-  if (!APP_ROLES.includes(role) || role === "authenticated") {
-    const sbUrl = env?.SUPABASE_URL || (globalThis as any).SUPABASE_URL;
-    const sbKey =
-      env?.SUPABASE_SERVICE_ROLE_KEY ||
-      env?.SUPABASE_SERVICE_KEY ||
-      env?.SUPABASE_ANON_KEY ||
-      (globalThis as any).SUPABASE_ANON_KEY;
-    if (sbUrl && sbKey) {
-      const cacheKey = `__PROFILE_ROLE_${userId}__`;
-      const cache: any = (globalThis as any)[cacheKey];
-      if (cache && cache.role && Date.now() - cache.fetchedAt < 60000) {
-        role = cache.role;
-      } else {
-        try {
-          const profileRes = await fetch(
-            `${sbUrl}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(userId)}&limit=1`,
-            {
-              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` },
-            },
-          );
-          if (profileRes.ok) {
-            const profiles = (await profileRes.json()) as Array<{
-              role: string;
-            }>;
-            if (
-              Array.isArray(profiles) &&
-              profiles.length > 0 &&
-              profiles[0].role
-            ) {
-              role = profiles[0].role;
-              (globalThis as any)[cacheKey] = { role, fetchedAt: Date.now() };
-            }
-          }
-        } catch {}
-      }
-    }
-  }
-
-  if (role === "authenticated") role = "user";
-
   const sbUrl = env?.SUPABASE_URL || (globalThis as any).SUPABASE_URL;
+
+  // ── Verify the signature BEFORE trusting anything in the payload. ────────
+  // Role resolution used to run first, which meant a forged token drove a
+  // service-key query to Supabase and populated a cache keyed on an
+  // unverified `sub`. Real Supabase tokens carry role: 'authenticated', so
+  // that path fired on essentially every request.
   const jwksUrl =
     env?.SUPABASE_JWKS_URL ||
     env?.JWKS_URL ||
@@ -197,6 +179,15 @@ export async function validateJWT(
     (sbUrl ? `${sbUrl.replace(/\/$/, '')}/auth/v1/.well-known/jwks.json` : undefined);
   if (!jwksUrl) {
     throw new UnauthorizedError("JWT verification not configured");
+  }
+
+  // The signature alone does not bind the token to this project. Supabase sets
+  // iss to <SUPABASE_URL>/auth/v1.
+  if (sbUrl) {
+    const expectedIss = `${String(sbUrl).replace(/\/$/, '')}/auth/v1`;
+    if (payload.iss && payload.iss !== expectedIss) {
+      throw new UnauthorizedError("Token issuer mismatch");
+    }
   }
 
   try {
@@ -266,6 +257,52 @@ export async function validateJWT(
     });
     throw new UnauthorizedError("JWT verification failed");
   }
+
+  // ── Signature is good. Only now resolve the role. ───────────────────────
+  let role =
+    payload.app_metadata?.role ??
+    payload.user_metadata?.role ??
+    payload.role ??
+    "user";
+
+  const APP_ROLES = ["superadmin", "admin", "employee", "user", "haunt"];
+  if (!APP_ROLES.includes(role) || role === "authenticated") {
+    const sbKey =
+      env?.SUPABASE_SERVICE_ROLE_KEY ||
+      env?.SUPABASE_SERVICE_KEY ||
+      env?.SUPABASE_ANON_KEY ||
+      (globalThis as any).SUPABASE_ANON_KEY;
+    if (sbUrl && sbKey) {
+      const hit = cachedRole(userId);
+      if (hit) {
+        role = hit;
+      } else {
+        try {
+          const profileRes = await fetch(
+            `${sbUrl}/rest/v1/profiles?select=role&id=eq.${encodeURIComponent(userId)}&limit=1`,
+            {
+              headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` },
+            },
+          );
+          if (profileRes.ok) {
+            const profiles = (await profileRes.json()) as Array<{
+              role: string;
+            }>;
+            if (
+              Array.isArray(profiles) &&
+              profiles.length > 0 &&
+              profiles[0].role
+            ) {
+              role = profiles[0].role;
+              cacheRole(userId, role);
+            }
+          }
+        } catch {}
+      }
+    }
+  }
+
+  if (role === "authenticated") role = "user";
 
   return { userId, role, email };
 }
