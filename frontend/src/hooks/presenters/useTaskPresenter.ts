@@ -2,6 +2,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Task, CreateTaskInput, UpdateTaskInput, Paginated, APIError } from '@/lib/api/types';
 
+const parseApiError = async (res: Response): Promise<APIError> => {
+  try {
+    const data = await res.json();
+    if (data && typeof data === 'object' && 'code' in data) {
+      return data as APIError;
+    }
+  } catch {
+    // fallback if non-JSON body
+  }
+  return {
+    code: 'HTTP_ERROR',
+    message: res.statusText || 'request_failed',
+    details: { status: res.status },
+  };
+};
+
 /** Helper for GET list */
 export const useTaskList = (page = 1, limit = 10) => {
   return useQuery({
@@ -9,12 +25,10 @@ export const useTaskList = (page = 1, limit = 10) => {
     queryFn: async () => {
       const res = await fetch(`/api/tasks?page=${page}&limit=${limit}`);
       if (!res.ok) {
-        const err = await res.json();
-        throw err as APIError;
+        throw await parseApiError(res);
       }
       return (await res.json()) as Paginated<Task>;
     },
-
   });
 };
 
@@ -25,8 +39,7 @@ export const useTask = (id: string) => {
     queryFn: async () => {
       const res = await fetch(`/api/tasks/${id}`);
       if (!res.ok) {
-        const err = await res.json();
-        throw err as APIError;
+        throw await parseApiError(res);
       }
       return (await res.json()) as Task;
     },
@@ -44,8 +57,7 @@ export const useCreateTask = () => {
         body: JSON.stringify(input),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw err as APIError;
+        throw await parseApiError(res);
       }
       return (await res.json()) as Task;
     },
@@ -66,8 +78,7 @@ export const useUpdateTask = () => {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw err as APIError;
+        throw await parseApiError(res);
       }
       return (await res.json()) as Task;
     },
@@ -85,8 +96,7 @@ export const useDeleteTask = () => {
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
       if (!res.ok) {
-        const err = await res.json();
-        throw err as APIError;
+        throw await parseApiError(res);
       }
     },
     onSuccess: (_, id) => {

@@ -159,6 +159,7 @@ cocoindex.db
 cocoindex-code.db
 
 # Agent task plans
-tasks/
+/tasks/
+/frontend/tasks/
 
 .worktrees/
