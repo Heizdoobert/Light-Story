@@ -58,16 +58,31 @@ if (typeof (global as any).File === 'undefined') {
 // Mock framer-motion to no-op animations in test environment
 import React from 'react';
 import { vi } from 'vitest';
+const MOTION_PROPS = new Set([
+  'whileTap', 'whileHover', 'whileFocus', 'whileDrag', 'whileInView',
+  'initial', 'animate', 'exit', 'transition', 'variants', 'layout', 'layoutId',
+]);
+const stripMotionProps = (props: Record<string, any>) => {
+  const clean: Record<string, any> = {};
+  for (const [key, val] of Object.entries(props)) {
+    if (!MOTION_PROPS.has(key)) clean[key] = val;
+  }
+  return clean;
+};
+
+const framerCache = new Map<string, React.FC<any>>();
 vi.mock('framer-motion', () => {
-  // Create components that render the native HTML tag with all received props
-  const createMotionComponent = (tag: any) => {
-    return (props: any) => {
-      const { children, ...rest } = props;
-      return React.createElement(tag, rest, children);
-    };
+  const getMotionComponent = (tag: string) => {
+    if (!framerCache.has(tag)) {
+      framerCache.set(tag, (props: any) => {
+        const { children, ...rest } = props;
+        return React.createElement(tag, stripMotionProps(rest), children);
+      });
+    }
+    return framerCache.get(tag)!;
   };
   const motionProxy = new Proxy({} as any, {
-    get: (_, prop) => createMotionComponent(prop),
+    get: (_, prop: string) => getMotionComponent(prop),
   });
   return {
     __esModule: true,
@@ -80,16 +95,19 @@ vi.mock('framer-motion', () => {
 });
 
 // Additional mock for 'motion/react' to no-op animations
+const motionReactCache = new Map<string, React.FC<any>>();
 vi.mock('motion/react', () => {
-  // Render native HTML tags for motion components
-  const createMotionComponent = (tag: any) => {
-    return (props: any) => {
-      const { children, ...rest } = props;
-      return React.createElement(tag, rest, children);
-    };
+  const getMotionComponent = (tag: string) => {
+    if (!motionReactCache.has(tag)) {
+      motionReactCache.set(tag, (props: any) => {
+        const { children, ...rest } = props;
+        return React.createElement(tag, stripMotionProps(rest), children);
+      });
+    }
+    return motionReactCache.get(tag)!;
   };
   const motionProxy = new Proxy({} as any, {
-    get: (_, prop) => createMotionComponent(prop),
+    get: (_, prop: string) => getMotionComponent(prop),
   });
   return {
     __esModule: true,
@@ -100,51 +118,12 @@ vi.mock('motion/react', () => {
     ...new Proxy({}, { get: () => () => null }),
   };
 });
-// Mock lucide-react icons to simple SVG placeholders
-vi.mock('lucide-react', () => {
-  // Provide a generic SVG placeholder with data-icon and merged className for any icon.
-  const createIcon = (name: string) => (props: any) => {
-      const { className = '', ...rest } = props;
-      const defaultClass = `lucide-${name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()}`;
-      const mergedClass = [defaultClass, className].filter(Boolean).join(' ');
-      return React.createElement('svg', {
-        'data-icon': name,
-        className: mergedClass,
-        ...rest,
-      });
-    };
-
-    // Explicitly export commonly used icons to satisfy tests, including previously missing ones.
-    const explicitIcons = [
-      'Flame',
-      'Search',
-      'SlidersHorizontal',
-      'Construction',
-      'LayoutDashboard',
-      'LogIn',
-      'LogOut',
-      'User',
-      'ArrowUpDown',
-      'Eye',
-      'X',
-      'SearchX',
-      'Menu',
-      'ChevronsLeft',
-      'ChevronDown',
-      'Play',
-    ];
-
-    const exports: Record<string, any> = {};
-    explicitIcons.forEach((icon) => {
-      exports[icon] = createIcon(icon);
-    });
-
-    // Fallback proxy for any other icon name.
-    const genericProxy = new Proxy({} as any, {
-      get: (_, name) => createIcon(name as string),
-    });
-
-    return { __esModule: true, ...exports, ...genericProxy };
+// Mock lucide-react icons using importOriginal so all icon exports are valid components
+vi.mock('lucide-react', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, any>>();
+  return {
+    ...actual,
+  };
 });
 
 // Mock next/link to a basic anchor element
