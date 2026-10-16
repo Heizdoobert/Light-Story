@@ -1,4 +1,5 @@
 import { err, sbGet, sbPost, sb, handleRes, json } from '../utils/supabase-client';
+import { assertUuid, uuidFilter, ValidationFailure } from '../utils/validation';
 
 export async function handleUserRequest(
   request: Request,
@@ -7,13 +8,24 @@ export async function handleUserRequest(
   pathname: string,
 ): Promise<Response | null> {
   const method = request.method;
-  const userId = request.headers.get('x-user-id');
+  const rawUserId = request.headers.get('x-user-id');
 
-  if (!userId) {
+  if (!rawUserId) {
     if (method === 'GET' && (pathname === '/user/history' || pathname === '/user/bookmarks')) {
       return json([]);
     }
     return err('UNAUTHORIZED', 'User ID required', 401);
+  }
+
+  // The gateway strips any client-supplied x-user-id and sets this from the
+  // verified JWT (index.ts). Validate anyway: this module is also reachable in
+  // tests and would otherwise interpolate the header straight into a query.
+  let userId: string;
+  try {
+    userId = assertUuid(rawUserId, 'userId');
+  } catch (e) {
+    if (e instanceof ValidationFailure) return err('VALIDATION_ERROR', e.message, 400);
+    throw e;
   }
 
   try {
@@ -24,7 +36,7 @@ export async function handleUserRequest(
       );
       const res = await sbGet(
         'bookmarks',
-        `user_id=eq.${userId}&select=comic_id,created_at&order=created_at.desc&limit=${pageSize}`,
+        `${uuidFilter('user_id', userId)}&select=comic_id,created_at&order=created_at.desc&limit=${pageSize}`,
         env,
         token,
       );
@@ -36,7 +48,7 @@ export async function handleUserRequest(
       if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
 
       const existing = await (
-        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?${uuidFilter('user_id', userId)}&${uuidFilter('comic_id', body.comicId)}&select=id`, {
           headers: {
             apikey: env.SUPABASE_ANON_KEY,
             Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
@@ -53,7 +65,7 @@ export async function handleUserRequest(
     if (method === 'POST' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
       const comicId = pathname.split('/')[3];
       const existing = await (
-        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?${uuidFilter('user_id', userId)}&${uuidFilter('comic_id', comicId)}&select=id`, {
           headers: {
             apikey: env.SUPABASE_ANON_KEY,
             Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
@@ -70,7 +82,7 @@ export async function handleUserRequest(
     if (method === 'DELETE' && pathname.match(/^\/user\/bookmarks\/[^\/]+$/)) {
       const comicId = pathname.split('/')[3];
       const existing = await (
-        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${comicId}&select=id`, {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?${uuidFilter('user_id', userId)}&${uuidFilter('comic_id', comicId)}&select=id`, {
           headers: {
             apikey: env.SUPABASE_ANON_KEY,
             Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
@@ -80,7 +92,7 @@ export async function handleUserRequest(
 
       if (Array.isArray(existing) && existing.length > 0) {
         await sb(
-          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          `/rest/v1/bookmarks?${uuidFilter('id', (existing[0] as any).id)}`,
           { method: 'DELETE' },
           env,
           token,
@@ -94,7 +106,7 @@ export async function handleUserRequest(
       if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
 
       const existing = await (
-        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?${uuidFilter('user_id', userId)}&${uuidFilter('comic_id', body.comicId)}&select=id`, {
           headers: {
             apikey: env.SUPABASE_ANON_KEY,
             Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
@@ -104,7 +116,7 @@ export async function handleUserRequest(
 
       if (Array.isArray(existing) && existing.length > 0) {
         await sb(
-          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          `/rest/v1/bookmarks?${uuidFilter('id', (existing[0] as any).id)}`,
           { method: 'DELETE' },
           env,
           token,
@@ -118,7 +130,7 @@ export async function handleUserRequest(
       if (typeof body.comicId !== 'string' || !body.comicId.trim()) return err('VALIDATION_ERROR', 'comicId required', 422);
 
       const existing = await (
-        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?user_id=eq.${userId}&comic_id=eq.${body.comicId}&select=id`, {
+        await fetch(`${env.SUPABASE_URL}/rest/v1/bookmarks?${uuidFilter('user_id', userId)}&${uuidFilter('comic_id', body.comicId)}&select=id`, {
           headers: {
             apikey: env.SUPABASE_ANON_KEY,
             Authorization: `Bearer ${token || env.SUPABASE_ANON_KEY}`,
@@ -128,7 +140,7 @@ export async function handleUserRequest(
 
       if (Array.isArray(existing) && existing.length > 0) {
         await sb(
-          `/rest/v1/bookmarks?id=eq.${(existing[0] as any).id}`,
+          `/rest/v1/bookmarks?${uuidFilter('id', (existing[0] as any).id)}`,
           { method: 'DELETE' },
           env,
           token,
@@ -147,7 +159,7 @@ export async function handleUserRequest(
       );
       const res = await sbGet(
         'reading_history',
-        `user_id=eq.${userId}&select=comic_id,chapter_id,chapter_number,updated_at&order=updated_at.desc&limit=${pageSize}`,
+        `${uuidFilter('user_id', userId)}&select=comic_id,chapter_id,chapter_number,updated_at&order=updated_at.desc&limit=${pageSize}`,
         env,
         token,
       );
@@ -180,7 +192,15 @@ export async function handleUserRequest(
     }
 
     return null;
-  } catch (e: any) {
-    return err('INTERNAL_ERROR', e.message || 'Unknown error', 500);
+  } catch (e: unknown) {
+    if (e instanceof ValidationFailure) {
+      return err('VALIDATION_ERROR', e.message, 400);
+    }
+    console.error('[user] unhandled error', {
+      path: pathname,
+      method,
+      message: e instanceof Error ? e.message : String(e),
+    });
+    return err('INTERNAL_ERROR', 'Request failed', 500);
   }
 }

@@ -12,17 +12,36 @@ const ALLOWED_ORIGINS = [
   'https://staging.lightstory.app',
 ];
 
-export function isOriginAllowed(origin: string | null): boolean {
+/**
+ * Preview deployments are opt-in via ALLOWED_ORIGIN_SUFFIXES (comma-separated
+ * hostnames). The previous rule accepted any *.vercel.app host, which let any
+ * third party's free deployment through the gate with credentials enabled.
+ * Matching is exact-host or dot-boundary, so "evil-lightstory.app" does not
+ * match a "lightstory.app" entry.
+ */
+export function isOriginAllowed(
+  origin: string | null,
+  allowedSuffixes: string[] = [],
+): boolean {
   if (!origin) return true; // allow non-browser / curl requests
   if (ALLOWED_ORIGINS.includes(origin)) return true;
-  if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) return true;
+
+  let hostname: string;
   try {
-    const hostname = new URL(origin).hostname;
-    if (hostname.endsWith('.vercel.app')) return true;
+    const parsed = new URL(origin);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    hostname = parsed.hostname.toLowerCase();
   } catch {
-    if (origin.endsWith('.vercel.app')) return true;
+    return false;
   }
-  return false;
+
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+
+  return allowedSuffixes.some((raw) => {
+    const suffix = raw.trim().toLowerCase();
+    if (!suffix) return false;
+    return hostname === suffix || hostname.endsWith(`.${suffix}`);
+  });
 }
 
 const DEFAULT_ALLOWED_HEADERS =

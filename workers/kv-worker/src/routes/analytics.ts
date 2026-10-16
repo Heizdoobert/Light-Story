@@ -9,6 +9,7 @@ import {
   recordAnalyticsEngineEvent,
 } from '../utils/supabase-client';
 import { getInfrastructurePayload } from '../utils/infra';
+import { getAuthRole, requireRole } from '../utils/validation';
 
 export async function handleAnalyticsRequest(
   request: Request,
@@ -83,6 +84,11 @@ export async function handleAnalyticsRequest(
       method === 'GET' &&
       pathname === '/analytics/infrastructure'
     ) {
+      // R2 object counts, stored bytes, and Analytics Engine rows. Staff only;
+      // the same payload is already gated at /admin/analytics/dashboard.
+      if (!requireRole(getAuthRole(request), ['superadmin', 'admin', 'employee'])) {
+        return err('FORBIDDEN', 'Infrastructure metrics require staff privileges', 403);
+      }
       const payload = await getInfrastructurePayload(env);
       return json(payload);
     }

@@ -14,6 +14,7 @@
   ],
   "vars": {
     "SUPABASE_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co",
+    "ALLOWED_ORIGIN_SUFFIXES": "lightstory.app",
     "SUPABASE_JWKS_URL": "https://rwnzsmmfvsetfcnkjoxt.supabase.co/auth/v1/.well-known/jwks.json",
     "CLOUDFLARE_ACCOUNT_ID": "8ee8907819b5859d9543d68380ab6c1a"
   },
