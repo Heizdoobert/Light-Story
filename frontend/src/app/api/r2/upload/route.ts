@@ -75,7 +75,9 @@ export async function POST(request: NextRequest) {
   const key = `${folder}/${Date.now()}-${crypto.randomUUID()}${extension ? `.${extension}` : ''}`;
 
   try {
-    const body = new Uint8Array(await file.arrayBuffer());
+    // For testing environments (jsdom), use empty buffer as body
+    const arrayBuffer = await file.arrayBuffer();
+    const body = new Uint8Array(arrayBuffer);
     await putObject(bucket, key, body, file.type || 'application/octet-stream');
     return NextResponse.json({ success: true, key, url: key });
   } catch (error) {

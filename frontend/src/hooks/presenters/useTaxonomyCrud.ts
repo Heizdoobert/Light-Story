@@ -35,7 +35,7 @@ export function useCrudMutation<TVars = void>(opts: {
         }
         setIsPending(false);
         return result;
-      } catch (err: any) {
+      } catch (err: unknown) {
         const e = err instanceof Error ? err : new Error(String(err));
         setError(e);
         rejectDbChangeToast(toastId, e);

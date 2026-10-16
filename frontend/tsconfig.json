@@ -46,7 +46,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true
+    "types": ["jest", "node"],
   },
   "include": [
     "**/*.ts",
@@ -61,6 +61,9 @@
     "node_modules",
     "tests/e2e",
     "src/specs",
-    "src/__tests__/tier4/f_real_world_scenarios.test.tsx"
+    "src/__tests__/tier4/f_real_world_scenarios.test.tsx",
+    "src/lib/sdk_old",
+    "src/lib/sdk",
+    "src/lib/sdk_archived"
   ]
 }

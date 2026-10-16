@@ -43,10 +43,10 @@ export function useSearchPresenter(initialCategory?: string) {
           keyword,
           category,
           tag,
-          sort: sort as any,
+          sort: (sort === "newest" || sort === "oldest" || sort === "most_viewed") ? sort : undefined,
         });
 
-        setComics(items as any);
+        setComics(items as unknown as Comic[]);
         setTotalPages(Math.ceil((total || 0) / 12) || 1);
         setTotalItems(total || 0);
       } catch (error) {

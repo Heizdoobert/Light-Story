@@ -74,10 +74,10 @@ export async function fetchStoriesPage(params: StoryPageParams): Promise<StoryPa
     if (params.status && params.status !== 'all') searchParams.set('status', params.status);
     if (params.sort) searchParams.set('sort', params.sort);
 
-    const result = await apiClient.get<any>(ROUTES.API.STORIES_PAGE(searchParams.toString()));
+    const result = await apiClient.get<Story[] | { items?: Story[]; total?: number }>(ROUTES.API.STORIES_PAGE(searchParams.toString()));
     if (result) {
       const items = Array.isArray(result) ? result : (result.items ?? []);
-      const total = result.total ?? items.length;
+      const total = ('total' in result && typeof result.total === 'number') ? result.total : items.length;
       return { items, total };
     }
   } catch (err) {
