@@ -1,0 +1,27 @@
+{
+  "name": "@light-story/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Zero-dependency, resilient TypeScript SDK for Light-Story Gateway",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

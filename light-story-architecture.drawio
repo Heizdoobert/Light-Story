@@ -1,0 +1,315 @@
+<mxfile host="app.diagrams.net" modified="2026-08-19T15:54:00.000Z" agent="Antigravity" version="21.0.0" type="device">
+  <diagram name="Light-Story System Blueprint" id="light-story-blueprint">
+    <mxGraphModel dx="2800" dy="2000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2800" pageHeight="1800" background="#0f172a" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ================= MASTER BANNER ================= -->
+        <mxCell id="blueprint_title" value="&lt;b&gt;&lt;font style=&quot;font-size: 24px; color: #ffffff;&quot;&gt;LIGHT-STORY SYSTEM ARCHITECTURE &amp; DATA FLOW BLUEPRINT&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 13px; color: #94a3b8;&quot;&gt;Decoupled Fullstack Topology: Next.js 16 (App Router) • Cloudflare Workers (kv-worker) • Cloudflare R2 • Supabase Postgres 15+ &amp; RLS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#3b82f6;strokeWidth=2;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="2680" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 1. CLIENT LAYER ================= -->
+        <mxCell id="group_client" value="1. CLIENT &amp; PRESENTATION LAYER" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#0284c7;strokeWidth=2;fontColor=#38bdf8;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="170" width="380" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_reader" value="&lt;b&gt;📱 Public Reader (Web/Mobile)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Guest / Anonymous Viewer&lt;br/&gt;• Infinite Comic Catalog &amp; Search&lt;br/&gt;• Low-Latency Canvas Chapter Reader&lt;br/&gt;• Offline Page CacheStorage&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#38bdf8;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_client">
+          <mxGeometry x="25" y="60" width="330" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_user" value="&lt;b&gt;👤 Authenticated Member&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Registered User Profile&lt;br/&gt;• Bookmarks &amp; Reading History Sync&lt;br/&gt;• PKCE Cookie-Based Session&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#0ea5e9;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_client">
+          <mxGeometry x="25" y="240" width="330" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_staff" value="&lt;b&gt;✍️ Staff / Creator / Admin&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Comic CMS Studio (`/admin/comics`)&lt;br/&gt;• Direct Description Editor (`/admin/descriptions`)&lt;br/&gt;• Chapter WebP Image Uploader&lt;br/&gt;• Taxonomy (Tags, Genres, Authors)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_client">
+          <mxGeometry x="25" y="410" width="330" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_superadmin" value="&lt;b&gt;🛡️ Superadmin Console&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Telemetry Dashboard (`/admin/dashboard`)&lt;br/&gt;• Cloudflare R2 Storage Gauges (13k objects)&lt;br/&gt;• Analytics Engine SQL &amp; Queue Ingestion Stats&lt;br/&gt;• 4-Layer RBAC Governance&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#e11d48;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_client">
+          <mxGeometry x="25" y="600" width="330" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_legend" value="&lt;b&gt;FLOW LEGEND&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#38bdf8&quot;&gt;━━▶ [1] Read Flow&lt;/font&gt; (Pages &amp; CDN WebP)&lt;br/&gt;&lt;font color=&quot;#4ade80&quot;&gt;━━▶ [2] Direct S3 PUT&lt;/font&gt; (R2 Media Upload)&lt;br/&gt;&lt;font color=&quot;#fbbf24&quot;&gt;━━▶ [3] Server Actions&lt;/font&gt; (Zod Mutations)&lt;br/&gt;&lt;font color=&quot;#f43f5e&quot;&gt;━━▶ [4] 4-Layer RBAC&lt;/font&gt; (Security Verification)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0284c7;fillOpacity=10;strokeColor=#0284c7;fontColor=#cbd5e1;fontSize=11;align=left;spacingLeft=15;" vertex="1" parent="group_client">
+          <mxGeometry x="25" y="780" width="330" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 2. NETWORK & EDGE LAYER ================= -->
+        <mxCell id="group_edge" value="2. CLOUDFLARE EDGE &amp; NETWORK LAYER" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#d97706;strokeWidth=2;fontColor=#fbbf24;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="490" y="170" width="400" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="net_dns" value="&lt;b&gt;🌐 Anycast DNS &amp; SSL/TLS&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Global Anycast Network (300+ PoPs)&lt;br/&gt;• 0-RTT TLS 1.3 Termination&lt;br/&gt;• Automated Layer 3/4/7 DDoS Protection&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#fbbf24;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_edge">
+          <mxGeometry x="25" y="60" width="350" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="net_waf" value="&lt;b&gt;🛡️ Edge WAF &amp; Rate Limiting&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Memory-Isolated Request Throttling&lt;br/&gt;• Bot Management &amp; OWASP Filtering&lt;br/&gt;• Security Headers (HSTS, CSP, nosniff)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#f43f5e;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_edge">
+          <mxGeometry x="25" y="220" width="350" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="net_cdn" value="&lt;b&gt;🚀 Cloudflare R2 Media CDN&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Public URL: `pub-006586cb2a0d...r2.dev`&lt;br/&gt;• Edge Caching for Comic Covers &amp; Chapters&lt;br/&gt;• HTTP/3 &amp; Brotli Compression&lt;br/&gt;• $0.00 Egress Bandwidth Cost&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#38bdf8;strokeWidth=2;fontColor=#38bdf8;align=left;spacingLeft=15;" vertex="1" parent="group_edge">
+          <mxGeometry x="25" y="380" width="350" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="net_router" value="&lt;b&gt;🔀 Edge Traffic Dispatcher&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `/*` ──▶ Next.js 16 Frontend App&lt;br/&gt;• `/api/*` ──▶ kv-worker API Gateway&lt;br/&gt;• `/upload/*` ──▶ R2 Presigner Service&lt;br/&gt;• `/media/*` ──▶ R2 Object Storage Bucket&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#fbbf24;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_edge">
+          <mxGeometry x="25" y="570" width="350" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 3. API GATEWAY LAYER ================= -->
+        <mxCell id="group_gateway" value="3. API GATEWAY (Cloudflare kv-worker)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#7c3aed;strokeWidth=2;fontColor=#c084fc;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="940" y="170" width="410" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_hono" value="&lt;b&gt;⚡ Hono API Gateway (`src/index.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• TypeScript Micro-Gateway Framework&lt;br/&gt;• Reverse Proxy to Supabase PostgREST&lt;br/&gt;• Global CORS &amp; Error Catch Sanitizer&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="60" width="360" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_auth" value="&lt;b&gt;🔒 Web Crypto Auth (`auth.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Edge JWT Claim Verification&lt;br/&gt;• `requireRouteAuthorization()` (Fast 401/403)&lt;br/&gt;• Injects DB Service Role on Verified Calls&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#f43f5e;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="190" width="360" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_stories" value="&lt;b&gt;📚 Stories API (`routes/stories.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `GET /stories` (Tag filter `?tag=X`, slug search)&lt;br/&gt;• `GET /stories/:id/chapters` (Manifest Cache)&lt;br/&gt;• `TAXONOMY_ENTITIES` (Genres, Tags, Authors)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#38bdf8;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="320" width="360" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_presigner" value="&lt;b&gt;📤 R2 S3 Presigner (`routes/upload.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Endpoint: `POST /api/upload/presigned`&lt;br/&gt;• Generates Scoped AWS S3 SigV4 PUT URLs&lt;br/&gt;• Sanitizes Keys (`covers/...`, `chapters/...`)&lt;br/&gt;• Direct Client ──▶ R2 Upload (Zero server load)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#4ade80;strokeWidth=2;fontColor=#4ade80;align=left;spacingLeft=15;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="450" width="360" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_infra" value="&lt;b&gt;📊 Superadmin Telemetry (`utils/infra.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `GET /admin/analytics/dashboard` (Superadmin Gated)&lt;br/&gt;• R2 Bucket Object Count (13k objects)&lt;br/&gt;• Cloudflare Analytics Engine SQL &amp; Queue Stats&lt;br/&gt;• 20s Client Timeout for Cold Cache Resilience&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#e11d48;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="600" width="360" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="gw_bindings" value="&lt;b&gt;WRANGLER RUNTIME BINDINGS&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 10px; color: #94a3b8;&quot;&gt;• `APP_KV` • `COMIC_METADATA` • `R2_BUCKET` (comic)&lt;br/&gt;• `LIGHTSTORY_QUEUE` • `LIGHTSTORY_WORKFLOW` • `HYPERDRIVE`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;fontColor=#cbd5e1;align=center;" vertex="1" parent="group_gateway">
+          <mxGeometry x="25" y="750" width="360" height="80" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 4. FRONTEND COMPUTE LAYER ================= -->
+        <mxCell id="group_frontend" value="4. FRONTEND COMPUTE (Next.js 16 App Router)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#2563eb;strokeWidth=2;fontColor=#60a5fa;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="1395" y="170" width="420" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_routes" value="&lt;b&gt;🚪 Pure Route Controllers (`src/app/`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• 6-20 Lines per `page.tsx` (Architecture Rule 1)&lt;br/&gt;• Zero Inline State / Direct DB Calls / Effects&lt;br/&gt;• `(main)/comics/[slug]`, `/search`&lt;br/&gt;• `(admin)/admin/dashboard`, `/descriptions`, `/comics`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#3b82f6;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="60" width="370" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_presenters" value="&lt;b&gt;🧠 Presenter Hook Pattern (`presenters/`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `useComicDetailPresenter`: Tag badges, cover fallback&lt;br/&gt;• `useReadChapterPresenter`: Auto-scroll cancel on scroll&lt;br/&gt;• `useAdminDashboardPresenter`: Superadmin telemetry state&lt;br/&gt;• `useSearchPresenter`: Multi-param debounced query&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#3b82f6;strokeWidth=2;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="190" width="370" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_actions" value="&lt;b&gt;⚡ Server Actions (`src/actions/`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Directives: `&#39;use server&#39;`&lt;br/&gt;• Standard Return: `ActionResult&lt;T&gt;`&lt;br/&gt;• Pipeline: `act()` wrapper with Zod Schema parsing&lt;br/&gt;• Actions: `createComic`, `updateComic`, `toggleBookmark`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#fbbf24;strokeWidth=2;fontColor=#fbbf24;align=left;spacingLeft=15;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="340" width="370" height="130" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_middleware" value="&lt;b&gt;🛡️ Root Middleware (`middleware.ts`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `@supabase/ssr` Cookie Session Refresh&lt;br/&gt;• Fail-Closed Admin Redirect (`/admin/*` ──▶ `/login`)&lt;br/&gt;• CSP &amp; Security Header Injections&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#f43f5e;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="490" width="370" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_components" value="&lt;b&gt;🎨 Pure Presentation JSX (`src/components/`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `reader/`: Zoom Canvas, Gesture Nav, Filmstrip&lt;br/&gt;• `admin/`: Dark-Theme Analytics Grid, Description Modal&lt;br/&gt;• `comics/`: Cover Cards, Tag Badges, Chapter Lists&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="620" width="370" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_contexts" value="&lt;b&gt;GLOBAL CONTEXTS (`src/context/`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 10px; color: #94a3b8;&quot;&gt;• `AuthContext.tsx` • `LanguageContext.tsx` (VI/EN) • `ThemeContext.tsx`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;fontColor=#cbd5e1;align=center;" vertex="1" parent="group_frontend">
+          <mxGeometry x="25" y="760" width="370" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 5. STORAGE & CACHE LAYER ================= -->
+        <mxCell id="group_storage" value="5. STORAGE &amp; DISTRIBUTED CACHE" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#059669;strokeWidth=2;fontColor=#34d399;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="1860" y="170" width="400" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="st_kv" value="&lt;b&gt;⚡ Cloudflare KV Edge Cache&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `COMIC_METADATA`: Story catalog &amp; manifests&lt;br/&gt;• `APP_KV`: Route rate limits &amp; temp tokens&lt;br/&gt;• Sub-50ms Global Edge Read Performance&lt;br/&gt;• TTL Cache Eviction (300s TTL)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#38bdf8;strokeWidth=2;fontColor=#38bdf8;align=left;spacingLeft=15;" vertex="1" parent="group_storage">
+          <mxGeometry x="25" y="60" width="350" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="st_r2" value="&lt;b&gt;🪣 Cloudflare R2 Object Storage&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Bucket Name: `comic` ($0.00 Egress Cost)&lt;br/&gt;• Direct S3 SigV4 Multipart PUT Uploads&lt;br/&gt;• Asset Keys: `covers/{id}/...`, `chapters/{id}/...`&lt;br/&gt;• Stores WebP Pages, Thumbnails, Avatars&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#4ade80;strokeWidth=2;fontColor=#4ade80;align=left;spacingLeft=15;" vertex="1" parent="group_storage">
+          <mxGeometry x="25" y="230" width="350" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="st_cache" value="&lt;b&gt;💾 Browser CacheStorage&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Cache ID: `reader-pages`&lt;br/&gt;• Background chapter preloading&lt;br/&gt;• Offline reading resilience&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_storage">
+          <mxGeometry x="25" y="410" width="350" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="st_queues" value="&lt;b&gt;🔄 Async Queues &amp; Workflows&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `LIGHTSTORY_QUEUE` &amp; `LIGHTSTORY_WORKFLOW`&lt;br/&gt;• WebP Image Optimization Pipeline&lt;br/&gt;• Automated Search Index &amp; KV Cache Invalidation&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#a855f7;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_storage">
+          <mxGeometry x="25" y="550" width="350" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ================= 6. DATABASE & AUTH LAYER ================= -->
+        <mxCell id="group_database" value="6. DATABASE &amp; AUTH (Supabase Postgres 15+)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#e11d48;strokeWidth=2;fontColor=#fb7185;fontStyle=1;fontSize=14;startSize=35;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="2310" y="170" width="430" height="920" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_auth" value="&lt;b&gt;🔑 Supabase Auth Engine&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• GoTrue Auth &amp; PKCE Cookie Sessions&lt;br/&gt;• Custom Claims: `app_metadata.role`&lt;br/&gt;  (`superadmin`, `admin`, `employee`, `user`)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#f43f5e;strokeWidth=2;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="60" width="380" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_hyperdrive" value="&lt;b&gt;⚡ Hyperdrive Connection Pool&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Pool ID: `5a02e4b848144795...`&lt;br/&gt;• Low-Latency Edge Connection Pooling&lt;br/&gt;• Prevents Postgres Connection Exhaustion&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#38bdf8;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="190" width="380" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_schema" value="&lt;b&gt;🗄️ PostgreSQL 15+ Schema (`rwnzsmm...`)&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `stories`: id, title, slug (unique), tags, cover, views&lt;br/&gt;• `chapters`: id, story_id, content (JSONB R2 URLs)&lt;br/&gt;• `genres` &amp; `tags`: Taxonomy classification tables&lt;br/&gt;• `authors`: id, name, bio, avatar_url&lt;br/&gt;• `bookmarks` &amp; `profiles`: Scoped user library&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#10b981;strokeWidth=2;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="310" width="380" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_rls" value="&lt;b&gt;🔒 Row-Level Security (RLS) Engine&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• Public SELECT on published stories &amp; taxonomy&lt;br/&gt;• Staff mutations: `has_role([&#39;superadmin&#39;,&#39;admin&#39;,&#39;employee&#39;])`&lt;br/&gt;• User bookmark/profile isolation: `user_id = auth.uid()`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#f43f5e;strokeWidth=2;fontColor=#4ade80;align=left;spacingLeft=15;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="470" width="380" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_rpc" value="&lt;b&gt;🔍 RPC Stored Procs &amp; Vector Search&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;• `get_user_engagement_summary(p_time_range)` RPC&lt;br/&gt;• `stories_with_counts`, `popular_comics_view` Views&lt;br/&gt;• `pgvector` Cosine Similarity Embeddings Search&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;strokeWidth=1.5;fontColor=#ffffff;align=left;spacingLeft=15;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="600" width="380" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_migrations" value="&lt;b&gt;MIGRATION PIPELINE&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 10px; color: #94a3b8;&quot;&gt;• Idempotent DDL Migrations via `apply_migrations.sh` / `.ps1`&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#0f172a;strokeColor=#64748b;fontColor=#cbd5e1;align=center;" vertex="1" parent="group_database">
+          <mxGeometry x="25" y="730" width="380" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ================= BOTTOM PANELS: BLUEPRINT WORKFLOWS ================= -->
+        <mxCell id="panel_wf_read" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #38bdf8;&quot;&gt;WORKFLOW A: HIGH-SPEED READ &amp; STREAMING PATH&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;&lt;b&gt;[1]&lt;/b&gt; User requests `/comics/[slug]/[chapter]` ──▶ &lt;b&gt;[2]&lt;/b&gt; Next.js Presenter queries `kv-worker` Gateway ──▶ &lt;b&gt;[3]&lt;/b&gt; Worker checks KV Cache (`COMIC_METADATA`) for chapter manifest (Sub-50ms) ──▶ &lt;b&gt;[4]&lt;/b&gt; On Cache Miss, Worker queries Supabase Postgres via Hyperdrive pool and warms KV ──▶ &lt;b&gt;[5]&lt;/b&gt; Reader Canvas fetches WebP pages directly from Cloudflare R2 CDN (`pub-...r2.dev`) ──▶ &lt;b&gt;[6]&lt;/b&gt; Pages pre-cached in browser `CacheStorage`.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#38bdf8;strokeWidth=2;align=left;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1130" width="1310" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="panel_wf_write" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #4ade80;&quot;&gt;WORKFLOW B: DIRECT S3 MEDIA UPLOAD &amp; SERVER ACTION MUTATIONS&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;&lt;b&gt;[1]&lt;/b&gt; Staff requests presigned URL from `POST /api/upload/presigned` ──▶ &lt;b&gt;[2]&lt;/b&gt; Worker validates JWT role claim &amp; generates AWS S3 SigV4 PUT token for `covers/...` or `chapters/...` ──▶ &lt;b&gt;[3]&lt;/b&gt; Browser performs Direct Multipart PUT of WebP image directly to Cloudflare R2 Bucket (Zero server load) ──▶ &lt;b&gt;[4]&lt;/b&gt; Form calls Next.js Server Action (`createComic` / `createChapter`) ──▶ &lt;b&gt;[5]&lt;/b&gt; `act()` executes Zod validation &amp; inserts record into Supabase Postgres.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#4ade80;strokeWidth=2;align=left;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="1130" width="1310" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="panel_wf_security" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #f43f5e;&quot;&gt;WORKFLOW C: 4-LAYER DEFENSE-IN-DEPTH SECURITY &amp; RBAC&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;&lt;b&gt;Layer 1 (Edge Gate):&lt;/b&gt; `kv-worker` Web Crypto JWT check (`requireRouteAuthorization`) provides fast 401/403 drops at edge ──▶ &lt;b&gt;Layer 2 (Middleware):&lt;/b&gt; Next.js root `middleware.ts` guards `/admin/*` via `@supabase/ssr` cookies ──▶ &lt;b&gt;Layer 3 (UI Guard):&lt;/b&gt; `DEFAULT_ADMIN_MENU_VISIBILITY` filters navigation tabs + `useRoleGuard([&#39;superadmin&#39;])` on dashboard ──▶ &lt;b&gt;Layer 4 (Database RLS):&lt;/b&gt; Postgres Row Level Security verifies `auth.jwt()` role claims on every SQL statement.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#f43f5e;strokeWidth=2;align=left;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1270" width="1310" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="panel_wf_telemetry" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px; color: #fb7185;&quot;&gt;WORKFLOW D: SUPERADMIN TELEMETRY &amp; INFRASTRUCTURE OBSERVABILITY&lt;/font&gt;&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size: 11px; color: #cbd5e1;&quot;&gt;&lt;b&gt;[1]&lt;/b&gt; Superadmin loads `/admin/dashboard` ──▶ &lt;b&gt;[2]&lt;/b&gt; `useAdminDashboardPresenter` triggers single consolidated fetch to `/api/admin/analytics/dashboard` with 20s timeout ──▶ &lt;b&gt;[3]&lt;/b&gt; Worker `utils/infra.ts` aggregates Cloudflare R2 bucket count (13k objects) + Analytics Engine SQL ──▶ &lt;b&gt;[4]&lt;/b&gt; Calls Supabase RPC `get_user_engagement_summary()` for story totals &amp; bookmarks ──▶ &lt;b&gt;[5]&lt;/b&gt; Returns single unified telemetry payload to render dark-theme gauge cards.&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1e293b;strokeColor=#e11d48;strokeWidth=2;align=left;spacingLeft=20;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="1270" width="1310" height="120" as="geometry" />
+        </mxCell>
+
+        <!-- ================= ORTHOGONAL NON-OVERLAPPING EDGES ================= -->
+
+        <!-- Read Path Edge 1: Public Reader -> Cloudflare Router -->
+        <mxCell id="e_read_1" value="[1] View Page (HTTPS)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="c_reader" target="net_router">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="300" />
+              <mxPoint x="460" y="815" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Read Path Edge 2: Router -> Next.js Pure Routes -->
+        <mxCell id="e_read_2" value="[2] Route SSR" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="net_router" target="fe_routes">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="915" y="815" />
+              <mxPoint x="915" y="285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Read Path Edge 3: Presenter -> Worker Stories API -->
+        <mxCell id="e_read_3" value="[3] Fetch Metadata" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="fe_presenters" target="gw_stories">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="425" />
+              <mxPoint x="1370" y="545" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Read Path Edge 4: Stories API -> KV Cache -->
+        <mxCell id="e_read_4" value="[4] KV Lookup" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="gw_stories" target="st_kv">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="545" />
+              <mxPoint x="1370" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Read Path Edge 5: Worker -> Postgres on Miss -->
+        <mxCell id="e_read_5" value="[5] DB Fallback (SQL)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="gw_hono" target="db_hyperdrive">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1370" y="285" />
+              <mxPoint x="1370" y="150" />
+              <mxPoint x="2290" y="150" />
+              <mxPoint x="2290" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Read Path Edge 6: Reader -> R2 CDN Stream -->
+        <mxCell id="e_read_6" value="[6] Stream WebP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#38bdf8;strokeWidth=2.5;fontColor=#38bdf8;fontSize=10;" edge="1" parent="1" source="c_reader" target="net_cdn">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="300" />
+              <mxPoint x="460" y="625" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Write Path Edge 1: Staff -> Worker Presigner -->
+        <mxCell id="e_upload_1" value="[1] Presign Req" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#4ade80;strokeWidth=2.5;fontColor=#4ade80;fontSize=10;" edge="1" parent="1" source="c_staff" target="gw_presigner">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="655" />
+              <mxPoint x="470" y="685" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Write Path Edge 2: Staff -> Direct R2 PUT -->
+        <mxCell id="e_upload_2" value="[2] Direct S3 SigV4 PUT WebP" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#4ade80;strokeWidth=2.5;fontColor=#4ade80;fontSize=10;" edge="1" parent="1" source="c_staff" target="st_r2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="655" />
+              <mxPoint x="480" y="1110" />
+              <mxPoint x="1840" y="1110" />
+              <mxPoint x="1840" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Server Actions Edge 1: Staff -> Next.js Actions -->
+        <mxCell id="e_action_1" value="[3] Call Server Action" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#fbbf24;strokeWidth=2.5;fontColor=#fbbf24;fontSize=10;" edge="1" parent="1" source="c_staff" target="fe_actions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="655" />
+              <mxPoint x="460" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Server Actions Edge 2: Server Action -> Supabase Postgres Schema Insert -->
+        <mxCell id="e_action_2" value="[4] INSERT via act() Zod (SQL)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#fbbf24;strokeWidth=2.5;fontColor=#fbbf24;fontSize=10;" edge="1" parent="1" source="fe_actions" target="db_schema">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1830" y="575" />
+              <mxPoint x="1830" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Auth Login: User -> Supabase Auth -->
+        <mxCell id="e_auth_1" value="Auth (PKCE Session)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#f43f5e;strokeWidth=2;fontColor=#f43f5e;fontSize=10;dashed=1;" edge="1" parent="1" source="c_user" target="db_auth">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="475" />
+              <mxPoint x="450" y="140" />
+              <mxPoint x="2300" y="140" />
+              <mxPoint x="2300" y="285" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Telemetry: Superadmin -> Worker Infra -->
+        <mxCell id="e_infra_1" value="Dashboard Req" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#e11d48;strokeWidth=2.5;fontColor=#e11d48;fontSize=10;" edge="1" parent="1" source="c_superadmin" target="gw_infra">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="470" y="835" />
+              <mxPoint x="470" y="835" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
