@@ -24,6 +24,7 @@
     "supabase:stop": "supabase stop",
     "env:add-service-key": "node ./scripts/add_service_key.mjs",
     "env:use-emulator": "node ./scripts/use_emulator.mjs",
+    "cocoindex": "node scripts/run_cocoindex.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1100.0",
