@@ -1,6 +1,6 @@
 // src/hooks/presenters/useTaskPresenter.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Task, CreateTaskInput, UpdateTaskInput, Paginated, APIError } from '@/lib/api/types';
+import type { Task, CreateTaskInput, UpdateTaskInput, Paginated, APIError } from '@/sdk/task/types';
 
 const parseApiError = async (res: Response): Promise<APIError> => {
   try {
