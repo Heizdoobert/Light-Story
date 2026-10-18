@@ -6,9 +6,7 @@ on:
       - Deploy
       - Publish Docker Image
       - Supabase Database Tests
-      - Agent Smoke Tests
       - CodeQL Security Scan
-      - Worker E2E Smoke Tests
     types: [completed]
 
 jobs:
