@@ -1,12 +1,14 @@
-// Shared in‑memory store and utilities for the Task API (demo only)
-import type { Task } from '@/lib/api/types';
+// Re-export SDK Task store utilities – ensure clear method is available
+import { taskStore as sdkStore, generateId, mapTask, mapPaginated } from '@/sdk/task/api/_shared';
 
-/** In‑memory map of tasks – key is the string id */
-export const taskStore = new Map<string, Task>();
-let idCounter = 1;
+// Export the same store object; add clear method if missing (for test compatibility)
+export const taskStore = sdkStore;
+if (!(taskStore as any).clear) {
+  (taskStore as any).clear = () => {
+    for (const key in taskStore) {
+      delete (taskStore as any)[key];
+    }
+  };
+}
 
-/** Generate a new unique Task id */
-export const generateTaskId = (): string => `task-${idCounter++}`;
-
-/** Convert a Task to the public response shape (currently identity) */
-export const toResponse = (task: Task) => task;
+export { generateId, mapTask, mapPaginated };

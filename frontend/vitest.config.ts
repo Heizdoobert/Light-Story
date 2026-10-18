@@ -29,6 +29,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@light-story/sdk": path.resolve(__dirname, "../packages/sdk/src"),
+      "@light-story/api-types": path.resolve(__dirname, "../packages/api-types"),
     },
   },
 });

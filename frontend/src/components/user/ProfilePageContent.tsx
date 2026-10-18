@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
 import { Mail, User, Edit2, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
-import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
+import Image from "next/image";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useProfilePresenter } from "@/hooks/presenters/useProfilePresenter";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { ROUTES } from "@/lib/constants/routes";
+import { sanitizeImageUrl, getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 
 const details = (profile: NonNullable<ReturnType<typeof useAuth>["profile"]>, t: (key: string) => string) => [
   { icon: Mail, label: t("profile_email"), value: profile.email },
@@ -89,18 +90,17 @@ export const ProfilePageContent: React.FC = () => {
             <div className="px-8 pb-8">
               <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 mb-8">
                 {profile.avatar_url && sanitizeImageUrl(profile.avatar_url) ? (
-                  <img
-                    src={proxyAvatarUrl(profile.avatar_url) || undefined}
-                    alt={profile.full_name || "User avatar"}
-                    width={80}
-                    height={80}
-                    decoding="async"
-                    className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
-                    }}
-                  />
+                  <Image
+                  src={proxyAvatarUrl(profile.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
+                  alt={profile.full_name || "User avatar"}
+                  width={80}
+                  height={80}
+                  className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                  }}
+                />
                 ) : (
                   <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 border-4 border-white dark:border-slate-900 flex items-center justify-center shadow-lg shrink-0">
                     <User size={32} className="text-white" />

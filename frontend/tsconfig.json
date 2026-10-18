@@ -32,6 +32,9 @@
       ],
       "@light-story/api-types": [
         "../packages/api-types"
+      ],
+      "@light-story/sdk": [
+        "../packages/sdk/src"
       ]
     },
     "noEmit": true,

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Plus, Edit, Trash2, Search, BookOpen, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
@@ -155,18 +156,17 @@ export default function AdminComicsPage() {
                 comics.map((comic) => (
                   <tr key={comic.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-4">
-                      <img
-                        src={getR2ImageUrl(comic.cover_url)}
-                        alt={comic.title}
-                        width={48}
-                        height={64}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-12 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;
-                        }}
-                      />
+                      <Image
+  src={getR2ImageUrl(comic.cover_url)}
+  alt={comic.title}
+  width={48}
+  height={64}
+  loading="lazy"
+  className="w-12 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950"
+  onError={(e) => {
+    (e.target as HTMLImageElement).src = ROUTES.PLACEHOLDER_COVER;
+  }}
+/>
                     </td>
                     <td className="p-4 font-bold text-slate-900 dark:text-white max-w-xs truncate">{comic.title}</td>
                     <td className="p-4 text-slate-600 dark:text-slate-300">{comic.author || "Chưa cập nhật"}</td>

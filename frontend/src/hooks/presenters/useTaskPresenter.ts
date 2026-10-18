@@ -2,33 +2,32 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Task, CreateTaskInput, UpdateTaskInput, Paginated, APIError } from '@/sdk/task/types';
 
+/** Helper to parse API errors */
 const parseApiError = async (res: Response): Promise<APIError> => {
   try {
     const data = await res.json();
-    if (data && typeof data === 'object' && 'code' in data) {
-      return data as APIError;
-    }
+    if (data && typeof data === 'object' && 'code' in data) return data as APIError;
   } catch {
-    // fallback if non-JSON body
+    // ignore parsing errors
   }
-  return {
-    code: 'HTTP_ERROR',
-    message: res.statusText || 'request_failed',
-    details: { status: res.status },
-  };
+  return { code: 'HTTP_ERROR', message: res.statusText || 'request_failed', details: { status: res.status } };
+};
+
+/** Generic request helper using fetch */
+const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    const err = await parseApiError(res);
+    throw err;
+  }
+  return (await res.json()) as T;
 };
 
 /** Helper for GET list */
 export const useTaskList = (page = 1, limit = 10) => {
   return useQuery({
     queryKey: ['tasks', page, limit],
-    queryFn: async () => {
-      const res = await fetch(`/api/tasks?page=${page}&limit=${limit}`);
-      if (!res.ok) {
-        throw await parseApiError(res);
-      }
-      return (await res.json()) as Paginated<Task>;
-    },
+    queryFn: () => request<Paginated<Task>>(`/api/tasks?page=${page}&limit=${limit}`),
   });
 };
 
@@ -36,13 +35,7 @@ export const useTaskList = (page = 1, limit = 10) => {
 export const useTask = (id: string) => {
   return useQuery({
     queryKey: ['task', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/tasks/${id}`);
-      if (!res.ok) {
-        throw await parseApiError(res);
-      }
-      return (await res.json()) as Task;
-    },
+    queryFn: () => request<Task>(`/api/tasks/${id}`),
   });
 };
 
@@ -51,15 +44,12 @@ export const useCreateTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateTaskInput) => {
-      const res = await fetch('/api/tasks', {
+      const res = await request<Task>('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(input),
       });
-      if (!res.ok) {
-        throw await parseApiError(res);
-      }
-      return (await res.json()) as Task;
+      return res;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -72,15 +62,12 @@ export const useUpdateTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: UpdateTaskInput }) => {
-      const res = await fetch(`/api/tasks/${id}`, {
+      const res = await request<Task>(`/api/tasks/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-      if (!res.ok) {
-        throw await parseApiError(res);
-      }
-      return (await res.json()) as Task;
+      return res;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['task', variables.id] });
@@ -94,10 +81,7 @@ export const useDeleteTask = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        throw await parseApiError(res);
-      }
+      await request<void>(`/api/tasks/${id}`, { method: 'DELETE' });
     },
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: ['task', id] });

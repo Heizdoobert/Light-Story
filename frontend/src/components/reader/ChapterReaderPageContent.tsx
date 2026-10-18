@@ -22,6 +22,7 @@ import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
 import { useReadChapterPresenter, type ReaderInitialData } from "@/hooks/presenters/useReadChapterPresenter";
 import { ROUTES } from "@/lib/constants/routes";
+import Image from "next/image";
 
 export interface ChapterReaderPageContentProps {
   initialData?: ReaderInitialData | null;
@@ -181,14 +182,13 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
                 onClick={() => scrollToPage(idx)}
                 className="flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary dark:hover:border-primary transition-colors"
               >
-                <img
+                <Image
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
                   width={64}
                   height={96}
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  decoding="async"
                 />
               </button>
             ))}

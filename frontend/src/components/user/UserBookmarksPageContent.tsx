@@ -3,6 +3,7 @@
 import React from "react";
 import { Bookmark, Sparkles, AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import { useBookmarks } from "@/hooks/features/useBookmarks";
 import { fetchStoriesByIds } from "@/services/comics/story.service";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -75,13 +76,13 @@ export const UserBookmarksPageContent: React.FC = () => {
             className="group relative bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm transition-all hover:border-primary/50 flex flex-col"
           >
             <Link href={ROUTES.COMIC_DETAIL(comic.id)} className="block relative aspect-[3/4] overflow-hidden bg-slate-100 dark:bg-slate-800">
-              <img
+              <Image
                 src={proxiedR2ImageUrl(comic.cover_url || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                 alt={comic.title}
                 width={300}
                 height={400}
                 loading="lazy"
-                decoding="async"
+                unoptimized
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 onError={applyComicCoverFallback}
               />

@@ -6,6 +6,7 @@ import { uploadToR2 } from "@/lib/r2/upload";
 import { resizeImageFile } from "@/lib/r2/resize";
 import { processCbzFile } from "@/lib/r2/cbz-processor";
 import { getR2ImageUrl } from "@/lib/utils/image-url";
+import Image from "next/image";
 import { cbzBasename, isCbzOrZipFile } from "@/lib/r2/cbz-name";
 import { toast } from "sonner";
 
@@ -179,7 +180,7 @@ export function ImageUploader({
           <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 max-h-80 overflow-y-auto p-2 bg-slate-950/40 rounded-xl border border-slate-800">
             {previews.map((src, i) => (
               <div key={i} className="relative aspect-[3/4] rounded-xl overflow-hidden border border-slate-700 bg-slate-900 group">
-                <img src={getR2ImageUrl(src)} alt={`Trang ${i + 1}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                <Image src={getR2ImageUrl(src)} alt={`Trang ${i + 1}`} loading="lazy" className="w-full h-full object-cover" />
                 <span className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/80 text-[10px] font-bold text-white rounded">
                   P.{i + 1}
                 </span>

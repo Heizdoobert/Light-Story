@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/lib/utils/error-utils';
 import { sanitizeImageUrl } from '@/lib/security/security-utils';
+import Image from 'next/image';
 
 interface EditUserProfileModalProps {
   isOpen: boolean;
@@ -183,15 +184,14 @@ export const EditUserProfileModal: React.FC<EditUserProfileModalProps> = ({
                 <div className="space-y-3">
                   <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide">Profile Picture</label>
                   <div className="flex items-center gap-4">
-                    {safeAvatarUrl ? (
-                      <img
-                        src={safeAvatarUrl.startsWith("blob:") || safeAvatarUrl.startsWith("http") || safeAvatarUrl.startsWith("/") ? safeAvatarUrl : undefined}
-                        alt="Avatar"
-                        width={64}
-                        height={64}
-                        decoding="async"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
-                      />
+                    {safeAvatarUrl && (safeAvatarUrl.startsWith("blob:") || safeAvatarUrl.startsWith("http") || safeAvatarUrl.startsWith("/")) ? (
+                        <Image
+                          src={safeAvatarUrl}
+                          alt="Avatar"
+                          width={64}
+                          height={64}
+                          className="w-16 h-16 rounded-full object-cover border-2 border-slate-200 dark:border-slate-700"
+                        />
                     ) : (
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-purple-500 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center">
                         <span className="text-xs font-bold text-white">AVATAR</span>

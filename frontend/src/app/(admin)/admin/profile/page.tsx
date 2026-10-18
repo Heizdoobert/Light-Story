@@ -4,6 +4,7 @@ import { User, Mail, Calendar, LogOut, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 const ImageUploader = dynamic(() => import("@/components/admin/image-uploader"), {
   ssr: false,
 });
@@ -63,17 +64,16 @@ export default function AdminProfilePage() {
         <div className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white rounded-2xl p-6 shadow-xl space-y-6 text-center">
           <div className="relative w-28 h-28 mx-auto rounded-full overflow-hidden border-2 border-orange-500/50 bg-slate-950 flex items-center justify-center">
             {avatarUrl ? (
-              <img
-                src={getR2ImageUrl(avatarUrl)}
-                alt={fullName || "Admin Avatar"}
-                width={112}
-                height={112}
-                decoding="async"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
+              <Image
+                        src={getR2ImageUrl(avatarUrl)}
+                        alt={fullName || "Admin Avatar"}
+                        width={112}
+                        height={112}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
             ) : (
               <span className="text-4xl font-black text-orange-400">
                 {fullName ? fullName[0].toUpperCase() : user?.email ? user.email[0].toUpperCase() : "A"}

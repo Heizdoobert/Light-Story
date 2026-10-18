@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { ImageOff, RefreshCw } from 'lucide-react';
+import Image from 'next/image';
 
 type ChapterImageProps = {
   src: string;
@@ -76,13 +77,13 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
         </div>
       ) : (
         visible && (
-          <img
+          <Image
             key={imgKey}
             src={src}
             alt={alt}
-            decoding="async"
-            fetchPriority={priority ? 'high' : 'auto'}
-            onLoad={() => setLoaded(true)}
+            priority={priority}
+            fill
+            onLoadingComplete={() => setLoaded(true)}
             onError={() => setError(true)}
             className={`transition-opacity duration-300 ${
               fitScreen
