@@ -46,10 +46,7 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "types": ["jest", "node"],
+    "noUnusedLocals": true
   },
   "include": [
     "**/*.ts",

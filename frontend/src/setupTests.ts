@@ -23,7 +23,9 @@ if (typeof globalThis.DOMException === 'undefined') {
   globalThis.DOMException = DOMException;
 }
 
-import '@testing-library/jest-dom';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { expect } from 'vitest';
+expect.extend(matchers);
 
 // Polyfill File for FormData handling (provide _buffer and arrayBuffer)
 if (typeof (global as any).File === 'undefined') {
