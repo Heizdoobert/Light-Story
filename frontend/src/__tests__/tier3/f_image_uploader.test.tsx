@@ -31,6 +31,7 @@ vi.mock("@/lib/r2/cbz-processor", () => ({
 
 // Mock Next.js Image
 vi.mock("next/image", () => ({
+  // eslint-disable-next-line @next/next/no-img-element, @typescript-eslint/no-explicit-any
   default: (props: any) => <img alt={props.alt || "image"} {...props} />,
 }));
 

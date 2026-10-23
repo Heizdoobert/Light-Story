@@ -49,4 +49,8 @@ export type {
   CheckboxProps,
   RadioProps,
   UploadProps,
+  TableProps,
+  TablePaginationConfig,
+  TableColumnsType,
+  TableColumnType,
 } from 'antd';

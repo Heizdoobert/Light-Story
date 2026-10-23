@@ -21,7 +21,7 @@ export function FormModal({
   ...restProps
 }: FormModalProps) {
   const [internalSubmitting, setInternalSubmitting] = useState(false);
-  const isSubmitting = externalSubmitting !== undefined ? externalSubmitting : internalSubmitting;
+  const isSubmitting = externalSubmitting ?? internalSubmitting;
 
   const handleOk = async () => {
     if (!onSubmit) {

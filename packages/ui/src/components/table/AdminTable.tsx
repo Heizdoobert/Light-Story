@@ -32,17 +32,15 @@ export function AdminTable<T extends object = Record<string, any>>({
     ...locale,
   };
 
-  const mergedPagination: false | TablePaginationConfig =
-    pagination === false
-      ? false
-      : {
-          ...defaultPagination,
-          ...pagination,
-        };
+  const mergedPagination: false | TablePaginationConfig = pagination
+    ? { ...defaultPagination, ...pagination }
+    : false;
+
+  const tableClassName = ['light-story-admin-table', className].filter(Boolean).join(' ');
 
   return (
     <Table<T>
-      className={`light-story-admin-table ${className || ''}`}
+      className={tableClassName}
       columns={columns}
       dataSource={dataSource}
       loading={loading}

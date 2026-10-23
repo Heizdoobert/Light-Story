@@ -9,6 +9,7 @@ import {
   Select,
   EditOutlined,
   DeleteOutlined,
+  TableColumnsType,
 } from '@light-story/ui';
 import { formatDate, formatChapterTitle } from '@/sdk';
 
@@ -44,12 +45,14 @@ export function AdminChaptersTable<T extends ChapterRow = ChapterRow>({
   selectedComicId = 'all',
   onSelectComic,
 }: AdminChaptersTableProps<T>) {
-  const comicOptions = [
-    { value: 'all', label: `Tất cả bộ truyện (${comics?.length || 0})` },
-    ...(comics || []).map((c) => ({ value: c.id, label: c.title })),
-  ];
+  const comicOptions = comics
+    ? [
+        { value: 'all', label: `Tất cả bộ truyện (${comics.length})` },
+        ...comics.map((c) => ({ value: c.id, label: c.title })),
+      ]
+    : [];
 
-  const columns = [
+  const columns: TableColumnsType<T> = [
     {
       title: 'Số Chương',
       dataIndex: 'chapter_number',
@@ -92,7 +95,7 @@ export function AdminChaptersTable<T extends ChapterRow = ChapterRow>({
     {
       title: 'Thao Tác',
       key: 'actions',
-      align: 'right' as const,
+      align: 'right',
       render: (_: unknown, record: T) => (
         <Space size="small">
           <Button

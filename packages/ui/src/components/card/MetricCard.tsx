@@ -3,9 +3,18 @@
 import React from 'react';
 import { Card, Skeleton, Space, Typography } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, MinusOutlined } from '@ant-design/icons';
-import { MetricCardProps } from './types';
+import { MetricCardProps, MetricTrend } from './types';
 
 const { Text } = Typography;
+
+const TREND_CONFIG: Record<
+  MetricTrend['direction'],
+  { icon: React.ReactNode; color: string }
+> = {
+  up: { icon: <ArrowUpOutlined />, color: '#10b981' },
+  down: { icon: <ArrowDownOutlined />, color: '#ef4444' },
+  neutral: { icon: <MinusOutlined />, color: '#9ca3af' },
+};
 
 export function MetricCard({
   title,
@@ -19,9 +28,11 @@ export function MetricCard({
   className,
   ...restProps
 }: MetricCardProps) {
+  const cardClassName = ['light-story-metric-card', className].filter(Boolean).join(' ');
+
   if (loading) {
     return (
-      <Card className={`light-story-metric-card ${className || ''}`} {...restProps}>
+      <Card className={cardClassName} {...restProps}>
         <Skeleton active paragraph={{ rows: 2 }} />
       </Card>
     );
@@ -30,16 +41,7 @@ export function MetricCard({
   const renderTrend = () => {
     if (!trend) return null;
 
-    let iconNode: React.ReactNode = <MinusOutlined />;
-    let color = '#9ca3af';
-
-    if (trend.direction === 'up') {
-      iconNode = <ArrowUpOutlined />;
-      color = '#10b981';
-    } else if (trend.direction === 'down') {
-      iconNode = <ArrowDownOutlined />;
-      color = '#ef4444';
-    }
+    const { icon: iconNode, color } = TREND_CONFIG[trend.direction] ?? TREND_CONFIG.neutral;
 
     return (
       <Space size={4} style={{ color, fontSize: 13, fontWeight: 600 }}>
@@ -56,7 +58,7 @@ export function MetricCard({
 
   return (
     <Card
-      className={`light-story-metric-card ${className || ''}`}
+      className={cardClassName}
       styles={{ body: { padding: '20px 24px' } }}
       {...restProps}
     >
