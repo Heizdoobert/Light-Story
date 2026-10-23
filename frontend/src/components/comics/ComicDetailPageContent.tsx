@@ -21,6 +21,7 @@ import type { ComicContext as Comic } from "@/services/comics/comic.service";
 import type { Chapter, Category } from "@/types/entities";
 import { ROUTES } from "@/lib/constants/routes";
 import { normalizeName } from "@/lib/utils/slug";
+import { formatChapterTitle, formatDate, formatCompactNumber } from "@/sdk";
 
 type ComicDetailPageContentProps = {
   initialComic?: Comic | null;
@@ -142,7 +143,7 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                   {getVietnameseStatus(comic.status)}
                 </span>
                 <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  <Eye size={16} /> {(comic.viewCount || 0).toLocaleString()}{" "}
+                  <Eye size={16} /> {formatCompactNumber(comic.viewCount || 0, 'vi')}{" "}
                   lượt xem
                 </div>
               </div>
@@ -239,18 +240,13 @@ export const ComicDetailPageContent: React.FC<ComicDetailPageContentProps> = ({
                       {readChapters.has(chapter.chapter_number || 0) && (
                         <span className="text-emerald-500 shrink-0" title="Đã đọc">✓</span>
                       )}
-                      {chapter.chapter_number
-                        ? `Chương ${chapter.chapter_number}`
-                        : chapter.title}
-                      {chapter.title &&
-                        chapter.title !== `Chương ${chapter.chapter_number}` &&
-                        ` - ${chapter.title}`}
+                      {formatChapterTitle(chapter.chapter_number ?? '', chapter.title, { locale: 'vi' })}
                     </h4>
                     <div className="flex items-center gap-3 mt-1.5 text-[11px] text-slate-400 font-medium">
                       <span className="flex items-center gap-1">
                         <Clock size={12} />
                         {chapter.created_at
-                          ? new Date(chapter.created_at).toLocaleDateString("vi-VN")
+                          ? formatDate(chapter.created_at, 'vi')
                           : null}
                       </span>
                     </div>

@@ -7,6 +7,7 @@ import { StoriesClient } from './gateway/stories';
 import { AdminClient } from './gateway/admin';
 import { AnalyticsClient } from './gateway/analytics';
 import { UserClient } from './gateway/user';
+import { StorageManager } from './storage/storage-manager';
 
 export * from './types';
 export * from './errors';
@@ -14,6 +15,8 @@ export * from './retry';
 export * from './interceptors';
 export * from './client';
 export * from './gateway';
+export * from './storage';
+export * from './formatters';
 
 /**
  * Unified Gateway Client for Light-Story.
@@ -22,6 +25,7 @@ export class GatewayClient {
   public readonly http: HttpClient;
   public readonly health: HealthClient;
   public readonly r2: R2Client;
+  public readonly storage: StorageManager;
   public readonly comics: ComicsClient;
   public readonly stories: StoriesClient;
   public readonly admin: AdminClient;
@@ -32,6 +36,7 @@ export class GatewayClient {
     this.http = new HttpClient(config);
     this.health = new HealthClient(this.http);
     this.r2 = new R2Client(this.http);
+    this.storage = new StorageManager(this.http);
     this.comics = new ComicsClient(this.http);
     this.stories = new StoriesClient(this.http);
     this.admin = new AdminClient(this.http);

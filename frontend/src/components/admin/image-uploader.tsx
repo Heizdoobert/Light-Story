@@ -9,21 +9,26 @@ import { getR2ImageUrl } from "@/lib/utils/image-url";
 import Image from "next/image";
 import { cbzBasename, isCbzOrZipFile } from "@/lib/r2/cbz-name";
 import { toast } from "sonner";
+import { formatBytes, storageManager, DEFAULT_MAX_FILE_SIZE } from "@/sdk";
 
 export interface ImageUploaderProps {
   onImagesUploaded?: (urls: string[]) => void;
   onCbzName?: (name: string) => void;
   onCbzProcessed?: (name: string, urls: string[]) => void;
+  onValidationError?: (file: File, reason: string) => void;
   bulkChapters?: boolean;
   folder?: string;
+  maxSizeBytes?: number;
 }
 
 export function ImageUploader({
   onImagesUploaded,
   onCbzName,
   onCbzProcessed,
+  onValidationError,
   bulkChapters = false,
   folder = "chapters",
+  maxSizeBytes = DEFAULT_MAX_FILE_SIZE,
 }: ImageUploaderProps) {
   const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -36,6 +41,20 @@ export function ImageUploader({
     const list = Array.from(files);
     if (list.length === 0) return;
 
+    // Validate size and format policies via SDK StorageManager
+    for (const file of list) {
+      const validation = storageManager.validate(
+        { size: file.size, name: file.name, type: file.type },
+        { maxSizeBytes }
+      );
+      if (!validation.valid) {
+        const reason = validation.error || "Tệp không hợp lệ";
+        toast.error(`Tệp ${file.name} (${formatBytes(file.size)}) không hợp lệ: ${reason}`);
+        onValidationError?.(file, reason);
+        return;
+      }
+    }
+
     setIsUploading(true);
     setProgressMsg("");
     const uploadedUrls: string[] = [];
@@ -43,7 +62,7 @@ export function ImageUploader({
     const handleCbz = async (file: File) => {
       const name = cbzBasename(file.name);
       if (name) onCbzName?.(name);
-      toast.info(`Đang giải nén tập tin comic ${file.name}...`);
+      toast.info(`Đang giải nén tập tin comic ${file.name} (${formatBytes(file.size)})...`);
       const cbzRes = await processCbzFile(file, folder, (_curr, _tot, msg) => {
         setProgressMsg(msg);
       });
@@ -54,7 +73,7 @@ export function ImageUploader({
         } else {
           uploadedUrls.push(...cbzRes.urls);
         }
-        toast.success(`Đã tải lên ${cbzRes.urls.length} trang ảnh từ tệp ${file.name}!`);
+        toast.success(`Đã tải lên ${cbzRes.urls.length} trang ảnh từ tệp ${file.name} (${formatBytes(file.size)})!`);
       } else if (cbzRes.failed > 0) {
         toast.error(`Không thể tải hết trang ảnh từ ${file.name}: ${cbzRes.error || `${cbzRes.failed} trang thất bại`}. Chương không được tạo.`);
       } else {
@@ -63,13 +82,13 @@ export function ImageUploader({
     };
 
     const handleImage = async (file: File, i: number, total: number) => {
-      setProgressMsg(`Đang tải lên ảnh ${i}/${total}...`);
+      setProgressMsg(`Đang tải lên ảnh ${i}/${total} (${formatBytes(file.size)})...`);
       const resized = await resizeImageFile(file);
       const res = await uploadToR2(resized.file, folder);
       if (res.success && res.url) {
         uploadedUrls.push(res.url);
       } else {
-        toast.error(`Tải lên ảnh ${file.name} thất bại`);
+        toast.error(`Tải lên ảnh ${file.name} (${formatBytes(file.size)}) thất bại`);
       }
     };
 
@@ -144,7 +163,7 @@ export function ImageUploader({
           Kéo thả ảnh hoặc chọn tệp truyện <strong>.CBZ / .ZIP / Hình Ảnh</strong>
         </span>
         <span className="text-xs text-slate-400 mt-1 text-center">
-          Hỗ trợ tải lên bộ tệp truyện <strong>.cbz</strong> (tự động giải nén & sắp xếp thứ tự trang lên R2 Storage)
+          Hỗ trợ tải lên bộ tệp truyện <strong>.cbz</strong> (tối đa {formatBytes(maxSizeBytes)}, tự động giải nén & sắp xếp thứ tự trang lên R2 Storage)
         </span>
         <input
           ref={inputRef}

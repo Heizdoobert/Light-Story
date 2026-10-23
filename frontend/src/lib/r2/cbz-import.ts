@@ -2,6 +2,7 @@ import JSZip from "jszip";
 import { ROUTES } from "@/lib/constants/routes";
 import { getGatewayUrl } from "@/lib/utils/gateway-url";
 import { getAccessToken } from "@/services/comics/comic.service";
+import { storageManager } from "@/sdk";
 
 export const CBZ_LIMITS = {
   maxFileMB: 50,
@@ -97,6 +98,16 @@ export async function uploadChapterPage(
   file: File,
   opts: { comicId: string; chapterNumber: number; pageNumber: number },
 ): Promise<string> {
+  // Security & bounds validation via StorageManager
+  const validation = storageManager.validate({
+    size: file.size,
+    name: file.name,
+    type: file.type,
+  });
+  if (!validation.valid) {
+    throw new CbzImportError("INVALID_FILE", validation.error || "Tệp không hợp lệ");
+  }
+
   const form = new FormData();
   form.append("file", file);
   form.append("folder", "chapters");

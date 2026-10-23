@@ -5,10 +5,11 @@ Light-Story Gateway SDK is a resilient, type-safe, zero-dependency TypeScript SD
 ## Features
 
 - **Zero Runtime Dependencies**: Relies exclusively on standard Web APIs (`fetch`, `Headers`, `AbortController`). Tiny bundle size (≤ 15 KB gzipped) and zero cold-start latency in Cloudflare Workers.
+- **Unified Storage Manager**: Dedicated `StorageManager` module for uploading, batch uploads with progress and concurrency control, generating public/CDN/proxy URLs, presigned URLs, listing objects, and batch cleanup.
 - **Safe Idempotent Retries**: Automatically retries transient network failures, `429` (respecting `Retry-After`), and `502`/`503`/`504` server errors on safe methods (`GET`, `HEAD`, `PUT`, `DELETE`). Mutations (`POST`, `PATCH`) require explicit caller opt-in (`{ retry: true }`).
 - **Configurable Timeouts**: Request-level and client-level timeouts with automatic `AbortController` cancellation and signal chaining.
 - **Pluggable Logging**: Supports custom `SdkLogger` interfaces (debug, info, warn, error) with a silent default.
-- **Typed Gateway Domain APIs**: High-level modules for Comics, Stories, Admin, Analytics, R2 Media, and User reading history/bookmarks.
+- **Typed Gateway Domain APIs**: High-level modules for Comics, Stories, Admin, Analytics, R2 Storage, and User reading history/bookmarks.
 
 ## Installation
 
@@ -40,14 +41,38 @@ const sdk = createLightStoryClient({
   },
 });
 
+// Storage Manager API
+const uploadResult = await sdk.storage.upload(fileBlob, {
+  folder: 'covers',
+  filename: 'cover.webp',
+});
+console.log('CDN URL:', uploadResult.publicUrl);
+
+// Batch upload with progress reporting
+const batch = await sdk.storage.uploadBatch(chapterPages, {
+  concurrency: 3,
+  onProgress: (p) => console.log(`Uploaded ${p.completed}/${p.total} (${p.percentage}%)`),
+});
+
+// Presigned URLs and listing
+const { signedUrl } = await sdk.storage.getSignedUrl('covers/comic-1.webp');
+const files = await sdk.storage.listFiles({ folder: 'covers', limit: 50 });
+await sdk.storage.delete('covers/old-cover.webp');
+
+// Formatters API
+import { formatCompactNumber, formatRelativeTime, formatBytes, slugify, formatChapterTitle } from '@light-story/sdk';
+
+formatCompactNumber(15400, 'vi'); // "15,4K"
+formatRelativeTime(new Date(Date.now() - 3600000), { locale: 'vi' }); // "1 giờ trước"
+formatBytes(15728640); // "15 MB"
+slugify('Đấu La Đại Lục: Khởi Đầu Mới'); // "dau-la-dai-luc-khoi-dau-moi"
+formatChapterTitle(15, 'Đại Chiến', { locale: 'vi' }); // "Chương 15: Đại Chiến"
+
 // Comics API
 const comics = await sdk.comics.list({ page: 1, limit: 20 });
 
 // Stories API
 const categories = await sdk.stories.getCategories();
-
-// R2 Storage API
-const { signedUrl } = await sdk.r2.getSignedUrl('covers/comic-1.webp');
 
 // User Bookmarks API
 await sdk.user.toggleBookmark('comic-id');

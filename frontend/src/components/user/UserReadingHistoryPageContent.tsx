@@ -6,6 +6,7 @@ import { useReadingHistory } from "@/hooks/features/useReadingHistory";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { ROUTES } from "@/lib/constants/routes";
+import { formatChapterNumber } from "@/sdk";
 
 export const UserReadingHistoryPageContent: React.FC = () => {
   const { history, isLoading, clearHistory } = useReadingHistory();
@@ -68,7 +69,7 @@ export const UserReadingHistoryPageContent: React.FC = () => {
                     </h3>
                   </Link>
                   <p className="text-xs font-semibold text-primary mt-1">
-                    Chương {item.chapterNumber}
+                    {formatChapterNumber(item.chapterNumber, { locale: 'vi' })}
                   </p>
                 </div>
               </div>

@@ -8,6 +8,7 @@ import {
   AdminClient,
   AnalyticsClient,
   UserClient,
+  StorageManager,
 } from '@light-story/sdk';
 
 export * from '@light-story/sdk';
@@ -20,6 +21,7 @@ export class GatewayClient {
   public readonly http: GatewayHttpClient;
   public readonly health: HealthClient;
   public readonly r2: R2Client;
+  public readonly storage: StorageManager;
   public readonly comics: ComicsClient;
   public readonly stories: StoriesClient;
   public readonly admin: AdminClient;
@@ -30,6 +32,7 @@ export class GatewayClient {
     this.http = new GatewayHttpClient(config);
     this.health = new HealthClient(this.http);
     this.r2 = new R2Client(this.http);
+    this.storage = new StorageManager(this.http);
     this.comics = new ComicsClient(this.http);
     this.stories = new StoriesClient(this.http);
     this.admin = new AdminClient(this.http);
@@ -82,3 +85,8 @@ export const gatewayClient = new GatewayClient();
  * Alias singleton instance matching gatewaySdk convention.
  */
 export const gatewaySdk = gatewayClient;
+
+/**
+ * Convenience singleton instance for StorageManager.
+ */
+export const storageManager = gatewayClient.storage;
