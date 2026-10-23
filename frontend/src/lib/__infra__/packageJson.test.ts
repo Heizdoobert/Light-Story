@@ -32,7 +32,7 @@ describe('root package.json', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
     expect(overrides.next).toEqual({
       postcss: '8.5.25',
-      sharp: '0.35.4',
+      sharp: '0.35.5',
     });
   });
 
@@ -45,11 +45,11 @@ describe('root package.json', () => {
 
   it('retains the top-level pinned overrides', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
-    expect(overrides['shell-quote']).toBe('1.10.0');
+    expect(overrides['shell-quote']).toBe('1.12.0');
     expect(overrides['fast-uri']).toBe('4.1.4');
     expect(overrides['body-parser']).toBe('2.3.0');
     expect(overrides.postcss).toBe('8.5.25');
-    expect(overrides.sharp).toBe('0.35.4');
+    expect(overrides.sharp).toBe('0.35.5');
     expect(overrides['js-yaml']).toBe('4.3.2');
     expect(overrides['@hono/node-server']).toBe('2.0.11');
   });
