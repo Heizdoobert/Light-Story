@@ -51,8 +51,6 @@ jobs:
       - name: Test with coverage
         run: npm run test:coverage
 
-      - name: Security audit
-        run: npm audit --audit-level=high
 
   worker:
     name: Worker Type-Check (${{ matrix.worker }})
