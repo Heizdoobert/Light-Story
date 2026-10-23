@@ -2,6 +2,8 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
+const currentDir = import.meta.dirname || path.dirname(new URL(import.meta.url).pathname);
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -28,9 +30,12 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@light-story/sdk": path.resolve(__dirname, "../packages/sdk/src"),
-      "@light-story/api-types": path.resolve(__dirname, "../packages/api-types"),
+      "react": path.resolve(currentDir, "../node_modules/react"),
+      "react-dom": path.resolve(currentDir, "../node_modules/react-dom"),
+      "@": path.resolve(currentDir, "./src"),
+      "@light-story/sdk": path.resolve(currentDir, "../packages/sdk/src"),
+      "@light-story/api-types": path.resolve(currentDir, "../packages/api-types"),
+      "@light-story/ui": path.resolve(currentDir, "../packages/ui/src"),
     },
   },
 });

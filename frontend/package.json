@@ -33,6 +33,7 @@
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@light-story/api-types": "file:../packages/api-types",
     "@light-story/sdk": "file:../packages/sdk",
+    "@light-story/ui": "file:../packages/ui",
     "@modelcontextprotocol/sdk": "^1.24.3",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.105.4",
@@ -86,8 +87,6 @@
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   },
-
-
   "optionalDependencies": {
     "lightningcss-linux-x64-gnu": "^1.29.1",
     "lightningcss-linux-x64-musl": "^1.29.1"

@@ -3,12 +3,16 @@
 import Link from 'next/link';
 import { useUser } from '@/hooks/features/use-user';
 import { useLanguage } from '@/context/LanguageContext';
+import { useTheme } from '@/context/ThemeContext';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { ROUTES } from '@/lib/constants/routes';
+import { AntdRegistry, LightStoryThemeProvider } from '@light-story/ui';
 
 export default function AdminRouteGroupLayout({ children }: { children: React.ReactNode }) {
   const { isStaff, isLoading } = useUser();
   const { t } = useLanguage();
+  const { theme } = useTheme();
+  const antdMode = theme === 'light' ? 'light' : 'dark';
 
   if (isLoading) {
     return (
@@ -35,11 +39,15 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
     );
   }
 
-  // Every admin route (incl. /admin/dashboard) renders inside the AdminSidebar shell.
+  // Every admin route (incl. /admin/dashboard) renders inside the AdminSidebar shell with Ant Design theming.
   return (
-    <div className="min-h-screen flex bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <AdminSidebar />
-      <main id="main-content" className="flex-1 p-8 overflow-y-auto">{children}</main>
-    </div>
+    <AntdRegistry>
+      <LightStoryThemeProvider mode={antdMode}>
+        <div className="min-h-screen flex bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+          <AdminSidebar />
+          <main id="main-content" className="flex-1 p-8 overflow-y-auto">{children}</main>
+        </div>
+      </LightStoryThemeProvider>
+    </AntdRegistry>
   );
 }

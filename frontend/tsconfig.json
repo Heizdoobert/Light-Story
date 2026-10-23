@@ -35,6 +35,9 @@
       ],
       "@light-story/sdk": [
         "../packages/sdk/src"
+      ],
+      "@light-story/ui": [
+        "../packages/ui/src"
       ]
     },
     "noEmit": true,
