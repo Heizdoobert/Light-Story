@@ -27,6 +27,8 @@ describe('StorageManager SDK', () => {
       expect(storage.validate({ size: 100, name: 'script_without_ext' }).valid).toBe(false);
       expect(storage.validate({ size: 100, name: 'chapter1.cbz' }).valid).toBe(true);
       expect(storage.validate({ size: 100, name: 'image.webp' }).valid).toBe(true);
+      expect(storage.validate({ size: 100, name: 'payload.php\0.png' }).valid).toBe(false);
+      expect(storage.validate({ size: NaN, name: 'image.png' }).valid).toBe(false);
     });
 
     it('sanitizes path traversal from folders and keys', () => {
@@ -40,6 +42,10 @@ describe('StorageManager SDK', () => {
       const parsed = storage.parseKey('../../sensitive/secret.png');
       expect(parsed.folder).toBe('sensitive');
       expect(parsed.filename).toBe('secret.png');
+
+      const multiDotKey = client.storage.parseKey('chapters/....//etc/passwd.jpg');
+      expect(multiDotKey.folder).toBe('chapters');
+      expect(multiDotKey.filename).toBe('etc/passwd.jpg');
     });
 
     it('parses storage keys accurately', () => {
@@ -175,6 +181,10 @@ describe('StorageManager SDK', () => {
           method: 'POST',
           body: JSON.stringify({ key: 'covers/1.png', expires: 1800 }),
         }),
+      );
+
+      await expect(client.storage.getSignedUrl('../../..')).rejects.toThrow(
+        '[StorageManager] Key cannot be empty after sanitization.',
       );
     });
 

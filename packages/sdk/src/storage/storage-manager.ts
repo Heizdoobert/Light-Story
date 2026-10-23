@@ -73,11 +73,13 @@ export function sanitizeFolder(folder?: string, defaultFolder = 'chapters'): str
 
 /**
  * Sanitizes storage keys to prevent directory traversal and illegal characters.
+ * Enforces stripping of multi-dot traversal attempts and dangerous characters.
  */
 export function sanitizeStorageKey(key: string): string {
   return key
     .replace(/\\/g, '/')
     .split('/')
+    .map((segment) => segment.replace(/\.\.+/g, ''))
     .filter((segment) => segment && segment !== '.' && segment !== '..')
     .map((segment) => segment.replace(/[^a-zA-Z0-9_\-\.]/g, '_'))
     .join('/');
@@ -102,7 +104,7 @@ export class StorageManager {
     const allowedMimes = options.allowedMimeTypes ?? DEFAULT_ALLOWED_MIME_TYPES;
 
     if (file.size !== undefined) {
-      if (file.size <= 0) {
+      if (typeof file.size !== 'number' || !Number.isFinite(file.size) || file.size <= 0) {
         return { valid: false, error: 'File is empty (0 bytes).' };
       }
       if (file.size > maxSize) {
@@ -112,6 +114,9 @@ export class StorageManager {
     }
 
     if (file.name) {
+      if (/[\x00-\x1f\x7f]/.test(file.name)) {
+        return { valid: false, error: 'Filename contains forbidden control characters.' };
+      }
       const ext = extractFileExtension(file.name);
       if (allowedExts.length > 0) {
         if (!ext || !allowedExts.includes(ext)) {
@@ -273,9 +278,12 @@ export class StorageManager {
     key: string,
     options: StorageSignedUrlOptions = {},
   ): Promise<R2SignedUrlResponse> {
+    const safeKey = sanitizeStorageKey(key);
+    if (!safeKey) {
+      throw new Error('[StorageManager] Key cannot be empty after sanitization.');
+    }
     const requestedExpires = options.expiresInSeconds ?? 3600;
     const expires = Math.min(Math.max(60, requestedExpires), 86400); // 1 min to 24 hours
-    const safeKey = sanitizeStorageKey(key);
     return this.r2.getSignedUrl(safeKey, expires, options);
   }
 

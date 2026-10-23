@@ -41,7 +41,7 @@
     "@types/dompurify": "^3.0.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dompurify": "^3.4.14",
+    "dompurify": "^3.4.17",
     "dotenv": "^17.2.3",
     "jszip": "^3.10.1",
     "lucide-react": "^1.25.0",
@@ -59,7 +59,6 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "chai": "^5.1.0",
     "@next/bundle-analyzer": "^16.3.0",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.3.3",
@@ -74,9 +73,10 @@
     "@vitest/coverage-v8": "^5.0.0",
     "@vitest/ui": "^5.0.0",
     "autoprefixer": "^10.5.4",
+    "chai": "^5.1.0",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.2.12",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint": "^9.39.5",
     "happy-dom": "^20.11.0",
     "jsdom": "^30.0.1",
     "postcss": "^8.5.25",
