@@ -145,6 +145,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     updating: "Đang cập nhật",
     searching: "Đang tìm kiếm...",
     no_comics_found: "Không tìm thấy truyện nào.",
+    recommended_for_you: "Truyện đề xuất cho bạn",
 
     // Navigation & Sidebar
     nav_dashboard: "Bảng điều khiển",
@@ -526,6 +527,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     updating: "Updating",
     searching: "Searching...",
     no_comics_found: "No comics found.",
+    recommended_for_you: "Recommended for you",
 
     // Navigation & Sidebar
     nav_dashboard: "Dashboard",

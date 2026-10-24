@@ -8,6 +8,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { fetchStoriesPage } from "@/services/comics/story.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { ROUTES } from "@/lib/constants/routes";
+import Image from 'next/image';
 import { Story } from "@/types/entities";
 
 type Props = {
@@ -166,7 +167,7 @@ export const QuickSearchModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         }}
                         className="w-full flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors text-left"
                       >
-                        <img
+                        <Image
                           src={proxiedR2ImageUrl(comic.cover_url || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                           alt={comic.title}
                           width={40}

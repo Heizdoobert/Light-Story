@@ -14,6 +14,7 @@ import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { AdRenderer } from "@/components/reader/AdRenderer";
 import { useHomePagePresenter } from "@/hooks/presenters/useHomePagePresenter";
 import { ROUTES } from "@/lib/constants/routes";
+import Image from 'next/image';
 
 type HomePageProps = {
   initialComics?: Comic[];
@@ -95,16 +96,15 @@ export const HomePage: React.FC<HomePageProps> = ({
               href={ROUTES.COMIC_DETAIL(spotlight.id)}
               className="relative w-32 min-[400px]:w-36 sm:w-44 lg:w-52 shrink-0 rounded-2xl overflow-hidden border-4 border-white/20 dark:border-white/10 shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-300"
             >
-              <img
-                src={getComicCover(spotlight)}
-                alt={spotlight.title}
-                width={300}
-                height={400}
-                decoding="async"
-                className="w-full aspect-[3/4] object-cover"
-                referrerPolicy="no-referrer"
-                onError={applyComicCoverFallback}
-              />
+              <Image
+  src={getComicCover(spotlight)}
+  alt={spotlight.title}
+  width={300}
+  height={400}
+  className="w-full aspect-[3/4] object-cover"
+  referrerPolicy="no-referrer"
+  onError={applyComicCoverFallback}
+/>
             </Link>
             <div className="flex-1 text-center sm:text-left">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 dark:bg-white/10 backdrop-blur text-white text-[10px] font-black uppercase tracking-widest mb-3">
@@ -167,13 +167,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="group relative w-32 sm:w-40 flex-shrink-0 outline-none block"
               >
                 <div className="relative overflow-hidden rounded-xl aspect-[3/4] bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/10 group-hover:border-orange-500 dark:group-hover:border-accent transition-colors">
-                  <img
+                  <Image
                     src={getComicCover(comic)}
                     alt={comic.title}
                     width={300}
                     height={400}
                     loading="lazy"
-                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={applyComicCoverFallback}
@@ -219,13 +218,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 className="group relative w-32 sm:w-40 flex-shrink-0 outline-none block"
               >
                 <div className="relative overflow-hidden rounded-xl aspect-[3/4] bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/10 group-hover:border-orange-500 dark:group-hover:border-accent transition-colors">
-                  <img
+                  <Image
                     src={getComicCover(comic)}
                     alt={comic.title}
                     width={300}
                     height={400}
                     loading="lazy"
-                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     referrerPolicy="no-referrer"
                     onError={applyComicCoverFallback}
@@ -276,13 +274,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                       href={ROUTES.COMIC_DETAIL(comic.id)}
                       className="relative w-16 h-[88px] sm:w-20 sm:h-28 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-black"
                     >
-                      <img
+                      <Image
                         src={getComicCover(comic)}
                         alt={comic.title}
                         width={300}
                         height={400}
                         loading="lazy"
-                        decoding="async"
+   
                         className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                         onError={applyComicCoverFallback}
@@ -342,13 +340,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                     {idx + 1}
                   </span>
                   <div className="relative shrink-0 w-10 h-14 overflow-hidden rounded-lg border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black">
-                    <img
+                    <Image
                       src={getComicCover(comic)}
                       alt={comic.title}
                       width={300}
                       height={400}
-                      loading="lazy"
-                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       referrerPolicy="no-referrer"
                       onError={applyComicCoverFallback}

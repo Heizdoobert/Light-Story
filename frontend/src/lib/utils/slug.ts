@@ -1,11 +1,11 @@
-export function normalizeName(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .replace(/-{2,}/g, '-');
+import { slugify } from '@/sdk';
+
+/**
+ * Normalizes title/genre names into URL-safe slugs.
+ * Delegates to canonical slugify from @light-story/sdk.
+ */
+export function normalizeName(value: string): string {
+  return slugify(value);
 }
+
+export { slugify };

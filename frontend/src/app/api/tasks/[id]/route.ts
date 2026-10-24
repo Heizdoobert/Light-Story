@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server';
-import { updateTaskSchema, parseZodError } from '@/lib/api/validation';
-import type { Task, UpdateTaskInput, APIError } from '@/lib/api/types';
-import { taskStore, toResponse } from '@/app/api/tasks/_shared';
+import { updateTaskSchema, parseZodError } from '@/sdk/task/validation';
+import type { Task, UpdateTaskInput, APIError } from '@/sdk/task/types';
+import { taskStore, mapTask } from '@/sdk/task/api/_shared';
 
 /** GET – fetch a task by id */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const task = taskStore.get(id);
+  const task = taskStore[id];
   if (!task) {
     const err: APIError = { code: 'NOT_FOUND', message: 'task_not_found' };
     return NextResponse.json(err, { status: 404 });
   }
-  return NextResponse.json(toResponse(task));
+  return NextResponse.json(mapTask(task));
 }
 
 /** PATCH – partially update a task */
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const existing = taskStore.get(id);
+  const existing = taskStore[id];
   if (!existing) {
     const err: APIError = { code: 'NOT_FOUND', message: 'task_not_found' };
     return NextResponse.json(err, { status: 404 });
@@ -43,17 +43,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     ...data,
     updatedAt: new Date().toISOString(),
   };
-  taskStore.set(updated.id, updated);
-  return NextResponse.json(toResponse(updated));
+  taskStore[id] = updated;
+  return NextResponse.json(mapTask(updated));
 }
 
 /** DELETE – remove a task */
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const existed = taskStore.delete(id);
-  if (!existed) {
+  if (!(id in taskStore)) {
     const err: APIError = { code: 'NOT_FOUND', message: 'task_not_found' };
     return NextResponse.json(err, { status: 404 });
   }
+  delete taskStore[id];
   return new NextResponse(null, { status: 204 });
 }

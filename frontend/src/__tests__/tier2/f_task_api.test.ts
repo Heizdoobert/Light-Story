@@ -14,8 +14,8 @@ vi.mock('next/server', () => {
 
 import { GET, POST } from '@/app/api/tasks/route';
 import { GET as GET_ONE, PATCH, DELETE } from '@/app/api/tasks/[id]/route';
-import { taskStore } from '@/app/api/tasks/_shared';
-import type { Task, Paginated, APIError } from '@/lib/api/types';
+import { taskStore } from '@/sdk/task/api/_shared';
+import type { Task, Paginated, APIError } from '@/sdk/task/types';
 
 describe('Task Management API (integration tests)', () => {
   beforeEach(() => {

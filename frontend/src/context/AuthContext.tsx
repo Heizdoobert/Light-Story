@@ -211,7 +211,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       subscription.unsubscribe();
     };
     // ponytail: bootstrap runs once; fetchProfile identity changes per render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const signIn = async () => {

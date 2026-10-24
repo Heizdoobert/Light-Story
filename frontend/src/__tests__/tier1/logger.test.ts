@@ -1,4 +1,4 @@
-import { vi } from 'vitest';
+import { test, expect, vi } from 'vitest';
 
 test('logger level switches with NODE_ENV', async () => {
   const originalEnv = process.env.NODE_ENV;

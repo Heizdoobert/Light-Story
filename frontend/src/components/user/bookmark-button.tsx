@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -36,4 +37,4 @@ export function BookmarkButton({ comicId: _comicId, className = '' }: BookmarkBu
   );
 }
 
-export default BookmarkButton;
+

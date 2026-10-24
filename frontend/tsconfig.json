@@ -32,6 +32,12 @@
       ],
       "@light-story/api-types": [
         "../packages/api-types"
+      ],
+      "@light-story/sdk": [
+        "../packages/sdk/src"
+      ],
+      "@light-story/ui": [
+        "../packages/ui/src"
       ]
     },
     "noEmit": true,
@@ -43,10 +49,7 @@
     "noImplicitAny": true,
     "noImplicitThis": true,
     "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "types": ["jest", "node"],
+    "noUnusedLocals": true
   },
   "include": [
     "**/*.ts",

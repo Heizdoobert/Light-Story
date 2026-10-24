@@ -29,6 +29,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { NotificationBell } from "@/components/ui/notification-bell";
 import { toast } from "sonner";
+import Image from "next/image";
 import { apiClient } from "@/lib/api/apiClient";
 import { Category, Story } from "@/types/entities";
 import { fetchStoriesPage } from "@/services/comics/story.service";
@@ -272,13 +273,13 @@ export const Header: React.FC<HeaderProps> = ({
                         onClick={() => setShowResults(false)}
                         className="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
                       >
-                        <img
+                        <Image
                           src={getComicCover(comic)}
                           alt={comic.title}
                           width={40}
                           height={56}
                           loading="lazy"
-                          decoding="async"
+   
                           className="w-10 h-14 rounded object-cover border border-slate-200 dark:border-white/10 shrink-0"
                           referrerPolicy="no-referrer"
                           onError={(e) => {
@@ -433,13 +434,13 @@ export const Header: React.FC<HeaderProps> = ({
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-primary rounded-full overflow-hidden shadow-sm hover:shadow-sm transition-shadow"
                   >
-                    <img
+                    <Image
                       // codeql[js/xss-through-dom] src sanitized by proxyAvatarUrl -> sanitizeImageUrl (rejects non-http(s))
                       src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                       alt="Avatar"
                       width={40}
                       height={40}
-                      decoding="async"
+                      
                       className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-orange-500 dark:border-primary object-cover"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
@@ -658,19 +659,17 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="p-4 flex-1 overflow-y-auto space-y-6">
                   {user && (
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-white/10">
-                    <img
-                      // codeql[js/xss-through-dom] src sanitized by proxyAvatarUrl -> sanitizeImageUrl (rejects non-http(s))
+                    <Image
                       src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                       alt="Avatar"
                       width={40}
                       height={40}
-                      decoding="async"
                       className="w-10 h-10 rounded-full border-2 border-orange-500 dark:border-primary object-cover"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
-                        }}
-                      />
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                      }}
+                    />
                       <div className="flex-1 min-w-0">
                         <div className="font-bold text-sm text-slate-800 dark:text-white line-clamp-1">
                           {profile?.full_name || user.email?.split("@")[0]}

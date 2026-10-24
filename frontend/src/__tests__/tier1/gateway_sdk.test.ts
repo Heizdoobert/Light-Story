@@ -351,13 +351,15 @@ describe('Gateway SDK', () => {
 
   describe('Error Handling', () => {
     it('throws GatewayError with error code and status on HTTP 401', async () => {
-      const mockFetch = vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            success: false,
-            error: { code: 'UNAUTHORIZED', message: 'JWT token invalid or expired' },
-          }),
-          { headers: { 'Content-Type': 'application/json' }, status: 401 }
+      const mockFetch = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              success: false,
+              error: { code: 'UNAUTHORIZED', message: 'JWT token invalid or expired' },
+            }),
+            { headers: { 'Content-Type': 'application/json' }, status: 401 }
+          )
         )
       );
 
@@ -390,15 +392,17 @@ describe('Gateway SDK', () => {
     });
 
     it('handles non-JSON error responses gracefully', async () => {
-      const mockFetch = vi.fn().mockResolvedValue(
-        new Response('502 Bad Gateway', {
-          headers: { 'Content-Type': 'text/plain' },
-          status: 502,
-          statusText: 'Bad Gateway',
-        })
+      const mockFetch = vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response('502 Bad Gateway', {
+            headers: { 'Content-Type': 'text/plain' },
+            status: 502,
+            statusText: 'Bad Gateway',
+          })
+        )
       );
 
-      const client = new GatewayClient({ baseUrl: mockBaseUrl, fetch: mockFetch });
+      const client = new GatewayClient({ baseUrl: mockBaseUrl, fetch: mockFetch, retry: false });
 
       try {
         await client.request('/api/broken');

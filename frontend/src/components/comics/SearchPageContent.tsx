@@ -8,6 +8,7 @@ import { Image as ImageIcon, Search, SearchX, SlidersHorizontal, X } from "lucid
 import { FilterMenu } from "@/components/comics/FilterMenu";
 import { SortDropdown } from "@/components/comics/SortDropdown";
 import { Pagination } from "@/components/navigation/Pagination";
+import Image from "next/image";
 import { getStatusStyles } from "@/lib/utils/status-styles";
 import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
@@ -220,13 +221,12 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
                     className="group flex flex-col h-full bg-white dark:bg-slate-900 rounded-2xl p-2 shadow-xs hover:shadow-2xl hover:shadow-primary/15 hover:-translate-y-1.5 transition-all duration-300 border border-slate-200/80 dark:border-slate-800"
                   >
                     <div className="relative overflow-hidden rounded-xl mb-2 aspect-[3/4] bg-slate-100 dark:bg-slate-800">
-                      <img
+                      <Image
                         src={proxiedR2ImageUrl(comic.coverUrl || comic.cover_url || "") || "https://placehold.co/400x600/png?text=No+Cover"}
                         alt={comic.title}
                         width={300}
                         height={400}
                         loading="lazy"
-                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                         onError={applyComicCoverFallback}
                       />

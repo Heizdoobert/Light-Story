@@ -22,6 +22,8 @@ import { AdRenderer } from "@/components/reader/AdRenderer";
 import { ChapterCommentsSection } from "@/components/reader/ChapterCommentsSection";
 import { useReadChapterPresenter, type ReaderInitialData } from "@/hooks/presenters/useReadChapterPresenter";
 import { ROUTES } from "@/lib/constants/routes";
+import Image from "next/image";
+import { formatChapterTitle, formatChapterNumber } from "@/sdk";
 
 export interface ChapterReaderPageContentProps {
   initialData?: ReaderInitialData | null;
@@ -107,10 +109,7 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
           <h1 className="inline">{comic?.title || "Tên Truyện Đang Cập Nhật"}</h1>
         </Link>
         <div className="text-slate-500 dark:text-zinc-400 font-medium text-sm sm:text-base">
-          {currentChapter?.chapter_number
-            ? `Chương ${currentChapter.chapter_number}`
-            : "Chương ?"}
-          {currentChapter?.title && ` - ${currentChapter.title}`}
+          {formatChapterTitle(currentChapter?.chapter_number ?? "?", currentChapter?.title, { locale: "vi" })}
         </div>
 
         <AdRenderer position="header" />
@@ -181,14 +180,13 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
                 onClick={() => scrollToPage(idx)}
                 className="flex-shrink-0 w-16 h-24 rounded-lg overflow-hidden border-2 border-transparent hover:border-primary dark:hover:border-primary transition-colors"
               >
-                <img
+                <Image
                   src={imgUrl}
                   alt={`Trang ${idx + 1}`}
                   width={64}
                   height={96}
                   className="w-full h-full object-cover"
                   loading="lazy"
-                  decoding="async"
                 />
               </button>
             ))}
@@ -242,9 +240,7 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
                 className="w-full flex items-center justify-between gap-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white font-extrabold rounded-xl px-3.5 py-2 transition-all text-xs sm:text-sm shadow-md shadow-blue-500/25 dark:shadow-blue-900/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
               >
                 <span className="truncate tracking-wide">
-                  {currentChapter?.chapter_number
-                    ? `Chương ${currentChapter.chapter_number}`
-                    : currentChapter?.title || "Chọn chương"}
+                  {formatChapterNumber(currentChapter?.chapter_number, { locale: "vi" }) || currentChapter?.title || "Chọn chương"}
                 </span>
                 <List size={16} className="text-white/90 flex-shrink-0" />
               </button>
@@ -261,9 +257,7 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
                           : "text-slate-700 dark:text-slate-200 font-semibold"
                       }`}
                     >
-                      {chap.chapter_number
-                        ? `Chương ${chap.chapter_number}`
-                        : chap.title}
+                      {formatChapterNumber(chap.chapter_number, { locale: "vi" }) || chap.title}
                     </button>
                   ))}
                 </div>
