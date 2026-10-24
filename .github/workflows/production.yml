@@ -14,17 +14,25 @@ jobs:
     name: Lint Build Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
 
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Lint
         run: npm run lint
@@ -46,32 +54,57 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Cache node_modules (deploy)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      - name: Deploy Workers
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Cloudflare token scopes
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo "::error::CLOUDFLARE_API_TOKEN is missing in GitHub Secrets. Please add CLOUDFLARE_API_TOKEN under Settings > Secrets and variables > Actions."
+          if ! wrangler whoami --account-id ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}; then
+            echo "::error::CLOUDFLARE_API_TOKEN missing or lacks required scopes"
             exit 1
           fi
-          npx wrangler deploy --config workers/kv-worker/wrangler.jsonc
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: Install Supabase CLI
-        run: npm install -g supabase
+      - name: Validate Wrangler config
+        run: wrangler validate --config workers/kv-worker/wrangler.jsonc
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy Workers
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is missing"
+            exit 1
+          fi
+          npx wrangler deploy --config workers/kv-worker/wrangler.jsonc --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v2
+        with:
+          version: latest
 
       - name: Push Supabase migrations
+        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           supabase link --project-ref rwnzsmmfvsetfcnkjoxt
           supabase migration repair --status reverted 20260730000004 || true
@@ -83,15 +116,17 @@ jobs:
 
       - name: Smoke test
         run: |
-          for i in {1..5}; do
-            if curl -sf "https://kv-worker.hhhuygiau.workers.dev/api/stories?page=1&pageSize=5" > /dev/null 2>&1; then
+          for i in {1..10}; do
+            resp=$(curl -sf -o /dev/null -w "%{http_code}" "https://kv-worker.hhhuygiau.workers.dev/api/stories?page=1&pageSize=5")
+            if [ "$resp" = "200" ]; then
               echo "Smoke test passed"
               exit 0
             fi
-            echo "Attempt $i/5 failed, retrying..."
-            sleep 5
+            echo "Attempt $i/10 failed (status $resp), retrying..."
+            sleep $((5 * 2 ** (i-1)))
           done
-          echo "Smoke test notice: worker deployment completed, endpoint initializing."
+          echo "::error::Smoke test failed after all retries"
+          exit 1
 
       - name: Notify Discord on failure
         if: failure()
