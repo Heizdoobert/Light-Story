@@ -5,14 +5,26 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Resolve the path to the Python script relative to this file
-const scriptPath = path.resolve(__dirname, '..', '..', 'cocoindex_repo.py');
+const repoRoot = path.resolve(__dirname, '..', '..');
+const scriptPath = path.resolve(repoRoot, 'cocoindex_repo.py');
+const pythonBin = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
 
-const proc = spawn('python', [scriptPath], { stdio: 'inherit', cwd: path.resolve(__dirname, '..', '..') });
+console.log(`[CocoIndex] Starting repository indexer using ${pythonBin}...`);
+
+const proc = spawn(pythonBin, [scriptPath], {
+  stdio: 'inherit',
+  cwd: repoRoot,
+});
+
+proc.on('error', (err) => {
+  console.error(`[CocoIndex] Failed to spawn ${pythonBin}:`, err.message);
+  process.exit(1);
+});
 
 proc.on('close', (code) => {
   if (code !== 0) {
-    console.error(`cocoindex script exited with code ${code}`);
+    console.error(`[CocoIndex] Script exited with code ${code}`);
     process.exit(code);
   }
+  console.log('[CocoIndex] Repository indexing completed successfully.');
 });

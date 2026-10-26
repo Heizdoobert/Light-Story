@@ -74,3 +74,6 @@ app = coco.App(
     app_main,
     sourcedir=pathlib.Path("."),
 )
+
+if __name__ == "__main__":
+    app.update_blocking()

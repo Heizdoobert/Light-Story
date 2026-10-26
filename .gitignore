@@ -153,6 +153,12 @@ deploy_key*
 
 backend-supabase/supabase/.branches/
 
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 # CocoIndex artifacts
 .cocoindex/
 *.cocoindex
