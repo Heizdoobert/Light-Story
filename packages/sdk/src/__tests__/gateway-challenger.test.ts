@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GatewayClient } from '../index';
-import { ChapterItem, RatingItem } from '../gateway';
+import { ChapterItem, RatingItem, CommentItem } from '../gateway';
 import { GatewayError, SdkNetworkError } from '../errors';
 
 describe('Adversarial Stress Testing — Gateway Domain Clients', () => {
