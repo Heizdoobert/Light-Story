@@ -16,6 +16,7 @@ import {
   Download,
   Sun,
   Moon,
+  Bookmark,
 } from "lucide-react";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
@@ -63,6 +64,8 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
     handleDownload,
     prevChapter,
     nextChapter,
+    isBookmarked,
+    toggleBookmark,
   } = useReadChapterPresenter(initialData);
 
   if (loading) {
@@ -215,6 +218,19 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
               title={theme === "dark" ? "Sáng" : "Tối"}
             >
               {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            <button
+              onClick={toggleBookmark}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+                isBookmarked
+                  ? "bg-amber-500 text-white shadow-md shadow-amber-500/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={isBookmarked ? "Bỏ đánh dấu truyện" : "Đánh dấu truyện"}
+              aria-label={isBookmarked ? "Bỏ đánh dấu truyện" : "Đánh dấu truyện"}
+            >
+              <Bookmark size={18} className={isBookmarked ? "fill-current" : ""} />
             </button>
 
             <Link

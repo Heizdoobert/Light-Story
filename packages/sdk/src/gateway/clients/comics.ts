@@ -1,11 +1,11 @@
-import { HttpClient } from '../client';
+import { HttpClient } from '../../client';
 import {
   ComicItem,
   ComicDetail,
   ChapterDetail,
   ComicListParams,
   RequestOptions,
-} from '../types';
+} from '../../types';
 
 export class ComicsClient {
   constructor(private http: HttpClient) {}

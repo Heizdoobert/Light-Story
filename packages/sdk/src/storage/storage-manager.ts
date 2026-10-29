@@ -1,5 +1,5 @@
 import { HttpClient } from '../client';
-import { R2Client } from '../gateway/r2';
+import { R2Client } from '../gateway/clients/r2';
 import { RequestOptions, R2SignedUrlResponse, R2ListResponse } from '../types';
 import {
   StorageUploadOptions,

@@ -61,5 +61,16 @@ After a successful build, hit the API endpoint to confirm the worker is reachabl
 curl -sf "https://kv-worker.hhhuygiau.workers.dev/api/stories?page=1&pageSize=5" && echo "✅ API reachable"
 ```
 
+### 8️⃣ Packages & Architecture Documentation
+- **Core SDK (`@light-story/sdk`)**: Zero-dependency isomorphic library for Gateway APIs, R2 media storage, offline reader state, and formatting helpers.
+  - [SDK Documentation Guide](packages/sdk/docs/index.md)
+  - [Domain Clients Guide](packages/sdk/docs/gateway-clients.md)
+  - [Storage Manager Guide](packages/sdk/docs/storage.md)
+  - [Reader State & Offline Progress](packages/sdk/docs/reader-state.md)
+  - [Localization & Formatters](packages/sdk/docs/formatters.md)
+- **UI System (`@light-story/ui`)**: Ant Design v5 components scoped strictly to `(admin)` routes.
+- **Support Utility (`@light-story/support-utility`)**: In-process issue tracking, diagnosis, and support helpers.
+
 ---
 *All commands are meant to be run from the repository root. Adjust paths if you are inside a sub‑package.*
+

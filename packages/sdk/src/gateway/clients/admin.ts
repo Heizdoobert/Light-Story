@@ -1,5 +1,5 @@
-import { HttpClient } from '../client';
-import { RequestOptions } from '../types';
+import { HttpClient } from '../../client';
+import { RequestOptions } from '../../types';
 
 export class AdminClient {
   constructor(private http: HttpClient) {}

@@ -1,5 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GatewayClient, GatewayError, gatewaySdk } from '@/sdk';
+import {
+  GatewayClient,
+  GatewayError,
+  gatewaySdk,
+  searchClient,
+  SearchClient,
+  ChaptersClient,
+  CommentsClient,
+  ReaderProgressManager,
+  BookmarkManager,
+} from '@/sdk';
 
 describe('Gateway SDK', () => {
   const mockBaseUrl = 'https://gateway.example.com';
@@ -414,4 +424,60 @@ describe('Gateway SDK', () => {
       }
     });
   });
+
+  describe('Domain Clients & Search', () => {
+    it('initializes search, chapters, and comments clients on GatewayClient', () => {
+      const client = new GatewayClient();
+      expect(client.search).toBeInstanceOf(SearchClient);
+      expect(client.chapters).toBeInstanceOf(ChaptersClient);
+      expect(client.comments).toBeInstanceOf(CommentsClient);
+      expect(searchClient).toBeInstanceOf(SearchClient);
+    });
+
+    it('searches stories via search client with pagination', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              items: [{ id: 's1', title: 'Story One' }],
+              total: 1,
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+      const client = new GatewayClient({ baseUrl: mockBaseUrl, fetch: mockFetch });
+      const res = await client.search.searchStories({ keyword: 'One', page: 1, pageSize: 10 });
+      expect(res.items).toHaveLength(1);
+      expect(res.total).toBe(1);
+      expect(res.totalPages).toBe(1);
+      expect(res.hasMore).toBe(false);
+    });
+  });
+
+  describe('Storage Subsystem: ReaderProgressManager & BookmarkManager', () => {
+    it('operates in SSR/in-memory environment gracefully without window', async () => {
+      const progressMgr = new ReaderProgressManager();
+      const bookmarkMgr = new BookmarkManager();
+
+      // Bookmark operations
+      expect(await bookmarkMgr.isBookmarked('comic-100')).toBe(false);
+      const added = await bookmarkMgr.toggleBookmark('comic-100', { chapterNumber: 1 });
+      expect(added.bookmarked).toBe(true);
+      expect(await bookmarkMgr.isBookmarked('comic-100')).toBe(true);
+
+      // Progress operations
+      const saved = await progressMgr.saveProgress({
+        comicId: 'comic-100',
+        chapterId: 'ch-1',
+        chapterNumber: 1,
+        progressPercent: 50,
+      });
+      expect(saved.comicId).toBe('comic-100');
+      expect(saved.chapterNumber).toBe(1);
+      expect(await progressMgr.isChapterRead('comic-100', 1)).toBe(true);
+    });
+  });
 });
+

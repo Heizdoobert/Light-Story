@@ -115,6 +115,15 @@ try {
 }
 ```
 
+## Documentation Guides
+
+Detailed topic guides are available in the [docs/](./docs/) directory:
+- [Overview & Architecture](./docs/index.md)
+- [Gateway Domain Clients](./docs/gateway-clients.md) (Search, Chapters, Comments, Comics, Stories, etc.)
+- [Storage & Media Management](./docs/storage.md) (StorageManager, R2 presigned URLs, Batch upload)
+- [Reader State & Bookmarks](./docs/reader-state.md) (ReaderProgressManager, BookmarkManager, offline sync)
+- [Formatters & Helpers](./docs/formatters.md) (Localization, Numbers, Relative Time, Slugs)
+
 ## Development & Testing
 
 ```bash
@@ -123,3 +132,4 @@ npm run typecheck
 npm run test
 npm run build
 ```
+

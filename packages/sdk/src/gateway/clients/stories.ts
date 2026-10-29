@@ -1,5 +1,5 @@
-import { HttpClient } from '../client';
-import { StoryItem, CategoryItem, RequestOptions } from '../types';
+import { HttpClient } from '../../client';
+import { StoryItem, CategoryItem, RequestOptions } from '../../types';
 
 export class StoriesClient {
   constructor(private http: HttpClient) {}
