@@ -255,8 +255,25 @@ jobs:
     if: always()
     steps:
       - name: Check overall status
-        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
         run: |
-          echo "One or more required CI jobs failed."
+          echo "One or more required CI jobs did not succeed."
+          echo "Job results:"
+          echo "  - frontend: ${{ needs.frontend.result }}"
+          echo "  - worker: ${{ needs.worker.result }}"
+          echo "  - backend-supabase: ${{ needs.backend-supabase.result }}"
+          echo "  - api-mock: ${{ needs.api-mock.result }}"
+          echo "  - contract-tests: ${{ needs.contract-tests.result }}"
           exit 1
+
+      - name: Report overall status
+        run: |
+          echo "All required CI jobs completed successfully."
+          echo "Job results:"
+          echo "  - frontend: ${{ needs.frontend.result }}"
+          echo "  - worker: ${{ needs.worker.result }}"
+          echo "  - backend-supabase: ${{ needs.backend-supabase.result }}"
+          echo "  - api-mock: ${{ needs.api-mock.result }}"
+          echo "  - contract-tests: ${{ needs.contract-tests.result }}"
+
 
