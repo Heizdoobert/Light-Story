@@ -29,6 +29,12 @@ describe('StorageManager SDK', () => {
       expect(storage.validate({ size: 100, name: 'image.webp' }).valid).toBe(true);
       expect(storage.validate({ size: 100, name: 'payload.php\0.png' }).valid).toBe(false);
       expect(storage.validate({ size: NaN, name: 'image.png' }).valid).toBe(false);
+      expect(
+        storage.validate({ size: 100, name: 'image.png' }, { allowedExtensions: ['.png', 'JPG'] }).valid,
+      ).toBe(true);
+      expect(
+        storage.validate({ size: 100, name: 'IMAGE.PNG' }, { allowedExtensions: ['png'] }).valid,
+      ).toBe(true);
     });
 
     it('sanitizes path traversal from folders and keys', () => {
@@ -185,6 +191,15 @@ describe('StorageManager SDK', () => {
 
       await expect(client.storage.getSignedUrl('../../..')).rejects.toThrow(
         '[StorageManager] Key cannot be empty after sanitization.',
+      );
+
+      // Falls back to safe default if NaN passed
+      await client.storage.getSignedUrl('covers/1.png', { expiresInSeconds: NaN });
+      expect(mockFetch).toHaveBeenLastCalledWith(
+        'https://api.light-story.test/api/admin/r2/signed-url',
+        expect.objectContaining({
+          body: JSON.stringify({ key: 'covers/1.png', expires: 3600 }),
+        }),
       );
     });
 

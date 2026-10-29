@@ -1,10 +1,10 @@
-import { HttpClient } from '../client';
+import { HttpClient } from '../../client';
 import {
   AnalyticsOverview,
   EngagementSummary,
   InfrastructureStats,
   RequestOptions,
-} from '../types';
+} from '../../types';
 
 export class AnalyticsClient {
   constructor(private http: HttpClient) {}

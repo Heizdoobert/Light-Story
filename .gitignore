@@ -41,6 +41,7 @@ frontend/.upload_test.txt
 scripts/full_flow_test.mjs
 LOCAL_TESTING_GUIDE.md
 API_Testing_Instructions.md
+pr.json
 
 # Unused root-level documentation (canonical copies in docs/)
 ACCESS_REAL_DATA.md
@@ -144,7 +145,8 @@ playwright/.cache/
 **/dist/
 
 # Internal documentation and setup files (ignored on main)
-docs/
+/docs/
+!packages/sdk/docs/
 AGENTS.md
 HUONG_DAN_SETUP.md
 deploy_key*

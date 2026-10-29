@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { apiClient } from "@/lib/api/apiClient";
@@ -17,6 +17,7 @@ import { parseChapterContent } from "@/lib/r2/chapter-content";
 import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { supabase } from "@/lib/supabase/client";
+import { ReaderProgressManager, BookmarkManager } from "@light-story/sdk";
 
 export interface ReaderChapterListItem {
   id: string;
@@ -31,6 +32,7 @@ export interface ReaderInitialData {
   currentChapter: Chapter | null;
   images: string[];
   requiresCbzUnpack: boolean;
+  isBookmarked?: boolean;
 }
 
 export function useReadChapterPresenter(initialData?: ReaderInitialData | null) {
@@ -76,6 +78,56 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
   const [autoScrollSpeed, setAutoScrollSpeed] = useState<number>(0);
   const autoScrollSpeedRef = useRef<number>(0);
   const { theme, toggleTheme } = useTheme();
+
+  const readerProgressManager = useMemo(
+    () =>
+      new ReaderProgressManager({
+        debounceMs: 1000,
+        onSyncError: (err) => console.warn("[ReaderProgressManager] sync error", err),
+      }),
+    [],
+  );
+
+  const bookmarkManager = useMemo(
+    () =>
+      new BookmarkManager({
+        onSyncError: (err) => console.warn("[BookmarkManager] sync error", err),
+      }),
+    [],
+  );
+
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(initialData?.isBookmarked ?? false);
+
+  useEffect(() => {
+    let active = true;
+    if (comicId) {
+      bookmarkManager.isBookmarked(comicId).then((bookmarked) => {
+        if (active) setIsBookmarked(bookmarked);
+      }).catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [comicId, bookmarkManager]);
+
+  const currentChapterNumber = currentChapter?.chapter_number;
+
+  const toggleBookmark = useCallback(async () => {
+    if (!comicId) return false;
+    try {
+      const res = await bookmarkManager.toggleBookmark(comicId, {
+        chapterId,
+        chapterNumber: currentChapterNumber,
+      });
+      setIsBookmarked(res.bookmarked);
+      toast.success(res.bookmarked ? "Đã thêm vào dấu trang" : "Đã xóa khỏi dấu trang");
+      return res.bookmarked;
+    } catch (err) {
+      console.error("[useReadChapterPresenter] toggleBookmark error", err);
+      toast.error("Không thể cập nhật dấu trang");
+      return isBookmarked;
+    }
+  }, [comicId, chapterId, currentChapterNumber, isBookmarked, bookmarkManager]);
 
   useEffect(() => {
     autoScrollSpeedRef.current = autoScrollSpeed;
@@ -238,13 +290,22 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
   // Reading progress must persist on both the SSR-seeded and client-fetch paths.
   useEffect(() => {
     if (currentChapter && comicId && chapterId) {
+      readerProgressManager.saveProgress({
+        comicId,
+        chapterId,
+        chapterNumber: currentChapter.chapter_number || 1,
+        progressPercent: progress,
+      }).catch((err) => {
+        console.warn("[ReaderProgressManager] saveProgress error", err);
+      });
+
       saveReadingProgress({
         comicId,
         chapterId,
         chapterNumber: currentChapter.chapter_number || 1,
       });
     }
-  }, [comicId, chapterId, currentChapter?.id]);
+  }, [comicId, chapterId, currentChapter?.id, currentChapter?.chapter_number, progress, readerProgressManager]);
 
   // CBZ chapters can't be unpacked server-side (blob URLs); unpack on the client
   // only when SSR flagged requiresCbzUnpack, without refetching anything.
@@ -418,5 +479,9 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
     setAutoScrollSpeed,
     prevChapter,
     nextChapter,
+    isBookmarked,
+    toggleBookmark,
+    readerProgressManager,
+    bookmarkManager,
   };
 }

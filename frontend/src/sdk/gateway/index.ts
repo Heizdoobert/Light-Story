@@ -8,6 +8,9 @@ import {
   AdminClient,
   AnalyticsClient,
   UserClient,
+  ChaptersClient,
+  CommentsClient,
+  SearchClient,
   StorageManager,
 } from '@light-story/sdk';
 
@@ -27,6 +30,9 @@ export class GatewayClient {
   public readonly admin: AdminClient;
   public readonly analytics: AnalyticsClient;
   public readonly user: UserClient;
+  public readonly chapters: ChaptersClient;
+  public readonly comments: CommentsClient;
+  public readonly search: SearchClient;
 
   constructor(config: GatewayConfig = {}) {
     this.http = new GatewayHttpClient(config);
@@ -38,6 +44,9 @@ export class GatewayClient {
     this.admin = new AdminClient(this.http);
     this.analytics = new AnalyticsClient(this.http);
     this.user = new UserClient(this.http);
+    this.chapters = new ChaptersClient(this.http);
+    this.comments = new CommentsClient(this.http);
+    this.search = new SearchClient(this.http);
   }
 
   public getBaseUrl(): string {
@@ -90,3 +99,8 @@ export const gatewaySdk = gatewayClient;
  * Convenience singleton instance for StorageManager.
  */
 export const storageManager = gatewayClient.storage;
+
+/**
+ * Convenience singleton instance for SearchClient.
+ */
+export const searchClient = gatewayClient.search;

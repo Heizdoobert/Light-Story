@@ -1,9 +1,9 @@
-import { HttpClient } from '../client';
+import { HttpClient } from '../../client';
 import {
   BookmarkItem,
   ReadingHistoryItem,
   RequestOptions,
-} from '../types';
+} from '../../types';
 
 export class UserClient {
   constructor(private http: HttpClient) {}

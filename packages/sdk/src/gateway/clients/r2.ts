@@ -1,11 +1,11 @@
-import { HttpClient } from '../client';
+import { HttpClient } from '../../client';
 import {
   R2UploadOptions,
   R2UploadResponse,
   R2SignedUrlResponse,
   R2ListResponse,
   RequestOptions,
-} from '../types';
+} from '../../types';
 
 export class R2Client {
   constructor(private http: HttpClient) {}

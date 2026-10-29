@@ -1,6 +1,6 @@
 {
   "name": "@light-story/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Zero-dependency, resilient TypeScript SDK for Light-Story Gateway",
   "main": "dist/index.js",

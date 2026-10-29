@@ -1,5 +1,6 @@
 """Minimal repo index: chunk markdown + TS sources into local sqlite (no embeddings)."""
 import pathlib
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -24,7 +25,10 @@ class CodeChunk:
 @coco.lifespan
 def coco_lifespan(builder: coco.EnvironmentBuilder) -> Iterator[None]:
     builder.settings.db_path = pathlib.Path("./cocoindex.db")
-    conn = sqlite.connect("./cocoindex-code.db")
+    db_path = pathlib.Path("./cocoindex.db")
+    if db_path.exists():
+        db_path.unlink()
+    conn = sqlite.connect(str(db_path))
     builder.provide(SQLITE_DB, conn)
     yield
     conn.close()
@@ -62,7 +66,7 @@ async def app_main(sourcedir: pathlib.Path) -> None:
         sourcedir,
         recursive=True,
         path_matcher=PatternFilePathMatcher(
-            included_patterns=["**/*.md", "**/*.ts", "**/*.tsx"],
+            included_patterns=["**/*.md", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.py"],
             excluded_patterns=["node_modules/**", ".git/**", ".worktrees/**"],
         ),
     )
