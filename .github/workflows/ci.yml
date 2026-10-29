@@ -33,6 +33,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Load test env
+        run: |
+          cp frontend/.env.test frontend/.env
+
       - name: Clean Next cache
         run: rm -rf .next
 
@@ -113,6 +117,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Load test env
+        run: |
+          cp frontend/.env.test frontend/.env
+
       - name: Validate OpenAPI spec loads
         run: |
           npx --yes @stoplight/prism-cli --version
@@ -150,6 +158,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Load test env
+        run: |
+          cp frontend/.env.test frontend/.env
 
       - name: Run Prism mock server
         run: |
