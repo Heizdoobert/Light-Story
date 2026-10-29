@@ -285,3 +285,5 @@ Test tiers: `npm test -- __tests__/tier1` (or `tier2`). See [AGENTS.md](AGENTS.m
 ## 📄 License
 
 Distributed under the **MIT License**. See `LICENSE` for details.
+\ n #   R e v i e w   n o t e \ n A d d   a   P R   f o r   C I   v e r i f i c a t i o n .  
+ 
