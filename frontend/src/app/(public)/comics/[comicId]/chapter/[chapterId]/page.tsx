@@ -7,6 +7,7 @@ import { parseChapterContent } from "@/lib/r2/chapter-content";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import type { ComicContext } from "@/services/comics/comic.service";
 import type { Chapter } from "@/types/entities";
+import { BookmarkManager, ReaderProgressManager } from "@light-story/sdk";
 
 export const dynamic = "force-dynamic";
 
@@ -96,12 +97,23 @@ async function loadReaderData(
 
   const parsed = parseChapterContent(content);
 
+  let isBookmarked = false;
+  try {
+    const bookmarkManager = new BookmarkManager();
+    const progressManager = new ReaderProgressManager();
+    isBookmarked = await bookmarkManager.isBookmarked(comicId);
+    await progressManager.getProgress(comicId);
+  } catch {
+    // SSR graceful fallback
+  }
+
   return {
     comic: story,
     allChapters: sanitizeChapterList(sorted),
     currentChapter: current,
     images: parsed.isCbz ? [] : parsed.imageUrls.map(proxiedR2ImageUrl),
     requiresCbzUnpack: parsed.isCbz,
+    isBookmarked,
   };
 }
 

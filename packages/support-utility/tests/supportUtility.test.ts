@@ -6,6 +6,7 @@ import {
   resolveIssue,
   checkIssue,
   _resetStore,
+  noop,
   IssueInput,
 } from '../src/index';
 
@@ -409,4 +410,12 @@ describe('Tier 4: Real-World Diagnostic Scenarios', () => {
     );
     expect(dbP1).toHaveLength(2);
   });
+
+  describe('noop helper', () => {
+    it('executes without throwing and returns undefined', () => {
+      expect(noop()).toBeUndefined();
+      expect(noop(1, 'two', { three: true })).toBeUndefined();
+    });
+  });
 });
+

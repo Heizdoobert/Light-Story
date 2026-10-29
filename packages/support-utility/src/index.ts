@@ -136,3 +136,9 @@ export function _resetStore(): void {
 
 // Optional convenience export for consumers who need a read‑only view of the store
 export type IssueStore = ReadonlyMap<string, Issue>;
+
+/**
+ * A simple no-op helper function that safely accepts any arguments and performs no action.
+ */
+export function noop(..._args: unknown[]): void {}
+

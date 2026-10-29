@@ -1,12 +1,15 @@
 import { ClientConfig, GatewayConfig, RequestOptions } from './types';
 import { HttpClient } from './client';
-import { HealthClient } from './gateway/health';
-import { R2Client } from './gateway/r2';
-import { ComicsClient } from './gateway/comics';
-import { StoriesClient } from './gateway/stories';
-import { AdminClient } from './gateway/admin';
-import { AnalyticsClient } from './gateway/analytics';
-import { UserClient } from './gateway/user';
+import { HealthClient } from './gateway/clients/health';
+import { R2Client } from './gateway/clients/r2';
+import { ComicsClient } from './gateway/clients/comics';
+import { StoriesClient } from './gateway/clients/stories';
+import { AdminClient } from './gateway/clients/admin';
+import { AnalyticsClient } from './gateway/clients/analytics';
+import { UserClient } from './gateway/clients/user';
+import { ChaptersClient } from './gateway/clients/chapters';
+import { CommentsClient } from './gateway/clients/comments';
+import { SearchClient } from './gateway/clients/search';
 import { StorageManager } from './storage/storage-manager';
 
 export * from './types';
@@ -31,6 +34,9 @@ export class GatewayClient {
   public readonly admin: AdminClient;
   public readonly analytics: AnalyticsClient;
   public readonly user: UserClient;
+  public readonly chapters: ChaptersClient;
+  public readonly comments: CommentsClient;
+  public readonly search: SearchClient;
 
   constructor(config: GatewayConfig = {}) {
     this.http = new HttpClient(config);
@@ -42,6 +48,9 @@ export class GatewayClient {
     this.admin = new AdminClient(this.http);
     this.analytics = new AnalyticsClient(this.http);
     this.user = new UserClient(this.http);
+    this.chapters = new ChaptersClient(this.http);
+    this.comments = new CommentsClient(this.http);
+    this.search = new SearchClient(this.http);
   }
 
   public getBaseUrl(): string {

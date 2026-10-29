@@ -13,9 +13,14 @@ import { getStatusStyles } from "@/lib/utils/status-styles";
 import { ROUTES } from "@/lib/constants/routes";
 import { useSearchPresenter } from "@/hooks/presenters/useSearchPresenter";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
+import type { SearchPageResult, StoryItem } from "@/sdk/gateway";
 
-export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
+export const SearchPageContent: React.FC<{
+  initialCategory?: string;
+  initialData?: SearchPageResult<StoryItem> | null;
+}> = ({
   initialCategory,
+  initialData,
 }) => {
   const router = useRouter();
   const {
@@ -31,7 +36,7 @@ export const SearchPageContent: React.FC<{ initialCategory?: string }> = ({
     setShowFilter,
     applyComicCoverFallback,
     getVietnameseStatus,
-  } = useSearchPresenter(initialCategory);
+  } = useSearchPresenter(initialCategory, initialData);
   const [inputValue, setInputValue] = useState(keyword);
 
   return (

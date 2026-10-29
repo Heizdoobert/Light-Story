@@ -1,5 +1,5 @@
 import { HttpClient } from '../client';
-import { R2Client } from '../gateway/r2';
+import { R2Client } from '../gateway/clients/r2';
 import { RequestOptions, R2SignedUrlResponse, R2ListResponse } from '../types';
 import {
   StorageUploadOptions,
@@ -100,8 +100,10 @@ export class StorageManager {
     options: StorageValidationOptions = {},
   ): { valid: boolean; error?: string } {
     const maxSize = options.maxSizeBytes ?? DEFAULT_MAX_FILE_SIZE;
-    const allowedExts = options.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS;
-    const allowedMimes = options.allowedMimeTypes ?? DEFAULT_ALLOWED_MIME_TYPES;
+    const rawAllowedExts = options.allowedExtensions ?? DEFAULT_ALLOWED_EXTENSIONS;
+    const allowedExts = rawAllowedExts.map((e) => e.toLowerCase().replace(/^\./, ''));
+    const rawAllowedMimes = options.allowedMimeTypes ?? DEFAULT_ALLOWED_MIME_TYPES;
+    const allowedMimes = rawAllowedMimes.map((m) => m.toLowerCase());
 
     if (file.size !== undefined) {
       if (typeof file.size !== 'number' || !Number.isFinite(file.size) || file.size <= 0) {
@@ -283,7 +285,8 @@ export class StorageManager {
       throw new Error('[StorageManager] Key cannot be empty after sanitization.');
     }
     const requestedExpires = options.expiresInSeconds ?? 3600;
-    const expires = Math.min(Math.max(60, requestedExpires), 86400); // 1 min to 24 hours
+    const validExpires = Number.isFinite(requestedExpires) ? requestedExpires : 3600;
+    const expires = Math.min(Math.max(60, validExpires), 86400); // 1 min to 24 hours
     return this.r2.getSignedUrl(safeKey, expires, options);
   }
 

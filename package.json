@@ -8,6 +8,8 @@
     "backend-supabase"
   ],
   "scripts": {
+    "agent:cli": "python3 -m agent_system",
+    "agent:mcp": "python3 -m agent_system.cli.main mcp --root .",
     "dev": "npm --prefix frontend run dev",
     "dev:gateway": "npx wrangler dev --port 8787 --remote --config workers/kv-worker/wrangler.dev.jsonc",
     "dev:all": "concurrently -n fe,gw \"npm run dev\" \"npm run dev:gateway\"",

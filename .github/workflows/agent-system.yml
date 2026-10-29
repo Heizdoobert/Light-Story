@@ -1,0 +1,21 @@
+name: Agent System CI
+on:
+  push:
+    paths:
+      - 'Agent_update_smart_working/**'
+  pull_request:
+    paths:
+      - 'Agent_update_smart_working/**'
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - name: Install Agent System (editable)
+        run: pip install -e ./Agent_update_smart_working
+      - name: Run tests
+        run: pytest -q ./Agent_update_smart_working/tests
