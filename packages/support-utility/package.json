@@ -1,8 +1,12 @@
 {
   "name": "@light-story/support-utility",
   "version": "0.1.1",
-  "type": "module",
-  "description": "Pure in-process TypeScript support and issue checking utility for Light-Story",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "license": "MIT",
+
   "private": false,
   "main": "./dist/index.js",
   "module": "./dist/index.js",
