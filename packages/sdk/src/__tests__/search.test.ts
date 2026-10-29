@@ -102,6 +102,24 @@ describe('SearchClient', () => {
       expect(result.totalPages).toBe(1);
       expect(result.hasMore).toBe(false);
     });
+
+    it('forwards tag and tags filters in searchComics', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: { items: [], total: 0 },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+
+      const client = new GatewayClient({ baseUrl, fetch: mockFetch });
+      await client.search.searchComics({ tags: ['action', 'manhwa'] });
+
+      const url = new URL(mockFetch.mock.calls[0][0] as string);
+      expect(url.searchParams.get('tag')).toBe('action,manhwa');
+    });
   });
 
   describe('searchAll', () => {
@@ -170,6 +188,22 @@ describe('SearchClient', () => {
         expect.stringContaining('/api/search/suggest?keyword=Solo&limit=5'),
         expect.anything(),
       );
+    });
+
+    it('accepts unwrapped array directly from /api/search/suggest', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: ['Title A', 'Title B'],
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+
+      const client = new GatewayClient({ baseUrl, fetch: mockFetch });
+      const res = await client.search.suggest('Title');
+      expect(res.suggestions).toEqual(['Title A', 'Title B']);
     });
 
     it('falls back to extracting unique story titles if suggest endpoint fails', async () => {

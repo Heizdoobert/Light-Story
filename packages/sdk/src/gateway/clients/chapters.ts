@@ -99,7 +99,13 @@ export class ChaptersClient {
       return raw as ChapterItem[];
     }
     if (raw && typeof raw === 'object') {
-      return Object.values(raw as Record<string, ChapterItem>);
+      const rawObj = raw as { items?: ChapterItem[] };
+      if (Array.isArray(rawObj.items)) {
+        return rawObj.items;
+      }
+      return Object.values(raw as Record<string, ChapterItem>).filter(
+        (val): val is ChapterItem => Boolean(val && typeof val === 'object' && !Array.isArray(val)),
+      );
     }
     return [];
   }
@@ -158,7 +164,8 @@ export class ChaptersClient {
     chapters: ChapterItem[],
     currentChapterId: string,
   ): ChapterNavigationResolution {
-    const sorted = [...chapters].sort((a, b) => {
+    const list = Array.isArray(chapters) ? chapters : [];
+    const sorted = [...list].sort((a, b) => {
       const numA = a.chapterNumber ?? a.chapter_number ?? 0;
       const numB = b.chapterNumber ?? b.chapter_number ?? 0;
       if (numA !== numB) {

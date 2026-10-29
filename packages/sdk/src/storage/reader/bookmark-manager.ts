@@ -163,7 +163,8 @@ export class BookmarkManager {
         }
       }
 
-      this.queue = [];
+      // Remove processed mutations without dropping newly enqueued items
+      this.queue = this.queue.filter((m) => !mutationsToProcess.includes(m));
 
       // 2. Fetch remote bookmarks
       const rawRemote = await userClient.getBookmarks(100);

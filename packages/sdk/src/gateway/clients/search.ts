@@ -107,6 +107,11 @@ export class SearchClient {
         : params.category;
     }
 
+    const tagParam = params?.tags ?? params?.tag;
+    if (tagParam) {
+      queryParams.tag = Array.isArray(tagParam) ? tagParam.join(',') : tagParam;
+    }
+
     const raw = await this.http.get<unknown>('/api/comics', {
       ...options,
       params: {
@@ -167,7 +172,7 @@ export class SearchClient {
     }
 
     try {
-      const res = await this.http.get<{ suggestions: string[] }>('/api/search/suggest', {
+      const res = await this.http.get<{ suggestions: string[] } | string[]>('/api/search/suggest', {
         ...options,
         params: {
           keyword: trimmed,
@@ -175,8 +180,11 @@ export class SearchClient {
           ...(options?.params || {}),
         },
       });
-      if (res && Array.isArray(res.suggestions)) {
-        return res;
+      if (Array.isArray(res)) {
+        return { suggestions: res as string[] };
+      }
+      if (res && Array.isArray((res as { suggestions?: string[] }).suggestions)) {
+        return res as { suggestions: string[] };
       }
     } catch {
       // Resilient fallback: query stories

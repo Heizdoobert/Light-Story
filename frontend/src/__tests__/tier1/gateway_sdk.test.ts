@@ -478,6 +478,16 @@ describe('Gateway SDK', () => {
       expect(saved.chapterNumber).toBe(1);
       expect(await progressMgr.isChapterRead('comic-100', 1)).toBe(true);
     });
+
+    it('exports all gateway client modules from individual files in @/sdk/gateway/*', async () => {
+      const chaptersModule = await import('@/sdk/gateway/chapters');
+      const commentsModule = await import('@/sdk/gateway/comments');
+      const searchModule = await import('@/sdk/gateway/search');
+
+      expect(chaptersModule.ChaptersClient).toBeDefined();
+      expect(commentsModule.CommentsClient).toBeDefined();
+      expect(searchModule.SearchClient).toBeDefined();
+    });
   });
 });
 

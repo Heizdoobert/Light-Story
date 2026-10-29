@@ -83,6 +83,25 @@ describe('ChaptersClient', () => {
       expect(emptyRes).toEqual([]);
     });
 
+    it('batch fetches latest chapters with items envelope', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              items: [{ id: 'ch-30', comic_id: 'c3', chapter_number: 30 }],
+            },
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        ),
+      );
+
+      const client = new GatewayClient({ baseUrl, fetch: mockFetch });
+      const res = await client.chapters.getBatchLatest(['c3']);
+      expect(res).toHaveLength(1);
+      expect(res[0].id).toBe('ch-30');
+    });
+
     it('creates, updates, and deletes chapter', async () => {
       const mockFetch = vi
         .fn()
@@ -177,6 +196,17 @@ describe('ChaptersClient', () => {
       expect(nav.hasPrevious).toBe(false);
       expect(nav.hasNext).toBe(false);
       expect(nav.currentIndex).toBe(-1);
+    });
+
+    it('safely handles null or undefined chapters list without throwing', () => {
+      const client = new GatewayClient({ baseUrl });
+      const navNull = client.chapters.resolveNavigation(null as any, 'any-id');
+      expect(navNull.current).toBeNull();
+      expect(navNull.totalChapters).toBe(0);
+
+      const navUndef = client.chapters.resolveNavigation(undefined as any, 'any-id');
+      expect(navUndef.current).toBeNull();
+      expect(navUndef.totalChapters).toBe(0);
     });
   });
 

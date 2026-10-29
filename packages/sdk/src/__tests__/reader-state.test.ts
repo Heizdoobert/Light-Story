@@ -177,5 +177,45 @@ describe('Reader State & Offline Subsystem', () => {
       const all = await manager.listBookmarks();
       expect(all.map((b) => b.comicId).sort()).toEqual(['c1', 'c3', 'c4']);
     });
+
+    it('preserves concurrent mutations added while syncWithGateway is awaiting', async () => {
+      const storage = new MemoryStorageAdapter();
+      const manager = new BookmarkManager({ storage });
+
+      await manager.addBookmark('c1');
+
+      let resolveSyncNetwork: (val: any) => void;
+      const networkPromise = new Promise((resolve) => {
+        resolveSyncNetwork = resolve;
+      });
+
+      const mockUserClient = {
+        getBookmarks: vi.fn().mockResolvedValue([]),
+        addBookmark: vi.fn().mockImplementation(() => networkPromise),
+        removeBookmark: vi.fn().mockResolvedValue({ bookmarked: false }),
+      };
+
+      const syncPromise = manager.syncWithGateway(mockUserClient);
+
+      // Concurrent action while addBookmark is in-flight:
+      await manager.addBookmark('c2_concurrent');
+
+      // Now resolve the network call
+      resolveSyncNetwork!({ bookmarked: true });
+      await syncPromise;
+
+      // The mutation for c2_concurrent MUST still be in the manager
+      expect(await manager.isBookmarked('c2_concurrent')).toBe(true);
+
+      // Sync again should now process c2_concurrent
+      const secondMock = {
+        getBookmarks: vi.fn().mockResolvedValue([]),
+        addBookmark: vi.fn().mockResolvedValue({ bookmarked: true }),
+        removeBookmark: vi.fn().mockResolvedValue({ bookmarked: false }),
+      };
+      const secondRes = await manager.syncWithGateway(secondMock);
+      expect(secondRes.addedCount).toBe(1);
+      expect(secondMock.addBookmark).toHaveBeenCalledWith('c2_concurrent');
+    });
   });
 });
