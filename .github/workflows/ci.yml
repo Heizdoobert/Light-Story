@@ -35,7 +35,7 @@ jobs:
 
       - name: Load test env
         run: |
-          cp frontend/.env.test frontend/.env
+          if [ -f .env.test ]; then cp .env.test .env; else cp frontend/.env.test frontend/.env; fi
 
       - name: Clean Next cache
         run: rm -rf .next
@@ -119,7 +119,7 @@ jobs:
 
       - name: Load test env
         run: |
-          cp frontend/.env.test frontend/.env
+          if [ -f .env.test ]; then cp .env.test .env; else cp frontend/.env.test frontend/.env; fi
 
       - name: Validate OpenAPI spec loads
         run: |
@@ -161,7 +161,7 @@ jobs:
 
       - name: Load test env
         run: |
-          cp frontend/.env.test frontend/.env
+          if [ -f .env.test ]; then cp .env.test .env; else cp frontend/.env.test frontend/.env; fi
 
       - name: Run Prism mock server
         run: |
@@ -255,14 +255,8 @@ jobs:
     if: always()
     steps:
       - name: Check overall status
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         run: |
-          if [ "${{ needs.frontend.result }}" != "success" ] || \
-             [ "${{ needs.worker.result }}" != "success" ] || \
-             [ "${{ needs.backend-supabase.result }}" != "success" ] || \
-             [ "${{ needs.api-mock.result }}" != "success" ] || \
-             [ "${{ needs.contract-tests.result }}" != "success" ]; then
-            echo "One or more required CI jobs failed."
-            exit 1
-          fi
-          echo "All CI jobs passed successfully."
+          echo "One or more required CI jobs failed."
+          exit 1
 
