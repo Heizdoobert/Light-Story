@@ -4,7 +4,10 @@
  * Falls back to loading a full UI bundle if the manifest or chunk cannot be fetched.
  */
 export async function loadComponent(name: string): Promise<any> {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const origin = window.location.origin || '';
   const manifestUrl = `${origin}/sdk/sdk-manifest.json`;
   try {
     const resp = await fetch(manifestUrl);
@@ -12,13 +15,17 @@ export async function loadComponent(name: string): Promise<any> {
     const manifest: Record<string, string> = await resp.json();
     const chunkFile = manifest[name];
     if (!chunkFile) throw new Error(`Component ${name} not found in manifest`);
-    const moduleUrl = `${origin}sdk/${chunkFile}`;
+    const moduleUrl = `${origin}/sdk/${chunkFile}`;
     const mod = await import(/* webpackIgnore: true */ moduleUrl);
     return mod.default ?? mod;
-  } catch (e) {
-    // fallback: load full bundle
-    const fallbackUrl = `${origin}sdk/full-ui.bundle.js`;
-    const fallbackMod = await import(/* webpackIgnore: true */ fallbackUrl);
-    return fallbackMod[name];
+  } catch {
+    // fallback: load full bundle if in browser environment
+    try {
+      const fallbackUrl = `${origin}/sdk/full-ui.bundle.js`;
+      const fallbackMod = await import(/* webpackIgnore: true */ fallbackUrl);
+      return fallbackMod?.[name] ?? null;
+    } catch {
+      return null;
+    }
   }
 }

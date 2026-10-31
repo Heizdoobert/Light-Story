@@ -1,3 +1,5 @@
+"use client";
+
 import { someExport } from '@/sdk';
 
 export default function Page() {
