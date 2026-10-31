@@ -23,6 +23,14 @@
   "subagent_depth": 2,
   "max_schema_depth": 50,
   "mcp": {
+    "agent-system": {
+      "type": "local",
+      "command": [
+        "agent-system",
+        "mcp"
+      ],
+      "enabled": true
+    },
     "chrome-devtools": {
       "type": "local",
       "command": [
