@@ -27,6 +27,7 @@ import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimitKV';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
+import { handleTieringFallback } from './utils/tiering-fallback';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -155,7 +156,7 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<Response> {
     (globalThis as any).SUPABASE_URL = env.SUPABASE_URL;
     (globalThis as any).SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
@@ -412,12 +413,22 @@ export default {
           const outcome = classifyR2Get(object);
 
           if (outcome.kind === 'missing') {
-            console.warn('[Media] object not found', {
-              event: 'media_not_found',
-              key: rawKey.slice(0, 500),
-              requestId: downstreamHeaders.get('x-request-id'),
+            const fallback = await handleTieringFallback({
+              key: rawKey,
+              gdriveFallbackUrl: (env as any).GDRIVE_FALLBACK_URL,
+              bucket,
+              ctx,
             });
-            res = err('NOT_FOUND', 'File not found', 404);
+            if (fallback.found && fallback.response) {
+              res = fallback.response;
+            } else {
+              console.warn('[Media] object not found', {
+                event: 'media_not_found',
+                key: rawKey.slice(0, 500),
+                requestId: downstreamHeaders.get('x-request-id'),
+              });
+              res = err('NOT_FOUND', 'File not found', 404);
+            }
           } else if (outcome.kind === 'not-modified') {
             const notModified = new Headers();
             if (outcome.etag) notModified.set('etag', outcome.etag);
@@ -558,7 +569,7 @@ export default {
   async queue(
     batch: MessageBatch<any>,
     env: Env,
-    _ctx: ExecutionContext,
+    ctx: ExecutionContext,
   ): Promise<void> {
     for (const message of batch.messages) {
       try {

@@ -1,0 +1,1 @@
+export { corsHeaders } from "./cors";

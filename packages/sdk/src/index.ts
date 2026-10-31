@@ -20,6 +20,7 @@ export * from './client';
 export * from './gateway';
 export * from './storage';
 export * from './formatters';
+export * from './loader';
 
 /**
  * Unified Gateway Client for Light-Story.

@@ -1,6 +1,8 @@
 /**
  *  @type {import('next').NextConfig}
- *  */
+ */
+import { resolve } from 'node:path';
+
 const nextConfig = {
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
   reactStrictMode: true,
@@ -11,6 +13,8 @@ const nextConfig = {
     maxInactiveAge: 60 * 1000,
     pagesBufferLength: 5,
   },
+  // Turbopack config (empty to silence warning about custom webpack)
+  turbopack: {},
   images: {
     minimumCacheTTL: 31536000,
     formats: ["image/avif", "image/webp"],
@@ -46,7 +50,14 @@ const nextConfig = {
       "sonner",
     ],
   },
-
+  // Add SDK alias for '@/sdk'
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@/sdk': resolve(__dirname, 'packages/sdk/src'),
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
