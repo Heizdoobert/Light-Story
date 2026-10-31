@@ -346,3 +346,5 @@ export class StorageManager {
 export function createStorageManager(http: HttpClient): StorageManager {
   return new StorageManager(http);
 }
+
+export const storageManager = new StorageManager(new HttpClient());

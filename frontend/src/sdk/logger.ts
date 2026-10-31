@@ -9,11 +9,11 @@ export const levels = {
   ERROR: 4,
 } as const;
 
-type LevelKey = keyof typeof levels;
+export type LevelKey = keyof typeof levels;
 
 let currentLevel: number = isDev ? levels.DEBUG : levels.ERROR;
 
-function setLevel(level: LevelKey | number) {
+export function setLevel(level: LevelKey | number): void {
   if (typeof level === 'string') {
     const lvl = levels[level as LevelKey];
     if (lvl !== undefined) currentLevel = lvl;
@@ -22,11 +22,11 @@ function setLevel(level: LevelKey | number) {
   }
 }
 
-function getLevel() {
+export function getLevel(): number {
   return currentLevel;
 }
 
-function shouldLog(level: number) {
+function shouldLog(level: number): boolean {
   return level >= currentLevel;
 }
 
@@ -34,8 +34,15 @@ export const logger = {
   levels,
   setLevel,
   getLevel,
+  trace: (...args: unknown[]) => { if (shouldLog(levels.TRACE)) console.trace('[trace]', ...args); },
   debug: (...args: unknown[]) => { if (shouldLog(levels.DEBUG)) console.debug('[debug]', ...args); },
   info: (...args: unknown[]) => { if (shouldLog(levels.INFO)) console.info('[info]', ...args); },
   warn: (...args: unknown[]) => { if (shouldLog(levels.WARN)) console.warn('[warn]', ...args); },
   error: (...args: unknown[]) => { if (shouldLog(levels.ERROR)) console.error('[error]', ...args); },
 };
+
+export default logger;
+export * from './logger/types/loggerTypes';
+export * from './logger/redact/redactMetadata';
+export * from './logger/sentry/sentryTransport';
+export * from './logger/supabase/supabaseTransport';

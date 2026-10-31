@@ -1,0 +1,9 @@
+{
+  "name": "light_story_workspace",
+  "version": "0.1.0",
+  "description": "Domain rules and actions for TypeScript project.",
+  "rules_path": ".agent/rules.md",
+  "entrypoint": "plugin.py",
+  "actions": [],
+  "critics": []
+}

@@ -9,7 +9,8 @@ import { getR2ImageUrl } from "@/lib/utils/image-url";
 import Image from "next/image";
 import { cbzBasename, isCbzOrZipFile } from "@/lib/r2/cbz-name";
 import { toast } from "sonner";
-import { formatBytes, storageManager, DEFAULT_MAX_FILE_SIZE } from "@/sdk";
+import { formatBytes, DEFAULT_MAX_FILE_SIZE, storageManager, StorageManager } from "@/sdk";
+import { loadComponent } from "@/sdk";
 
 export interface ImageUploaderProps {
   onImagesUploaded?: (urls: string[]) => void;
@@ -41,9 +42,22 @@ export function ImageUploader({
     const list = Array.from(files);
     if (list.length === 0) return;
 
+    // Lazy‑load StorageManager from the dynamic SDK with safe fallback to storageManager instance
+    const getStorageManager = async (): Promise<StorageManager> => {
+      try {
+        const loaded = await loadComponent('storageManager');
+        if (loaded && typeof loaded.validate === 'function') return loaded;
+        if (loaded && typeof loaded === 'function') return new loaded(storageManager.http);
+      } catch {
+        // Fallback to static storageManager
+      }
+      return storageManager;
+    };
+
     // Validate size and format policies via SDK StorageManager
     for (const file of list) {
-      const validation = storageManager.validate(
+      const storageMgr = await getStorageManager();
+      const validation = storageMgr.validate(
         { size: file.size, name: file.name, type: file.type },
         { maxSizeBytes }
       );
