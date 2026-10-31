@@ -9,7 +9,8 @@ import { getR2ImageUrl } from "@/lib/utils/image-url";
 import Image from "next/image";
 import { cbzBasename, isCbzOrZipFile } from "@/lib/r2/cbz-name";
 import { toast } from "sonner";
-import { formatBytes, storageManager, DEFAULT_MAX_FILE_SIZE } from "@/sdk";
+import { formatBytes, DEFAULT_MAX_FILE_SIZE } from "@/sdk";
+import { loadComponent } from "@light-story/dynamic-sdk";
 
 export interface ImageUploaderProps {
   onImagesUploaded?: (urls: string[]) => void;
@@ -41,9 +42,14 @@ export function ImageUploader({
     const list = Array.from(files);
     if (list.length === 0) return;
 
+    // Lazy‑load StorageManager from the dynamic SDK
+    const getStorageManager = async () =>
+      (await loadComponent('storageManager')) as typeof import('@light-story/sdk').StorageManager;
+
     // Validate size and format policies via SDK StorageManager
     for (const file of list) {
-      const validation = storageManager.validate(
+      const storageMgr = await getStorageManager();
+      const validation = storageMgr.validate(
         { size: file.size, name: file.name, type: file.type },
         { maxSizeBytes }
       );

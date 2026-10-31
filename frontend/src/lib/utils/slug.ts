@@ -1,11 +1,13 @@
-import { slugify } from '@/sdk';
+import { loadComponent } from '@light-story/dynamic-sdk';
 
 /**
  * Normalizes title/genre names into URL-safe slugs.
- * Delegates to canonical slugify from @light-story/sdk.
+ * Dynamically loads the `slugify` utility from the SDK.
  */
-export function normalizeName(value: string): string {
+export async function normalizeName(value: string): Promise<string> {
+  const slugify = (await loadComponent('slugify')) as (s: string) => string;
   return slugify(value);
 }
 
-export { slugify };
+// Preserve previous named export for compatibility.
+export { normalizeName as slugify };
