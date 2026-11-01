@@ -8,6 +8,8 @@
     "backend-supabase"
   ],
   "scripts": {
+    "prepush:security": "npm audit --audit-level=high && echo 'Security check passed' || (echo 'Security issues detected – aborting push.' && exit 1)",
+    "prepare": "husky install",
     "agent:cli": "python3 -m agent_system",
     "agent:mcp": "python3 -m agent_system.cli.main mcp --root .",
     "dev": "npm --prefix frontend run dev",
@@ -31,6 +33,7 @@
     "cocoindex": "npm --prefix frontend run cocoindex"
   },
   "devDependencies": {
+    "vite": "^7.1.0",
     "@cloudflare/workers-types": "^4.20260625.1",
     "@supabase/supabase-js": "^2.106.1",
     "@types/node": "^26.6.6",
@@ -39,8 +42,8 @@
     "@types/react-dom": "^19.2.4",
     "concurrently": "^9.2.4",
     "csstype": "^3.2.3",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "^16.3.0",
+    "eslint": "^4.0.0",
+    "eslint-config-next": "^0.2.4",
     "husky": "^9.1.7",
     "typescript": "^6.0.3",
     "undici-types": "^8.12.3",
@@ -58,11 +61,12 @@
     "proxy-addr": "2.0.8",
     "tinypool": "2.2.0",
     "fast-uri": "4.1.4",
-    "body-parser": "2.3.0",
+    "body-parser": "2.4.0",
     "postcss": "8.5.25",
     "hono": "4.12.34",
     "js-yaml": "4.3.2",
-    "undici": "7.29.0",
+    "undici": "8.12.3",
+    "happy-dom": "^21.0.4",
     "sharp": "0.35.5",
     "@hono/node-server": "2.0.11",
     "next": {
@@ -73,9 +77,14 @@
       "@hono/node-server": "2.0.11"
     }
   },
+  "resolutions": {"tinypool": "2.2.0", "tmp": "0.2.7"},
   "allowScripts": {
-    "esbuild@0.28.1": true,
     "unrs-resolver@1.12.2": true,
     "workerd@1.20260625.1": true
+  },
+  "dependencies": {
+    "shadcn": "1.0.0"
+
+
   }
 }
