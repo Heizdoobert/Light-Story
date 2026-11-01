@@ -14,17 +14,17 @@ jobs:
     name: Lint Build Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
 
       - name: Cache node_modules
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -54,17 +54,17 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
 
       - name: Cache node_modules (deploy)
-        uses: actions/cache@v6
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -134,3 +134,4 @@ jobs:
           curl -s -H "Content-Type: application/json" \
             -d '{"content":"Deployment to production failed!"}' \
             ${{ secrets.DISCORD_WEBHOOK }}
+
