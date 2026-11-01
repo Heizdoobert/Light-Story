@@ -24,14 +24,14 @@
     "build": "tsc --project tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint .",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "@types/node": "^26.2.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "eslint": "^8.57.1",
+    "@typescript-eslint/eslint-plugin": "^8.72.1",
+    "@typescript-eslint/parser": "^8.72.1",
+    "eslint": "^9.39.5",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.2",
     "typescript": "^5.5.0",
