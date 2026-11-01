@@ -62,7 +62,7 @@
     "tinypool": "2.2.0",
     "tmp": "0.2.7",
     "fast-uri": "4.1.4",
-    "body-parser": "2.4.0",
+    "body-parser": "2.3.0",
     "postcss": "8.5.25",
     "hono": "4.12.34",
     "js-yaml": "4.3.2",
