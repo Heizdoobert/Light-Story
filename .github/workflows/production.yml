@@ -23,14 +23,6 @@ jobs:
           cache: npm
           cache-dependency-path: '**/package-lock.json'
 
-      - name: Cache node_modules
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7b30a57
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install dependencies
         run: npm ci
 
@@ -62,14 +54,6 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-
-      - name: Cache node_modules (deploy)
-        uses: actions/cache@1bd1e32a3bdc45362d1e726936510720a7b30a57
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci
@@ -134,5 +118,6 @@ jobs:
           curl -s -H "Content-Type: application/json" \
             -d '{"content":"Deployment to production failed!"}' \
             ${{ secrets.DISCORD_WEBHOOK }}
+
 
 
