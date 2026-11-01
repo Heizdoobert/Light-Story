@@ -32,6 +32,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: .
 
       - name: Load test env
         run: |
@@ -116,6 +117,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: .
 
       - name: Load test env
         run: |
@@ -158,6 +160,7 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: .
 
       - name: Load test env
         run: |

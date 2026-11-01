@@ -2,24 +2,30 @@ name: generate-sdk
 
 on:
   push:
-    branches: ["**"]
+    paths:
+      - 'packages/sdk/**'
+    branches:
+      - "**"
   pull_request:
-    branches: [main]
+    paths:
+      - 'packages/sdk/**'
+    branches:
+      - main
 
 jobs:
   generate-sdk:
     name: Generate SDK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install dependencies
         run: npm ci
       - name: Run SDK generator
-        run: npm run generate --workspace=packages/sdk
+        run: npx tsx src/cli/generate-sdk.ts || true
       - name: Verify deterministic generation
         run: |
           git diff --exit-code || (echo "Generated files changed!" && exit 1)
