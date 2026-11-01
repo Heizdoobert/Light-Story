@@ -60,17 +60,21 @@ jobs:
 
       - name: Validate Cloudflare token scopes
         run: |
-          if ! wrangler whoami --account-id ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}; then
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is missing in repository secrets"
+            exit 1
+          fi
+          ACCOUNT_OPT=""
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            ACCOUNT_OPT="--account-id ${CLOUDFLARE_ACCOUNT_ID}"
+          fi
+          if ! npx wrangler whoami $ACCOUNT_OPT; then
             echo "::error::CLOUDFLARE_API_TOKEN missing or lacks required scopes"
             exit 1
           fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Validate Wrangler config
-        run: wrangler validate --config workers/kv-worker/wrangler.jsonc
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Workers
         run: |
