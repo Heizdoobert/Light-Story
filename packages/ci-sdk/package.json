@@ -1,0 +1,26 @@
+{
+  "name": "@light-story/ci-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc",
+    "prepare": "npm run build",
+    "lint": "eslint src/**/*.ts"
+  },
+  "bin": {
+    "ci-sdk": "dist/cli.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.0",
+    "yaml": "^2.5.0",
+    "libsodium-wrappers": "^0.7.13"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "typescript": "^6.0.3"
+  }
+}
