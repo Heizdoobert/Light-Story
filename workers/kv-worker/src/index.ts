@@ -543,7 +543,7 @@ export default {
         authToken(downstreamHeaders),
         strippedPath,
       );
-    } else if (strippedPath.startsWith('/hyperdrive-test')) {
+    } else if (strippedPath.startsWith('/hyperdrive')) {
       res = await handleHyperdriveRequest(
         createForwardRequest(url.toString()),
         env,
