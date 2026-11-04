@@ -13,13 +13,11 @@ CREATE TABLE IF NOT EXISTS public.drive_cbz_index (
     storage_tier VARCHAR(20) DEFAULT 'cold_gdrive',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
+    -- uq_comic_chapter automatically creates a B-Tree index on (comic_slug, chapter_number)
     CONSTRAINT uq_comic_chapter UNIQUE (comic_slug, chapter_number)
 );
 
--- Index for O(1) lookups by comic slug and chapter number
-CREATE INDEX IF NOT EXISTS idx_drive_cbz_lookup 
-ON public.drive_cbz_index (comic_slug, chapter_number);
-
+-- Note: No redundant index needed since uq_comic_chapter already indexes (comic_slug, chapter_number)
 -- Enable RLS
 ALTER TABLE public.drive_cbz_index ENABLE ROW LEVEL SECURITY;
 
