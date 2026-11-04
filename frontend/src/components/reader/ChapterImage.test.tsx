@@ -36,4 +36,11 @@ describe('ChapterImage', () => {
     // stylesheet chunk arrives after the first paint (late-CSS layout shift).
     expect(pageWrap!.getAttribute('style')).toContain('aspect-ratio: 3 / 4');
   });
+
+  it('safely releases resources and unmounts without error', () => {
+    const { unmount } = render(
+      <ChapterImage src="https://example.com/page-1.jpg" alt="Trang 1" index={0} />,
+    );
+    expect(() => unmount()).not.toThrow();
+  });
 });

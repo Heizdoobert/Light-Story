@@ -1,6 +1,9 @@
 /** KV-backed cache utility for read endpoints */
 
 import { json } from '../utils/supabase-client';
+import { l1Cache, IsolateL1Cache } from './isolate-l1-cache';
+
+export { l1Cache, IsolateL1Cache };
 
 export type CacheOptions = {
   ttlSec: number;
@@ -23,13 +26,22 @@ export async function withCache<T>(
 
   const cacheKey = `${opts.prefix ?? DEFAULT_PREFIX}${key}`;
 
+  // 1. Try L1 in-memory micro-cache (0.1ms read latency)
+  const l1Hit = l1Cache.get<T>(cacheKey);
+  if (l1Hit !== null) return l1Hit;
+
+  // 2. Try L2 KV store
   try {
     const cached = await kv.get<T>(cacheKey, 'json');
-    if (cached !== null) return cached;
+    if (cached !== null) {
+      l1Cache.set(cacheKey, cached, Math.min(10, opts.ttlSec));
+      return cached;
+    }
   } catch {
     // KV read failure → proceed to fn
   }
 
+  // 3. Cache miss on both L1 and KV → invoke fn
   const result = await fn();
 
   // A Response cannot survive JSON.stringify — it serializes to "{}". Callers
@@ -44,6 +56,8 @@ export async function withCache<T>(
   } catch {
     // KV write failure → silent, next request will miss again
   }
+
+  l1Cache.set(cacheKey, result, Math.min(10, opts.ttlSec));
 
   return result;
 }
@@ -63,13 +77,25 @@ export async function invalidateCache(
   kv: KVNamespace | undefined,
   prefixes: string[],
 ): Promise<void> {
-  if (!kv || prefixes.length === 0) return;
+  if (prefixes.length === 0) return;
+
+  // Invalidate matching keys from in-memory L1 cache
+  for (const prefix of prefixes) {
+    l1Cache.deletePrefix(prefix);
+  }
+
+  if (!kv) return;
 
   for (const prefix of prefixes) {
     let cursor: string | undefined;
     do {
       const page = await kv.list({ prefix, cursor });
-      await Promise.allSettled(page.keys.map((k) => kv.delete(k.name)));
+      await Promise.allSettled(
+        page.keys.map((k) => {
+          l1Cache.delete(k.name);
+          return kv.delete(k.name);
+        })
+      );
       cursor = page.list_complete ? undefined : page.cursor;
     } while (cursor);
   }

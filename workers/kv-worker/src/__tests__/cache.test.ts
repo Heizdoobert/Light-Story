@@ -1,6 +1,22 @@
-import { describe, expect, it } from 'vitest';
-import { invalidateCache, publicCache, storyCachePrefixes, withCache } from '../middleware/cache';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  invalidateCache,
+  IsolateL1Cache,
+  l1Cache,
+  publicCache,
+  storyCachePrefixes,
+  withCache,
+} from '../middleware/cache';
 import { fakeKV } from './helpers/fake-kv';
+
+beforeEach(() => {
+  l1Cache.clear();
+  vi.useRealTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('withCache', () => {
   it('does not cache a Response', async () => {
@@ -31,6 +47,58 @@ describe('withCache', () => {
     expect(first).toEqual({ items: [1, 2], total: 2 });
     expect(second).toEqual({ items: [1, 2], total: 2 });
     expect(calls).toBe(1);
+  });
+
+  it('returns from L1 cache immediately without calling kv.get a second time', async () => {
+    const kv = fakeKV();
+    const getSpy = vi.spyOn(kv, 'get');
+    let calls = 0;
+    const fn = async () => {
+      calls++;
+      return { msg: 'l1-fast' };
+    };
+
+    const first = await withCache(kv, 'fast-key', { ttlSec: 60 }, fn);
+    expect(first).toEqual({ msg: 'l1-fast' });
+    expect(calls).toBe(1);
+    expect(getSpy).toHaveBeenCalledTimes(1);
+
+    // Second call: served from L1 micro-cache directly, kv.get is not invoked again
+    const second = await withCache(kv, 'fast-key', { ttlSec: 60 }, fn);
+    expect(second).toEqual({ msg: 'l1-fast' });
+    expect(calls).toBe(1);
+    expect(getSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to KV after L1 cache expires past TTL', async () => {
+    vi.useFakeTimers();
+    try {
+      const kv = fakeKV();
+      const getSpy = vi.spyOn(kv, 'get');
+      let calls = 0;
+      const fn = async () => {
+        calls++;
+        return { count: calls };
+      };
+
+      // First call: misses both L1 and KV, calls fn(), populates L1 and KV
+      const first = await withCache(kv, 'exp-key', { ttlSec: 5 }, fn);
+      expect(first).toEqual({ count: 1 });
+      expect(calls).toBe(1);
+      expect(getSpy).toHaveBeenCalledTimes(1);
+
+      // Advance time past L1 TTL (min(10, 5) = 5s -> advance 6000ms)
+      vi.advanceTimersByTime(6000);
+
+      // Second call: L1 cache has expired, falls back to KV
+      // KV contains the data so fn() is NOT called, but kv.get IS called
+      const second = await withCache(kv, 'exp-key', { ttlSec: 5 }, fn);
+      expect(second).toEqual({ count: 1 });
+      expect(calls).toBe(1);
+      expect(getSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
@@ -71,6 +139,34 @@ describe('invalidateCache', () => {
 
     expect(kv.store.has('cache:categories')).toBe(false);
   });
+
+  it('cleans up L1 cache when invalidateCache is called', async () => {
+    const kv = fakeKV();
+    let calls = 0;
+    const fn = async () => {
+      calls++;
+      return { val: calls };
+    };
+
+    // Populate L1 cache and KV
+    const first = await withCache(kv, 'sub-key', { prefix: 'cache:stories:list:', ttlSec: 60 }, fn);
+    expect(first).toEqual({ val: 1 });
+    expect(calls).toBe(1);
+    expect(l1Cache.get('cache:stories:list:sub-key')).toEqual({ val: 1 });
+
+    // Invalidate prefix
+    await invalidateCache(kv, ['cache:stories:list']);
+
+    // L1 cache entry must be deleted
+    expect(l1Cache.get('cache:stories:list:sub-key')).toBeNull();
+    // KV entry must also be deleted
+    expect(kv.store.has('cache:stories:list:sub-key')).toBe(false);
+
+    // Next request must call fn() again since both L1 and KV were cleared
+    const second = await withCache(kv, 'sub-key', { prefix: 'cache:stories:list:', ttlSec: 60 }, fn);
+    expect(second).toEqual({ val: 2 });
+    expect(calls).toBe(2);
+  });
 });
 
 describe('storyCachePrefixes', () => {
@@ -87,5 +183,56 @@ describe('storyCachePrefixes', () => {
 
   it('ignores a missing id rather than emitting an undefined key', () => {
     expect(storyCachePrefixes(null).some((p) => p.includes('undefined') || p.includes('null'))).toBe(false);
+  });
+});
+
+describe('IsolateL1Cache', () => {
+  it('respects maxSize and evicts the oldest entry (FIFO/LRU)', () => {
+    const cache = new IsolateL1Cache(3);
+    cache.set('k1', 'v1', 60);
+    cache.set('k2', 'v2', 60);
+    cache.set('k3', 'v3', 60);
+    expect(cache.size()).toBe(3);
+
+    // Access k1 to make k2 the oldest entry
+    expect(cache.get('k1')).toBe('v1');
+
+    // Adding 4th element should evict k2
+    cache.set('k4', 'v4', 60);
+    expect(cache.size()).toBe(3);
+    expect(cache.get('k2')).toBeNull();
+    expect(cache.get('k1')).toBe('v1');
+    expect(cache.get('k3')).toBe('v3');
+    expect(cache.get('k4')).toBe('v4');
+  });
+
+  it('supports delete, clear, and size methods', () => {
+    const cache = new IsolateL1Cache(10);
+    cache.set('a', 1, 60);
+    cache.set('b', 2, 60);
+    expect(cache.size()).toBe(2);
+
+    cache.delete('a');
+    expect(cache.size()).toBe(1);
+    expect(cache.get('a')).toBeNull();
+    expect(cache.get('b')).toBe(2);
+
+    cache.clear();
+    expect(cache.size()).toBe(0);
+    expect(cache.get('b')).toBeNull();
+  });
+
+  it('expires entries after ttlSec', () => {
+    vi.useFakeTimers();
+    try {
+      const cache = new IsolateL1Cache(10);
+      cache.set('k', 'v', 2);
+      expect(cache.get('k')).toBe('v');
+
+      vi.advanceTimersByTime(3000);
+      expect(cache.get('k')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

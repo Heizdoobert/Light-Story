@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   isCbzUrl,
   isCbzFile,
   isImageFilename,
   naturalSortFilenames,
+  revokeCbzPageUrls,
 } from "./cbz-reader";
 
 describe("cbzReader utility", () => {
@@ -59,6 +60,37 @@ describe("cbzReader utility", () => {
         "page_10.jpg",
         "page_20.jpg",
       ]);
+    });
+  });
+
+  describe("revokeCbzPageUrls", () => {
+    it("revokes only blob URLs safely", () => {
+      const revokeSpy = vi.fn();
+      const originalRevoke = URL.revokeObjectURL;
+      URL.revokeObjectURL = revokeSpy;
+
+      try {
+        const urls = [
+          "blob:http://localhost:3000/uuid-1",
+          "https://example.com/image.png",
+          "blob:http://localhost:3000/uuid-2",
+          "",
+        ];
+
+        revokeCbzPageUrls(urls);
+
+        expect(revokeSpy).toHaveBeenCalledTimes(2);
+        expect(revokeSpy).toHaveBeenCalledWith("blob:http://localhost:3000/uuid-1");
+        expect(revokeSpy).toHaveBeenCalledWith("blob:http://localhost:3000/uuid-2");
+      } finally {
+        URL.revokeObjectURL = originalRevoke;
+      }
+    });
+
+    it("handles invalid or empty inputs without throwing", () => {
+      expect(() => revokeCbzPageUrls([] as any)).not.toThrow();
+      expect(() => revokeCbzPageUrls(null as any)).not.toThrow();
+      expect(() => revokeCbzPageUrls(undefined as any)).not.toThrow();
     });
   });
 });

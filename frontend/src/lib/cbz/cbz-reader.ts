@@ -108,3 +108,19 @@ export async function extractCbzFileToImages(file: File): Promise<File[]> {
 
   return extractedFiles;
 }
+
+export function revokeCbzPageUrls(urls: string[]): void {
+  if (!Array.isArray(urls)) return;
+  for (const url of urls) {
+    if (typeof url === "string" && url.startsWith("blob:")) {
+      try {
+        if (typeof URL !== "undefined" && typeof URL.revokeObjectURL === "function") {
+          URL.revokeObjectURL(url);
+        }
+      } catch {
+        // Safe fallback if already revoked or environment doesn't support revokeObjectURL
+      }
+    }
+  }
+}
+

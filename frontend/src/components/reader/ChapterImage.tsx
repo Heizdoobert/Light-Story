@@ -20,25 +20,46 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
   const [retryCount, setRetryCount] = useState(0);
   const [imgKey, setImgKey] = useState(src);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    if (priority) return;
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (priority) {
+      setVisible(true);
+      return;
+    }
     const el = containerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setVisible(true);
+      return;
+    }
+    let observer: IntersectionObserver | null = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry?.isIntersecting && isMountedRef.current) {
           setVisible(true);
-          observer.disconnect();
+          observer?.disconnect();
+          observer = null;
         }
       },
       { rootMargin: '200px' },
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (observer) {
+        observer.disconnect();
+        observer = null;
+      }
+    };
   }, [priority]);
 
   const handleRetry = () => {
+    if (!isMountedRef.current) return;
     setError(false);
     setLoaded(false);
     setRetryCount((prev) => prev + 1);
@@ -83,8 +104,15 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
             alt={alt}
             priority={priority}
             fill
-            onLoadingComplete={() => setLoaded(true)}
-            onError={() => setError(true)}
+            onLoad={() => {
+              if (isMountedRef.current) setLoaded(true);
+            }}
+            onLoadingComplete={() => {
+              if (isMountedRef.current) setLoaded(true);
+            }}
+            onError={() => {
+              if (isMountedRef.current) setError(true);
+            }}
             className={`transition-opacity duration-300 ${
               fitScreen
                 ? 'w-auto h-full max-w-full object-contain'

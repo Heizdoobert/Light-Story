@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleStoriesRequest } from '../routes/stories';
 import { handleComicRecommendations } from '../routes/comics';
+import { l1Cache } from '../middleware/cache';
 import { fakeKV } from './helpers/fake-kv';
 
 function envWith(kv: KVNamespace): Env {
@@ -13,6 +14,7 @@ function envWith(kv: KVNamespace): Env {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  l1Cache.clear();
 });
 
 describe('GET /categories', () => {
