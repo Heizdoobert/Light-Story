@@ -26,25 +26,29 @@ export async function handleHyperdriveRequest(
       connectionString: env.HYPERDRIVE.connectionString,
     });
 
-    // 2. Connect to the pool
-    await client.connect();
+    try {
+      // 2. Connect to the pool
+      await client.connect();
 
-    // 3. Execute a simple query
-    const result = await client.query('SELECT current_timestamp, version();');
+      // 3. Execute a simple query
+      const result = await client.query('SELECT current_timestamp, version();');
 
-    // 4. Close the connection
-    await client.end();
-
-    // Return the response
-    return json({
-      message: 'Successfully connected to Supabase Postgres via Cloudflare Hyperdrive!',
-      data: result.rows,
-    });
+      // Return the response
+      return json({
+        message: 'Successfully connected to Supabase Postgres via Cloudflare Hyperdrive!',
+        data: result.rows,
+      });
+    } finally {
+      // 4. Always close the connection even on query errors to prevent pool socket leaks
+      try {
+        await client.end();
+      } catch {}
+    }
   } catch (error: any) {
     console.error('Hyperdrive Error:', error);
     return err(
       'HYPERDRIVE_ERROR',
-      error.message || 'Failed to query database',
+      'Database connection or query failed',
       500,
     );
   }

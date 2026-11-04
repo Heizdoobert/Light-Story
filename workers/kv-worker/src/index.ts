@@ -163,8 +163,11 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    const incomingReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id');
-    const requestId = incomingReqId || ("req_" + Date.now() + "_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)));
+    const rawReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id');
+    const isSafeReqId = rawReqId && /^[a-zA-Z0-9_\-\.]{1,64}$/.test(rawReqId);
+    const requestId = isSafeReqId
+      ? rawReqId
+      : ("req_" + Date.now() + "_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)));
 
     (globalThis as any).SUPABASE_URL = env.SUPABASE_URL;
     (globalThis as any).SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;

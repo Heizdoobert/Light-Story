@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleHyperdriveRequest } from '../routes/hyperdrive';
 
 // Mock 'pg' Client constructor
-const mockConnect = vi.fn();
-const mockQuery = vi.fn();
-const mockEnd = vi.fn();
+const mockConnect = vi.fn().mockResolvedValue(undefined);
+const mockQuery = vi.fn().mockResolvedValue({ rows: [] });
+const mockEnd = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('pg', () => {
   return {
@@ -79,6 +79,22 @@ describe('handleHyperdriveRequest', () => {
 
     const json = await res.json() as { error: { code: string; message: string } };
     expect(json.error.code).toBe('HYPERDRIVE_ERROR');
-    expect(json.error.message).toContain('Connection timeout to upstream database pool');
+    expect(json.error.message).toBe('Database connection or query failed');
+  });
+
+  it('always closes client connection in finally block even when query fails', async () => {
+    const req = new Request('https://worker.local/api/hyperdrive-test', { method: 'GET' });
+    const env = {
+      HYPERDRIVE: { connectionString: 'postgres://pool.cloudflare.com:5432/db' },
+    } as unknown as Env;
+
+    mockConnect.mockResolvedValueOnce(undefined);
+    mockQuery.mockRejectedValueOnce(new Error('Fatal syntax error in query'));
+
+    const res = await handleHyperdriveRequest(req, env, null, '/hyperdrive-test');
+    expect(res.status).toBe(500);
+    const json = await res.json() as { error: { code: string; message: string } };
+    expect(json.error.code).toBe('HYPERDRIVE_ERROR');
+    expect(mockEnd).toHaveBeenCalledTimes(1);
   });
 });

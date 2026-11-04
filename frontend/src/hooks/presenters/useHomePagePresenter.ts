@@ -107,7 +107,7 @@ export function useHomePagePresenter(
       try {
         const history: HistoryItem[] = await getReadingHistory();
         if (!history?.length) return [];
-        const uniqueComicIds = [...new Set(history.map((h) => h.comicId))];
+        const uniqueComicIds = [...new Set(history.map((h) => h.comicId))].slice(0, 8);
         const details = await Promise.all(
           uniqueComicIds.map((id) => fetchStoryById(id).catch(() => null)),
         );
@@ -116,8 +116,7 @@ export function useHomePagePresenter(
           .map((d: any) => {
             const h = history.find((item) => item.comicId === d?.id);
             return { ...d, chapterNumber: h?.chapterNumber, chapterId: h?.chapterId };
-          })
-          .slice(0, 8);
+          });
         return merged as HistoryComic[];
       } catch {
         return [];
