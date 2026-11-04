@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_MASK_BYTES,
-  DEFAULT_XOR_KEY,
   createUnmaskTransformStream,
   xorBufferHeader,
 } from '../utils/cbz-obfuscation';
