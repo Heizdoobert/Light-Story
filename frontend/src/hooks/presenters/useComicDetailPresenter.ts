@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { getReadingHistory } from "@/services/reader/readerHub.service";
 import { Chapter, Category } from "@/types/entities";
@@ -12,6 +13,7 @@ import { fetchStoryById } from "@/services/comics/story.service";
 import { fetchChaptersByStoryId } from "@/services/comics/chapter.service";
 import { apiClient } from "@/lib/api/apiClient";
 import { getVietnameseStatus } from "@/lib/utils/status-styles";
+import { QUERY_KEYS } from "@/lib/constants/query-keys";
 
 type ComicDetailProps = {
   initialComic?: Comic | null;
@@ -27,59 +29,94 @@ export function useComicDetailPresenter({
   hydrated = false,
 }: ComicDetailProps = {}) {
   const params = useParams();
-  const comicId = params.comicId as string;
+  const comicId = (Array.isArray(params?.comicId) ? params.comicId[0] : (params?.comicId as string)) || "";
 
-  const [comic, setComic] = useState<Comic | null>(initialComic);
-  const [chapters, setChapters] = useState<Chapter[]>(initialChapters);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [loading, setLoading] = useState(!hydrated);
-
-  const [readChapters, setReadChapters] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    if (hydrated) return;
-    const fetchComicDetail = async () => {
-      setLoading(true);
+  // 1. Story detail query: key QUERY_KEYS.stories.detail(comicId), initialData: initialComic, staleTime 60s
+  const hasInitialComic = hydrated || Boolean(initialComic);
+  const storyQuery = useQuery({
+    queryKey: QUERY_KEYS.stories.detail(comicId),
+    queryFn: async () => {
       try {
-        const [comicData, chaptersData] = await Promise.all([
-          fetchStoryById(comicId).catch(() => null),
-          fetchChaptersByStoryId(comicId).catch(() => []),
-        ]);
-
-        if (comicData) {
-          setComic(comicData as any);
-        }
-
-        const sortedChapters = (chaptersData || []).sort(
-          (a, b) => (a.chapter_number ?? 0) - (b.chapter_number ?? 0),
-        );
-        setChapters(sortedChapters);
-
-        try {
-          const data = await apiClient.get<Category[]>("/api/categories");
-          if (data) setCategories(data);
-        } catch {}
+        const comicData = await fetchStoryById(comicId);
+        return (comicData || null) as unknown as Comic | null;
       } catch (error) {
         console.error("Lỗi tải chi tiết truyện:", error);
         toast.error("Không thể tải thông tin truyện.");
-      } finally {
-        setLoading(false);
+        return null;
       }
-    };
+    },
+    initialData: initialComic ?? undefined,
+    enabled: Boolean(comicId),
+    staleTime: 60_000,
+  });
 
-    if (comicId) fetchComicDetail();
-  }, [comicId, hydrated]);
+  // 2. Chapters query: key QUERY_KEYS.chapters.byStory(comicId), initialData: initialChapters, staleTime 60s
+  const sortedInitialChapters = useMemo(() => {
+    return initialChapters.length > 0
+      ? [...initialChapters].sort((a, b) => (a.chapter_number ?? 0) - (b.chapter_number ?? 0))
+      : initialChapters;
+  }, [initialChapters]);
 
-  useEffect(() => {
-    getReadingHistory()
-      .then((history) => {
-        const read = history
-          .filter((h) => h.comicId === comicId)
-          .map((h) => h.chapterNumber);
-        if (read.length) setReadChapters(new Set(read));
-      })
-      .catch(() => {});
-  }, [comicId]);
+  const hasInitialChapters = hydrated || initialChapters.length > 0;
+  const chaptersQuery = useQuery({
+    queryKey: QUERY_KEYS.chapters.byStory(comicId),
+    queryFn: async () => {
+      try {
+        const chaptersData = await fetchChaptersByStoryId(comicId);
+        return (chaptersData || []).sort(
+          (a, b) => (a.chapter_number ?? 0) - (b.chapter_number ?? 0),
+        );
+      } catch {
+        return [];
+      }
+    },
+    initialData: hasInitialChapters ? sortedInitialChapters : undefined,
+    enabled: Boolean(comicId),
+    staleTime: 60_000,
+  });
+
+  // 3. Categories query: key QUERY_KEYS.categories.all, staleTime 60s, gcTime 5m
+  const categoriesQuery = useQuery({
+    queryKey: QUERY_KEYS.categories.all,
+    queryFn: async () => {
+      try {
+        const data = await apiClient.get<Category[]>("/api/categories");
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
+    initialData: (hydrated || initialCategories.length > 0) ? initialCategories : undefined,
+    staleTime: 60_000,
+    gcTime: 300_000,
+  });
+
+  // 4. Reading history query: key QUERY_KEYS.history.all, staleTime 60s
+  const historyQuery = useQuery({
+    queryKey: QUERY_KEYS.history.all,
+    queryFn: async () => {
+      try {
+        return await getReadingHistory();
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 60_000,
+  });
+
+  const comic = storyQuery.data ?? initialComic;
+  const chapters = chaptersQuery.data ?? sortedInitialChapters;
+  const categories = categoriesQuery.data ?? initialCategories;
+
+  const loading = !hydrated && (!hasInitialComic || !hasInitialChapters) && (storyQuery.isLoading || chaptersQuery.isLoading);
+
+  const readChapters = useMemo(() => {
+    if (!historyQuery.data) return new Set<number>();
+    const read = historyQuery.data
+      .filter((h) => h.comicId === comicId)
+      .map((h) => h.chapterNumber);
+    return new Set<number>(read);
+  }, [historyQuery.data, comicId]);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";

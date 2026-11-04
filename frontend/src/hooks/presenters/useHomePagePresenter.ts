@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api/apiClient";
 import { ComicContext as Comic } from "@/services/comics/comic.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
@@ -10,6 +11,7 @@ import { useLanguage } from "@/context/LanguageContext";
 
 import { fetchStoriesPage, fetchStoryById } from "@/services/comics/story.service";
 import { applyComicCoverFallback } from "@/lib/utils/image-url";
+import { QUERY_KEYS } from "@/lib/constants/query-keys";
 
 type HistoryComic = Comic & { chapterNumber?: number; chapterId?: string };
 
@@ -20,47 +22,95 @@ export function useHomePagePresenter(
   hydrated = false,
 ) {
   const { t } = useLanguage();
-  const [, setCategories] = useState<Category[]>([]);
-  const [comics, setComics] = useState<Comic[]>(initialComics);
-  const [latestChapters, setLatestChapters] = useState<Record<string, Chapter>>(initialLatestChapters);
-  const [trendingComics, setTrendingComics] = useState<Comic[]>(initialTrending);
-  const [trendingLoaded, setTrendingLoaded] = useState(hydrated);
-  const [loading, setLoading] = useState(!hydrated && initialComics.length === 0);
-  const [historyComics, setHistoryComics] = useState<HistoryComic[]>([]);
 
-  useEffect(() => {
-    if (hydrated) return;
-    const loadInitData = async () => {
+  // 1. Categories query: key QUERY_KEYS.categories.all, staleTime 60s, gcTime 5m
+  useQuery({
+    queryKey: QUERY_KEYS.categories.all,
+    queryFn: async () => {
       try {
-        let cats: Category[] = [];
-        try {
-          const data = await apiClient.get<Category[]>("/api/categories");
-          if (data) cats = data;
-        } catch {}
-        setCategories(cats);
+        const data = await apiClient.get<Category[]>("/api/categories");
+        return data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 60_000,
+    gcTime: 300_000,
+  });
 
+  // 2. Trending query: key QUERY_KEYS.stories.trending, initialData if hydrated or initialTrending.length > 0, staleTime 60s
+  const hasTrendingInitial = hydrated || initialTrending.length > 0;
+  const trendingQuery = useQuery({
+    queryKey: QUERY_KEYS.stories.trending,
+    queryFn: async () => {
+      try {
         const { items: trendingData } = await fetchStoriesPage({ page: 1, pageSize: 6, sort: "most_viewed" });
-        setTrendingComics(trendingData as any);
+        return (trendingData || []) as unknown as Comic[];
       } catch (error) {
         console.error("Lỗi tải dữ liệu khởi tạo:", error);
-      } finally {
-        setTrendingLoaded(true);
+        return [];
       }
-    };
-    loadInitData();
-  }, [hydrated]);
+    },
+    initialData: hasTrendingInitial ? initialTrending : undefined,
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
+  // 3. Comics list query: key QUERY_KEYS.stories.list({ page: 1, pageSize: 15, sort: "newest" }), initialData if hydrated or initialComics.length > 0, staleTime 60s
+  const hasComicsInitial = hydrated || initialComics.length > 0;
+  const comicsListQuery = useQuery({
+    queryKey: QUERY_KEYS.stories.list({ page: 1, pageSize: 15, sort: "newest" }),
+    queryFn: async () => {
+      try {
+        const { items } = await fetchStoriesPage({ page: 1, pageSize: 15, sort: "newest" });
+        return (items.length > 0 ? items : initialComics) as unknown as Comic[];
+      } catch (error) {
+        console.error("Lỗi tải danh sách truyện tranh:", error);
+        return initialComics;
+      }
+    },
+    initialData: hasComicsInitial ? initialComics : undefined,
+    staleTime: 60_000,
+  });
+
+  const comics = (comicsListQuery.data ?? initialComics) as Comic[];
+  const comicIds = comics.map((c: any) => c.id).filter(Boolean).join(",");
+
+  // 4. Batch latest chapters query: key QUERY_KEYS.chapters.batch(comicIds), staleTime 60s
+  const chaptersQuery = useQuery({
+    queryKey: QUERY_KEYS.chapters.batch(comicIds),
+    queryFn: async () => {
+      if (!comicIds) return initialLatestChapters;
+      let chapters: any[] = [];
+      try {
+        const batchRes = await apiClient.get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
+        chapters = Array.isArray(batchRes) ? batchRes : batchRes?.chapters || [];
+      } catch {
+        return initialLatestChapters;
+      }
+      const chapterMap: Record<string, Chapter> = { ...initialLatestChapters };
+      for (const ch of chapters) {
+        if (ch.story_id && (!chapterMap[ch.story_id] || (ch.chapter_number ?? 0) > (chapterMap[ch.story_id].chapter_number ?? 0))) {
+          chapterMap[ch.story_id] = ch;
+        }
+      }
+      return chapterMap;
+    },
+    enabled: comicIds.length > 0 && !hydrated,
+    initialData: Object.keys(initialLatestChapters).length > 0 ? initialLatestChapters : undefined,
+    staleTime: 60_000,
+  });
+
+  // 5. Reading history query: key QUERY_KEYS.history.all, staleTime 60s
+  const historyQuery = useQuery({
+    queryKey: QUERY_KEYS.history.all,
+    queryFn: async () => {
       try {
         const history: HistoryItem[] = await getReadingHistory();
-        if (cancelled || !history?.length) return;
-        const comicIds = [...new Set(history.map((h) => h.comicId))];
+        if (!history?.length) return [];
+        const uniqueComicIds = [...new Set(history.map((h) => h.comicId))];
         const details = await Promise.all(
-          comicIds.map((id) => fetchStoryById(id).catch(() => null)),
+          uniqueComicIds.map((id) => fetchStoryById(id).catch(() => null)),
         );
-        if (cancelled) return;
         const merged = details
           .filter(Boolean)
           .map((d: any) => {
@@ -68,64 +118,19 @@ export function useHomePagePresenter(
             return { ...d, chapterNumber: h?.chapterNumber, chapterId: h?.chapterId };
           })
           .slice(0, 8);
-        setHistoryComics(merged);
+        return merged as HistoryComic[];
       } catch {
-        /* silent */
+        return [];
       }
-    };
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    },
+    staleTime: 60_000,
+  });
 
-  useEffect(() => {
-    if (hydrated) return;
-    let isMounted = true;
-    async function loadComics() {
-      if (initialComics.length === 0) setLoading(true);
-      try {
-        const { items } = await fetchStoriesPage({ page: 1, pageSize: 15, sort: "newest" });
-        const comicsData = items.length > 0 ? items : initialComics;
-
-        if (!isMounted) return;
-
-        setComics(comicsData as any);
-        setLoading(false);
-
-        if (comicsData.length > 0) {
-          try {
-            const comicIds = comicsData.map((c: any) => c.id).join(",");
-            let chapters: any[] = [];
-            try {
-              const batchRes = await apiClient.get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
-              chapters = Array.isArray(batchRes) ? batchRes : batchRes?.chapters || [];
-            } catch {
-              // Chapters fetch failed silently
-            }
-            const chapterMap: Record<string, Chapter> = {};
-            for (const ch of chapters) {
-              if (ch.story_id && (!chapterMap[ch.story_id] || (ch.chapter_number ?? 0) > (chapterMap[ch.story_id].chapter_number ?? 0))) {
-                chapterMap[ch.story_id] = ch;
-              }
-            }
-            if (isMounted) setLatestChapters(chapterMap);
-          } catch {
-            // silent fallback
-          }
-        }
-      } catch (error) {
-        console.error("Lỗi tải danh sách truyện tranh:", error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    loadComics();
-    return () => {
-      isMounted = false;
-    };
-  }, [hydrated, initialComics]);
+  const trendingComics = (trendingQuery.data ?? initialTrending) as Comic[];
+  const trendingLoaded = hasTrendingInitial || !trendingQuery.isLoading;
+  const loading = !hasComicsInitial && comicsListQuery.isLoading;
+  const latestChapters = chaptersQuery.data ?? initialLatestChapters;
+  const historyComics = historyQuery.data ?? [];
 
   const getComicCover = useCallback((comic: any): string => {
     const raw = comic.coverUrl || comic.cover_url || "";

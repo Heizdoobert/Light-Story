@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  cachedJson,
   invalidateCache,
   IsolateL1Cache,
   l1Cache,
   publicCache,
+  publicCacheControl,
   storyCachePrefixes,
   withCache,
 } from '../middleware/cache';
@@ -236,3 +238,42 @@ describe('IsolateL1Cache', () => {
     }
   });
 });
+
+describe('publicCacheControl', () => {
+  it('formats standard public Cache-Control for anonymous callers', () => {
+    expect(publicCacheControl(60)).toBe('public, max-age=60, s-maxage=60, stale-while-revalidate=30');
+    expect(publicCacheControl(600)).toBe('public, max-age=60, s-maxage=600, stale-while-revalidate=30');
+    expect(publicCacheControl(10)).toBe('public, max-age=10, s-maxage=10, stale-while-revalidate=5');
+  });
+
+  it('formats private, no-cache when an authenticated token is present', () => {
+    expect(publicCacheControl(60, 'user-token')).toBe('private, no-cache');
+    expect(publicCacheControl(600, 'staff-token')).toBe('private, no-cache');
+  });
+});
+
+describe('cachedJson', () => {
+  it('sets Cache-Control header when ttlSec is provided', () => {
+    const res = cachedJson({ data: 'hello' }, 60);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=60, stale-while-revalidate=30');
+  });
+
+  it('sets private, no-cache when token is provided', () => {
+    const res = cachedJson({ data: 'hello' }, 60, 'auth-token');
+    expect(res.headers.get('Cache-Control')).toBe('private, no-cache');
+  });
+
+  it('passes through error Response without attaching public Cache-Control', () => {
+    const errRes = new Response('err', { status: 500 });
+    const res = cachedJson(errRes, 60);
+    expect(res).toBe(errRes);
+    expect(res.headers.get('Cache-Control')).toBeNull();
+  });
+
+  it('attaches Cache-Control to an existing 200 Response if missing', () => {
+    const okRes = new Response('ok', { status: 200 });
+    const res = cachedJson(okRes, 300);
+    expect(res.headers.get('Cache-Control')).toBe('public, max-age=60, s-maxage=300, stale-while-revalidate=30');
+  });
+});
+

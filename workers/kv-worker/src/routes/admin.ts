@@ -855,7 +855,8 @@ export async function handleAdminRequest(
           userId,
         });
 
-        await bucket.put(key, await file.arrayBuffer(), {
+        const stream = typeof (file as any).stream === 'function' ? (file as any).stream() : await file.arrayBuffer();
+        await bucket.put(key, stream, {
           httpMetadata: {
             contentType: file.type || 'application/octet-stream',
             cacheControl: 'public, max-age=31536000, immutable',

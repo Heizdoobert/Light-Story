@@ -125,12 +125,48 @@ function hashString(str: string): string {
 }
 
 /**
+ * Standard Cache-Control header generator for public cache responses.
+ * Ensures browser and Cloudflare CDN micro-cache operate optimally.
+ */
+export function publicCacheControl(ttlSec: number, token?: string | null): string {
+  if (token) return 'private, no-cache';
+  const browserMaxAge = Math.min(60, ttlSec);
+  const swr = Math.min(30, Math.floor(ttlSec / 2));
+  return `public, max-age=${browserMaxAge}, s-maxage=${ttlSec}, stale-while-revalidate=${swr}`;
+}
+
+/**
  * Cached handlers return decoded data on the happy path and a Response on the
  * upstream-error path (which withCache deliberately does not cache). This turns
- * either into the Response the route must return.
+ * either into the Response the route must return with appropriate Cache-Control headers.
  */
-export function cachedJson(result: unknown): Response {
-  return result instanceof Response ? result : json(result);
+export function cachedJson(
+  result: unknown,
+  cacheControlOrTtl?: string | number,
+  token?: string | null,
+): Response {
+  let cacheControl: string | undefined;
+  if (typeof cacheControlOrTtl === 'number') {
+    cacheControl = publicCacheControl(cacheControlOrTtl, token);
+  } else if (typeof cacheControlOrTtl === 'string') {
+    cacheControl = cacheControlOrTtl;
+  }
+
+  if (result instanceof Response) {
+    if (cacheControl && result.ok && !result.headers.has('Cache-Control')) {
+      const headers = new Headers(result.headers);
+      headers.set('Cache-Control', cacheControl);
+      return new Response(result.body, {
+        status: result.status,
+        statusText: result.statusText,
+        headers,
+      });
+    }
+    return result;
+  }
+
+  const headers = cacheControl ? { 'Cache-Control': cacheControl } : undefined;
+  return json(result, 200, headers);
 }
 
 /**

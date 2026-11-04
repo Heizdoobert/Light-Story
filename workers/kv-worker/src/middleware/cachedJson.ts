@@ -1,1 +1,1 @@
-export { cachedJson } from "./cache";
+export { cachedJson, publicCacheControl } from "./cache";

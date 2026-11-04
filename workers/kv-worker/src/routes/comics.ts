@@ -9,7 +9,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { encryptField, decryptField } from '../utils/encryption';
-import { withCache, buildCacheKey, invalidateCache, publicCache } from '../middleware/cache';
+import { withCache, buildCacheKey, invalidateCache, publicCache, cachedJson } from '../middleware/cache';
 import {
   validateBody,
   sanitizeBody,
@@ -86,7 +86,7 @@ export async function handleComicsRequest(
         const total = await sbGetCount(countQ, env, token);
         return { items, total };
       });
-      return json(data);
+      return cachedJson(data, 60, token);
     }
 
     if (method === 'GET' && pathname.match(/^\/comics\/[^\/]+$/)) {
@@ -104,7 +104,7 @@ export async function handleComicsRequest(
         if (!res.ok) return handleRes(res);
         return Array.isArray(data) ? data[0] || null : data;
       });
-      return json(data);
+      return cachedJson(data, 300, token);
     }
 
     if (method === 'POST' && pathname === '/comics') {
@@ -189,7 +189,7 @@ export async function handleComicsRequest(
         }
         return items;
       });
-      return json(data);
+      return cachedJson(data, 120, token);
     }
 
     if (
@@ -276,18 +276,18 @@ export async function handleComicRecommendations(
     // Return generic recommendations (top viewed/liked) if no comicId is provided
     const genericRes = await sbGet('stories', `status=neq.archived&order=views.desc,like_count.desc&limit=${limit}`, env, token);
     const genericData = genericRes.ok ? await genericRes.json() : [];
-    return json({ success: true, data: genericData });
+    return { success: true, data: genericData };
   }
 
   const targetRes = await sbGet('stories', `id=eq.${comicId}&select=*`, env, token);
   if (!targetRes.ok) {
-    return json({ success: true, data: [] });
+    return { success: true, data: [] };
   }
   const targetData = (await targetRes.json()) as any[];
   const targetComic = Array.isArray(targetData) && targetData.length > 0 ? targetData[0] : null;
 
   if (!targetComic) {
-    return json({ success: true, data: [] });
+    return { success: true, data: [] };
   }
 
   const candidatesRes = await sbGet('stories', `id=neq.${comicId}&status=neq.archived&select=*&limit=50`, env, token);
@@ -322,5 +322,5 @@ export async function handleComicRecommendations(
   const recommendations = scored.slice(0, limit).map(({ _score, ...rest }) => rest);
   return { success: true, data: recommendations };
   });
-  return json(data);
+  return cachedJson(data, 300, token);
 }
