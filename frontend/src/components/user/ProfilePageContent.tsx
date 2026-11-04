@@ -2,7 +2,12 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
+import dynamic from "next/dynamic";
+
+const EditUserProfileModal = dynamic(
+  () => import("@/components/user/EditUserProfileModal").then((mod) => mod.EditUserProfileModal),
+  { ssr: false }
+);
 import { Mail, User, Edit2, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
