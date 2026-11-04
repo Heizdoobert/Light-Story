@@ -35,8 +35,7 @@ jobs:
         working-directory: .
 
       - name: Load test env
-        run: |
-
+        run: if [ -f .env.test ]; then cp .env.test .env; elif [ -f frontend/.env.test ]; then cp frontend/.env.test frontend/.env; fi
 
       - name: Clean Next cache
         run: rm -rf .next
@@ -120,8 +119,7 @@ jobs:
         working-directory: .
 
       - name: Load test env
-        run: |
-
+        run: if [ -f .env.test ]; then cp .env.test .env; elif [ -f frontend/.env.test ]; then cp frontend/.env.test frontend/.env; fi
 
       - name: Validate OpenAPI spec loads
         run: |
@@ -163,8 +161,7 @@ jobs:
         working-directory: .
 
       - name: Load test env
-        run: |
-
+        run: if [ -f .env.test ]; then cp .env.test .env; elif [ -f frontend/.env.test ]; then cp frontend/.env.test frontend/.env; fi
 
       - name: Run Prism mock server
         run: |

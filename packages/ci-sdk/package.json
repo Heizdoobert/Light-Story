@@ -20,7 +20,7 @@
     "libsodium-wrappers": "^0.7.13"
   },
   "devDependencies": {
-    "vitest": "^5.1.0",
+    "vitest": "^5.0.5",
     "typescript": "^6.0.3"
   }
 }
