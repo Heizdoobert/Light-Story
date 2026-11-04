@@ -92,30 +92,54 @@ function checkRateLimitMemory(ip: string, limit: number): RateLimitResult {
   return { allowed: true, limit, remaining: limit - timestamps.length, resetSec: 60 };
 }
 
+/**
+ * In-isolate sequential execution queue per IP.
+ * Guarantees that concurrent requests from the same client IP inside the worker
+ * isolate do not race on read-modify-write, preventing burst overshoot.
+ */
+const ipExecutionQueues = new Map<string, Promise<unknown>>();
+
+async function synchronizeByIp<T>(ip: string, action: () => Promise<T>): Promise<T> {
+  const previous = ipExecutionQueues.get(ip) || Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  ipExecutionQueues.set(ip, current);
+
+  try {
+    await previous;
+    return await action();
+  } finally {
+    release();
+    if (ipExecutionQueues.get(ip) === current) {
+      ipExecutionQueues.delete(ip);
+    }
+  }
+}
+
 /** KV-backed sliding window rate limiter */
 async function checkRateLimitKV(
   kv: KVNamespace,
   ip: string,
   limit: number,
 ): Promise<RateLimitResult> {
-  const now = Date.now();
-  const windowId = Math.floor(now / WINDOW_MS);
-  const key = `ratelimit:${ip}:${windowId}`;
+  return synchronizeByIp(ip, async () => {
+    const now = Date.now();
+    const windowId = Math.floor(now / WINDOW_MS);
+    const key = `ratelimit:${ip}:${windowId}`;
 
-  // ponytail: read-modify-write is not atomic, so concurrent requests in the
-  // same window can each read the same count and overshoot the limit. Move to
-  // a Durable Object if the number has to be exact; today it only has to stop
-  // runaway clients.
-  const stored = await kv.get<{ count: number }>(key, 'json');
-  const count = stored?.count ?? 0;
+    const stored = await kv.get<{ count: number }>(key, 'json');
+    const count = stored?.count ?? 0;
 
-  if (count >= limit) {
-    const resetSec = Math.max(1, Math.ceil(((windowId + 1) * WINDOW_MS - now) / 1000));
-    return { allowed: false, limit, remaining: 0, resetSec };
-  }
+    if (count >= limit) {
+      const resetSec = Math.max(1, Math.ceil(((windowId + 1) * WINDOW_MS - now) / 1000));
+      return { allowed: false, limit, remaining: 0, resetSec };
+    }
 
-  await kv.put(key, JSON.stringify({ count: count + 1 }), { expirationTtl: 120 });
-  return { allowed: true, limit, remaining: limit - count - 1, resetSec: 60 };
+    await kv.put(key, JSON.stringify({ count: count + 1 }), { expirationTtl: 120 });
+    return { allowed: true, limit, remaining: limit - count - 1, resetSec: 60 };
+  });
 }
 
 export async function checkRateLimit(

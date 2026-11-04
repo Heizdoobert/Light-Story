@@ -1,9 +1,10 @@
 import { StorageAdapter, StorageAdapterOptions } from './adapter.interface';
 import { MemoryStorageAdapter } from './memory-adapter';
 import { WebStorageAdapter } from './web-storage-adapter';
+import { IndexedDBStorageAdapter, IndexedDBAdapterOptions } from './indexeddb-adapter';
 
-export interface StorageFactoryOptions extends StorageAdapterOptions {
-  type?: 'local' | 'session' | 'memory';
+export interface StorageFactoryOptions extends StorageAdapterOptions, IndexedDBAdapterOptions {
+  type?: 'local' | 'session' | 'memory' | 'indexeddb';
   fallbackToMemory?: boolean;
 }
 
@@ -16,6 +17,16 @@ export function createStorageAdapter(options?: StorageFactoryOptions): StorageAd
 
   if (type === 'memory' || typeof window === 'undefined') {
     return new MemoryStorageAdapter(adapterOptions);
+  }
+
+  if (type === 'indexeddb') {
+    if (typeof window.indexedDB !== 'undefined') {
+      return new IndexedDBStorageAdapter(adapterOptions);
+    }
+    if (fallbackToMemory) {
+      return new MemoryStorageAdapter(adapterOptions);
+    }
+    throw new Error('IndexedDB is not available in this environment');
   }
 
   try {
