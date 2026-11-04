@@ -10,7 +10,6 @@
  */
 
 import fs from 'node:fs';
-import path from 'node:path';
 
 const DEFAULT_XOR_KEY = new Uint8Array([
   0x5a, 0xa5, 0x3c, 0xc3, 0x1f, 0xf1, 0x7e, 0xe7,
