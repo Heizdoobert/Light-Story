@@ -172,3 +172,6 @@ cocoindex-code.db
 /frontend/tasks/
 
 .worktrees/
+
+.sentry-native/
+agent_plugin.json
