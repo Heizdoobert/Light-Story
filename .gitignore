@@ -98,7 +98,8 @@ workers/r2-signed-url/worker.test.js
 frontend/test-results/
 
 # Operational scripts (no active references, no CI integration)
-/scripts/
+/scripts/*
+!/scripts/doctor.mjs
 .github/copilot-instructions.md
 .opencode/opencode.json
 .opencode/plugins/graphify.js

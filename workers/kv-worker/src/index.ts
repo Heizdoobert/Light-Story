@@ -41,9 +41,11 @@ async function handleSupabaseProxy(
   request: Request,
   origin: string | null,
   env: Env,
+  requestId: string,
 ): Promise<Response> {
   const respond = (body: unknown, init: { status: number; headers?: HeadersInit }) => {
     const headers = new Headers(init.headers);
+    headers.set('X-Request-Id', requestId);
     applySecurityHeaders(headers);
     return new Response(
       typeof body === 'string' ? body : JSON.stringify(body),
@@ -53,7 +55,7 @@ async function handleSupabaseProxy(
 
   if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
     return respond(
-      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED' } },
+      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED', requestId } },
       {
         status: 500,
         headers: {
@@ -67,7 +69,7 @@ async function handleSupabaseProxy(
   const sbPath = supabaseProxyPath(pathname);
   if (!sbPath) {
     return respond(
-      { success: false, error: { code: 'INVALID_SUPABASE_PATH' } },
+      { success: false, error: { code: 'INVALID_SUPABASE_PATH', requestId } },
       {
         status: 400,
         headers: {
@@ -94,7 +96,7 @@ async function handleSupabaseProxy(
   }
   headers.delete('x-forwarded-by');
   headers.delete('x-begin-timestamp');
-  headers.delete('x-request-id');
+  headers.set('x-request-id', requestId);
   headers.delete('content-length');
 
   const reqText = request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : null;
@@ -112,6 +114,7 @@ async function handleSupabaseProxy(
   const c = corsHeaders(origin);
   for (const [k, v] of Object.entries(c))
     responseHeaders.set(k, v as string);
+  responseHeaders.set('X-Request-Id', requestId);
   applySecurityHeaders(responseHeaders);
 
   if (contentType.includes('application/json')) {
@@ -129,6 +132,7 @@ async function handleSupabaseProxy(
       ? {
           success: true,
           data: parsed,
+          requestId,
           timestamp: new Date().toISOString(),
         }
       : {
@@ -137,6 +141,7 @@ async function handleSupabaseProxy(
             code: (parsed as any)?.code || 'SUPABASE_ERROR',
             message:
               (parsed as any)?.message || res.statusText,
+            requestId,
           },
           timestamp: new Date().toISOString(),
         };
@@ -158,6 +163,9 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
+    const incomingReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id');
+    const requestId = incomingReqId || ("req_" + Date.now() + "_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)));
+
     (globalThis as any).SUPABASE_URL = env.SUPABASE_URL;
     (globalThis as any).SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
     (globalThis as any).SUPABASE_JWKS_URL =
@@ -167,7 +175,9 @@ export default {
     const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS') {
-      return handleCorsPreflightRequest(request);
+      const preflightRes = handleCorsPreflightRequest(request);
+      preflightRes.headers.set('X-Request-Id', requestId);
+      return preflightRes;
     }
 
     const allowedSuffixes = ((env as any).ALLOWED_ORIGIN_SUFFIXES ?? '')
@@ -180,6 +190,7 @@ export default {
         status: 403,
         headers: (() => {
           const h = new Headers();
+          h.set('X-Request-Id', requestId);
           applySecurityHeaders(h);
           return h;
         })(),
@@ -209,6 +220,7 @@ export default {
         JSON.stringify({
           status: 'ok',
           worker: 'kv-worker',
+          requestId,
           timestamp: new Date().toISOString(),
         }),
         {
@@ -216,6 +228,7 @@ export default {
           headers: (() => {
             const h = new Headers({
               'Content-Type': 'application/json',
+              'X-Request-Id': requestId,
               ...corsHeaders(origin),
             });
             applySecurityHeaders(h);
@@ -238,9 +251,10 @@ export default {
             return new Response(
               JSON.stringify({
                 success: false,
-        error: {
+                error: {
                   code: 'UNAUTHORIZED',
                   message: e.message,
+                  requestId,
                 },
               }),
               {
@@ -248,6 +262,7 @@ export default {
                 headers: (() => {
                   const h = new Headers({
                     'Content-Type': 'application/json',
+                    'X-Request-Id': requestId,
                     ...corsHeaders(origin),
                   });
                   applySecurityHeaders(h);
@@ -259,9 +274,20 @@ export default {
           return new Response(
             JSON.stringify({
               success: false,
-        error: { code: 'INTERNAL_ERROR' },
+              error: { code: 'INTERNAL_ERROR', requestId },
             }),
-            { status: 500, headers: (() => { const h = new Headers(); applySecurityHeaders(h); return h; })() },
+            {
+              status: 500,
+              headers: (() => {
+                const h = new Headers({
+                  'Content-Type': 'application/json',
+                  'X-Request-Id': requestId,
+                  ...corsHeaders(origin),
+                });
+                applySecurityHeaders(h);
+                return h;
+              })(),
+            },
           );
         }
         // For public GET requests, log warning and allow unauthenticated fallback
@@ -279,13 +305,14 @@ export default {
         'Retry-After': String(rateLimit.resetSec),
         'X-RateLimit-Limit': String(rateLimit.limit),
         'X-RateLimit-Remaining': '0',
+        'X-Request-Id': requestId,
         ...corsHeaders(origin),
       });
       applySecurityHeaders(headers);
       return new Response(
         JSON.stringify({
           success: false,
-        error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.', requestId },
         }),
         { status: 429, headers },
       );
@@ -298,13 +325,14 @@ export default {
       return new Response(
         JSON.stringify({
           success: false,
-        error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations', requestId },
         }),
         {
           status: 401,
           headers: (() => {
             const h = new Headers({
               'Content-Type': 'application/json',
+              'X-Request-Id': requestId,
               ...corsHeaders(origin),
             });
             applySecurityHeaders(h);
@@ -318,7 +346,7 @@ export default {
       strippedPath.startsWith('/supabase/') ||
       strippedPath.startsWith('/rpc/')
     ) {
-      return handleSupabaseProxy(pathname, request, origin, env);
+      return handleSupabaseProxy(pathname, request, origin, env, requestId);
     }
 
     const responseHeaders = new Headers();
@@ -332,7 +360,7 @@ export default {
     downstreamHeaders.delete('x-user-email');
     downstreamHeaders.set(
       'x-request-id',
-      crypto.randomUUID(),
+      requestId,
     );
     downstreamHeaders.set('x-begin-timestamp', String(Date.now()));
     if (authCtx) {
@@ -531,6 +559,7 @@ export default {
     const resHeaders = new Headers(res.headers);
     for (const [k, v] of Object.entries(c))
       resHeaders.set(k, v as string);
+    resHeaders.set('X-Request-Id', requestId);
     applySecurityHeaders(resHeaders);
 
     const contentType = res.headers.get('Content-Type') || '';
@@ -556,6 +585,7 @@ export default {
         ? {
             success: true,
             data: parsed,
+            requestId,
             timestamp: new Date().toISOString(),
           }
         : {
@@ -567,6 +597,7 @@ export default {
               message:
                 (obj as any)?.error?.message ||
                 res.statusText,
+              requestId,
             },
             timestamp: new Date().toISOString(),
           };

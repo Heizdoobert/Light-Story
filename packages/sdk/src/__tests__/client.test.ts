@@ -91,6 +91,41 @@ describe('HttpClient', () => {
       const data = await client.get<{ user: string }>('/api/user');
       expect(data).toEqual({ user: 'alice' });
     });
+
+    it('automatically generates x-request-id when none provided', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true, data: { ok: true } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      const client = new HttpClient({ baseUrl, fetch: mockFetch });
+      await client.get('/api/trace');
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [, init] = mockFetch.mock.calls[0];
+      const headers = new Headers(init.headers);
+      const reqId = headers.get('x-request-id');
+      expect(reqId).toBeDefined();
+      expect(reqId).toMatch(/^req_\d+_[a-z0-9]+$/);
+    });
+
+    it('preserves existing x-request-id when explicitly provided in headers', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ success: true, data: { ok: true } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+
+      const client = new HttpClient({ baseUrl, fetch: mockFetch });
+      await client.get('/api/trace', { headers: { 'x-request-id': 'custom-req-id-123' } });
+
+      const [, init] = mockFetch.mock.calls[0];
+      const headers = new Headers(init.headers);
+      expect(headers.get('x-request-id')).toBe('custom-req-id-123');
+    });
   });
 
   describe('Resilience & Safe Idempotency Retry Logic', () => {
@@ -343,6 +378,40 @@ describe('HttpClient', () => {
 
       const client = new HttpClient({ baseUrl, fetch: mockFetch });
       await expect(client.get('/api/chapter/999')).rejects.toThrow('Chapter not found');
+    });
+
+    it('attaches requestId to GatewayError on error responses (prioritizing header)', async () => {
+      const mockFetch = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: { message: 'Server error', requestId: 'trace-body-123' } }), {
+          status: 500,
+          headers: {
+            'content-type': 'application/json',
+            'x-request-id': 'trace-header-456',
+          },
+        }),
+      );
+
+      const client = new HttpClient({ baseUrl, fetch: mockFetch, retry: false });
+
+      try {
+        await client.get('/api/error');
+        expect.unreachable();
+      } catch (err) {
+        expect(err).toBeInstanceOf(GatewayError);
+        const gwErr = err as GatewayError;
+        expect(gwErr.requestId).toBe('trace-header-456');
+      }
+    });
+
+    it('extracts requestId from response body in GatewayError.fromResponse when header is absent', () => {
+      const err1 = GatewayError.fromResponse(400, { error: { message: 'Bad request', requestId: 'body-req-1' } });
+      expect(err1.requestId).toBe('body-req-1');
+
+      const err2 = GatewayError.fromResponse(400, { message: 'Bad request', requestId: 'body-req-2' });
+      expect(err2.requestId).toBe('body-req-2');
+
+      const err3 = GatewayError.fromResponse(400, { message: 'Bad request', requestId: 'body-req-2' }, undefined, 'header-req-override');
+      expect(err3.requestId).toBe('header-req-override');
     });
   });
 });
