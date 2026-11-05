@@ -45,7 +45,7 @@ describe('/admin/r2/upload streaming', () => {
 
     const res = await handleAdminRequest(req, env, null, '/admin/r2/upload');
     expect(res?.status).toBe(200);
-    const body = await res?.json();
+    const body = (await res?.json()) as any;
     expect(body).toEqual({
       success: true,
       data: { urls: ['/api/media/avatars/user-123.png'] },
@@ -102,5 +102,69 @@ describe('/admin/r2/upload streaming', () => {
     expect(mockBucket.put).toHaveBeenCalledTimes(1);
     expect(mockFileWithoutStream.arrayBuffer).toHaveBeenCalledTimes(1);
     expect(putValue).toBe(buffer);
+  });
+
+  it('uploads multiple chapter images with bounded worker pool preserving index order', async () => {
+    let activeUploads = 0;
+    let maxConcurrentUploads = 0;
+
+    const mockBucket = {
+      put: vi.fn(async (_key: string, _value: any, _opts: any) => {
+        activeUploads++;
+        if (activeUploads > maxConcurrentUploads) {
+          maxConcurrentUploads = activeUploads;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 15));
+        activeUploads--;
+      }),
+    };
+
+    const env = {
+      R2_BUCKET: mockBucket,
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_ANON_KEY: 'anon',
+    } as unknown as Env;
+
+    const files = Array.from({ length: 8 }, (_, i) => ({
+      name: `page-${i + 1}.webp`,
+      type: 'image/webp',
+      size: 10,
+      stream: () => new ReadableStream(),
+    }));
+
+    const req = new Request('https://gateway.test/api/admin/r2/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data; boundary=test',
+        'x-user-role': 'admin',
+        'x-user-id': 'user-123',
+      },
+      body: 'mock-body',
+    });
+    req.formData = async () => ({
+      getAll: (key: string) => {
+        if (key === 'file') return files;
+        if (key === 'pageNumber') return files.map((_, i) => String(i + 1));
+        return [];
+      },
+      get: (key: string) => {
+        if (key === 'folder') return 'chapters';
+        if (key === 'comicId') return 'comic-abc';
+        if (key === 'chapterNumber') return '1';
+        return null;
+      },
+    } as any);
+
+    const res = await handleAdminRequest(req, env, null, '/admin/r2/upload');
+    expect(res?.status).toBe(200);
+    const body = (await res?.json()) as any;
+
+    expect(mockBucket.put).toHaveBeenCalledTimes(8);
+    expect(maxConcurrentUploads).toBeLessThanOrEqual(4);
+    expect(maxConcurrentUploads).toBeGreaterThan(1);
+    expect(body.data.urls).toHaveLength(8);
+    for (let i = 0; i < 8; i++) {
+      expect(body.data.urls[i]).toMatch(new RegExp(`^/api/media/chapters/comic-abc/chapter-1/page-${i + 1}-[0-9a-f]{8}\\.webp$`));
+    }
   });
 });

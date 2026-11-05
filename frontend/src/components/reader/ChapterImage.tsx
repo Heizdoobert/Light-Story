@@ -13,19 +13,25 @@ type ChapterImageProps = {
   priority?: boolean;
 };
 
+const MAX_AUTO_RETRIES = 3;
+
 export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, className = '', fitScreen, priority = false }) => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [visible, setVisible] = useState(priority);
-  const [retryCount, setRetryCount] = useState(0);
+  const [autoRetryCount, setAutoRetryCount] = useState(0);
   const [imgKey, setImgKey] = useState(src);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMountedRef = useRef(true);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
     };
   }, []);
 
@@ -58,12 +64,35 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
     };
   }, [priority]);
 
+  const handleError = () => {
+    if (!isMountedRef.current) return;
+    if (autoRetryCount < MAX_AUTO_RETRIES) {
+      const delay = Math.min(1000 * Math.pow(2, autoRetryCount), 4000) + Math.random() * 200;
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+      retryTimerRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+        setAutoRetryCount((prev) => prev + 1);
+        const separator = src.includes('?') ? '&' : '?';
+        setImgKey(`${src}${separator}retry=${Date.now()}`);
+      }, delay);
+    } else {
+      setError(true);
+    }
+  };
+
   const handleRetry = () => {
     if (!isMountedRef.current) return;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    setAutoRetryCount(0);
     setError(false);
     setLoaded(false);
-    setRetryCount((prev) => prev + 1);
-    setImgKey(`${src}?retry=${retryCount + 1}`);
+    const separator = src.includes('?') ? '&' : '?';
+    setImgKey(`${src}${separator}retry=${Date.now()}`);
   };
 
   return (
@@ -100,7 +129,7 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
         visible && (
           <Image
             key={imgKey}
-            src={src}
+            src={imgKey}
             alt={alt}
             priority={priority}
             fill
@@ -110,9 +139,7 @@ export const ChapterImage: React.FC<ChapterImageProps> = ({ src, alt, index, cla
             onLoadingComplete={() => {
               if (isMountedRef.current) setLoaded(true);
             }}
-            onError={() => {
-              if (isMountedRef.current) setError(true);
-            }}
+            onError={handleError}
             className={`transition-opacity duration-300 ${
               fitScreen
                 ? 'w-auto h-full max-w-full object-contain'

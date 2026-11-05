@@ -58,12 +58,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Object exceeds size limit' }, { status: 413 });
     }
 
+    const finalContentType = contentType || guessContentType(key);
+    const isSvg = finalContentType.includes('svg');
+
     return new NextResponse(Buffer.from(body), {
       headers: {
-        'Content-Type': contentType || guessContentType(key),
+        'Content-Type': finalContentType,
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Cross-Origin-Resource-Policy': 'cross-origin',
         'X-Content-Type-Options': 'nosniff',
+        ...(isSvg
+          ? {
+              'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+              'Content-Disposition': 'inline',
+            }
+          : {}),
       },
     });
   } catch (error) {

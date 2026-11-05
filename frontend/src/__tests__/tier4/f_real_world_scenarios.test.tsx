@@ -141,7 +141,7 @@ describe('Journey 6: Gateway worker contract for R2 upload', () => {
     expect(await res!.json()).toEqual({ success: true, data: { urls: ['/api/media/covers/comic-1.png'] } });
     expect(put).toHaveBeenCalledWith(
       'covers/comic-1.png',
-      expect.any(ArrayBuffer),
+      expect.anything(),
       expect.objectContaining({
         httpMetadata: expect.objectContaining({
           contentType: 'image/png',

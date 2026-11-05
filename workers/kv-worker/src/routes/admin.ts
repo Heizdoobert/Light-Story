@@ -840,33 +840,46 @@ export async function handleAdminRequest(
         return err(validation.code, validation.message, validation.status);
       }
 
-      const uploadedUrls: string[] = [];
-      for (let i = 0; i < fileEntries.length; i++) {
-        const file = fileEntries[i];
-        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const uploadKeys: string[] = new Array(fileEntries.length);
+      const CONCURRENCY = 4;
+      let currentIndex = 0;
+      const worker = async () => {
+        while (currentIndex < fileEntries.length) {
+          const i = currentIndex++;
+          const file = fileEntries[i];
+          const ext = (file.name.split('.').pop() || 'png').toLowerCase();
 
-        const key = buildUploadKey({
-          folder,
-          ext,
-          comicId,
-          chapterNumber,
-          pageNumber: pageNumbers[i] ?? null,
-          loopIndex: i,
-          userId,
-        });
-
-        const stream = typeof (file as any).stream === 'function' ? (file as any).stream() : await file.arrayBuffer();
-        await bucket.put(key, stream, {
-          httpMetadata: {
-            contentType: file.type || 'application/octet-stream',
-            cacheControl: 'public, max-age=31536000, immutable',
-          },
-          customMetadata: {
-            uploadedBy: userId || 'admin',
+          const key = buildUploadKey({
             folder,
-            originalName: file.name,
-          },
-        });
+            ext,
+            comicId,
+            chapterNumber,
+            pageNumber: pageNumbers[i] ?? null,
+            loopIndex: i,
+            userId,
+          });
+
+          const stream = typeof (file as any).stream === 'function' ? (file as any).stream() : await file.arrayBuffer();
+          await bucket.put(key, stream, {
+            httpMetadata: {
+              contentType: file.type || 'application/octet-stream',
+              cacheControl: 'public, max-age=31536000, immutable',
+            },
+            customMetadata: {
+              uploadedBy: userId || 'admin',
+              folder,
+              originalName: file.name,
+            },
+          });
+          uploadKeys[i] = key;
+        }
+      };
+
+      const workers = Array.from({ length: Math.min(CONCURRENCY, fileEntries.length) }, () => worker());
+      await Promise.all(workers);
+
+      const uploadedUrls: string[] = [];
+      for (const key of uploadKeys) {
         uploadedUrls.push(`/api/media/${key}`);
       }
       return json({ success: true, data: { urls: uploadedUrls } });

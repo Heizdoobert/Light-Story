@@ -58,6 +58,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Upstream returned non-image content' }, { status: 502 });
     }
 
+    if (contentType.includes('svg') || contentType === 'image/svg+xml') {
+      return NextResponse.json({ error: 'SVG images not supported' }, { status: 400 });
+    }
+
     const contentLength = Number(response.headers.get('content-length'));
     if (Number.isFinite(contentLength) && contentLength > MAX_AVATAR_BYTES) {
       return NextResponse.json({ error: 'Image exceeds size limit' }, { status: 503 });
