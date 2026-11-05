@@ -23,6 +23,12 @@ export const QUERY_KEYS = {
   history: {
     all: ['history'] as const,
   },
+  admin: {
+    dashboard: ['admin', 'dashboard'] as const,
+  },
+  user: {
+    dashboard: ['user', 'dashboard'] as const,
+  },
 } as const;
 
 /**

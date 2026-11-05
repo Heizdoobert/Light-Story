@@ -194,7 +194,7 @@ export function publicCache(env: Env, token: string | null): KVNamespace | undef
  * knows which story changed.
  */
 export function storyCachePrefixes(storyId?: string | null): string[] {
-  const prefixes = ['cache:stories:list', 'cache:comics:list'];
+  const prefixes = ['cache:stories:list', 'cache:comics:list', 'admin:analytics:dashboard:overview'];
   if (storyId) {
     prefixes.push(
       `cache:story:${storyId}`,
@@ -203,4 +203,11 @@ export function storyCachePrefixes(storyId?: string | null): string[] {
     );
   }
   return prefixes;
+}
+
+/**
+ * Cache prefixes for admin dashboard telemetry overview.
+ */
+export function adminDashboardCachePrefixes(): string[] {
+  return ['admin:analytics:dashboard:overview'];
 }

@@ -6,6 +6,7 @@ import {
   l1Cache,
   publicCache,
   publicCacheControl,
+  adminDashboardCachePrefixes,
   storyCachePrefixes,
   withCache,
 } from '../middleware/cache';
@@ -172,8 +173,12 @@ describe('invalidateCache', () => {
 });
 
 describe('storyCachePrefixes', () => {
-  it('always covers both list caches', () => {
-    expect(storyCachePrefixes()).toEqual(['cache:stories:list', 'cache:comics:list']);
+  it('always covers both list caches and admin dashboard overview', () => {
+    expect(storyCachePrefixes()).toEqual([
+      'cache:stories:list',
+      'cache:comics:list',
+      'admin:analytics:dashboard:overview',
+    ]);
   });
 
   it('covers the detail caches for a known story', () => {
@@ -181,10 +186,17 @@ describe('storyCachePrefixes', () => {
     expect(prefixes).toContain('cache:story:11111111-1111-4111-8111-111111111111');
     expect(prefixes).toContain('cache:comic:11111111-1111-4111-8111-111111111111');
     expect(prefixes).toContain('cache:chapters:11111111-1111-4111-8111-111111111111');
+    expect(prefixes).toContain('admin:analytics:dashboard:overview');
   });
 
   it('ignores a missing id rather than emitting an undefined key', () => {
     expect(storyCachePrefixes(null).some((p) => p.includes('undefined') || p.includes('null'))).toBe(false);
+  });
+});
+
+describe('adminDashboardCachePrefixes', () => {
+  it('returns admin dashboard cache prefix', () => {
+    expect(adminDashboardCachePrefixes()).toEqual(['admin:analytics:dashboard:overview']);
   });
 });
 
