@@ -22,7 +22,15 @@ export function createClient(): SupabaseClient {
     cookieOptions: {
       path: "/",
       sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+      secure:
+        typeof window !== "undefined"
+          ? window.location.protocol === "https:"
+          : process.env.NODE_ENV === "production",
+    },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
     },
   }) as unknown as SupabaseClient;
   return clientInstance;
