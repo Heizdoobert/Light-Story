@@ -249,7 +249,7 @@ async function main() {
     { name: '@light-story/sdk (Vitest)', cmd: 'npm', args: ['--prefix', 'packages/sdk', 'test'] },
     { name: 'workers/kv-worker (Vitest)', cmd: 'npm', args: ['--prefix', 'workers/kv-worker', 'test'] },
     { name: '@light-story/ui (Vitest)', cmd: 'npx', args: ['vitest', 'run', '--root', 'packages/ui'] },
-    { name: 'frontend (Vitest Core)', cmd: 'npx', args: ['vitest', 'run', '--root', 'frontend', 'src/hooks/presenters/__tests__/presenter-cache.test.tsx', 'src/components/reader/ChapterImage.test.tsx', 'src/lib/cbz/cbz-reader.test.ts', 'src/actions/__tests__/result.test.ts'] },
+    { name: 'frontend (Vitest Core)', cmd: 'npx', args: ['vitest', 'run', '--root', 'frontend', 'src/context/__tests__/auth-session-persistence.test.tsx', 'src/hooks/presenters/__tests__/presenter-cache.test.tsx', 'src/components/reader/ChapterImage.test.tsx', 'src/lib/cbz/cbz-reader.test.ts', 'src/actions/__tests__/result.test.ts'] },
   ];
 
   for (const test of testChecks) {

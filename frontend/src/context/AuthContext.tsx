@@ -27,12 +27,9 @@ const normalizeRole = (value: unknown): UserRole | null => {
 
 const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
   // Mirror middleware/use-user: app_metadata.role preferred (synced by the DB
-  // trigger), user_metadata fallback, profiles table last.
+  // trigger), profiles table fallback. Untrusted user_metadata.role is strictly excluded.
   const resolvedAppRole = normalizeRole(user?.app_metadata?.role);
   if (resolvedAppRole) return resolvedAppRole;
-
-  const resolvedMetaRole = normalizeRole(user?.user_metadata?.role);
-  if (resolvedMetaRole) return resolvedMetaRole;
 
   const resolvedProfileRole = normalizeRole(profileRole);
   if (resolvedProfileRole) return resolvedProfileRole;

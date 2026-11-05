@@ -29,8 +29,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
   }
 
+  const configuredHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+    : null;
+
   const isValidSupabaseAvatar =
-    parsedUrl.hostname.endsWith('.supabase.co') &&
+    (configuredHost
+      ? parsedUrl.hostname === configuredHost
+      : parsedUrl.hostname.endsWith('.supabase.co')) &&
     normalizedPath.startsWith('/storage/v1/object/public/avatars/');
 
   if (!isValidSupabaseAvatar) {
