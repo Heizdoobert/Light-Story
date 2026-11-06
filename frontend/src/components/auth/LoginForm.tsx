@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn, Mail, Lock } from "lucide-react";
@@ -18,10 +18,20 @@ import {
 export function LoginForm() {
   const router = useRouter();
   const { t } = useLanguage();
-  const { signIn, signInWithEmail, signInWithPassword } = useUser();
+  const { user, role, isLoading, signIn, signInWithEmail, signInWithPassword } = useUser();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      const destination =
+        role === "superadmin" || role === "admin" || role === "employee"
+          ? ROUTES.ADMIN.DASHBOARD
+          : ROUTES.USER.DASHBOARD;
+      router.replace(destination);
+    }
+  }, [user, role, isLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,108 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 import {
-  BookOpen,
   Database,
   Globe,
   HardDrive,
   Layers,
   Plus,
+  RefreshCw,
   Settings,
   BarChart3,
   Users,
   TrendingUp,
 } from "lucide-react";
-import { apiClient } from "@/lib/api/apiClient";
 import { ROUTES } from "@/lib/constants/routes";
 import {
   formatCompactNumber,
   formatFixedNumber,
 } from "@/services/admin/analytics.service";
-import { useRoleGuard } from "@/hooks/common/use-role-guard";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAdminDashboardPresenter } from "@/hooks/presenters/useAdminDashboardPresenter";
+import {
+  MetricsKpiCards,
+  RecentSettingsAuditTable,
+} from "@/components/admin/dashboard";
 
-type OverviewStats = {
-  totalStories: number;
-  totalChapters: number;
-  activeStories: number;
-  totalViews: number;
-};
-
-type EngagementSummary = {
-  mau?: number;
-  new_signups?: number;
-  dau?: number;
-};
-
-type Story = {
-  id: string;
-  title: string;
-  author: string;
-  views: number;
-  like_count: number;
-  status: string;
-  created_at: string;
-};
-
-type OverviewData = {
-  stats: OverviewStats | null;
-  engagement: EngagementSummary | null;
-  infrastructure: Record<string, unknown> | null;
-  stories: Story[];
-  recentSettingsChanges: SettingChange[];
-};
-
-type SettingChange = {
-  id: string;
-  action: string;
-  actor_email: string | null;
-  actor_name: string | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-};
-
-const empty: OverviewData = {
-  stats: null,
-  engagement: null,
-  infrastructure: null,
-  stories: [],
-  recentSettingsChanges: [],
-};
-
-/** Read a numeric field from the loosely-typed infrastructure object. */
 const infraNum = (inf: Record<string, unknown> | null | undefined, key: string): number =>
   (inf?.[key] as number) ?? 0;
 
 export default function AdminDashboardPage() {
-  useRoleGuard(["superadmin", "admin", "employee"], ROUTES.ADMIN.COMICS);
   const { t } = useLanguage();
-  const [data, setData] = useState<OverviewData>(empty);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiClient
-      .get<OverviewData>(ROUTES.API.ADMIN.ANALYTICS_DASHBOARD, { signal: AbortSignal.timeout(20000) })
-      .then((result) => {
-        if (cancelled) return;
-        setData(result ?? empty);
-        setLoading(false);
-        setError(!result);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setLoading(false);
-          setError(true);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const {
+    data,
+    isLoading: loading,
+    isError: error,
+    refetch,
+    isFetching,
+    timeRange,
+    setTimeRange,
+  } = useAdminDashboardPresenter();
 
   const { stats, engagement, infrastructure, stories, recentSettingsChanges } = data;
   const r2Usage = infraNum(infrastructure, "r2_usage_gb");
@@ -114,13 +51,43 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100">
-          {t("dash_title")}
-        </h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          {t("dash_subtitle")}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 dark:text-slate-100">
+            {t("dash_title")}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t("dash_subtitle")}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Time range selector */}
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+            {(["24h", "7d", "30d", "90d"] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setTimeRange(range)}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  timeRange === range
+                    ? "bg-white dark:bg-slate-700 text-orange-500 shadow-sm"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            title="Làm mới dữ liệu"
+            className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-400"
+          >
+            <RefreshCw size={16} className={isFetching ? "animate-spin text-orange-500" : ""} />
+          </button>
+        </div>
       </div>
 
       {loading && (
@@ -163,37 +130,10 @@ export default function AdminDashboardPage() {
             </Section>
           </motion.div>
 
-          {/* Top stat cards — 2 rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card
-              label={t("dash_total_stories")}
-              value={formatCompactNumber(stats?.totalStories ?? 0)}
-              sub={`${formatCompactNumber(stats?.activeStories ?? 0)} ${t("dash_active_stories")}`}
-              icon={BookOpen}
-              accent="text-orange-400"
-            />
-            <Card
-              label={t("dash_total_chapters")}
-              value={formatCompactNumber(stats?.totalChapters ?? 0)}
-              sub={t("dash_chapters_posted")}
-              icon={Layers}
-              accent="text-cyan-400"
-            />
-            <Card
-              label={t("dash_new_users_30d")}
-              value={formatCompactNumber(engagement?.new_signups ?? 0)}
-              sub={`${formatCompactNumber(engagement?.mau ?? 0)} ${t("dash_mau")}`}
-              icon={Users}
-              accent="text-emerald-400"
-            />
-            <Card
-              label={t("dash_total_views")}
-              value={formatCompactNumber(stats?.totalViews ?? 0)}
-              sub={`${formatCompactNumber(engagement?.dau ?? 0)} ${t("dash_dau")}`}
-              icon={TrendingUp}
-              accent="text-purple-400"
-            />
-          </div>
+          {/* Primary KPI Metrics with inline SVG sparklines */}
+          <MetricsKpiCards stats={stats} engagement={engagement} t={t} />
+
+          {/* Infrastructure stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card
               label={t("dash_r2_used")}
@@ -427,46 +367,7 @@ export default function AdminDashboardPage() {
             transition={{ duration: 0.3, delay: 0.3 }}
           >
             <Section title={t("dash_settings_log_title")}>
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
-                  <tr>
-                    <th className="p-3">Ai sửa</th>
-                    <th className="p-3">Thời gian</th>
-                    <th className="p-3">Nội dung</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60">
-                  {recentSettingsChanges.length > 0 ? (
-                    recentSettingsChanges.map((log) => (
-                      <tr
-                        key={log.id}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                      >
-                        <td className="p-3 font-semibold text-slate-900 dark:text-white">
-                          {log.actor_name || log.actor_email || "—"}
-                        </td>
-                        <td className="p-3 text-slate-500 dark:text-slate-400">
-                          {new Date(log.created_at).toLocaleString()}
-                        </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-300 font-mono text-[11px]">
-                          {Array.isArray(log.metadata?.keys)
-                            ? (log.metadata.keys as string[]).join(", ")
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={3}
-                        className="p-4 text-center text-slate-500 dark:text-slate-400"
-                      >
-                        {t("dash_settings_log_empty")}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <RecentSettingsAuditTable logs={recentSettingsChanges} t={t} />
             </Section>
           </motion.div>
 

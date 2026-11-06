@@ -30,7 +30,7 @@ jobs:
         working-directory: backend-supabase
         timeout-minutes: 15
         run: |
-          supabase start
+          supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector,functions
 
       - name: Run pgTAP SQL Tests
         working-directory: backend-supabase
@@ -52,7 +52,7 @@ jobs:
         run: |
           cd backend-supabase
           # supabase test db stops non-DB services; restart them for the API
-          supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector > /dev/null 2>&1
+          supabase start -x studio,imgproxy,logflare,mailpit,analytics,vector,functions -x studio,imgproxy,logflare,mailpit,analytics,vector > /dev/null 2>&1
           # poll until the API is back up; ANON_KEY is empty while services are starting
           for _ in $(seq 1 30); do
             eval "$(supabase status -o env 2>/dev/null)"

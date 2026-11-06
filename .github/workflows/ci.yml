@@ -84,6 +84,48 @@ jobs:
       - name: Test worker
         run: npx vitest run --root workers/${{ matrix.worker }}
 
+  sdk:
+    name: SDK Validation and Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Type-check SDK
+        run: npx --prefix packages/sdk tsc -p packages/sdk/tsconfig.json --noEmit
+
+      - name: Test SDK
+        run: npx vitest run --root packages/sdk
+
+  ui:
+    name: UI Validation and Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Type-check UI
+        run: npx --prefix packages/ui tsc -p packages/ui/tsconfig.json --noEmit
+
+      - name: Test UI
+        run: npx vitest run --root packages/ui
+
   backend-supabase:
     name: Backend Structure Validation
     runs-on: ubuntu-latest
@@ -188,7 +230,7 @@ jobs:
 
   auto-pull-request:
     name: Auto Pull Request to main
-    needs: [frontend, backend-supabase]
+    needs: [frontend, worker, backend-supabase, sdk, ui]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     permissions:

@@ -49,7 +49,7 @@ export async function handleStoriesRequest(
         if (!res.ok) return handleRes(res);
         return await res.json();
       });
-      return cachedJson(data);
+      return cachedJson(data, 600, token);
     }
 
     if (method === 'GET' && pathname === '/stories') {
@@ -118,7 +118,7 @@ export async function handleStoriesRequest(
         const total = await sbGetCount(countQ, env, token);
         return { items, total };
       });
-      return json(data);
+      return cachedJson(data, 60, token);
     }
 
     if (method === 'GET' && pathname.match(/^\/stories\/[^\/]+$/)) {
@@ -132,7 +132,7 @@ export async function handleStoriesRequest(
           return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
         return Array.isArray(data) ? data[0] || null : data;
       });
-      return json(data);
+      return cachedJson(data, 300, token);
     }
 
     if (method === 'POST' && pathname === '/stories') {

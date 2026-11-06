@@ -45,7 +45,8 @@ export function sanitizeImageUrl(
  * This avoids external network requests which might be blocked by adblockers.
  */
 export function getFallbackAvatar(name: string): string {
-  const initial = (name || "U").charAt(0).toUpperCase();
+  const rawChar = (name || "U").trim().charAt(0).toUpperCase();
+  const initial = /^[A-Z0-9]$/.test(rawChar) ? rawChar : "U";
   // Using a nice gradient background for the avatar
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
     <defs>

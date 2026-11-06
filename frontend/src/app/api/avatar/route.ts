@@ -29,8 +29,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
   }
 
+  const configuredHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+    : null;
+
   const isValidSupabaseAvatar =
-    parsedUrl.hostname.endsWith('.supabase.co') &&
+    (configuredHost
+      ? parsedUrl.hostname === configuredHost
+      : parsedUrl.hostname.endsWith('.supabase.co')) &&
     normalizedPath.startsWith('/storage/v1/object/public/avatars/');
 
   if (!isValidSupabaseAvatar) {
@@ -56,6 +62,10 @@ export async function GET(request: Request) {
     // Validate that upstream returns an image
     if (!contentType.startsWith('image/')) {
       return NextResponse.json({ error: 'Upstream returned non-image content' }, { status: 502 });
+    }
+
+    if (contentType.includes('svg') || contentType === 'image/svg+xml') {
+      return NextResponse.json({ error: 'SVG images not supported' }, { status: 400 });
     }
 
     const contentLength = Number(response.headers.get('content-length'));

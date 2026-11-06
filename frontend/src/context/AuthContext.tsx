@@ -27,12 +27,9 @@ const normalizeRole = (value: unknown): UserRole | null => {
 
 const resolveRole = (user: User | null, profileRole?: unknown): UserRole | null => {
   // Mirror middleware/use-user: app_metadata.role preferred (synced by the DB
-  // trigger), user_metadata fallback, profiles table last.
+  // trigger), profiles table fallback. Untrusted user_metadata.role is strictly excluded.
   const resolvedAppRole = normalizeRole(user?.app_metadata?.role);
   if (resolvedAppRole) return resolvedAppRole;
-
-  const resolvedMetaRole = normalizeRole(user?.user_metadata?.role);
-  if (resolvedMetaRole) return resolvedMetaRole;
 
   const resolvedProfileRole = normalizeRole(profileRole);
   if (resolvedProfileRole) return resolvedProfileRole;
@@ -77,6 +74,7 @@ interface AuthContextType {
   profile: AuthProfile | null;
   role: UserRole | null;
   loading: boolean;
+  isInitialized: boolean;
   signIn: () => Promise<void>;
   signInWithEmail: (email: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
@@ -102,6 +100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<AuthProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
   const queryClient = useQueryClient();
 
   const ensureProfileExists = async (authUser: User) => {
@@ -128,13 +127,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const fetchProfile = async (authUser: User) => {
+    // Immediately build a fallback profile from auth user so profile is never null
+    setProfile(buildProfile(authUser));
+
     if (!supabase) {
       setLoading(false);
       return;
     }
     try {
-      await ensureProfileExists(authUser);
-
+      // First attempt to fetch existing profile
       const { data, error } = await supabase
         .from("profiles")
         .select(PROFILE_SELECT)
@@ -142,7 +143,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .maybeSingle();
 
       if (error) throw error;
-      setProfile(buildProfile(authUser, data as ProfileRow | undefined));
+
+      if (data) {
+        // Profile exists – use it
+        setProfile(buildProfile(authUser, data as ProfileRow));
+      } else {
+        // No profile – create fallback then upsert
+        await ensureProfileExists(authUser);
+        const { data: newData, error: newError } = await supabase
+          .from("profiles")
+          .select(PROFILE_SELECT)
+          .eq("id", authUser.id)
+          .maybeSingle();
+        if (newError) throw newError;
+        setProfile(buildProfile(authUser, newData as ProfileRow));
+      }
     } catch (error) {
       console.warn("Could not fetch profile from database, using session user fallback:", getErrorMessage(error));
       setProfile(buildProfile(authUser));
@@ -156,12 +171,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (!supabase) {
       setLoading(false);
+      setIsInitialized(true);
       return;
     }
 
     // Safety release in case auth/profile calls stall unexpectedly.
     const loadingFallback = window.setTimeout(() => {
-      if (isActive) setLoading(false);
+      if (isActive) {
+        setLoading(false);
+        setIsInitialized(true);
+      }
     }, 12000);
 
     const bootstrapAuth = async () => {
@@ -184,6 +203,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setUser(null);
         setProfile(null);
         setLoading(false);
+      } finally {
+        if (isActive) setIsInitialized(true);
       }
     };
 
@@ -399,6 +420,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         profile,
         role: resolveRole(user, profile?.role),
         loading,
+        isInitialized,
         signIn,
         signInWithEmail,
         signInWithPassword,
