@@ -78,4 +78,33 @@ describe('redis-sync', () => {
     expect(rpcCalls[0]).toEqual({ story_id_param: 'story-scheduled', inc: 99 });
     expect(await kv.get('view:story-scheduled')).toBeNull();
   });
+
+  it('preserves KV key when Supabase RPC fails to prevent data loss', async () => {
+    await kv.put('view:story-fail', '50');
+
+    globalThis.fetch = vi.fn(async () => {
+      return new Response(JSON.stringify({ error: 'Database timeout' }), { status: 500 });
+    }) as any;
+
+    await syncViews(env);
+
+    // Key must NOT be deleted if RPC failed
+    expect(String(await kv.get('view:story-fail'))).toBe('50');
+  });
+
+  it('correctly handles story IDs containing colons', async () => {
+    await kv.put('view:comic:ch-1:page-2', '10');
+
+    const rpcCalls: any[] = [];
+    globalThis.fetch = vi.fn(async (_url, init) => {
+      rpcCalls.push(init?.body ? JSON.parse(init.body as string) : null);
+      return new Response(JSON.stringify({ success: true }), { status: 200 });
+    }) as any;
+
+    await syncViews(env);
+
+    expect(rpcCalls).toHaveLength(1);
+    expect(rpcCalls[0]).toEqual({ story_id_param: 'comic:ch-1:page-2', inc: 10 });
+    expect(await kv.get('view:comic:ch-1:page-2')).toBeNull();
+  });
 });

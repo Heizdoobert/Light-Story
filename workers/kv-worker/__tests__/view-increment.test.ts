@@ -42,6 +42,7 @@ describe('view-increment', () => {
 
     const res = await worker.fetch(req, env, mockCtx);
     expect(res.status).toBe(204);
+    expect(await res.text()).toBe('');
 
     const val = await kv.get('view:story-123');
     expect(String(val)).toBe('1');
@@ -49,8 +50,25 @@ describe('view-increment', () => {
     // Second call increments to 2
     const res2 = await worker.fetch(req, env, mockCtx);
     expect(res2.status).toBe(204);
+    expect(await res2.text()).toBe('');
     const val2 = await kv.get('view:story-123');
     expect(String(val2)).toBe('2');
+  });
+
+  it('supports /api/stories/:id/view without v1 prefix', async () => {
+    const req = new Request('http://localhost/api/stories/story-alt/view', {
+      method: 'POST',
+      headers: {
+        'x-user-role': 'user',
+      },
+    });
+
+    const res = await worker.fetch(req, env, mockCtx);
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe('');
+
+    const val = await kv.get('view:story-alt');
+    expect(String(val)).toBe('1');
   });
 
   it('rejects unauthenticated requests with 401', async () => {

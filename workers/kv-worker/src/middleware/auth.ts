@@ -164,7 +164,7 @@ export async function validateJWT(
   if (!userId) throw new UnauthorizedError("Missing subject (sub) in token");
 
   const email = payload.email ?? undefined;
-  const sbUrl = env?.SUPABASE_URL || (globalThis as any).SUPABASE_URL;
+  const sbUrl = (globalThis as any).SUPABASE_URL || env?.SUPABASE_URL;
 
   // ── Verify the signature BEFORE trusting anything in the payload. ────────
   // Role resolution used to run first, which meant a forged token drove a

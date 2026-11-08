@@ -22,17 +22,22 @@ export async function incrementStoryView(
   if (count >= 1000) {
     // Call Supabase RPC to increment story views (assumes existing rpc)
     const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-    await fetch(`${sbUrl}/rest/v1/rpc/increment_story_views`, {
-      method: 'POST',
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ story_id_param: storyId, inc: count }),
-    });
-    // Reset KV counter regardless of RPC success (best‑effort)
-    await env.APP_KV.put(kvKey, '0');
+    try {
+      const res = await fetch(`${sbUrl}/rest/v1/rpc/increment_story_views`, {
+        method: 'POST',
+        headers: {
+          apikey: env.SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ story_id_param: storyId, inc: count }),
+      });
+      if (res.ok) {
+        await env.APP_KV.put(kvKey, '0');
+      }
+    } catch {
+      // Best-effort inline flush; keep counter in KV if RPC fails so scheduled cron sync can retry
+    }
     if (isHandler) {
       return new Response(null, { status: 204 });
     }
