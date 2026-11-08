@@ -1,0 +1,11 @@
+name = "kv-worker"
+main = "src/index.ts"
+account_id = "8ee8907819b5859d9543d68380ab6c1a"
+compatibility_date = "2026-07-02"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+minify = true
+
+# Cloudflare Cron Trigger running scripts/redis_sync.ts daily at 02:00 UTC
+[triggers]
+crons = ["0 2 * * *"]

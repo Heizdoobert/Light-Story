@@ -7,6 +7,7 @@ vi.mock('cloudflare:workers', () => ({
 }));
 
 import worker from '../src/index';
+import { sbGet } from '../src/utils/supabase-client';
 
 function createEnv(): Env {
   return {
@@ -89,5 +90,42 @@ describe('region-routing', () => {
 
     await worker.fetch(req, env, mockCtx);
     expect((globalThis as any).SUPABASE_URL).toBe('https://default.supabase.co');
+  });
+
+  it('downstream sb utilities fall back to env.SUPABASE_URL when globalThis is unset', async () => {
+    delete (globalThis as any).SUPABASE_URL;
+
+    let calledUrl = '';
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (url: any) => {
+      calledUrl = url.toString();
+      return new Response(JSON.stringify([]), { status: 200 });
+    }) as any;
+
+    try {
+      await sbGet('stories', 'id=eq.1', env);
+      expect(calledUrl).toContain('https://default.supabase.co/rest/v1/stories?id=eq.1');
+    } finally {
+      globalThis.fetch = origFetch;
+    }
+  });
+
+  it('downstream sb utilities respect globalThis.SUPABASE_URL when set', async () => {
+    (globalThis as any).SUPABASE_URL = 'https://eu.supabase.co';
+
+    let calledUrl = '';
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(async (url: any) => {
+      calledUrl = url.toString();
+      return new Response(JSON.stringify([]), { status: 200 });
+    }) as any;
+
+    try {
+      await sbGet('stories', 'id=eq.1', env);
+      expect(calledUrl).toContain('https://eu.supabase.co/rest/v1/stories?id=eq.1');
+    } finally {
+      globalThis.fetch = origFetch;
+      delete (globalThis as any).SUPABASE_URL;
+    }
   });
 });

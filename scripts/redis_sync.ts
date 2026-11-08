@@ -4,28 +4,44 @@
 // Minimal Redis sync script
 // Iterates KV keys with prefix 'view:' and syncs counts to Supabase
 
-export async function syncViews(env: Env) {
+export async function syncViews(env: Env): Promise<void> {
   if (!env.APP_KV) return;
-  const list = await env.APP_KV.list({ prefix: 'view:' });
-  for (const key of list.keys) {
-    const storyId = key.name.split(':')[1];
-    const val = await env.APP_KV.get(key.name);
-    const count = val ? parseInt(val, 10) : 0;
-    if (count > 0) {
-      // Sync via RPC (assumes existing RPC)
-      const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-      await fetch(`${sbUrl}/rest/v1/rpc/increment_story_views`, {
-        method: 'POST',
-        headers: {
-          apikey: env.SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ story_id_param: storyId, inc: count }),
-      });
+
+  let currentCursor: string | undefined = undefined;
+  let complete = false;
+  while (!complete) {
+    const listResult: KVNamespaceListResult<unknown> = await env.APP_KV.list(
+      currentCursor ? { prefix: 'view:', cursor: currentCursor } : { prefix: 'view:' }
+    );
+    for (const key of listResult.keys) {
+      const storyId = key.name.startsWith('view:') ? key.name.slice(5) : key.name;
+      const val = await env.APP_KV.get(key.name);
+      const count = val ? parseInt(val, 10) : 0;
+      if (count > 0) {
+        const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
+        try {
+          const res = await fetch(`${sbUrl}/rest/v1/rpc/increment_story_views`, {
+            method: 'POST',
+            headers: {
+              apikey: env.SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ story_id_param: storyId, inc: count }),
+          });
+          if (!res.ok) {
+            console.error(`[RedisSync] Failed RPC for ${storyId}: ${res.status}`);
+            continue; // Prevent data loss: retain KV key on RPC error
+          }
+        } catch (e) {
+          console.error(`[RedisSync] Network error for ${storyId}:`, e);
+          continue; // Prevent data loss: retain KV key on network failure
+        }
+      }
+      await env.APP_KV.delete(key.name);
     }
-    // delete key after sync
-    await env.APP_KV.delete(key.name);
+    complete = listResult.list_complete;
+    currentCursor = listResult.list_complete ? undefined : (listResult as any).cursor;
   }
 }
 
