@@ -30,6 +30,7 @@ import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 import { handleTieringFallback } from './utils/tiering-fallback';
 import { checkIdempotency, saveIdempotency } from './middleware/idempotency';
+import { getAuthRole, requireActionRole } from './utils/validation';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -162,7 +163,11 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     // Determine nearest Supabase replica based on CF-Region header
-  const cfRegion = (request as any).cf?.region as string | undefined;
+    const cfRegion =
+      ((request as any).cf?.region as string | undefined) ||
+      request.headers.get('CF-Region') ||
+      request.headers.get('cf-region') ||
+      undefined;
   let supabaseUrl = env.SUPABASE_URL;
   if (cfRegion) {
     // Simple heuristic: assume EU region codes start with "EU" and US with "US"
@@ -220,14 +225,52 @@ export default {
     // POST /stories/{id}/view -> increment view counter (supports /api/v1/stories/:id/view and /api/stories/:id/view)
     const viewMatch = strippedPath.match(/^\/stories\/([^\/]+)\/view$/);
     if (request.method === 'POST' && viewMatch) {
+      let role = getAuthRole(request);
+      if (!role && request.headers.has('Authorization')) {
+        try {
+          const authUser = await validateJWT(request.headers.get('Authorization')!, env);
+          role = authUser.role;
+        } catch {
+          // invalid jwt token
+        }
+      }
+      if (!role) {
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }),
+          {
+            status: 401,
+            headers: (() => {
+              const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+              h.set('x-request-id', requestId);
+              h.set('x-trace-id', traceId);
+              applySecurityHeaders(h);
+              return h;
+            })(),
+          },
+        );
+      }
+      if (!requireActionRole(role)) {
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Forbidden' } }),
+          {
+            status: 403,
+            headers: (() => {
+              const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+              h.set('x-request-id', requestId);
+              h.set('x-trace-id', traceId);
+              applySecurityHeaders(h);
+              return h;
+            })(),
+          },
+        );
+      }
       const storyId = viewMatch[1];
-      // ignore response from incrementStoryView, just return 204
-      await incrementStoryView(env, storyId);
+      const res = await incrementStoryView(env, storyId, true);
       const h = new Headers(corsHeaders(origin));
       h.set('x-request-id', requestId);
       h.set('x-trace-id', traceId);
       applySecurityHeaders(h);
-      return new Response(null, { status: 204, headers: h });
+      return new Response(null, { status: res.status, headers: h });
     }
 
     // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
@@ -679,6 +722,15 @@ export default {
         message.retry();
       }
     }
+  },
+
+  async scheduled(
+    event: ScheduledEvent,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    const { syncViews } = await import('../../../scripts/redis_sync');
+    await syncViews(env);
   },
 };
 

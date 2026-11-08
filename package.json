@@ -8,7 +8,7 @@
     "backend-supabase"
   ],
   "scripts": {
-    "test": "npm --prefix frontend run test:run",
+    "test": "npm --prefix frontend run test:run && npm --prefix workers/kv-worker test",
 
     "prepush:security": "npm audit --audit-level=high && echo 'Security check passed' || (echo 'Security issues detected – aborting push.' && exit 1)",
     "prepare": "husky install || true",

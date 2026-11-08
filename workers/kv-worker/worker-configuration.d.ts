@@ -3,6 +3,8 @@
 // Runtime types generated with workerd@1.20260625.1 2026-05-16 
 interface __BaseEnv_Env {
 	SUPABASE_URL: string;
+	SUPABASE_URL_EU?: string;
+	SUPABASE_URL_US?: string;
 	SUPABASE_ANON_KEY: string;
 	SUPABASE_JWKS_URL: string;
 	USE_NEW_UNIFIED_GATEWAY: string;

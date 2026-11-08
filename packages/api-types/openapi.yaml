@@ -108,6 +108,26 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /stories/{id}/view:
+    post:
+      summary: Increment story view counter
+      operationId: incrementStoryView
+      tags: [stories]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: View counted successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
   # ── Chapters ─────────────────────────────────────────────
   /chapters:
     get:

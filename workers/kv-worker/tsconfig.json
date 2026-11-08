@@ -16,6 +16,7 @@
   },
   "include": [
     "src/**/*",
+    "__tests__/**/*",
     "worker-configuration.d.ts"
   ]
 }
