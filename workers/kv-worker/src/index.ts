@@ -19,6 +19,7 @@ import {
   UnauthorizedError,
 } from './middleware/auth';
 import { handleStoriesRequest } from './routes/stories';
+import { incrementStoryView } from './counters';
 import { handleComicsRequest } from './routes/comics';
 import { handleAdminRequest } from './routes/admin';
 import { handleAnalyticsRequest } from './routes/analytics';
@@ -28,6 +29,8 @@ import { checkRateLimit } from './middleware/rateLimitKV';
 import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 import { handleTieringFallback } from './utils/tiering-fallback';
+import { checkIdempotency, saveIdempotency } from './middleware/idempotency';
+import { getAuthRole, requireActionRole } from './utils/validation';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -80,7 +83,8 @@ async function handleSupabaseProxy(
     );
   }
 
-  const targetUrl = `${env.SUPABASE_URL}${sbPath}`;
+  const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
+  const targetUrl = `${sbUrl}${sbPath}`;
   const headers = new Headers(request.headers);
   headers.delete('x-user-role');
   headers.delete('x-user-id');
@@ -163,13 +167,43 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    const rawReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id');
+    // Determine nearest Supabase replica based on x-supabase-region or CF-Region header
+    const explicitRegion =
+      request.headers.get('x-supabase-region') ||
+      request.headers.get('X-Supabase-Region') ||
+      undefined;
+    const cfRegion =
+      ((request as any).cf?.region as string | undefined) ||
+      request.headers.get('CF-Region') ||
+      request.headers.get('cf-region') ||
+      undefined;
+    const regionHint = (explicitRegion || cfRegion || '').toUpperCase();
+
+    // Read queries (GET, HEAD) can route to regional read replicas.
+    // Mutating operations (POST, PUT, PATCH, DELETE) MUST always route to primary SUPABASE_URL.
+    const isReadOperation = request.method === 'GET' || request.method === 'HEAD';
+    let supabaseUrl = env.SUPABASE_URL;
+    let resolvedRegion = 'primary';
+
+    if (isReadOperation && regionHint) {
+      if (regionHint.startsWith('EU')) {
+        supabaseUrl = env.SUPABASE_URL_EU || env.SUPABASE_URL;
+        if (env.SUPABASE_URL_EU) resolvedRegion = 'replica-eu';
+      } else if (regionHint.startsWith('US')) {
+        supabaseUrl = env.SUPABASE_URL_US || env.SUPABASE_URL;
+        if (env.SUPABASE_URL_US) resolvedRegion = 'replica-us';
+      }
+    }
+    // expose for downstream utils
+    (globalThis as any).SUPABASE_URL = supabaseUrl;
+
+    const incomingTrace = request.headers.get('x-trace-id') || request.headers.get('X-Trace-Id');
+    const rawReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id') || incomingTrace;
     const isSafeReqId = rawReqId && /^[a-zA-Z0-9_\-\.]{1,64}$/.test(rawReqId);
     const requestId = isSafeReqId
       ? rawReqId
       : ("req_" + Date.now() + "_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)));
-
-    (globalThis as any).SUPABASE_URL = env.SUPABASE_URL;
+    const traceId = incomingTrace || requestId;
     (globalThis as any).SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
     (globalThis as any).SUPABASE_JWKS_URL =
       env.SUPABASE_JWKS_URL;
@@ -189,25 +223,81 @@ export default {
       .filter(Boolean);
 
     if (origin && !isOriginAllowed(origin, allowedSuffixes)) {
-      return new Response('Forbidden', {
-        status: 403,
-        headers: (() => {
-          const h = new Headers();
-          h.set('X-Request-Id', requestId);
-          applySecurityHeaders(h);
-          return h;
-        })(),
-      });
+      const h = new Headers({ 'Content-Type': 'application/json' });
+      h.set('X-Request-Id', requestId);
+      h.set('x-request-id', requestId);
+      h.set('x-trace-id', traceId);
+      applySecurityHeaders(h);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Forbidden origin' },
+          timestamp: new Date().toISOString(),
+          correlationId: requestId,
+        }),
+        {
+          status: 403,
+          headers: h,
+        },
+      );
     }
 
     const pathname = url.pathname;
+    const strippedPath = stripApiPrefix(pathname);
+
+    // POST /stories/{id}/view -> increment view counter (supports /api/v1/stories/:id/view and /api/stories/:id/view)
+    const viewMatch = strippedPath.match(/^\/stories\/([^\/]+)\/view$/);
+    if (request.method === 'POST' && viewMatch) {
+      let role = getAuthRole(request);
+      if (!role && request.headers.has('Authorization')) {
+        try {
+          const authUser = await validateJWT(request.headers.get('Authorization')!, env);
+          role = authUser.role;
+        } catch {
+          // invalid jwt token
+        }
+      }
+      if (!role) {
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authentication required' } }),
+          {
+            status: 401,
+            headers: (() => {
+              const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+              h.set('x-request-id', requestId);
+              h.set('x-trace-id', traceId);
+              applySecurityHeaders(h);
+              return h;
+            })(),
+          },
+        );
+      }
+      if (!requireActionRole(role)) {
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'FORBIDDEN', message: 'Forbidden' } }),
+          {
+            status: 403,
+            headers: (() => {
+              const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+              h.set('x-request-id', requestId);
+              h.set('x-trace-id', traceId);
+              applySecurityHeaders(h);
+              return h;
+            })(),
+          },
+        );
+      }
+      const storyId = viewMatch[1];
+      const res = await incrementStoryView(env, storyId, true);
+      const h = new Headers(corsHeaders(origin));
+      h.set('x-request-id', requestId);
+      h.set('x-trace-id', traceId);
+      applySecurityHeaders(h);
+      return new Response(null, { status: res.status, headers: h });
+    }
 
     // Real traffic telemetry -> Analytics Engine (non-blocking, best-effort).
     // blobs: [hostname, device, pathname]; index: 'request'.
-    // NOTE: blob ORDER is the read contract with /analytics/infrastructure —
-    // read via aliased SQL columns (blob1=host, blob2=device, blob3=pathname).
-    // cf-cache-status is a response header; edge hits bypass the worker, so
-    // a cache-hit ratio from request headers would be structurally wrong.
     recordAnalyticsEngineEvent(env, {
       indexes: ['request'],
       blobs: [
@@ -218,29 +308,33 @@ export default {
       doubles: [Date.now()],
     });
 
-    if (request.method === 'GET' && pathname === '/api/health') {
+    if (request.method === 'GET' && (strippedPath === '/health' || pathname === '/api/health')) {
+      const h = new Headers({
+        'Content-Type': 'application/json',
+        'x-request-id': requestId,
+        'x-trace-id': traceId,
+        ...corsHeaders(origin),
+      });
+      applySecurityHeaders(h);
       return new Response(
         JSON.stringify({
           status: 'ok',
           worker: 'kv-worker',
           requestId,
           timestamp: new Date().toISOString(),
+          correlationId: requestId,
         }),
         {
           status: 200,
-          headers: (() => {
-            const h = new Headers({
-              'Content-Type': 'application/json',
-              'X-Request-Id': requestId,
-              ...corsHeaders(origin),
-            });
-            applySecurityHeaders(h);
-            return h;
-          })(),
+          headers: h,
         },
       );
     }
-    const isAuthOrAdmin = pathname.startsWith('/api/admin') || pathname.startsWith('/api/auth');
+    const isAuthOrAdmin =
+      strippedPath.startsWith('/admin') ||
+      strippedPath.startsWith('/auth') ||
+      pathname.startsWith('/api/admin') ||
+      pathname.startsWith('/api/auth');
 
     const authHeader = request.headers.get('Authorization') ?? '';
     let authCtx = null;
@@ -251,6 +345,14 @@ export default {
         // If route is protected/admin or non-GET write operation, enforce 401
         if (isAuthOrAdmin || (request.method !== 'GET' && request.method !== 'HEAD' && request.method !== 'OPTIONS')) {
           if (e instanceof UnauthorizedError) {
+            const h = new Headers({
+              'Content-Type': 'application/json',
+              'X-Request-Id': requestId,
+              'x-request-id': requestId,
+              'x-trace-id': traceId,
+              ...corsHeaders(origin),
+            });
+            applySecurityHeaders(h);
             return new Response(
               JSON.stringify({
                 success: false,
@@ -259,38 +361,28 @@ export default {
                   message: e.message,
                   requestId,
                 },
+                timestamp: new Date().toISOString(),
+                correlationId: requestId,
               }),
-              {
-                status: 401,
-                headers: (() => {
-                  const h = new Headers({
-                    'Content-Type': 'application/json',
-                    'X-Request-Id': requestId,
-                    ...corsHeaders(origin),
-                  });
-                  applySecurityHeaders(h);
-                  return h;
-                })(),
-              },
+              { status: 401, headers: h },
             );
           }
+          const h = new Headers({
+            'Content-Type': 'application/json',
+            'X-Request-Id': requestId,
+            'x-request-id': requestId,
+            'x-trace-id': traceId,
+            ...corsHeaders(origin),
+          });
+          applySecurityHeaders(h);
           return new Response(
             JSON.stringify({
               success: false,
-              error: { code: 'INTERNAL_ERROR', requestId },
+              error: { code: 'INTERNAL_ERROR', message: 'Internal server error', requestId },
+              timestamp: new Date().toISOString(),
+              correlationId: requestId,
             }),
-            {
-              status: 500,
-              headers: (() => {
-                const h = new Headers({
-                  'Content-Type': 'application/json',
-                  'X-Request-Id': requestId,
-                  ...corsHeaders(origin),
-                });
-                applySecurityHeaders(h);
-                return h;
-              })(),
-            },
+            { status: 500, headers: h },
           );
         }
         // For public GET requests, log warning and allow unauthenticated fallback
@@ -309,6 +401,8 @@ export default {
         'X-RateLimit-Limit': String(rateLimit.limit),
         'X-RateLimit-Remaining': '0',
         'X-Request-Id': requestId,
+        'x-request-id': requestId,
+        'x-trace-id': traceId,
         ...corsHeaders(origin),
       });
       applySecurityHeaders(headers);
@@ -316,31 +410,46 @@ export default {
         JSON.stringify({
           success: false,
           error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.', requestId },
+          timestamp: new Date().toISOString(),
+          correlationId: requestId,
         }),
         { status: 429, headers },
       );
     }
 
-    const strippedPath = stripApiPrefix(pathname);
     const method = request.method;
 
+    // Check Idempotency for write requests
+    const idempotency = await checkIdempotency(request, env.APP_KV, origin, authCtx?.userId);
+    if (idempotency.hit && idempotency.response) {
+      const hitHeaders = new Headers(idempotency.response.headers);
+      hitHeaders.set('x-request-id', requestId);
+      hitHeaders.set('x-trace-id', traceId);
+      return new Response(idempotency.response.body, {
+        status: idempotency.response.status,
+        headers: hitHeaders,
+      });
+    }
+
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
+      const h = new Headers({
+        'Content-Type': 'application/json',
+        'X-Request-Id': requestId,
+        'x-request-id': requestId,
+        'x-trace-id': traceId,
+        ...corsHeaders(origin),
+      });
+      applySecurityHeaders(h);
       return new Response(
         JSON.stringify({
           success: false,
           error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations', requestId },
+          timestamp: new Date().toISOString(),
+          correlationId: requestId,
         }),
         {
           status: 401,
-          headers: (() => {
-            const h = new Headers({
-              'Content-Type': 'application/json',
-              'X-Request-Id': requestId,
-              ...corsHeaders(origin),
-            });
-            applySecurityHeaders(h);
-            return h;
-          })(),
+          headers: h,
         },
       );
     }
@@ -361,10 +470,9 @@ export default {
     downstreamHeaders.delete('x-user-role');
     downstreamHeaders.delete('x-user-id');
     downstreamHeaders.delete('x-user-email');
-    downstreamHeaders.set(
-      'x-request-id',
-      requestId,
-    );
+    downstreamHeaders.set('x-request-id', requestId);
+    downstreamHeaders.set('X-Request-Id', requestId);
+    downstreamHeaders.set('x-trace-id', traceId);
     downstreamHeaders.set('x-begin-timestamp', String(Date.now()));
     if (authCtx) {
       downstreamHeaders.set('Authorization', authHeader);
@@ -503,7 +611,8 @@ export default {
       } else {
         try {
           let q = 'select=key,value&or=(key.like.public_%,key.like.ad_%)';
-          const supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+          const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
+          const supRes = await fetch(`${sbUrl}/rest/v1/site_settings?${q}`, {
             headers: {
               apikey: svcKey,
               Authorization: `Bearer ${svcKey}`,
@@ -559,10 +668,17 @@ export default {
       res = err('NOT_FOUND', `No route: ${request.method} ${pathname}`, 404);
     }
 
+    // Save idempotency cache if request is a successful mutation with Idempotency-Key
+    if (env.APP_KV && res.ok && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      ctx.waitUntil(saveIdempotency(request, res, env.APP_KV, authCtx?.userId));
+    }
+
     const resHeaders = new Headers(res.headers);
     for (const [k, v] of Object.entries(c))
       resHeaders.set(k, v as string);
+    resHeaders.set('x-request-id', requestId);
     resHeaders.set('X-Request-Id', requestId);
+    resHeaders.set('x-trace-id', traceId);
     applySecurityHeaders(resHeaders);
 
     const contentType = res.headers.get('Content-Type') || '';
@@ -579,6 +695,17 @@ export default {
       }
       const obj = parsed as Record<string, unknown>;
       if (obj && typeof obj.success === 'boolean') {
+        if (!obj.timestamp || !obj.correlationId) {
+          const augmented = {
+            ...obj,
+            timestamp: obj.timestamp || new Date().toISOString(),
+            correlationId: obj.correlationId || requestId,
+          };
+          return new Response(JSON.stringify(augmented), {
+            status: res.status,
+            headers: resHeaders,
+          });
+        }
         return new Response(bodyText, {
           status: res.status,
           headers: resHeaders,
@@ -590,6 +717,7 @@ export default {
             data: parsed,
             requestId,
             timestamp: new Date().toISOString(),
+            correlationId: requestId,
           }
         : {
             success: false,
@@ -601,8 +729,10 @@ export default {
                 (obj as any)?.error?.message ||
                 res.statusText,
               requestId,
+              ...((obj as any)?.error?.details ? { details: (obj as any).error.details } : {}),
             },
             timestamp: new Date().toISOString(),
+            correlationId: requestId,
           };
       return new Response(JSON.stringify(wrapped), {
         status: res.ok ? 200 : res.status,
@@ -641,6 +771,15 @@ export default {
         message.retry();
       }
     }
+  },
+
+  async scheduled(
+    event: ScheduledEvent,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<void> {
+    const { syncViews } = await import('../../../scripts/redis_sync');
+    await syncViews(env);
   },
 };
 

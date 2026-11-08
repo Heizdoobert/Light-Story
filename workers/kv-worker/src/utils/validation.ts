@@ -128,6 +128,13 @@ export function requireRole(role: string | null, allowed: string[]): boolean {
   return role !== null && allowed.includes(role);
 }
 
+export function requireActionRole(
+  role: string | null,
+  allowed: readonly string[] = APP_ROLES,
+): boolean {
+  return role !== null && (allowed as readonly string[]).includes(role);
+}
+
 export const APP_ROLES = ['superadmin', 'admin', 'employee', 'user', 'haunt'] as const;
 
 export type AppRole = (typeof APP_ROLES)[number];

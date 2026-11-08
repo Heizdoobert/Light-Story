@@ -3,6 +3,8 @@
 // Runtime types generated with workerd@1.20260625.1 2026-05-16 
 interface __BaseEnv_Env {
 	SUPABASE_URL: string;
+	SUPABASE_URL_EU?: string;
+	SUPABASE_URL_US?: string;
 	SUPABASE_ANON_KEY: string;
 	SUPABASE_JWKS_URL: string;
 	USE_NEW_UNIFIED_GATEWAY: string;
@@ -15,6 +17,9 @@ interface __BaseEnv_Env {
 	ANALYTICS_DATA?: AnalyticsEngineDataset;
 	LIGHTSTORY_QUEUE?: Queue;
 	LIGHTSTORY_WORKFLOW?: Workflow;
+}
+declare global {
+	var SUPABASE_URL: string | undefined;
 }
 declare namespace Cloudflare {
 	interface GlobalProps {
@@ -13025,6 +13030,9 @@ declare namespace Rpc {
     export type Provider<T extends object, Reserved extends string = never> = MaybeCallableProvider<T> & Pick<{
         [K in keyof T]: MethodOrProperty<T[K]>;
     }, Exclude<keyof T, Reserved | symbol | keyof StubBase<never>>>;
+}
+declare global {
+	var SUPABASE_URL: string | undefined;
 }
 declare namespace Cloudflare {
     // Type of `env`.

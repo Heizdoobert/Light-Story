@@ -72,6 +72,9 @@
       "dataset": "lightstory_analytics"
     }
   ],
+  "triggers": {
+    "crons": ["0 2 * * *"]
+  },
   "env": {
     "production": {
       "routes": [

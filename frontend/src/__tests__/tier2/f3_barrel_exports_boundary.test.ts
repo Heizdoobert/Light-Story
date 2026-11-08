@@ -114,11 +114,15 @@ describe('F3 boundary: hooks barrel (@/hooks)', () => {
     }
   });
 
-  it('keeps every runtime export a function and no default export', () => {
+  it('keeps every runtime export a function (or object for initial data) and no default export', () => {
     const keys = Object.keys(hooks);
     expect(keys.length).toBeGreaterThanOrEqual(14);
     for (const key of keys) {
-      expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
+      if (key === 'initialOverviewData') {
+        expect(typeof hooks[key as keyof HooksModule], key).toBe('object');
+      } else {
+        expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
+      }
     }
     expect((hooks as Record<string, unknown>).default).toBeUndefined();
   });

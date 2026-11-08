@@ -11,7 +11,12 @@ export function fakeKV(): KVNamespace & { store: Map<string, string> } {
     store,
     get: async (key: string) => {
       const raw = store.get(key);
-      return raw === undefined ? null : JSON.parse(raw);
+      if (raw === undefined) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return raw;
+      }
     },
     put: async (key: string, value: string) => {
       store.set(key, value);

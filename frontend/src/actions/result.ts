@@ -5,9 +5,13 @@ export type ActionResult<T = unknown> = {
   success: boolean;
   data?: T;
   error?: string;
+  code?: string;
+  details?: unknown;
 };
 
-type RunResult<R = unknown> = { ok: true; data?: R } | { ok: false; error: string };
+type RunResult<R = unknown> =
+  | { ok: true; data?: R }
+  | { ok: false; error: string; code?: string; details?: unknown };
 
 export async function act<T, R = unknown>(
   schema: z.ZodType<T>,
@@ -23,7 +27,15 @@ export async function act<T, R = unknown>(
   }
   try {
     const result = await run(parsed.data);
-    return result.ok ? { success: true, data: result.data } : { success: false, error: result.error };
+    if (result.ok) {
+      return { success: true, data: result.data };
+    }
+    return {
+      success: false,
+      error: result.error,
+      ...(result.code ? { code: result.code } : {}),
+      ...(result.details ? { details: result.details } : {}),
+    };
   } catch (err) {
     return { success: false, error: getErrorMessage(err) };
   }
