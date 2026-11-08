@@ -48,8 +48,19 @@ END $$;
 -- STABLE tells PostgreSQL that the function cannot modify the database and that
 -- within a single statement it will consistently return the same result for the
 -- same arguments, enabling plan caching and InitPlan evaluation.
-ALTER FUNCTION IF EXISTS app_private.has_role(uuid, app_role) STABLE;
-ALTER FUNCTION IF EXISTS app_private.has_role(text[]) STABLE;
+DO $$
+BEGIN
+  BEGIN
+    ALTER FUNCTION app_private.has_role(uuid, app_role) STABLE;
+  EXCEPTION WHEN undefined_function THEN
+    NULL;
+  END;
+  BEGIN
+    ALTER FUNCTION app_private.has_role(text[]) STABLE;
+  EXCEPTION WHEN undefined_function THEN
+    NULL;
+  END;
+END $$;
 
 -- 1.3 Table: public.reading_history
 -- RLS Policy: Wrap auth.uid() in (SELECT auth.uid()) for InitPlan O(1)
