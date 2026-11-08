@@ -16,6 +16,9 @@ interface __BaseEnv_Env {
 	LIGHTSTORY_QUEUE?: Queue;
 	LIGHTSTORY_WORKFLOW?: Workflow;
 }
+declare global {
+	var SUPABASE_URL: string | undefined;
+}
 declare namespace Cloudflare {
 	interface GlobalProps {
 		mainModule: typeof import("./src/index");
@@ -13025,6 +13028,9 @@ declare namespace Rpc {
     export type Provider<T extends object, Reserved extends string = never> = MaybeCallableProvider<T> & Pick<{
         [K in keyof T]: MethodOrProperty<T[K]>;
     }, Exclude<keyof T, Reserved | symbol | keyof StubBase<never>>>;
+}
+declare global {
+	var SUPABASE_URL: string | undefined;
 }
 declare namespace Cloudflare {
     // Type of `env`.

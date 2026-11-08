@@ -91,6 +91,9 @@ export async function updateComic(id: string, data: UpdateComicInput): Promise<A
 export async function deleteComic(id: string): Promise<ActionResult<{ id: string }>> {
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
+      return { success: false, error: 'ID truyện không hợp lệ' };
+    }
     const db = await getServerSupabase();
     if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
     const { error } = await db.from('stories').delete().eq('id', id);

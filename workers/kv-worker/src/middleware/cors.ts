@@ -45,7 +45,7 @@ export function isOriginAllowed(
 }
 
 const DEFAULT_ALLOWED_HEADERS =
-  'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-user-role, x-user-id, x-user-email';
+  'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-trace-id, Idempotency-Key, X-Idempotency-Key, x-user-role, x-user-id, x-user-email';
 
 export function corsHeaders(
   origin: string | null,
@@ -59,7 +59,7 @@ export function corsHeaders(
     'Access-Control-Allow-Headers':
       requestHeaders || DEFAULT_ALLOWED_HEADERS,
     'Access-Control-Expose-Headers':
-      'x-request-id, x-begin-timestamp, content-range',
+      'x-request-id, x-trace-id, x-begin-timestamp, content-range',
     'Access-Control-Allow-Credentials': allowed !== '*' ? 'true' : 'false',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
@@ -85,10 +85,10 @@ export function stripApiPrefix(pathname: string): string {
 
 export function supabaseProxyPath(pathname: string): string | null {
   const match = pathname.match(
-    /^\/api\/supabase\/(rest|auth|storage)(\/v\d+\/.*)$/i,
+    /^\/api(?:\/v\d+)?\/supabase\/(rest|auth|storage)(\/v\d+\/.*)$/i,
   );
   if (match) return `/${match[1]}${match[2]}`;
-  const rpcMatch = pathname.match(/^\/api\/rpc\/(.+)$/i);
+  const rpcMatch = pathname.match(/^\/api(?:\/v\d+)?\/rpc\/(.+)$/i);
   if (rpcMatch) return `/rest/v1/rpc/${rpcMatch[1]}`;
   return null;
 }

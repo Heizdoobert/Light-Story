@@ -76,8 +76,9 @@ async function handlePromote(request: Request, env: Env, token: string | null): 
   h.set('Content-Type', 'application/json');
   h.set('Accept', 'application/json');
 
+  const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
   const countRes = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/profiles?select=id&role=in.(superadmin,admin,employee)&limit=1`,
+    `${sbUrl}/rest/v1/profiles?select=id&role=in.(superadmin,admin,employee)&limit=1`,
     { method: 'HEAD', headers: { ...Object.fromEntries((h as any).entries()), Prefer: 'count=exact' } },
   );
 
@@ -97,7 +98,7 @@ async function handlePromote(request: Request, env: Env, token: string | null): 
   }
 
   const rpcRes = await fetch(
-    `${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`,
+    `${sbUrl}/rest/v1/rpc/app_private.set_user_role_service`,
     { method: 'POST', headers: h, body: JSON.stringify({ target_user_id: userId, new_role: 'admin' }) },
   );
   if (!rpcRes.ok) {
@@ -368,9 +369,10 @@ export async function handleAdminRequest(
       }
       const svcKey = env.SUPABASE_SERVICE_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
+      const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
       let supRes;
       try {
-        supRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings?${q}`, {
+        supRes = await fetch(`${sbUrl}/rest/v1/site_settings?${q}`, {
           headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` },
         });
         // ponytail: 5xx = Supabase unreachable (local dev), return empty
@@ -384,6 +386,7 @@ export async function handleAdminRequest(
     if (method === 'POST' && path === '/admin/site-settings') {
       const svcKey = env.SUPABASE_SERVICE_KEY;
       if (!svcKey) return err('NOT_CONFIGURED', 'SUPABASE_SERVICE_KEY not set', 500);
+      const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
       const body = (await request.json()) as any;
       const userId = request.headers.get('x-user-id');
       const headers = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
@@ -391,7 +394,7 @@ export async function handleAdminRequest(
         const results = [];
         const keys: string[] = [];
         for (const item of body.payload) {
-          const upsertRes = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
+          const upsertRes = await fetch(`${sbUrl}/rest/v1/site_settings`, {
             method: 'POST',
             headers: { ...headers, Prefer: 'return=representation' },
             body: JSON.stringify({ key: item.key, value: item.value, updated_by: userId || null }),
@@ -401,7 +404,7 @@ export async function handleAdminRequest(
         }
         // Log settings change into private audit table
         if (keys.length > 0 && userId) {
-          await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+          await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys } }),
@@ -409,13 +412,13 @@ export async function handleAdminRequest(
         }
         return json({ success: true, results });
       }
-      const res = await fetch(`${env.SUPABASE_URL}/rest/v1/site_settings`, {
+      const res = await fetch(`${sbUrl}/rest/v1/site_settings`, {
         method: 'POST',
         headers: { ...headers, Prefer: 'return=representation' },
         body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
       });
       if (res.ok && userId) {
-        await fetch(`${env.SUPABASE_URL}/rest/v1/admin_audit_logs`, {
+        await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
           method: 'POST',
           headers,
           body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
@@ -641,8 +644,9 @@ export async function handleAdminRequest(
 
       if (action === 'updateRole') {
         const svcKey = env.SUPABASE_SERVICE_KEY || (env as any).SUPABASE_SERVICE_ROLE_KEY;
+        const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
         if (svcKey) {
-          const rpcRes = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/app_private.set_user_role_service`, {
+          const rpcRes = await fetch(`${sbUrl}/rest/v1/rpc/app_private.set_user_role_service`, {
             method: 'POST',
             headers: {
               apikey: svcKey,
@@ -695,9 +699,11 @@ export async function handleAdminRequest(
         );
       }
 
+      const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
+
       if (action === 'create') {
         const adminRes = await fetch(
-          `${env.SUPABASE_URL}/auth/v1/admin/users`,
+          `${sbUrl}/auth/v1/admin/users`,
           {
             method: 'POST',
             headers: {
@@ -743,7 +749,7 @@ export async function handleAdminRequest(
 
       if (action === 'delete') {
         const adminRes = await fetch(
-          `${env.SUPABASE_URL}/auth/v1/admin/users/${assertUuid(body.id, 'id')}`,
+          `${sbUrl}/auth/v1/admin/users/${assertUuid(body.id, 'id')}`,
           {
             method: 'DELETE',
             headers: {

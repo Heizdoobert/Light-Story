@@ -55,7 +55,7 @@ async function sb(
     const pref = (opts.headers as Record<string, string>).Prefer;
     if (pref) h.set('Prefer', pref);
   }
-  return fetch(`${env.SUPABASE_URL}${path}`, { ...opts, headers: h });
+  return fetch(`${(globalThis as any).SUPABASE_URL}${path}`, { ...opts, headers: h });
 }
 
 async function sbGet(
@@ -148,7 +148,7 @@ async function sbGetCount(
       ? `Bearer ${token}`
       : `Bearer ${env.SUPABASE_ANON_KEY}`,
   );
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${q}`, {
+  const res = await fetch(`${(globalThis as any).SUPABASE_URL}/rest/v1/${q}`, {
     method: 'HEAD',
     headers: {
       ...Object.fromEntries((h as any).entries()),
@@ -180,7 +180,7 @@ async function sbAdmin(
     const pref = (opts.headers as Record<string, string>).Prefer;
     if (pref) h.set('Prefer', pref);
   }
-  return fetch(`${env.SUPABASE_URL}${path}`, { ...opts, headers: h });
+  return fetch(`${(globalThis as any).SUPABASE_URL}${path}`, { ...opts, headers: h });
 }
 
 async function sbAdminGet(
@@ -254,7 +254,7 @@ async function sbAdminGetCount(
   const h = new Headers();
   h.set('apikey', env.SUPABASE_SERVICE_KEY);
   h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
-  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${q}`, {
+  const res = await fetch(`${(globalThis as any).SUPABASE_URL}/rest/v1/${q}`, {
     method: 'HEAD',
     headers: {
       ...Object.fromEntries((h as any).entries()),
