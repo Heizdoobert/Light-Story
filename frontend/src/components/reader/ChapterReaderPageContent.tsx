@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -25,6 +25,7 @@ import { useReadChapterPresenter, type ReaderInitialData } from "@/hooks/present
 import { ROUTES } from "@/lib/constants/routes";
 import Image from "next/image";
 import { formatChapterTitle, formatChapterNumber } from "@/sdk";
+import { revokeCbzPageUrls } from "@/lib/cbz/cbz-reader";
 
 export interface ChapterReaderPageContentProps {
   initialData?: ReaderInitialData | null;
@@ -66,7 +67,96 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
     nextChapter,
     isBookmarked,
     toggleBookmark,
+    currentPageIndex,
   } = useReadChapterPresenter(initialData);
+
+  const [activeIndex, setActiveIndex] = useState(currentPageIndex || 0);
+  const activeIndexRef = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const intersectingMapRef = useRef<Map<number, IntersectionObserverEntry>>(new Map());
+
+  // Reset activeIndex when chapter changes
+  useEffect(() => {
+    setActiveIndex(0);
+    activeIndexRef.current = 0;
+    intersectingMapRef.current.clear();
+  }, [chapterId]);
+
+  // Sync activeIndex with presenter's currentPageIndex (e.g. thumbnail bar navigation)
+  useEffect(() => {
+    if (typeof currentPageIndex === "number" && currentPageIndex >= 0) {
+      setActiveIndex(currentPageIndex);
+      activeIndexRef.current = currentPageIndex;
+    }
+  }, [currentPageIndex]);
+
+  // Revoke CBZ blob URLs on chapter change or unmount
+  const imagesRef = useRef(images);
+  useEffect(() => {
+    const prev = imagesRef.current;
+    if (prev !== images && prev.length > 0) {
+      revokeCbzPageUrls(prev);
+    }
+    imagesRef.current = images;
+  }, [images]);
+
+  useEffect(() => {
+    return () => {
+      revokeCbzPageUrls(imagesRef.current);
+    };
+  }, [chapterId]);
+
+  // IntersectionObserver to track viewport active page and update sliding window smoothly
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const idxStr = entry.target.getAttribute("data-page-index");
+          if (idxStr !== null) {
+            const idx = parseInt(idxStr, 10);
+            if (!isNaN(idx)) {
+              if (entry.isIntersecting) {
+                intersectingMapRef.current.set(idx, entry);
+              } else {
+                intersectingMapRef.current.delete(idx);
+              }
+            }
+          }
+        }
+
+        let bestIdx = -1;
+        let maxArea = -1;
+
+        for (const [idx, entry] of intersectingMapRef.current.entries()) {
+          const rect = entry.intersectionRect;
+          const area = rect.width * rect.height;
+          if (area > maxArea) {
+            maxArea = area;
+            bestIdx = idx;
+          }
+        }
+
+        if (bestIdx >= 0 && bestIdx !== activeIndexRef.current) {
+          activeIndexRef.current = bestIdx;
+          setActiveIndex(bestIdx);
+        }
+      },
+      {
+        root: null,
+        threshold: [0, 0.25, 0.5, 0.75, 1.0],
+      }
+    );
+
+    const elements = container.querySelectorAll("[data-page-index]");
+    elements.forEach((el) => observer.observe(el));
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [chapterId, images.length, activeIndex]);
 
   if (loading) {
     return (
@@ -119,6 +209,7 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
       </div>
 
       <div
+        ref={containerRef}
         className={`w-full mx-auto bg-white dark:bg-black flex-1 flex flex-col items-center min-h-[60vh] transition-colors shadow-sm touch-pan-y ${fitScreen ? "max-w-full" : "max-w-[800px]"}`}
         style={{ filter: `brightness(${brightness}%)` }}
         onTouchStart={handleTouchStart}
@@ -130,22 +221,47 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
             Chương này chưa có nội dung (ảnh).
           </div>
         ) : (
-          images.map((imgUrl, idx) => (
-            <React.Fragment key={`${imgUrl}-${idx}`}>
-              <div id={`page-${idx}`}>
-                <ChapterImage
-                  src={imgUrl}
-                  alt={`Trang ${idx + 1}`}
-                  index={idx}
-                  fitScreen={fitScreen}
-                  priority={idx === 0}
-                />
-              </div>
-              {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
-                <AdRenderer position="middle" />
-              )}
-            </React.Fragment>
-          ))
+          images.map((imgUrl, idx) => {
+            const inWindow =
+              idx >= Math.max(0, activeIndex - 2) &&
+              idx <= Math.min(images.length - 1, activeIndex + 2);
+
+            return (
+              <React.Fragment key={`${imgUrl}-${idx}`}>
+                {inWindow ? (
+                  <div
+                    id={`page-${idx}`}
+                    data-page-index={idx}
+                    className="w-full"
+                  >
+                    <ChapterImage
+                      src={imgUrl}
+                      alt={`Trang ${idx + 1}`}
+                      index={idx}
+                      fitScreen={fitScreen}
+                      priority={idx === 0}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    id={`page-${idx}`}
+                    data-page-index={idx}
+                    style={fitScreen ? undefined : { aspectRatio: "3/4" }}
+                    className={`w-full flex items-center justify-center my-2 ${
+                      fitScreen
+                        ? "min-h-[50vh] bg-transparent"
+                        : "aspect-[3/4] rounded-xl bg-slate-900/5 dark:bg-slate-950/20"
+                    }`}
+                  >
+                    <span className="text-xs text-slate-400">Trang {idx + 1}</span>
+                  </div>
+                )}
+                {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
+                  <AdRenderer position="middle" />
+                )}
+              </React.Fragment>
+            );
+          })
         )}
       </div>
 

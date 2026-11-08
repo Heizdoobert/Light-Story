@@ -1,6 +1,6 @@
 {
   "name": "kv-worker",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "private": true,
   "main": "src/index.ts",
   "scripts": {
@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy",
     "deploy:staging": "wrangler deploy --env staging",
     "type-check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {

@@ -36,7 +36,12 @@ import { fetchStoriesPage } from "@/services/comics/story.service";
 import { proxiedR2ImageUrl } from "@/services/comics/comicCms.service";
 import { getFallbackAvatar, proxyAvatarUrl } from "@/lib/security/security-utils";
 import { ROUTES } from "@/lib/constants/routes";
-import { QuickSearchModal } from "@/components/shared/ui/QuickSearchModal";
+import dynamic from "next/dynamic";
+
+const QuickSearchModal = dynamic(
+  () => import("@/components/shared/ui/QuickSearchModal").then((mod) => mod.QuickSearchModal),
+  { ssr: false }
+);
 
 const STAFF_ROLES = new Set(["superadmin", "admin", "employee"]);
 

@@ -1,4 +1,4 @@
-import { err, sbGet, sbPost, sb, handleRes, json } from '../utils/supabase-client';
+import { err, sbGet, sbPost, sb, sbRpc, handleRes, json } from '../utils/supabase-client';
 import { assertUuid, uuidFilter, ValidationFailure } from '../utils/validation';
 
 export async function handleUserRequest(
@@ -159,6 +159,11 @@ export async function handleUserRequest(
         100,
         Math.max(1, parseInt(new URL(request.url).searchParams.get('pageSize') || '50')),
       );
+      // Try high-performance RPC get_user_reading_progress first
+      const rpcRes = await sbRpc('get_user_reading_progress', { p_user_id: userId }, env, token).catch(() => null);
+      if (rpcRes && rpcRes.ok) {
+        return handleRes(rpcRes);
+      }
       const res = await sbGet(
         'reading_history',
         `${uuidFilter('user_id', userId)}&select=comic_id,chapter_id,chapter_number,updated_at&order=updated_at.desc&limit=${pageSize}`,

@@ -193,7 +193,7 @@ describe('Empirical Adversarial Stress Tests: Storage & Reader State', () => {
         }
         const err = new Error('Disk full');
         err.name = 'QuotaExceededError';
-        err.code = 22;
+        (err as any).code = 22;
         throw err;
       });
 

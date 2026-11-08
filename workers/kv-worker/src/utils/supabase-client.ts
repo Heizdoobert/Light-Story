@@ -21,8 +21,8 @@ export function recordAnalyticsEngineEvent(
   }
 }
 
-function json(data: unknown, status = 200): Response {
-  return Response.json(data, { status });
+function json(data: unknown, status = 200, headers?: HeadersInit): Response {
+  return Response.json(data, { status, headers });
 }
 
 function err(code: string, message: string, status: number): Response {

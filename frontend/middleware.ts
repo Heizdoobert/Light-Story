@@ -32,17 +32,22 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   return res;
 }
 
+function createRedirectWithCookies(
+  url: URL,
+  sourceResponse: NextResponse,
+  isDev: boolean
+): NextResponse {
+  const redirectResponse = NextResponse.redirect(url);
+  // Transfer any refreshed auth cookies to the redirect response
+  sourceResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie.name, cookie.value, cookie);
+  });
+  return addSecurityHeaders(redirectResponse, isDev);
+}
+
 export async function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
   const pathname = request.nextUrl.pathname;
-
-  const isAdminPath = pathname.startsWith(ROUTES.ADMIN.ROOT);
-  const isUserPath = pathname.startsWith(ROUTES.USER.ROOT);
-
-  // Public routes: headers only — skip the Supabase auth round-trip
-  if (!isAdminPath && !isUserPath) {
-    return addSecurityHeaders(NextResponse.next(), isDev);
-  }
 
   let response = NextResponse.next({
     request: {
@@ -50,8 +55,14 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY;
+
+  const isAdminPath = pathname.startsWith(ROUTES.ADMIN.ROOT);
+  const isUserPath = pathname.startsWith(ROUTES.USER.ROOT);
 
   if (!supabaseUrl || !supabaseKey) {
     if (isAdminPath) {
@@ -64,6 +75,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookieOptions: {
+      path: "/",
+      sameSite: "lax",
+      secure: !isDev,
+    },
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -82,20 +98,32 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Always verify/refresh session across all routes (standard Supabase SSR pattern)
   const { data: { user }, error } = await supabase.auth.getUser();
+
+  // If user is already logged in and visits login/register, redirect to appropriate dashboard
+  if (user && (pathname === ROUTES.LOGIN || pathname === ROUTES.REGISTER)) {
+    const role = (
+      user.app_metadata?.role ?? ""
+    ).toString().trim().toLowerCase();
+
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = ADMIN_ROLES.includes(role)
+      ? ROUTES.ADMIN.DASHBOARD
+      : ROUTES.USER.DASHBOARD;
+    return createRedirectWithCookies(redirectUrl, response, isDev);
+  }
 
   // Admin route protection
   if (isAdminPath) {
     if (error || !user) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.UNAUTHORIZED;
-      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+      return createRedirectWithCookies(url, response, isDev);
     }
 
     let role = (
-      user.app_metadata?.role ||
-      user.user_metadata?.role ||
-      ""
+      user.app_metadata?.role ?? ""
     ).toString().trim().toLowerCase();
 
     // Fallback: DB check
@@ -114,19 +142,19 @@ export async function middleware(request: NextRequest) {
     if (!ADMIN_ROLES.includes(role)) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.FORBIDDEN;
-      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+      return createRedirectWithCookies(url, response, isDev);
     }
 
     // Granular: analytics and settings are superadmin only
     if (pathname.startsWith("/admin/analytics") && role !== "superadmin") {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.FORBIDDEN;
-      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+      return createRedirectWithCookies(url, response, isDev);
     }
     if (pathname.startsWith("/admin/settings") && role !== "superadmin") {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.ERROR.FORBIDDEN;
-      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+      return createRedirectWithCookies(url, response, isDev);
     }
   }
 
@@ -135,7 +163,7 @@ export async function middleware(request: NextRequest) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = ROUTES.LOGIN;
-      return addSecurityHeaders(NextResponse.redirect(url), isDev);
+      return createRedirectWithCookies(url, response, isDev);
     }
   }
 

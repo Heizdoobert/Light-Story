@@ -6,3 +6,5 @@ export * from "./useReadChapterPresenter";
 export * from "./useSearchPresenter";
 export * from "./useTaxonomyCrud";
 export * from "./useTranslatorPresenter";
+export * from "./useAdminDashboardPresenter";
+export * from "./useUserDashboardPresenter";

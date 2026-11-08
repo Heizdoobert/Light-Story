@@ -2,7 +2,12 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { EditUserProfileModal } from "@/components/user/EditUserProfileModal";
+import dynamic from "next/dynamic";
+
+const EditUserProfileModal = dynamic(
+  () => import("@/components/user/EditUserProfileModal").then((mod) => mod.EditUserProfileModal),
+  { ssr: false }
+);
 import { Mail, User, Edit2, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
@@ -41,7 +46,17 @@ export const ProfilePageContent: React.FC = () => {
     );
   }
 
-  if (!user || !profile) {
+  // Graceful fallback profile if user is authenticated but DB profile row is still syncing
+  const effectiveProfile = profile || (user ? {
+    id: user.id,
+    email: user.email ?? "",
+    full_name: (user.user_metadata?.full_name as string) ?? user.email?.split("@")[0] ?? "User",
+    avatar_url: (user.user_metadata?.avatar_url as string) ?? null,
+    role: (user.app_metadata?.role as any) ?? "user",
+    created_at: user.created_at ?? null,
+  } : null);
+
+  if (!user || !effectiveProfile) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-4">
         <div className="text-center max-w-md">
@@ -89,16 +104,16 @@ export const ProfilePageContent: React.FC = () => {
 
             <div className="px-8 pb-8">
               <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 mb-8">
-                {profile.avatar_url && sanitizeImageUrl(profile.avatar_url) ? (
+                {effectiveProfile.avatar_url && sanitizeImageUrl(effectiveProfile.avatar_url) ? (
                   <Image
-                  src={proxyAvatarUrl(profile.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
-                  alt={profile.full_name || "User avatar"}
+                  src={proxyAvatarUrl(effectiveProfile.avatar_url) || getFallbackAvatar(effectiveProfile?.full_name || "User")}
+                  alt={effectiveProfile.full_name || "User avatar"}
                   width={80}
                   height={80}
                   className="w-20 h-20 rounded-2xl border-4 border-white dark:border-slate-900 object-cover shadow-lg"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
+                    e.currentTarget.src = getFallbackAvatar(effectiveProfile?.full_name || "User");
                   }}
                 />
                 ) : (
@@ -107,13 +122,13 @@ export const ProfilePageContent: React.FC = () => {
                   </div>
                 )}
                 <div className="pb-1">
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-white">{profile.full_name || "User"}</h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{profile.email}</p>
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-white">{effectiveProfile.full_name || "User"}</h1>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{effectiveProfile.email}</p>
                 </div>
               </div>
 
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {details(profile, t).map(({ icon: Icon, label, value }) => (
+                {details(effectiveProfile, t).map(({ icon: Icon, label, value }) => (
                   <div key={label} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500/10 to-amber-600/10 dark:from-orange-500/10 dark:to-amber-600/10 flex items-center justify-center shrink-0">
                       <Icon size={16} className="text-orange-500 dark:text-accent" />

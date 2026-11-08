@@ -171,6 +171,11 @@ export class HttpClient {
       });
     }
 
+    if (!headers.has('x-request-id') && !headers.has('X-Request-Id')) {
+      const reqId = "req_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+      headers.set('x-request-id', reqId);
+    }
+
     // Inject token if Authorization is not already set
     if (!headers.has('Authorization')) {
       const token = await this.resolveToken(explicitToken);
@@ -291,7 +296,16 @@ export class HttpClient {
 
       if (!response.ok) {
         this.logger?.error?.(`[SDK] HTTP ${response.status} ${response.statusText} on ${method} ${url}`);
-        throw GatewayError.fromResponse(response.status, responseData, response.statusText);
+        const resRequestId =
+          response.headers.get('x-request-id') ||
+          response.headers.get('X-Request-Id') ||
+          headers.get('x-request-id');
+        throw GatewayError.fromResponse(
+          response.status,
+          responseData,
+          undefined,
+          resRequestId || undefined,
+        );
       }
 
       // Unwrap API envelope if format is { success: true, data: T }
@@ -300,7 +314,19 @@ export class HttpClient {
         const apiRes = finalData as GatewayApiResponse<T>;
         if (apiRes.success === false) {
           const errMsg = apiRes.error?.message || 'Gateway operation returned success: false';
-          throw new GatewayError(response.status, errMsg, apiRes.error?.code || 'GATEWAY_ERROR', apiRes);
+          const resRequestId =
+            response.headers.get('x-request-id') ||
+            response.headers.get('X-Request-Id') ||
+            headers.get('x-request-id') ||
+            (apiRes as { requestId?: string }).requestId ||
+            (apiRes.error as { requestId?: string } | undefined)?.requestId;
+          throw new GatewayError(
+            response.status,
+            errMsg,
+            apiRes.error?.code || 'GATEWAY_ERROR',
+            apiRes,
+            resRequestId || undefined,
+          );
         }
         if (apiRes.success === true && 'data' in apiRes) {
           finalData = apiRes.data;

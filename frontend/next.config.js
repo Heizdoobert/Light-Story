@@ -2,6 +2,9 @@
  *  @type {import('next').NextConfig}
  */
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const nextConfig = {
   output: process.env.DOCKER_BUILD === "1" ? "standalone" : undefined,
@@ -54,7 +57,7 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@/sdk': resolve(__dirname, 'packages/sdk/src'),
+      '@/sdk': resolve(__dirname, '../packages/sdk/src'),
     };
     return config;
   },

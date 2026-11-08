@@ -94,6 +94,9 @@ describe('F1 x F3 x F7: hooks barrel and admin-gated comic form', () => {
       'useReadChapterPresenter',
       'useSearchPresenter',
       'useTranslatorPresenter',
+      'useAdminDashboardPresenter',
+      'useUserDashboardPresenter',
+      'initialOverviewData',
       'useCrudMutation',
       'useBookmarks',
       'useReadingHistory',
@@ -105,7 +108,11 @@ describe('F1 x F3 x F7: hooks barrel and admin-gated comic form', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual(expected);
     for (const key of keys) {
-      expect(typeof hooks[key as keyof typeof hooks]).toBe('function');
+      if (key === 'initialOverviewData') {
+        expect(typeof hooks[key as keyof typeof hooks]).toBe('object');
+      } else {
+        expect(typeof hooks[key as keyof typeof hooks]).toBe('function');
+      }
     }
   });
 });

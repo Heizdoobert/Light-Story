@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ComicDetailPageContent } from '@/components/comics/ComicDetailPageContent';
 import { ROUTES } from '@/lib/constants/routes';
 import type { Chapter } from '@/types/entities';
@@ -75,13 +76,22 @@ const outOfOrderChapters: Chapter[] = [
 ];
 
 describe('ComicDetailPageContent chapter ordering (regression guard)', () => {
+  let queryClient: QueryClient;
+
   beforeEach(() => {
     state.chapters = outOfOrderChapters;
     state.comic = comicFixture;
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
   });
 
   it('sorts fetched chapters ascending by chapter_number, ignoring upload order', async () => {
-    render(<ComicDetailPageContent />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComicDetailPageContent />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => {
       const labels = screen.getAllByText(/^Chương \d+$/).map((n) => n.textContent);
@@ -90,7 +100,11 @@ describe('ComicDetailPageContent chapter ordering (regression guard)', () => {
   });
 
   it('Đọc từ đầu links the lowest chapter_number, Đọc mới nhất the highest', async () => {
-    render(<ComicDetailPageContent />);
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ComicDetailPageContent />
+      </QueryClientProvider>
+    );
 
     await waitFor(() => {
       const firstLink = screen.getByText('Đọc từ đầu').closest('a');

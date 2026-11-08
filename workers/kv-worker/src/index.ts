@@ -44,9 +44,11 @@ async function handleSupabaseProxy(
   request: Request,
   origin: string | null,
   env: Env,
+  requestId: string,
 ): Promise<Response> {
   const respond = (body: unknown, init: { status: number; headers?: HeadersInit }) => {
     const headers = new Headers(init.headers);
+    headers.set('X-Request-Id', requestId);
     applySecurityHeaders(headers);
     return new Response(
       typeof body === 'string' ? body : JSON.stringify(body),
@@ -56,7 +58,7 @@ async function handleSupabaseProxy(
 
   if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
     return respond(
-      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED' } },
+      { success: false, error: { code: 'SUPABASE_NOT_CONFIGURED', requestId } },
       {
         status: 500,
         headers: {
@@ -70,7 +72,7 @@ async function handleSupabaseProxy(
   const sbPath = supabaseProxyPath(pathname);
   if (!sbPath) {
     return respond(
-      { success: false, error: { code: 'INVALID_SUPABASE_PATH' } },
+      { success: false, error: { code: 'INVALID_SUPABASE_PATH', requestId } },
       {
         status: 400,
         headers: {
@@ -98,7 +100,7 @@ async function handleSupabaseProxy(
   }
   headers.delete('x-forwarded-by');
   headers.delete('x-begin-timestamp');
-  headers.delete('x-request-id');
+  headers.set('x-request-id', requestId);
   headers.delete('content-length');
 
   const reqText = request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : null;
@@ -116,6 +118,7 @@ async function handleSupabaseProxy(
   const c = corsHeaders(origin);
   for (const [k, v] of Object.entries(c))
     responseHeaders.set(k, v as string);
+  responseHeaders.set('X-Request-Id', requestId);
   applySecurityHeaders(responseHeaders);
 
   if (contentType.includes('application/json')) {
@@ -133,6 +136,7 @@ async function handleSupabaseProxy(
       ? {
           success: true,
           data: parsed,
+          requestId,
           timestamp: new Date().toISOString(),
         }
       : {
@@ -141,6 +145,7 @@ async function handleSupabaseProxy(
             code: (parsed as any)?.code || 'SUPABASE_ERROR',
             message:
               (parsed as any)?.message || res.statusText,
+            requestId,
           },
           timestamp: new Date().toISOString(),
         };
@@ -168,18 +173,25 @@ export default {
       request.headers.get('CF-Region') ||
       request.headers.get('cf-region') ||
       undefined;
-  let supabaseUrl = env.SUPABASE_URL;
-  if (cfRegion) {
-    // Simple heuristic: assume EU region codes start with "EU" and US with "US"
-    if (cfRegion.startsWith('EU')) {
-      supabaseUrl = env.SUPABASE_URL_EU || env.SUPABASE_URL;
-    } else if (cfRegion.startsWith('US')) {
-      supabaseUrl = env.SUPABASE_URL_US || env.SUPABASE_URL;
+    let supabaseUrl = env.SUPABASE_URL;
+    if (cfRegion) {
+      // Simple heuristic: assume EU region codes start with "EU" and US with "US"
+      if (cfRegion.startsWith('EU')) {
+        supabaseUrl = env.SUPABASE_URL_EU || env.SUPABASE_URL;
+      } else if (cfRegion.startsWith('US')) {
+        supabaseUrl = env.SUPABASE_URL_US || env.SUPABASE_URL;
+      }
     }
-  }
-  // expose for downstream utils
-  (globalThis as any).SUPABASE_URL = supabaseUrl;
+    // expose for downstream utils
+    (globalThis as any).SUPABASE_URL = supabaseUrl;
 
+    const incomingTrace = request.headers.get('x-trace-id') || request.headers.get('X-Trace-Id');
+    const rawReqId = request.headers.get('x-request-id') || request.headers.get('X-Request-Id') || incomingTrace;
+    const isSafeReqId = rawReqId && /^[a-zA-Z0-9_\-\.]{1,64}$/.test(rawReqId);
+    const requestId = isSafeReqId
+      ? rawReqId
+      : ("req_" + Date.now() + "_" + (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Math.random().toString(36).slice(2, 10)));
+    const traceId = incomingTrace || requestId;
     (globalThis as any).SUPABASE_ANON_KEY = env.SUPABASE_ANON_KEY;
     (globalThis as any).SUPABASE_JWKS_URL =
       env.SUPABASE_JWKS_URL;
@@ -188,7 +200,9 @@ export default {
     const origin = request.headers.get('Origin');
 
     if (request.method === 'OPTIONS') {
-      return handleCorsPreflightRequest(request);
+      const preflightRes = handleCorsPreflightRequest(request);
+      preflightRes.headers.set('X-Request-Id', requestId);
+      return preflightRes;
     }
 
     const allowedSuffixes = ((env as any).ALLOWED_ORIGIN_SUFFIXES ?? '')
@@ -197,30 +211,27 @@ export default {
       .filter(Boolean);
 
     if (origin && !isOriginAllowed(origin, allowedSuffixes)) {
+      const h = new Headers({ 'Content-Type': 'application/json' });
+      h.set('X-Request-Id', requestId);
+      h.set('x-request-id', requestId);
+      h.set('x-trace-id', traceId);
+      applySecurityHeaders(h);
       return new Response(
         JSON.stringify({
           success: false,
           error: { code: 'FORBIDDEN', message: 'Forbidden origin' },
           timestamp: new Date().toISOString(),
+          correlationId: requestId,
         }),
         {
           status: 403,
-          headers: (() => {
-            const h = new Headers({ 'Content-Type': 'application/json' });
-            applySecurityHeaders(h);
-            return h;
-          })(),
+          headers: h,
         },
       );
     }
 
     const pathname = url.pathname;
     const strippedPath = stripApiPrefix(pathname);
-
-    const incomingTrace = request.headers.get('x-trace-id');
-    const incomingReqId = request.headers.get('x-request-id');
-    const traceId = incomingTrace || incomingReqId || crypto.randomUUID();
-    const requestId = incomingReqId || traceId;
 
     // POST /stories/{id}/view -> increment view counter (supports /api/v1/stories/:id/view and /api/stories/:id/view)
     const viewMatch = strippedPath.match(/^\/stories\/([^\/]+)\/view$/);
@@ -297,6 +308,7 @@ export default {
         JSON.stringify({
           status: 'ok',
           worker: 'kv-worker',
+          requestId,
           timestamp: new Date().toISOString(),
           correlationId: requestId,
         }),
@@ -323,6 +335,7 @@ export default {
           if (e instanceof UnauthorizedError) {
             const h = new Headers({
               'Content-Type': 'application/json',
+              'X-Request-Id': requestId,
               'x-request-id': requestId,
               'x-trace-id': traceId,
               ...corsHeaders(origin),
@@ -334,6 +347,7 @@ export default {
                 error: {
                   code: 'UNAUTHORIZED',
                   message: e.message,
+                  requestId,
                 },
                 timestamp: new Date().toISOString(),
                 correlationId: requestId,
@@ -343,6 +357,7 @@ export default {
           }
           const h = new Headers({
             'Content-Type': 'application/json',
+            'X-Request-Id': requestId,
             'x-request-id': requestId,
             'x-trace-id': traceId,
             ...corsHeaders(origin),
@@ -351,7 +366,7 @@ export default {
           return new Response(
             JSON.stringify({
               success: false,
-              error: { code: 'INTERNAL_ERROR', message: 'Internal server error' },
+              error: { code: 'INTERNAL_ERROR', message: 'Internal server error', requestId },
               timestamp: new Date().toISOString(),
               correlationId: requestId,
             }),
@@ -373,6 +388,7 @@ export default {
         'Retry-After': String(rateLimit.resetSec),
         'X-RateLimit-Limit': String(rateLimit.limit),
         'X-RateLimit-Remaining': '0',
+        'X-Request-Id': requestId,
         'x-request-id': requestId,
         'x-trace-id': traceId,
         ...corsHeaders(origin),
@@ -381,7 +397,7 @@ export default {
       return new Response(
         JSON.stringify({
           success: false,
-          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' },
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.', requestId },
           timestamp: new Date().toISOString(),
           correlationId: requestId,
         }),
@@ -406,6 +422,7 @@ export default {
     if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
       const h = new Headers({
         'Content-Type': 'application/json',
+        'X-Request-Id': requestId,
         'x-request-id': requestId,
         'x-trace-id': traceId,
         ...corsHeaders(origin),
@@ -414,7 +431,7 @@ export default {
       return new Response(
         JSON.stringify({
           success: false,
-          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations' },
+          error: { code: 'UNAUTHORIZED', message: 'Authentication required for write operations', requestId },
           timestamp: new Date().toISOString(),
           correlationId: requestId,
         }),
@@ -429,7 +446,7 @@ export default {
       strippedPath.startsWith('/supabase/') ||
       strippedPath.startsWith('/rpc/')
     ) {
-      return handleSupabaseProxy(pathname, request, origin, env);
+      return handleSupabaseProxy(pathname, request, origin, env, requestId);
     }
 
     const responseHeaders = new Headers();
@@ -442,6 +459,7 @@ export default {
     downstreamHeaders.delete('x-user-id');
     downstreamHeaders.delete('x-user-email');
     downstreamHeaders.set('x-request-id', requestId);
+    downstreamHeaders.set('X-Request-Id', requestId);
     downstreamHeaders.set('x-trace-id', traceId);
     downstreamHeaders.set('x-begin-timestamp', String(Date.now()));
     if (authCtx) {
@@ -512,49 +530,65 @@ export default {
           });
           res = err('BAD_REQUEST', 'Invalid key path', 400);
         } else {
-          const ifNoneMatch = request.headers.get('if-none-match');
+          const edgeCache = typeof caches !== 'undefined' ? (caches as any)?.default : undefined;
+          let edgeCachedRes: Response | null = null;
+          if (edgeCache) {
+            edgeCachedRes = await edgeCache.match(request).catch(() => null);
+          }
 
-          // ponytail: images are served as full 200s, Range ignored on purpose.
-          // Chrome's sniff probes (Range: bytes=0-…) get ORB-blocked when the
-          // worker answers 206 partials (truncated image sniff fails -> retry
-          // storm -> CLS). The admin r2/file route keeps range support.
-          const object = await bucket.get(rawKey, conditionalGetOptions(ifNoneMatch));
-          const outcome = classifyR2Get(object);
-
-          if (outcome.kind === 'missing') {
-            const fallback = await handleTieringFallback({
-              key: rawKey,
-              gdriveFallbackUrl: (env as any).GDRIVE_FALLBACK_URL,
-              bucket,
-              ctx,
-            });
-            if (fallback.found && fallback.response) {
-              res = fallback.response;
-            } else {
-              console.warn('[Media] object not found', {
-                event: 'media_not_found',
-                key: rawKey.slice(0, 500),
-                requestId: downstreamHeaders.get('x-request-id'),
-              });
-              res = err('NOT_FOUND', 'File not found', 404);
-            }
-          } else if (outcome.kind === 'not-modified') {
-            const notModified = new Headers();
-            if (outcome.etag) notModified.set('etag', outcome.etag);
-            notModified.set('cache-control', 'public, max-age=31536000, immutable');
-            res = new Response(null, { status: 304, headers: notModified });
+          if (edgeCachedRes) {
+            res = edgeCachedRes;
           } else {
-            const body = object as R2ObjectBody;
-            const mediaHeaders = new Headers();
-            mediaHeaders.set('cache-control', body.httpMetadata?.cacheControl || 'public, max-age=31536000, immutable');
-            mediaHeaders.set('content-type', body.httpMetadata?.contentType || 'application/octet-stream');
-            mediaHeaders.set('etag', body.httpEtag);
-            mediaHeaders.set('accept-ranges', 'bytes');
-            mediaHeaders.set('x-content-type-options', 'nosniff');
-            mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
-            mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
-            mediaHeaders.set('content-length', body.size.toString());
-            res = new Response(body.body, { status: 200, headers: mediaHeaders });
+            const ifNoneMatch = request.headers.get('if-none-match');
+
+            // ponytail: images are served as full 200s, Range ignored on purpose.
+            // Chrome's sniff probes (Range: bytes=0-…) get ORB-blocked when the
+            // worker answers 206 partials (truncated image sniff fails -> retry
+            // storm -> CLS). The admin r2/file route keeps range support.
+            const object = await bucket.get(rawKey, conditionalGetOptions(ifNoneMatch));
+            const outcome = classifyR2Get(object);
+
+            if (outcome.kind === 'missing') {
+              const isMasked = rawKey.endsWith('.cbz') || rawKey.endsWith('.dat');
+              const fallback = await handleTieringFallback({
+                key: rawKey,
+                gdriveFallbackUrl: (env as any).GDRIVE_FALLBACK_URL,
+                bucket,
+                ctx,
+                isMasked,
+              });
+              if (fallback.found && fallback.response) {
+                res = fallback.response;
+              } else {
+                console.warn('[Media] object not found', {
+                  event: 'media_not_found',
+                  key: rawKey.slice(0, 500),
+                  requestId: downstreamHeaders.get('x-request-id'),
+                });
+                res = err('NOT_FOUND', 'File not found', 404);
+              }
+            } else if (outcome.kind === 'not-modified') {
+              const notModified = new Headers();
+              if (outcome.etag) notModified.set('etag', outcome.etag);
+              notModified.set('cache-control', 'public, max-age=31536000, immutable');
+              res = new Response(null, { status: 304, headers: notModified });
+            } else {
+              const body = object as R2ObjectBody;
+              const mediaHeaders = new Headers();
+              mediaHeaders.set('cache-control', body.httpMetadata?.cacheControl || 'public, max-age=31536000, immutable');
+              mediaHeaders.set('content-type', body.httpMetadata?.contentType || 'application/octet-stream');
+              mediaHeaders.set('etag', body.httpEtag);
+              mediaHeaders.set('accept-ranges', 'bytes');
+              mediaHeaders.set('x-content-type-options', 'nosniff');
+              mediaHeaders.set('cross-origin-resource-policy', 'cross-origin');
+              mediaHeaders.set('x-request-id', downstreamHeaders.get('x-request-id') ?? '');
+              mediaHeaders.set('content-length', body.size.toString());
+              res = new Response(body.body, { status: 200, headers: mediaHeaders });
+            }
+
+            if (edgeCache && res && res.status === 200 && ctx && typeof ctx.waitUntil === 'function') {
+              ctx.waitUntil(edgeCache.put(request, res.clone()).catch(() => {}));
+            }
           }
         }
       }
@@ -609,7 +643,7 @@ export default {
         authToken(downstreamHeaders),
         strippedPath,
       );
-    } else if (strippedPath.startsWith('/hyperdrive-test')) {
+    } else if (strippedPath.startsWith('/hyperdrive')) {
       res = await handleHyperdriveRequest(
         createForwardRequest(url.toString()),
         env,
@@ -631,6 +665,7 @@ export default {
     for (const [k, v] of Object.entries(c))
       resHeaders.set(k, v as string);
     resHeaders.set('x-request-id', requestId);
+    resHeaders.set('X-Request-Id', requestId);
     resHeaders.set('x-trace-id', traceId);
     applySecurityHeaders(resHeaders);
 
@@ -668,6 +703,7 @@ export default {
         ? {
             success: true,
             data: parsed,
+            requestId,
             timestamp: new Date().toISOString(),
             correlationId: requestId,
           }
@@ -680,6 +716,7 @@ export default {
               message:
                 (obj as any)?.error?.message ||
                 res.statusText,
+              requestId,
               ...((obj as any)?.error?.details ? { details: (obj as any).error.details } : {}),
             },
             timestamp: new Date().toISOString(),

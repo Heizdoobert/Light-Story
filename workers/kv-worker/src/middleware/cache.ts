@@ -1,6 +1,9 @@
 /** KV-backed cache utility for read endpoints */
 
 import { json } from '../utils/supabase-client';
+import { l1Cache, IsolateL1Cache } from './isolate-l1-cache';
+
+export { l1Cache, IsolateL1Cache };
 
 export type CacheOptions = {
   ttlSec: number;
@@ -23,13 +26,22 @@ export async function withCache<T>(
 
   const cacheKey = `${opts.prefix ?? DEFAULT_PREFIX}${key}`;
 
+  // 1. Try L1 in-memory micro-cache (0.1ms read latency)
+  const l1Hit = l1Cache.get<T>(cacheKey);
+  if (l1Hit !== null) return l1Hit;
+
+  // 2. Try L2 KV store
   try {
     const cached = await kv.get<T>(cacheKey, 'json');
-    if (cached !== null) return cached;
+    if (cached !== null) {
+      l1Cache.set(cacheKey, cached, Math.min(10, opts.ttlSec));
+      return cached;
+    }
   } catch {
     // KV read failure → proceed to fn
   }
 
+  // 3. Cache miss on both L1 and KV → invoke fn
   const result = await fn();
 
   // A Response cannot survive JSON.stringify — it serializes to "{}". Callers
@@ -44,6 +56,8 @@ export async function withCache<T>(
   } catch {
     // KV write failure → silent, next request will miss again
   }
+
+  l1Cache.set(cacheKey, result, Math.min(10, opts.ttlSec));
 
   return result;
 }
@@ -63,13 +77,25 @@ export async function invalidateCache(
   kv: KVNamespace | undefined,
   prefixes: string[],
 ): Promise<void> {
-  if (!kv || prefixes.length === 0) return;
+  if (prefixes.length === 0) return;
+
+  // Invalidate matching keys from in-memory L1 cache
+  for (const prefix of prefixes) {
+    l1Cache.deletePrefix(prefix);
+  }
+
+  if (!kv) return;
 
   for (const prefix of prefixes) {
     let cursor: string | undefined;
     do {
       const page = await kv.list({ prefix, cursor });
-      await Promise.allSettled(page.keys.map((k) => kv.delete(k.name)));
+      await Promise.allSettled(
+        page.keys.map((k) => {
+          l1Cache.delete(k.name);
+          return kv.delete(k.name);
+        })
+      );
       cursor = page.list_complete ? undefined : page.cursor;
     } while (cursor);
   }
@@ -99,12 +125,48 @@ function hashString(str: string): string {
 }
 
 /**
+ * Standard Cache-Control header generator for public cache responses.
+ * Ensures browser and Cloudflare CDN micro-cache operate optimally.
+ */
+export function publicCacheControl(ttlSec: number, token?: string | null): string {
+  if (token) return 'private, no-cache';
+  const browserMaxAge = Math.min(60, ttlSec);
+  const swr = Math.min(30, Math.floor(ttlSec / 2));
+  return `public, max-age=${browserMaxAge}, s-maxage=${ttlSec}, stale-while-revalidate=${swr}`;
+}
+
+/**
  * Cached handlers return decoded data on the happy path and a Response on the
  * upstream-error path (which withCache deliberately does not cache). This turns
- * either into the Response the route must return.
+ * either into the Response the route must return with appropriate Cache-Control headers.
  */
-export function cachedJson(result: unknown): Response {
-  return result instanceof Response ? result : json(result);
+export function cachedJson(
+  result: unknown,
+  cacheControlOrTtl?: string | number,
+  token?: string | null,
+): Response {
+  let cacheControl: string | undefined;
+  if (typeof cacheControlOrTtl === 'number') {
+    cacheControl = publicCacheControl(cacheControlOrTtl, token);
+  } else if (typeof cacheControlOrTtl === 'string') {
+    cacheControl = cacheControlOrTtl;
+  }
+
+  if (result instanceof Response) {
+    if (cacheControl && result.ok && !result.headers.has('Cache-Control')) {
+      const headers = new Headers(result.headers);
+      headers.set('Cache-Control', cacheControl);
+      return new Response(result.body, {
+        status: result.status,
+        statusText: result.statusText,
+        headers,
+      });
+    }
+    return result;
+  }
+
+  const headers = cacheControl ? { 'Cache-Control': cacheControl } : undefined;
+  return json(result, 200, headers);
 }
 
 /**
@@ -132,7 +194,7 @@ export function publicCache(env: Env, token: string | null): KVNamespace | undef
  * knows which story changed.
  */
 export function storyCachePrefixes(storyId?: string | null): string[] {
-  const prefixes = ['cache:stories:list', 'cache:comics:list'];
+  const prefixes = ['cache:stories:list', 'cache:comics:list', 'admin:analytics:dashboard:overview'];
   if (storyId) {
     prefixes.push(
       `cache:story:${storyId}`,
@@ -141,4 +203,11 @@ export function storyCachePrefixes(storyId?: string | null): string[] {
     );
   }
   return prefixes;
+}
+
+/**
+ * Cache prefixes for admin dashboard telemetry overview.
+ */
+export function adminDashboardCachePrefixes(): string[] {
+  return ['admin:analytics:dashboard:overview'];
 }

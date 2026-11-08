@@ -9,6 +9,7 @@
     "rootDir": "src",
     "target": "ES2022",
     "module": "ESNext",
+    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true

@@ -53,3 +53,30 @@ describe('checkRateLimit store bound', () => {
     expect(result.limit).toBeLessThan(999999);
   });
 });
+
+describe('checkRateLimitKV concurrency synchronization', () => {
+  it('correctly increments count without lost updates under concurrent load', async () => {
+    const store = new Map<string, string>();
+    const mockKV: any = {
+      get: async (key: string) => {
+        await new Promise((r) => setTimeout(r, 2));
+        const val = store.get(key);
+        return val ? JSON.parse(val) : null;
+      },
+      put: async (key: string, val: string) => {
+        await new Promise((r) => setTimeout(r, 2));
+        store.set(key, val);
+      },
+    };
+
+    const ip = '198.51.100.99';
+    const promises = Array.from({ length: 10 }).map(() =>
+      checkRateLimit(req(ip), false, null, '/comics', mockKV),
+    );
+    const results = await Promise.all(promises);
+
+    expect(results.every((r) => r.allowed)).toBe(true);
+    const finalStored = await mockKV.get(`ratelimit:${ip}:${Math.floor(Date.now() / 60000)}`);
+    expect(finalStored.count).toBe(10);
+  });
+});

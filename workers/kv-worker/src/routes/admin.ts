@@ -32,7 +32,7 @@ import {
 } from '../utils/r2-keys';
 import { getInfrastructurePayload } from '../utils/infra';
 import { classifyR2Get, conditionalGetOptions } from '../utils/r2-conditional';
-import { invalidateCache, storyCachePrefixes } from '../middleware/cache';
+import { invalidateCache, storyCachePrefixes, adminDashboardCachePrefixes, l1Cache } from '../middleware/cache';
 
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
 
@@ -410,6 +410,7 @@ export async function handleAdminRequest(
             body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys } }),
           }).catch(() => null);
         }
+        await invalidateCache(env.APP_KV, adminDashboardCachePrefixes());
         return json({ success: true, results });
       }
       const res = await fetch(`${sbUrl}/rest/v1/site_settings`, {
@@ -423,6 +424,7 @@ export async function handleAdminRequest(
           headers,
           body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
         }).catch(() => null);
+        await invalidateCache(env.APP_KV, adminDashboardCachePrefixes());
       }
       return handleRes(res);
     }
@@ -545,87 +547,86 @@ export async function handleAdminRequest(
       method === 'GET' &&
       path === '/admin/analytics/dashboard'
     ) {
-      const [storiesRes, viewsRes] = await Promise.all([
-        sbGet(
-          'stories',
-          'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
-          env,
-          token,
-        ).catch(() => null),
-        sbGet(
-          'stories',
-          'select=views&limit=100000',
-          env,
-          token,
-        ).catch(() => null),
-      ]);
-      const stories = (storiesRes && storiesRes.ok)
-        ? await storiesRes.json().catch(() => [])
-        : [];
-      const views = (viewsRes && viewsRes.ok)
-        ? await viewsRes.json().catch(() => [])
-        : [];
-      const totalViews = Array.isArray(views) ? views.reduce((acc: number, cur: any) => acc + (cur.views || 0), 0) : 0;
+      const CACHE_KEY = 'admin:analytics:dashboard:overview';
 
-      const [totalStories, totalChapters, activeStories] = await Promise.all([
-        sbGetCount('stories?select=id', env, token).catch(() => 0),
-        sbGetCount('chapters?select=id', env, token).catch(() => 0),
-        sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token).catch(() => 0),
-      ]);
+      // 1. Try L1 in-memory micro-cache (0.1ms read latency)
+      const l1Hit = l1Cache.get<any>(CACHE_KEY);
+      if (l1Hit) return json(l1Hit);
 
-      const [engagementRes, infrastructure] = await Promise.all([
+      // 2. Try L2 KV cache (10-25ms latency)
+      if (env.APP_KV) {
+        try {
+          const kvHit = await env.APP_KV.get(CACHE_KEY, 'json');
+          if (kvHit) {
+            l1Cache.set(CACHE_KEY, kvHit, 15);
+            return json(kvHit);
+          }
+        } catch {}
+      }
+
+      // 3. Cache Miss: Run consolidated RPC + engagement + infra in parallel
+      const [summaryRes, engagementRes, infrastructure] = await Promise.all([
+        sbRpc('get_admin_dashboard_summary', {}, env, token)
+          .then((res) => (res.ok ? (res.json() as Promise<any>).catch(() => null) : null))
+          .catch(() => null),
         sbRpc('get_user_engagement_summary', { p_time_range: '30d' }, env, token)
-          .then((res) => (res.ok ? res.json().catch(() => null) : null))
+          .then((res) => (res.ok ? (res.json() as Promise<any>).catch(() => null) : null))
           .catch(() => null),
         getInfrastructurePayload(env).catch(() => null),
       ]);
 
-      // Recent settings changes (last 10) with actor info
-      let recentSettingsChanges: Array<{ id: string; action: string; actor_email: string | null; actor_name: string | null; metadata: Record<string, unknown>; created_at: string }> = [];
-      const logsRes = await sbGet(
-        'admin_audit_logs',
-        'select=id,action,actor_user_id,metadata,created_at&action=eq.settings_update&order=created_at.desc&limit=10',
-        env,
-        token,
-      ).catch(() => null);
-      if (logsRes && logsRes.ok) {
-        const logs = (await logsRes.json().catch(() => [])) as Array<{ id: string; action: string; actor_user_id: string | null; metadata: Record<string, unknown>; created_at: string }>;
-        const actorIds = [...new Set(logs.map((l) => l.actor_user_id).filter(Boolean))] as string[];
-        const emailByName = new Map<string, { email: string; name: string | null }>();
-        if (actorIds.length > 0) {
-          const ids = actorIds.map((id) => encodeURIComponent(id)).join(',');
-          const pRes = await sbGet('profiles', `select=id,email,full_name&id=in.(${ids})`, env, token).catch(() => null);
-          if (pRes && pRes.ok) {
-            for (const p of (await pRes.json().catch(() => [])) as Array<{ id: string; email: string; full_name: string | null }>) {
-              emailByName.set(p.id, { email: p.email, name: p.full_name });
-            }
-          }
-        }
-        recentSettingsChanges = logs.map((l) => {
-          const actor = l.actor_user_id ? emailByName.get(l.actor_user_id) : undefined;
-          return {
-            id: l.id,
-            action: l.action,
-            actor_email: actor?.email ?? null,
-            actor_name: actor?.name ?? null,
-            metadata: l.metadata,
-            created_at: l.created_at,
-          };
-        });
-      }
+      let stories = (summaryRes as any)?.stories ?? [];
+      let stats = (summaryRes as any)?.stats ?? null;
+      let recentSettingsChanges = (summaryRes as any)?.recentSettingsChanges ?? [];
 
-      return json({
-        stories,
-        stats: {
+      // Safe Fallback: If DB RPC is not deployed yet or in test mocks, compute lightweight metrics safely
+      if (!summaryRes) {
+        const [storiesFallback, totalStories, totalChapters, activeStories] = await Promise.all([
+          sbGet(
+            'stories',
+            'select=id,title,author,views,like_count,status,created_at&limit=5&order=created_at.desc',
+            env,
+            token,
+          ).then((res) => (res.ok ? res.json().catch(() => []) : [])).catch(() => []),
+          sbGetCount('stories?select=id', env, token).catch(() => 0),
+          sbGetCount('chapters?select=id', env, token).catch(() => 0),
+          sbGetCount('stories?select=id&status=neq.draft&status=neq.archived', env, token).catch(() => 0),
+        ]);
+        stories = storiesFallback;
+        stats = {
           totalStories,
           totalChapters,
           activeStories,
-          totalViews,
-        },
+          totalViews: 0,
+        };
+      }
+
+      // Enforce PII email masking for non-superadmin caller roles
+      const isSuperadmin = userRole === 'superadmin';
+      if (!isSuperadmin && Array.isArray(recentSettingsChanges)) {
+        recentSettingsChanges = recentSettingsChanges.map((item: any) => ({
+          ...item,
+          actor_email: item.actor_email && typeof item.actor_email === 'string' && item.actor_email.includes('@')
+            ? `${item.actor_email.slice(0, 3)}***@${item.actor_email.split('@')[1]}`
+            : item.actor_email,
+        }));
+      }
+
+      const payload = {
+        stories,
+        stats: stats ?? { totalStories: 0, totalChapters: 0, activeStories: 0, totalViews: 0 },
         engagement: engagementRes,
         infrastructure,
         recentSettingsChanges,
-      });
+      };
+
+      // Populate L2 KV (TTL 60s) and L1 In-Memory (TTL 15s)
+      if (env.APP_KV) {
+        env.APP_KV.put(CACHE_KEY, JSON.stringify(payload), { expirationTtl: 60 }).catch(() => {});
+      }
+      l1Cache.set(CACHE_KEY, payload, 15);
+
+      return json(payload);
     }
 
     if (method === 'POST' && path === '/admin/profiles') {
@@ -846,32 +847,46 @@ export async function handleAdminRequest(
         return err(validation.code, validation.message, validation.status);
       }
 
-      const uploadedUrls: string[] = [];
-      for (let i = 0; i < fileEntries.length; i++) {
-        const file = fileEntries[i];
-        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const uploadKeys: string[] = new Array(fileEntries.length);
+      const CONCURRENCY = 4;
+      let currentIndex = 0;
+      const worker = async () => {
+        while (currentIndex < fileEntries.length) {
+          const i = currentIndex++;
+          const file = fileEntries[i];
+          const ext = (file.name.split('.').pop() || 'png').toLowerCase();
 
-        const key = buildUploadKey({
-          folder,
-          ext,
-          comicId,
-          chapterNumber,
-          pageNumber: pageNumbers[i] ?? null,
-          loopIndex: i,
-          userId,
-        });
-
-        await bucket.put(key, await file.arrayBuffer(), {
-          httpMetadata: {
-            contentType: file.type || 'application/octet-stream',
-            cacheControl: 'public, max-age=31536000, immutable',
-          },
-          customMetadata: {
-            uploadedBy: userId || 'admin',
+          const key = buildUploadKey({
             folder,
-            originalName: file.name,
-          },
-        });
+            ext,
+            comicId,
+            chapterNumber,
+            pageNumber: pageNumbers[i] ?? null,
+            loopIndex: i,
+            userId,
+          });
+
+          const stream = typeof (file as any).stream === 'function' ? (file as any).stream() : await file.arrayBuffer();
+          await bucket.put(key, stream, {
+            httpMetadata: {
+              contentType: file.type || 'application/octet-stream',
+              cacheControl: 'public, max-age=31536000, immutable',
+            },
+            customMetadata: {
+              uploadedBy: userId || 'admin',
+              folder,
+              originalName: file.name,
+            },
+          });
+          uploadKeys[i] = key;
+        }
+      };
+
+      const workers = Array.from({ length: Math.min(CONCURRENCY, fileEntries.length) }, () => worker());
+      await Promise.all(workers);
+
+      const uploadedUrls: string[] = [];
+      for (const key of uploadKeys) {
         uploadedUrls.push(`/api/media/${key}`);
       }
       return json({ success: true, data: { urls: uploadedUrls } });

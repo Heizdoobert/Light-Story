@@ -14,22 +14,14 @@ jobs:
     name: Lint Build Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-
-      - name: Cache node_modules
-        uses: actions/cache@v6
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci
@@ -53,40 +45,38 @@ jobs:
     name: Deploy
     needs: validate
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: '**/package-lock.json'
-
-      - name: Cache node_modules (deploy)
-        uses: actions/cache@v6
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install dependencies
         run: npm ci
 
       - name: Validate Cloudflare token scopes
         run: |
-          if ! wrangler whoami --account-id ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}; then
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is missing in repository secrets"
+            exit 1
+          fi
+          ACCOUNT_OPT=""
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            ACCOUNT_OPT="--account-id ${CLOUDFLARE_ACCOUNT_ID}"
+          fi
+          if ! npx wrangler whoami $ACCOUNT_OPT; then
             echo "::error::CLOUDFLARE_API_TOKEN missing or lacks required scopes"
             exit 1
           fi
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Validate Wrangler config
-        run: wrangler validate --config workers/kv-worker/wrangler.jsonc
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy Workers
         run: |
@@ -94,12 +84,17 @@ jobs:
             echo "::error::CLOUDFLARE_API_TOKEN is missing"
             exit 1
           fi
-          npx wrangler deploy --config workers/kv-worker/wrangler.jsonc --env production
+          ACCOUNT_OPT=""
+          if [ -n "${CLOUDFLARE_ACCOUNT_ID}" ]; then
+            ACCOUNT_OPT="--account-id ${CLOUDFLARE_ACCOUNT_ID}"
+          fi
+          npx wrangler deploy --config workers/kv-worker/wrangler.jsonc $ACCOUNT_OPT
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v3
+        uses: supabase/setup-cli@d239d1052f6f024a8d746d7e5aeddead63b9cb53
         with:
           version: latest
 
@@ -134,3 +129,6 @@ jobs:
           curl -s -H "Content-Type: application/json" \
             -d '{"content":"Deployment to production failed!"}' \
             ${{ secrets.DISCORD_WEBHOOK }}
+
+
+

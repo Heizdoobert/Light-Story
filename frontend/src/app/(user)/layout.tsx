@@ -10,14 +10,18 @@ import { ROUTES } from '@/lib/constants/routes';
 import UserLoading from './loading';
 
 export default function UserLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isInitialized } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.replace(ROUTES.LOGIN);
-  }, [loading, user, router]);
+    // Only redirect if auth has completely initialized and user is confirmed null
+    if (isInitialized && !loading && !user) {
+      router.replace(ROUTES.LOGIN);
+    }
+  }, [isInitialized, loading, user, router]);
 
-  if (loading) return <UserLoading />;
+  // Keep loading skeleton while initializing or loading to avoid unauthenticated flash
+  if (loading || !isInitialized) return <UserLoading />;
   if (!user) return null;
 
   return (
