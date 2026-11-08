@@ -41,9 +41,11 @@ const EPONYMOUS_PRESENTER_HOOKS = [
   'useReadChapterPresenter',
   'useSearchPresenter',
   'useTranslatorPresenter',
+  'useAdminDashboardPresenter',
+  'useUserDashboardPresenter',
 ];
 
-const EXTRA_PRESENTER_EXPORTS = ['useCrudMutation'];
+const EXTRA_PRESENTER_EXPORTS = ['useCrudMutation', 'initialOverviewData'];
 
 const FEATURE_AND_COMMON_HOOKS = [
   'useBookmarks',
@@ -78,7 +80,11 @@ describe('F3 hooks barrel (@/hooks)', () => {
   it('re-exports the extra presenter exports (ad config hooks + crud mutation)', () => {
     for (const name of EXTRA_PRESENTER_EXPORTS) {
       expect(hooks, name).toHaveProperty(name);
-      expect(typeof hooks[name as keyof HooksModule]).toBe('function');
+      if (name === 'initialOverviewData') {
+        expect(typeof hooks[name as keyof HooksModule]).toBe('object');
+      } else {
+        expect(typeof hooks[name as keyof HooksModule]).toBe('function');
+      }
     }
   });
 
@@ -100,7 +106,11 @@ describe('F3 hooks barrel (@/hooks)', () => {
     const keys = Object.keys(hooks).sort();
     expect(keys).toEqual([...ALL_RUNTIME_EXPORTS].sort());
     for (const key of keys) {
-      expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
+      if (key === 'initialOverviewData') {
+        expect(typeof hooks[key as keyof HooksModule], key).toBe('object');
+      } else {
+        expect(typeof hooks[key as keyof HooksModule], key).toBe('function');
+      }
     }
   });
 

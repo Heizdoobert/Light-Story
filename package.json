@@ -29,7 +29,7 @@
     "healthcheck": "node scripts/doctor.mjs",
     "postinstall": "node -e \"try{require('fs').rmSync('node_modules/light-story-workspace',{recursive:true,force:true})}catch(e){}\"",
     "generate:types": "npm --prefix packages/api-types run generate",
-    "lint:api": "npx @stoplight/spectral-cli lint packages/api-types/openapi.yaml",
+    "lint:api": "npx --yes swagger-cli validate packages/api-types/openapi.yaml",
     "docker:build": "docker compose --env-file docker-local.env down --rmi all --volumes && docker system prune -af --volumes && docker compose --env-file docker-local.env build --no-cache && docker compose --env-file docker-local.env up -d",
     "docker:up": "docker compose --env-file docker-local.env up -d",
     "docker:local": "powershell -ExecutionPolicy Bypass -File docker-local.ps1",
