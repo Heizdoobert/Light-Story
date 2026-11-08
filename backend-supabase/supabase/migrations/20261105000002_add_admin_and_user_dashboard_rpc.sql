@@ -115,11 +115,11 @@ set search_path = public, pg_temp
 stable
 as $$
   select
-    rh.comic_id,
+    s.id as comic_id,
     s.title,
     s.cover_url,
     rh.chapter_id as last_read_chapter_id,
-    rh.chapter_number as last_read_chapter_number,
+    rh.chapter_number::int as last_read_chapter_number,
     coalesce(c_count.total, 0) as total_chapters,
     case
       when coalesce(c_count.total, 0) = 0 then 0
@@ -127,11 +127,11 @@ as $$
     end as progress_percent,
     rh.updated_at
   from public.reading_history rh
-  inner join public.stories s on s.id = rh.comic_id
+  inner join public.stories s on s.id::text = rh.comic_id
   left join lateral (
     select count(*) as total
     from public.chapters c
-    where c.story_id = rh.comic_id
+    where c.story_id::text = rh.comic_id
   ) c_count on true
   where rh.user_id = p_user_id
   order by rh.updated_at desc
