@@ -71,4 +71,23 @@ describe('region-routing', () => {
     await worker.fetch(req, env, mockCtx);
     expect((globalThis as any).SUPABASE_URL).toBe('https://eu.supabase.co');
   });
+
+  it('selects SUPABASE_URL_EU when x-supabase-region header is eu', async () => {
+    const req = new Request('http://localhost/api/health', {
+      headers: { 'x-supabase-region': 'eu' },
+    });
+
+    await worker.fetch(req, env, mockCtx);
+    expect((globalThis as any).SUPABASE_URL).toBe('https://eu.supabase.co');
+  });
+
+  it('always enforces primary SUPABASE_URL for mutating operations even with EU region header', async () => {
+    const req = new Request('http://localhost/api/health', {
+      method: 'POST',
+      headers: { 'x-supabase-region': 'eu' },
+    });
+
+    await worker.fetch(req, env, mockCtx);
+    expect((globalThis as any).SUPABASE_URL).toBe('https://default.supabase.co');
+  });
 });

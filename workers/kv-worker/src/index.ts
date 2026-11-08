@@ -167,19 +167,31 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    // Determine nearest Supabase replica based on CF-Region header
+    // Determine nearest Supabase replica based on x-supabase-region or CF-Region header
+    const explicitRegion =
+      request.headers.get('x-supabase-region') ||
+      request.headers.get('X-Supabase-Region') ||
+      undefined;
     const cfRegion =
       ((request as any).cf?.region as string | undefined) ||
       request.headers.get('CF-Region') ||
       request.headers.get('cf-region') ||
       undefined;
+    const regionHint = (explicitRegion || cfRegion || '').toUpperCase();
+
+    // Read queries (GET, HEAD) can route to regional read replicas.
+    // Mutating operations (POST, PUT, PATCH, DELETE) MUST always route to primary SUPABASE_URL.
+    const isReadOperation = request.method === 'GET' || request.method === 'HEAD';
     let supabaseUrl = env.SUPABASE_URL;
-    if (cfRegion) {
-      // Simple heuristic: assume EU region codes start with "EU" and US with "US"
-      if (cfRegion.startsWith('EU')) {
+    let resolvedRegion = 'primary';
+
+    if (isReadOperation && regionHint) {
+      if (regionHint.startsWith('EU')) {
         supabaseUrl = env.SUPABASE_URL_EU || env.SUPABASE_URL;
-      } else if (cfRegion.startsWith('US')) {
+        if (env.SUPABASE_URL_EU) resolvedRegion = 'replica-eu';
+      } else if (regionHint.startsWith('US')) {
         supabaseUrl = env.SUPABASE_URL_US || env.SUPABASE_URL;
+        if (env.SUPABASE_URL_US) resolvedRegion = 'replica-us';
       }
     }
     // expose for downstream utils

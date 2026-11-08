@@ -45,7 +45,7 @@ export function isOriginAllowed(
 }
 
 const DEFAULT_ALLOWED_HEADERS =
-  'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-trace-id, Idempotency-Key, X-Idempotency-Key, x-user-role, x-user-id, x-user-email';
+  'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-trace-id, x-supabase-region, Idempotency-Key, X-Idempotency-Key, x-user-role, x-user-id, x-user-email';
 
 export function corsHeaders(
   origin: string | null,
@@ -59,7 +59,7 @@ export function corsHeaders(
     'Access-Control-Allow-Headers':
       requestHeaders || DEFAULT_ALLOWED_HEADERS,
     'Access-Control-Expose-Headers':
-      'x-request-id, x-trace-id, x-begin-timestamp, content-range',
+      'x-request-id, x-trace-id, x-supabase-region, x-begin-timestamp, content-range',
     'Access-Control-Allow-Credentials': allowed !== '*' ? 'true' : 'false',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin',
