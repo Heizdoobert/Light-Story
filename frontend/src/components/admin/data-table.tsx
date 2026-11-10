@@ -13,7 +13,7 @@ export interface DataTableProps<T> {
   data: T[];
 }
 
-export function DataTable<T extends Record<string, any>>({ columns, data }: DataTableProps<T>) {
+export function DataTable<T extends object>({ columns, data }: DataTableProps<T>) {
   if (!data || data.length === 0) {
     return <div className="p-8 text-center text-slate-500 text-sm">Không có dữ liệu.</div>;
   }
@@ -33,7 +33,7 @@ export function DataTable<T extends Record<string, any>>({ columns, data }: Data
             <tr key={(item as { id?: string | number }).id ?? rowIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50">
               {columns.map((col) => (
                 <td key={col.key} className="px-6 py-4">
-                  {col.render ? col.render(item) : item[col.key]}
+                  {col.render ? col.render(item) : ((item as Record<string, unknown>)[col.key] as React.ReactNode)}
                 </td>
               ))}
             </tr>

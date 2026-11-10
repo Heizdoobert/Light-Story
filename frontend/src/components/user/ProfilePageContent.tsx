@@ -52,7 +52,7 @@ export const ProfilePageContent: React.FC = () => {
     email: user.email ?? "",
     full_name: (user.user_metadata?.full_name as string) ?? user.email?.split("@")[0] ?? "User",
     avatar_url: (user.user_metadata?.avatar_url as string) ?? null,
-    role: (user.app_metadata?.role as any) ?? "user",
+    role: (user.app_metadata?.role as NonNullable<ReturnType<typeof useAuth>["profile"]>["role"]) ?? "user",
     created_at: user.created_at ?? null,
   } : null);
 

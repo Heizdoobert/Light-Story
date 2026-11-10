@@ -122,7 +122,11 @@ export function useComicDetailPresenter({
     e.currentTarget.src = "https://placehold.co/400x600/png?text=No+Cover";
   };
 
-  const rawCover = (comic as any)?.coverUrl || (comic as any)?.cover_url || "";
+  const comicRecord = comic as Record<string, unknown> | null | undefined;
+  const rawCover =
+    (typeof comicRecord?.coverUrl === 'string' ? comicRecord.coverUrl : undefined) ||
+    (typeof comicRecord?.cover_url === 'string' ? comicRecord.cover_url : '') ||
+    '';
   const coverUrl = rawCover
     ? proxiedR2ImageUrl(rawCover)
     : "https://placehold.co/400x600/png?text=No+Cover";

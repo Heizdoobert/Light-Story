@@ -17,7 +17,7 @@ export function useAuthorPresenter() {
   const linkedCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const row of linkQuery.data ?? []) {
-      const id = (row as any).author_id as string | null;
+      const id = (row as { author_id?: string | null })?.author_id ?? null;
       if (!id) continue;
       counts.set(id, (counts.get(id) ?? 0) + 1);
     }

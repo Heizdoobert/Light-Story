@@ -316,6 +316,8 @@ export interface components {
             timestamp: string;
             /** @description Request correlation ID for tracing */
             correlationId?: string;
+            /** @description Distributed trace ID for tracing */
+            traceId?: string;
         };
         ApiResponse_Empty: components["schemas"]["ApiResponse"] & {
             data?: Record<string, never> | null;
@@ -327,6 +329,7 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
             correlationId?: string;
+            traceId?: string;
         };
         ApiResponse_Story: components["schemas"]["ApiResponse"] & {
             data?: components["schemas"]["Story"];
@@ -683,9 +686,19 @@ export interface components {
             };
         };
     };
-    parameters: never;
+    parameters: {
+        /** @description Unique correlation request ID for distributed tracing */
+        XRequestIdHeader: string;
+        /** @description Distributed trace ID propagating across microservices and edge workers */
+        XTraceIdHeader: string;
+    };
     requestBodies: never;
-    headers: never;
+    headers: {
+        /** @description Correlation request ID echoed in response */
+        "X-Request-Id": string;
+        /** @description Distributed trace ID echoed in response */
+        "X-Trace-Id": string;
+    };
     pathItems: never;
 }
 export type $defs = Record<string, never>;

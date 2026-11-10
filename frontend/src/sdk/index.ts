@@ -10,9 +10,10 @@ export * from './task/validation/taskValidation';
 
 // GatewayClient alias and singleton for tests/apps
 import { GatewayHttpClient } from './gateway/client/gatewayHttpClient';
+import type { ClientConfig } from '@light-story/sdk';
 export { GatewayHttpClient as GatewayClient };
 export const gatewaySdk = new GatewayHttpClient();
-export const createGatewayClient = (config?: any) => new GatewayHttpClient(config);
+export const createGatewayClient = (config?: ClientConfig) => new GatewayHttpClient(config);
 
 // Test export
 export const someExport = 'sdk-test';

@@ -1,14 +1,14 @@
 import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
-import reactHooks from "eslint-plugin-react-hooks";
 
 // Flat ESLint config for the frontend project
-export default [
+const eslintConfig = [
   // Ignore generated / build files
   {
     ignores: [
       ".next/**",
       ".next-dev/**",
+      ".next*/**",
       "node_modules/**",
       "dist/**",
       "coverage/**",
@@ -27,11 +27,25 @@ export default [
   // Additional project‑specific legacy rules (warn only)
   {
     files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
-      rules: {
-        "@typescript-eslint/no-explicit-any": "warn",
-        "@next/next/no-img-element": "warn",
-        "react-hooks/set-state-in-effect": "off",
-        "react-hooks/exhaustive-deps": "off",
-      },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@next/next/no-img-element": "warn",
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/exhaustive-deps": "off",
+    },
+  },
+  // Relax explicit any for test files and mocks
+  {
+    files: [
+      "**/__tests__/**/*.{js,jsx,mjs,ts,tsx}",
+      "**/*.test.{js,jsx,mjs,ts,tsx}",
+      "**/*.spec.{js,jsx,mjs,ts,tsx}",
+      "tests/**/*.{js,jsx,mjs,ts,tsx}",
+    ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
   },
 ];
+
+export default eslintConfig;

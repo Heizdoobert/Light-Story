@@ -424,6 +424,32 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  parameters:
+    XRequestIdHeader:
+      name: X-Request-Id
+      in: header
+      description: Unique correlation request ID for distributed tracing
+      required: false
+      schema:
+        type: string
+    XTraceIdHeader:
+      name: X-Trace-Id
+      in: header
+      description: Distributed trace ID propagating across microservices and edge workers
+      required: false
+      schema:
+        type: string
+
+  headers:
+    X-Request-Id:
+      description: Correlation request ID echoed in response
+      schema:
+        type: string
+    X-Trace-Id:
+      description: Distributed trace ID echoed in response
+      schema:
+        type: string
+
   responses:
     Unauthorized:
       description: Missing or invalid authentication
@@ -472,6 +498,9 @@ components:
         correlationId:
           type: string
           description: Request correlation ID for tracing
+        traceId:
+          type: string
+          description: Distributed trace ID for tracing
 
     # Concrete ApiResponse wrappers (avoids complex generics in OpenAPI 3.1)
     ApiResponse_Empty:
@@ -495,6 +524,8 @@ components:
           type: string
           format: date-time
         correlationId:
+          type: string
+        traceId:
           type: string
       required: [success, error, timestamp]
 

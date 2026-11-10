@@ -34,9 +34,9 @@ export function useAdminAnalytics() {
       if (res) {
         setData(res);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to load analytics data", err);
-      setError(err?.message || "Failed to fetch analytics data");
+      setError(err instanceof Error ? err.message : "Failed to fetch analytics data");
     } finally {
       setLoading(false);
     }

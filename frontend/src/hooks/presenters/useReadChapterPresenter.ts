@@ -161,7 +161,7 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
   useEffect(() => {
     try {
       const mode = localStorage.getItem('reader:readingMode');
-      if (mode && ['webtoon', 'single', 'double'].includes(mode)) setReadingMode(mode as any);
+      if (mode && (mode === 'webtoon' || mode === 'single' || mode === 'double')) setReadingMode(mode);
       const b = localStorage.getItem('reader:brightness');
       if (b && !isNaN(Number(b))) setBrightness(Number(b));
     } catch {}
@@ -210,7 +210,7 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
           fetchStoryById(comicId).catch(() => null),
           fetchChaptersByStoryId(comicId).catch(() => []),
         ]);
-        if (comicData) setComic(comicData as any);
+        if (comicData) setComic(comicData as unknown as Comic);
 
         const sortedChapters = (chaptersData || []).sort((a, b) => {
           if (a.chapter_number && b.chapter_number)
@@ -224,13 +224,13 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
 
         let currentData: Chapter | null = null;
         try {
-          const currentRes = await apiClient.get<any>(
+          const currentRes = await apiClient.get<Chapter | { chapter?: Chapter } | Chapter[]>(
             `/api/comics/${comicId}/chapters/${chapterId}`,
           ).catch(() => null);
           if (currentRes) {
             currentData = Array.isArray(currentRes)
               ? currentRes[0]
-              : currentRes?.chapter || currentRes;
+              : (currentRes as { chapter?: Chapter }).chapter || (currentRes as Chapter);
           }
         } catch {}
 

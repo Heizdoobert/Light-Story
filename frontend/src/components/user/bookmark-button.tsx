@@ -10,7 +10,7 @@ export interface BookmarkButtonProps {
   className?: string;
 }
 
-export function BookmarkButton({ comicId: _comicId, className = '' }: BookmarkButtonProps) {
+export function BookmarkButton({ comicId, className = '' }: BookmarkButtonProps) {
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   const toggle = (e: React.MouseEvent) => {
@@ -22,6 +22,7 @@ export function BookmarkButton({ comicId: _comicId, className = '' }: BookmarkBu
   return (
     <button
       type="button"
+      data-comic-id={comicId}
       onClick={toggle}
       className={cn(
         'inline-flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all border-2',

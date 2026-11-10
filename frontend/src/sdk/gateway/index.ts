@@ -1,4 +1,5 @@
 import { GatewayHttpClient } from './client/gatewayHttpClient';
+import type { ClientConfig } from '@light-story/sdk';
 
 // Re-export SDK gateway modules
 export * from './admin/adminClient';
@@ -17,4 +18,4 @@ export * from './types/gatewayTypes';
 export * from './user/userClient';
 
 export { GatewayHttpClient as GatewayClient };
-export const createGatewayClient = (config?: any) => new GatewayHttpClient(config);
+export const createGatewayClient = (config?: ClientConfig) => new GatewayHttpClient(config);

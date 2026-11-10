@@ -19,7 +19,8 @@ export default function RootError({
     console.error("[Root Error]", error);
   }, [error]);
 
-  const traceId = (error as any)?.requestId || (error as any)?.digest || 'N/A';
+  const errorRecord = error as Error & { requestId?: string; digest?: string };
+  const traceId = errorRecord?.requestId || errorRecord?.digest || 'N/A';
   const isDevelopment = process.env.NODE_ENV !== "production";
 
   const handleCopyTraceId = async () => {

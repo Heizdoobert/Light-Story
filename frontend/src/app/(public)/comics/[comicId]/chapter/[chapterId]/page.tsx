@@ -56,11 +56,14 @@ async function loadReaderData(
     sorted.find((ch) => ch.id === chapterId) ?? null;
 
   if (!current) {
-    const detail = await fetchGatewayData<any>(
+    const detail = await fetchGatewayData<Chapter | { chapter?: Chapter } | Chapter[]>(
       `/api/comics/${comicId}/chapters/${chapterId}`,
     );
-    current =
-      Array.isArray(detail) ? detail[0] : detail?.chapter ?? detail ?? null;
+    current = Array.isArray(detail)
+      ? detail[0] ?? null
+      : detail && 'chapter' in detail
+        ? detail.chapter ?? null
+        : (detail as Chapter | null) ?? null;
   }
 
   if (!current || !story) {

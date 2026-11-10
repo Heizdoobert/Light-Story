@@ -9,12 +9,16 @@ export const generateId = (): string => {
 };
 
 // In-memory store with clear method for tests
-export const taskStore = {} as Record<string, Task> & { clear: () => void };
-(taskStore as any).clear = () => {
-  for (const key in taskStore) {
-    if (key !== 'clear') delete (taskStore as Record<string, unknown>)[key];
+export const taskStore: Record<string, Task> & { clear: () => void } = Object.assign(
+  {} as Record<string, Task>,
+  {
+    clear: () => {
+      for (const key of Object.keys(taskStore)) {
+        if (key !== 'clear') delete taskStore[key];
+      }
+    },
   }
-};
+);
 
 // Mapper helpers - keep API shape stable
 export const mapTask = (task: Task) => task;

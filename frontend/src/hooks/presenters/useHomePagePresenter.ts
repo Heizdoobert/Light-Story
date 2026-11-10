@@ -73,16 +73,16 @@ export function useHomePagePresenter(
   });
 
   const comics = (comicsListQuery.data ?? initialComics) as Comic[];
-  const comicIds = comics.map((c: any) => c.id).filter(Boolean).join(",");
+  const comicIds = comics.map((c) => c.id).filter(Boolean).join(",");
 
   // 4. Batch latest chapters query: key QUERY_KEYS.chapters.batch(comicIds), staleTime 60s
   const chaptersQuery = useQuery({
     queryKey: QUERY_KEYS.chapters.batch(comicIds),
     queryFn: async () => {
       if (!comicIds) return initialLatestChapters;
-      let chapters: any[] = [];
+      let chapters: Chapter[] = [];
       try {
-        const batchRes = await apiClient.get<any>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
+        const batchRes = await apiClient.get<Chapter[] | { chapters?: Chapter[] }>(`/api/comics/chapters/batch?comicIds=${comicIds}`);
         chapters = Array.isArray(batchRes) ? batchRes : batchRes?.chapters || [];
       } catch {
         return initialLatestChapters;
@@ -112,12 +112,12 @@ export function useHomePagePresenter(
           uniqueComicIds.map((id) => fetchStoryById(id).catch(() => null)),
         );
         const merged = details
-          .filter(Boolean)
-          .map((d: any) => {
-            const h = history.find((item) => item.comicId === d?.id);
+          .filter((d): d is NonNullable<typeof d> => Boolean(d))
+          .map((d) => {
+            const h = history.find((item) => item.comicId === d.id);
             return { ...d, chapterNumber: h?.chapterNumber, chapterId: h?.chapterId };
           });
-        return merged as HistoryComic[];
+        return merged as unknown as HistoryComic[];
       } catch {
         return [];
       }
@@ -131,8 +131,8 @@ export function useHomePagePresenter(
   const latestChapters = chaptersQuery.data ?? initialLatestChapters;
   const historyComics = historyQuery.data ?? [];
 
-  const getComicCover = useCallback((comic: any): string => {
-    const raw = comic.coverUrl || comic.cover_url || "";
+  const getComicCover = useCallback((comic: Partial<Comic> | Record<string, unknown>): string => {
+    const raw = (comic as { coverUrl?: string; cover_url?: string }).coverUrl || (comic as { coverUrl?: string; cover_url?: string }).cover_url || "";
     if (!raw) return "https://placehold.co/400x600/png?text=No+Cover";
     return proxiedR2ImageUrl(raw);
   }, []);

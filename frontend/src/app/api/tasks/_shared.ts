@@ -3,10 +3,11 @@ import { taskStore as sdkStore, generateId, mapTask, mapPaginated } from '@/sdk/
 
 // Export the same store object; add clear method if missing (for test compatibility)
 export const taskStore = sdkStore;
-if (!(taskStore as any).clear) {
-  (taskStore as any).clear = () => {
-    for (const key in taskStore) {
-      delete (taskStore as any)[key];
+const storeWithClear = taskStore as Record<string, unknown> & { clear?: () => void };
+if (!storeWithClear.clear) {
+  storeWithClear.clear = () => {
+    for (const key of Object.keys(taskStore)) {
+      if (key !== 'clear') delete (taskStore as Record<string, unknown>)[key];
     }
   };
 }

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('End-to-End Comic Upload Flow (CBZ -> Cloudflare R2 -> Supabase)', () => {
-  test('uploads a CBZ archive, verifies storage in Cloudflare R2, and checks Supabase indexing', async ({ request }) => {
+  test('uploads a CBZ archive, verifies storage in Cloudflare R2, and checks Supabase indexing', async () => {
     const testComicId = `comic-e2e-${Date.now()}`;
     const testChapterNumber = 1;
     const testFilename = 'chapter-01.cbz';

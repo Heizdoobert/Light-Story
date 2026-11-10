@@ -41,7 +41,10 @@ export async function act<T, R = unknown>(
     };
   } catch (err) {
     const errorMsg = getErrorMessage(err);
-    const reqId = (err as any)?.requestId || (err as any)?.digest;
+    const errRecord = typeof err === 'object' && err !== null ? (err as Record<string, unknown>) : null;
+    const reqId =
+      (typeof errRecord?.requestId === 'string' ? errRecord.requestId : undefined) ||
+      (typeof errRecord?.digest === 'string' ? errRecord.digest : undefined);
     try {
       logger.error(`[ServerAction Error] ${errorMsg}`, {
         service: 'server-action',

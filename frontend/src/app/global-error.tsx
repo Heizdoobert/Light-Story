@@ -17,7 +17,8 @@ export default function GlobalError({
     console.error("[Global Error]", error);
   }, [error]);
 
-  const traceId = (error as any)?.requestId || (error as any)?.digest || 'N/A';
+  const errorRecord = error as Error & { requestId?: string; digest?: string };
+  const traceId = errorRecord?.requestId || errorRecord?.digest || 'N/A';
 
   const handleCopyTraceId = async () => {
     try {

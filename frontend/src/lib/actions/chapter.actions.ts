@@ -42,9 +42,9 @@ export async function updateChapter(id: string, storyId: string, data: UpdateCha
     }
     const updateFields: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
     if (updateFields.images !== undefined) {
-      (updateFields as any).content = JSON.stringify((updateFields as any).images ?? []);
+      updateFields.content = JSON.stringify(updateFields.images ?? []);
     }
-    delete (updateFields as any).images;
+    delete updateFields.images;
     const res = await fetchApi(`/api/admin/chapters/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updateFields),

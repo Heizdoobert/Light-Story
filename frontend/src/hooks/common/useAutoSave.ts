@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * Hook for auto-saving form data to localStorage with debouncing.
  * Helps prevent data loss when session expires or tab crashes.
  */
-export const useAutoSave = <T extends Record<string, any>>(
+export const useAutoSave = <T extends Record<string, unknown>>(
   key: string,
   data: T,
   interval: number = 5000, // Auto-save every 5 seconds
