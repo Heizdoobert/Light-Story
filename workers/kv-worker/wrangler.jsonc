@@ -35,6 +35,15 @@
         "binding": "LIGHTSTORY_QUEUE",
         "queue": "lightstory-queue"
       }
+    ],
+    "consumers": [
+      {
+        "queue": "lightstory-queue",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 3,
+        "dead_letter_queue": "lightstory-dlq"
+      }
     ]
   },
   "workflows": [
@@ -42,6 +51,20 @@
       "name": "lightstory-workflow",
       "binding": "LIGHTSTORY_WORKFLOW",
       "class_name": "LightStoryWorkflow"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "COUNTER_DO",
+        "class_name": "CounterDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["CounterDO"]
     }
   ],
   "hyperdrive": [

@@ -101,6 +101,7 @@ frontend/test-results/
 /scripts/*
 !/scripts/doctor.mjs
 !/scripts/redis_sync.ts
+!/scripts/perf/
 .github/copilot-instructions.md
 .opencode/opencode.json
 .opencode/plugins/graphify.js

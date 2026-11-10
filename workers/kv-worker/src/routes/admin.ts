@@ -777,6 +777,27 @@ export async function handleAdminRequest(
       );
     }
 
+    const userRoleUpdateMatch = path.match(/^\/admin\/users\/([^\/]+)$/);
+    if (method === 'PUT' && userRoleUpdateMatch) {
+      if (!requireRole(userRole, ['superadmin'])) {
+        return err('FORBIDDEN', 'User role update requires superadmin privileges', 403);
+      }
+      const targetUserId = userRoleUpdateMatch[1];
+      const body = (await request.json().catch(() => ({}))) as any;
+      if (!body.role || !isAppRole(body.role)) {
+        return err('VALIDATION_ERROR', 'role must be one of: ' + APP_ROLES.join(', '), 400);
+      }
+      await sbPatch(
+        'profiles',
+        uuidFilter('id', targetUserId),
+        { role: body.role },
+        env,
+        token,
+      ).catch(() => null);
+
+      return json({ success: true, data: { id: targetUserId, role: body.role } });
+    }
+
     if (method === 'GET' && path === '/admin/profiles') {
       const page = Math.max(
         1,

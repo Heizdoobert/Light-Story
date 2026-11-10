@@ -3,7 +3,26 @@
 import { json } from '../utils/supabase-client';
 import { l1Cache, IsolateL1Cache } from './isolate-l1-cache';
 
+// import cache config constants
+import { DEFAULT_TTL_SEC, MAX_TTL_SEC, CACHE_CONTROL_PUBLIC } from "../config/cache-config";
+
 export { l1Cache, IsolateL1Cache };
+
+const lockMap = new Map<string, Promise<any>>();
+export function withKeyLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = lockMap.get(key);
+  if (existing) return existing as Promise<T>;
+  const p = (async () => {
+    try {
+      return await fn();
+    } finally {
+      lockMap.delete(key);
+    }
+  })();
+  lockMap.set(key, p);
+  return p;
+}
+
 
 export type CacheOptions = {
   ttlSec: number;
@@ -130,9 +149,7 @@ function hashString(str: string): string {
  */
 export function publicCacheControl(ttlSec: number, token?: string | null): string {
   if (token) return 'private, no-cache';
-  const browserMaxAge = Math.min(60, ttlSec);
-  const swr = Math.min(30, Math.floor(ttlSec / 2));
-  return `public, max-age=${browserMaxAge}, s-maxage=${ttlSec}, stale-while-revalidate=${swr}`;
+  return CACHE_CONTROL_PUBLIC(ttlSec);
 }
 
 /**

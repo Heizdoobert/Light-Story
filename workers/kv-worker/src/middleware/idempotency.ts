@@ -2,6 +2,7 @@
 
 import { corsHeaders } from './cors';
 import { applySecurityHeaders } from './securityHeaders';
+import { logEvent } from '../utils/logger';
 
 export interface IdempotencyResult {
   hit: boolean;
@@ -33,6 +34,7 @@ export async function checkIdempotency(
     } | null;
 
     if (cached) {
+      await logEvent(null, 'idempotency_hit', { storageKey, userId, method }, { level: 'info' });
       const h = new Headers(cached.headers);
       h.set('X-Cache-Lookup', 'HIT-IDEMPOTENT');
       const c = corsHeaders(origin ?? null);
@@ -50,7 +52,9 @@ export async function checkIdempotency(
         ),
       };
     }
+    await logEvent(null, 'idempotency_miss', { storageKey, userId, method }, { level: 'debug' });
   } catch (err) {
+    await logEvent(null, 'idempotency_read_error', { storageKey, error: (err as Error).message }, { level: 'warn' });
     console.warn('[Idempotency] Failed reading cache:', err);
   }
 
@@ -90,7 +94,9 @@ export async function saveIdempotency(
       }),
       { expirationTtl: 86400 }, // 24 hours
     );
+    await logEvent(null, 'idempotency_saved', { storageKey, userId, status: response.status }, { level: 'info' });
   } catch (err) {
+    await logEvent(null, 'idempotency_save_error', { storageKey, error: (err as Error).message }, { level: 'warn' });
     console.warn('[Idempotency] Failed saving response to cache:', err);
   }
 }

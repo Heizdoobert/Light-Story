@@ -3,7 +3,7 @@
 import { revalidateTag } from 'next/cache';
 import { CACHE_TAGS } from '@/lib/constants/cache-tags';
 import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission';
-import { getServerSupabase } from '@/lib/supabase/server';
+import { fetchApi } from '@/actions/http';
 import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
 import { AD_SLOT_KEYS, parseSiteSettingsRows, validateAdMarkup } from '@/lib/admin/ad-policy';
@@ -17,24 +17,14 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
     if (!parsed.success) {
       return { success: false, error: parsed.error.issues[0]?.message ?? 'Dữ liệu không hợp lệ' };
     }
-    const db = await getServerSupabase();
-    if (!db) return { success: false, error: 'Không thể kết nối cơ sở dữ liệu' };
-    const { runtime, slotMarkup } = parseSiteSettingsRows(parsed.data.entries);
-    for (const key of AD_SLOT_KEYS) {
-      const validation = validateAdMarkup(slotMarkup[key], runtime);
-      if (!validation.ok) {
-        return { success: false, error: `Ad markup policy violation (${key}): ${validation.reason}` };
-      }
-    }
-    const rows = parsed.data.entries.map((e) => ({
-      key: e.key,
-      value: e.value,
-      updated_at: new Date().toISOString(),
-    }));
-    const { error } = await db.from('site_settings').upsert(rows);
-    if (error) return { success: false, error: error.message };
+    const res = await fetchApi('/api/admin/site-settings', {
+      method: 'POST',
+      body: JSON.stringify({ entries: parsed.data.entries }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.SETTINGS, 'max');
-    return { success: true, data: { count: rows.length } };
+    return { success: true, data: { count: json.count ?? parsed.data.entries.length } };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }

@@ -1,5 +1,7 @@
 /** KV-backed sliding window rate limiter — survives cold starts and multiple instances */
 
+import { logEvent } from '../utils/logger';
+
 type RateLimitStore = Map<string, number[]>;
 const ipStore: RateLimitStore = new Map();
 
@@ -72,6 +74,7 @@ function evictIfNeeded(now: number): void {
     if (oldest.done) break;
     ipStore.delete(oldest.value);
   }
+  logEvent(null, 'rate_limit_evicted', { remainingIps: ipStore.size }, { level: 'info' });
 }
 
 /** In-memory fallback when KV unavailable */
@@ -152,18 +155,39 @@ export async function checkRateLimit(
   const ip = getClientIP(request);
 
   if (shouldBypass(ip)) {
+    logEvent(null, 'rate_limit_bypassed', { ip }, { level: 'debug' });
     return { allowed: true, limit: 999999, remaining: 999999, resetSec: 60 };
   }
 
   const limit = getLimit(role, isAuthOrAdmin, pathname);
+  let res: RateLimitResult;
 
   if (kv) {
     try {
-      return await checkRateLimitKV(kv, ip, limit);
-    } catch {
-      // KV failure → fall back to in-memory
+      res = await checkRateLimitKV(kv, ip, limit);
+    } catch (err) {
+      logEvent(null, 'rate_limit_kv_failure', { ip, error: (err as Error).message }, { level: 'warn' });
+      res = checkRateLimitMemory(ip, limit);
     }
+  } else {
+    res = checkRateLimitMemory(ip, limit);
   }
 
-  return checkRateLimitMemory(ip, limit);
+  if (!res.allowed) {
+    logEvent(
+      null,
+      'rate_limit_exceeded',
+      { ip, limit: res.limit, resetSec: res.resetSec, pathname, role },
+      { level: 'warn' },
+    );
+  } else {
+    logEvent(
+      null,
+      'rate_limit_allowed',
+      { ip, remaining: res.remaining, limit: res.limit },
+      { level: 'debug' },
+    );
+  }
+
+  return res;
 }

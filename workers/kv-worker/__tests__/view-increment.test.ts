@@ -102,4 +102,22 @@ describe('view-increment', () => {
     const val = await kv.get('view:story-direct');
     expect(String(val)).toBe('1');
   });
+
+  it('buffers view increment into KV on public POST /api/v1/stories/views', async () => {
+    const req = new Request('http://localhost/api/v1/stories/views', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ storyId: 'story-pub-123' }),
+    });
+
+    const res = await worker.fetch(req, env, mockCtx);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as any;
+    expect(body.success).toBe(true);
+
+    const val = await kv.get('view:story-pub-123');
+    expect(String(val)).toBe('1');
+  });
 });

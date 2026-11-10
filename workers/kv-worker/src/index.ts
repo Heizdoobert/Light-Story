@@ -308,7 +308,7 @@ export default {
       doubles: [Date.now()],
     });
 
-    if (request.method === 'GET' && (strippedPath === '/health' || pathname === '/api/health')) {
+    if (request.method === 'GET' && (strippedPath === '' || strippedPath === '/' || strippedPath === '/health' || pathname === '/api/health')) {
       const h = new Headers({
         'Content-Type': 'application/json',
         'x-request-id': requestId,
@@ -327,6 +327,42 @@ export default {
         {
           status: 200,
           headers: h,
+        },
+      );
+    }
+
+    // Durable Object atomic hot counters (/increment, /get)
+    if (
+      strippedPath === '/increment' ||
+      strippedPath === '/get' ||
+      strippedPath === '/counters/increment' ||
+      strippedPath === '/counters/get'
+    ) {
+      if (env.COUNTER_DO) {
+        const entityId = url.searchParams.get('id') || 'global';
+        const id = env.COUNTER_DO.idFromName(entityId);
+        const stub = env.COUNTER_DO.get(id);
+        const doRes = await stub.fetch(request);
+        const h = new Headers(doRes.headers);
+        for (const [k, v] of Object.entries(corsHeaders(origin))) {
+          h.set(k, v);
+        }
+        h.set('x-request-id', requestId);
+        h.set('x-trace-id', traceId);
+        applySecurityHeaders(h);
+        return new Response(doRes.body, { status: doRes.status, headers: h });
+      }
+      return new Response(
+        JSON.stringify({ success: false, error: 'COUNTER_DO_NOT_CONFIGURED' }),
+        {
+          status: 503,
+          headers: (() => {
+            const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+            h.set('x-request-id', requestId);
+            h.set('x-trace-id', traceId);
+            applySecurityHeaders(h);
+            return h;
+          })(),
         },
       );
     }
@@ -431,7 +467,8 @@ export default {
       });
     }
 
-    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx) {
+    const isPublicWrite = strippedPath === '/stories/views';
+    if (method !== 'GET' && method !== 'OPTIONS' && !authCtx && !isPublicWrite) {
       const h = new Headers({
         'Content-Type': 'application/json',
         'X-Request-Id': requestId,
@@ -489,10 +526,12 @@ export default {
 
     const createForwardRequest = (targetUrl: string) => {
       const isBodyAllowed = method !== 'GET' && method !== 'HEAD';
+      const hasBody = isBodyAllowed && request.body !== null && request.body !== undefined;
       return new Request(targetUrl, {
         method: request.method,
         headers: downstreamHeaders,
         body: isBodyAllowed ? (request.body ?? undefined) : undefined,
+        ...(hasBody ? { duplex: 'half' as any } : {}),
       });
     };
 
@@ -792,3 +831,6 @@ export class LightStoryWorkflow extends WorkflowEntrypoint<Env, { action: string
     return res;
   }
 }
+
+// Durable Object atomic counter class export for Cloudflare Workers runtime
+export { CounterDO } from './do/counter.do';

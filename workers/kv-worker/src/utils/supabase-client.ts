@@ -68,6 +68,41 @@ async function sbGet(
   return sb(`/rest/v1/${table}?${q}`, { method: 'GET' }, env, token);
 }
 
+async function sbGetWithCount(
+  table: string,
+  q: string,
+  env: Env,
+  token?: string | null,
+): Promise<{ res: Response; items: any[]; total: number }> {
+  const res = await sb(
+    `/rest/v1/${table}?${q}`,
+    {
+      method: 'GET',
+      headers: { Prefer: 'count=exact' },
+    },
+    env,
+    token,
+  );
+  if (!res.ok) {
+    return { res, items: [], total: 0 };
+  }
+  const range = res.headers.get('content-range') || res.headers.get('Content-Range');
+  let items: any[] = [];
+  try {
+    const text = await res.text();
+    const parsed = text ? JSON.parse(text) : [];
+    items = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    items = [];
+  }
+  let total = items.length;
+  if (range) {
+    const match = range.match(/\/(\d+)$/);
+    if (match) total = parseInt(match[1], 10);
+  }
+  return { res, items, total };
+}
+
 async function sbPost(
   table: string,
   body: unknown,
@@ -303,6 +338,7 @@ export {
   authToken,
   sb,
   sbGet,
+  sbGetWithCount,
   sbPost,
   sbPatch,
   sbDelete,
