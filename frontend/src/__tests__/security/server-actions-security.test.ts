@@ -4,6 +4,8 @@ import {
   requireActionRole,
   ActionUnauthorizedError,
   ActionForbiddenError,
+  ActionRateLimitError,
+  checkActionRateLimit,
 } from '@/lib/security/permission';
 import { z } from 'zod';
 
@@ -115,6 +117,36 @@ describe('Server Actions Security & Validation Suites', () => {
       expect(res.success).toBe(true);
       expect(res.requester.role).toBe('admin');
       expect(res.data.title).toBe('Valid Comic Title');
+    });
+  });
+
+  describe('Server Actions Anti-Spam & Rate Limiting', () => {
+    it('allows requests within limit and rejects excess calls', () => {
+      const testKey = `test-user-${Date.now()}`;
+      expect(checkActionRateLimit(testKey, 2, 60_000)).toBe(true);
+      expect(checkActionRateLimit(testKey, 2, 60_000)).toBe(true);
+      expect(checkActionRateLimit(testKey, 2, 60_000)).toBe(false);
+    });
+
+    it('throws ActionRateLimitError when requireActionRole exceeds rate limit', async () => {
+      const spamUserId = `spam-user-${Date.now()}`;
+      mockGetUser.mockResolvedValue({
+        data: { user: { id: spamUserId, app_metadata: { role: 'admin' } } },
+        error: null,
+      });
+
+      // 2 allowed calls
+      await expect(
+        requireActionRole(ACTION_ADMIN_ROLES, { limit: 2, windowMs: 60_000 })
+      ).resolves.toBeDefined();
+      await expect(
+        requireActionRole(ACTION_ADMIN_ROLES, { limit: 2, windowMs: 60_000 })
+      ).resolves.toBeDefined();
+
+      // 3rd call exceeds limit
+      await expect(
+        requireActionRole(ACTION_ADMIN_ROLES, { limit: 2, windowMs: 60_000 })
+      ).rejects.toThrow(ActionRateLimitError);
     });
   });
 });

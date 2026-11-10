@@ -26,7 +26,51 @@ export class ActionForbiddenError extends Error {
   }
 }
 
+export class ActionRateLimitError extends Error {
+  constructor(message = "too many requests, please try again later") {
+    super(message);
+    this.name = "ActionRateLimitError";
+  }
+}
+
 export type ActionRequester = { userId: string; role: string };
+
+export type ActionRateLimitConfig = {
+  limit?: number;
+  windowMs?: number;
+};
+
+// In-memory sliding-window store for Server Action anti-spam
+const actionLimitStore = new Map<string, number[]>();
+const MAX_ACTION_STORE_ENTRIES = 5_000;
+
+export function checkActionRateLimit(
+  key: string,
+  limit = 60,
+  windowMs = 60_000,
+): boolean {
+  const now = Date.now();
+  const windowStart = now - windowMs;
+
+  let timestamps = actionLimitStore.get(key);
+  if (!timestamps) {
+    if (actionLimitStore.size >= MAX_ACTION_STORE_ENTRIES) {
+      const firstKey = actionLimitStore.keys().next().value;
+      if (firstKey) actionLimitStore.delete(firstKey);
+    }
+    timestamps = [];
+    actionLimitStore.set(key, timestamps);
+  }
+
+  const validTimestamps = timestamps.filter((t) => t > windowStart);
+  if (validTimestamps.length >= limit) {
+    return false;
+  }
+
+  validTimestamps.push(now);
+  actionLimitStore.set(key, validTimestamps);
+  return true;
+}
 
 /**
  * Resolves the current session user and checks they hold one of the allowed
@@ -35,6 +79,7 @@ export type ActionRequester = { userId: string; role: string };
  */
 export async function requireActionRole(
   allowedRoles: readonly string[],
+  rateLimitConfig?: ActionRateLimitConfig,
 ): Promise<ActionRequester> {
   const sessionClient = await createSessionClient();
   const { data: userData, error } = await sessionClient.auth.getUser();
@@ -50,6 +95,17 @@ export async function requireActionRole(
 
   if (role !== "superadmin" && !allowedRoles.includes(role)) {
     throw new ActionForbiddenError();
+  }
+
+  if (rateLimitConfig) {
+    const isAllowed = checkActionRateLimit(
+      `action:${userId}`,
+      rateLimitConfig.limit ?? 60,
+      rateLimitConfig.windowMs ?? 60_000,
+    );
+    if (!isAllowed) {
+      throw new ActionRateLimitError();
+    }
   }
 
   return { userId, role };

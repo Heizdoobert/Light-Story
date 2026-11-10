@@ -20,6 +20,7 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
     base-uri 'self';
     form-action 'self';
     frame-ancestors 'none';
+    ${isDev ? "" : "upgrade-insecure-requests;"}
   `.replace(/\s{2,}/g, " ").trim();
 
   res.headers.set("Content-Security-Policy", csp);
@@ -28,6 +29,7 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
   
   return res;
 }
