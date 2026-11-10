@@ -19,10 +19,10 @@ export async function createCategory(data: CreateCategoryInput): Promise<ActionR
       method: 'POST',
       body: JSON.stringify({ name: parsed.data.name }),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string; id?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.GENRES, 'max');
-    return { success: true, data: { id: json.id } };
+    return { success: true, data: { id: json.id || '' } };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
@@ -40,7 +40,7 @@ export async function updateCategory(id: string, data: UpdateCategoryInput): Pro
       method: 'PUT',
       body: JSON.stringify(parsed.data),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.GENRES, 'max');
     return { success: true, data: { id } };
@@ -54,7 +54,7 @@ export async function deleteCategory(id: string): Promise<ActionResult<{ id: str
     await requireActionRole(ACTION_ADMIN_ROLES);
     if (!id || !id.trim()) return { success: false, error: 'ID thể loại không hợp lệ' };
     const res = await fetchApi(`/api/admin/categories/${id}`, { method: 'DELETE' });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.GENRES, 'max');
     return { success: true, data: { id } };

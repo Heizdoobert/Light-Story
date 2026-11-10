@@ -41,7 +41,7 @@ export async function updateUserProfile(
       method: 'PUT',
       body: JSON.stringify(patch),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.USERS, 'max');
     return { success: true, data: { userId: targetId } };
@@ -61,7 +61,7 @@ export async function updateUserRole(userId: string, role: string): Promise<Acti
       method: 'PUT',
       body: JSON.stringify({ role: parsed.data.role, updated_at: new Date().toISOString() }),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     // No direct DB access needed; fetchApi handles auth and request
 

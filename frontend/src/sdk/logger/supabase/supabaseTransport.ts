@@ -3,6 +3,26 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 let cachedClient: SupabaseClient | null = null;
 
+const THROTTLE_WINDOW_MS = 10_000;
+const MAX_IDENTICAL_LOGS_PER_WINDOW = 3;
+const recentLogs = new Map<string, { count: number; firstSeen: number }>();
+
+function isThrottled(key: string): boolean {
+  const now = Date.now();
+  const existing = recentLogs.get(key);
+  if (!existing || now - existing.firstSeen > THROTTLE_WINDOW_MS) {
+    recentLogs.set(key, { count: 1, firstSeen: now });
+    if (recentLogs.size > 200) {
+      for (const [k, v] of recentLogs.entries()) {
+        if (now - v.firstSeen > THROTTLE_WINDOW_MS) recentLogs.delete(k);
+      }
+    }
+    return false;
+  }
+  existing.count++;
+  return existing.count > MAX_IDENTICAL_LOGS_PER_WINDOW;
+}
+
 /**
  * Safely resolves the Supabase client without failing if environment variables are missing.
  */
@@ -30,6 +50,11 @@ export function setSupabaseClientForLogger(client: SupabaseClient | null): void 
  */
 export async function persistLogToSupabase(entry: LogEntry): Promise<void> {
   try {
+    const throttleKey = `${entry.level}:${entry.service ?? 'default'}:${entry.message}`;
+    if (isThrottled(throttleKey)) {
+      return;
+    }
+
     const client = await getSupabaseClient();
     if (!client || typeof client.from !== 'function') {
       return;

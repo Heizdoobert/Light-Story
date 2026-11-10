@@ -6,8 +6,6 @@ import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permissi
 import { fetchApi } from '@/actions/http';
 import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
-import { AD_SLOT_KEYS, parseSiteSettingsRows, validateAdMarkup } from '@/lib/admin/ad-policy';
-
 import type { ActionResult } from '@/actions/result';
 
 export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<ActionResult<{ count: number }>> {
@@ -21,7 +19,7 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
       method: 'POST',
       body: JSON.stringify({ entries: parsed.data.entries }),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string; count?: number };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.SETTINGS, 'max');
     return { success: true, data: { count: json.count ?? parsed.data.entries.length } };

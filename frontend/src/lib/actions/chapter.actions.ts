@@ -24,10 +24,10 @@ export async function createChapter(data: CreateChapterInput): Promise<ActionRes
         content: JSON.stringify(parsed.data.images ?? []),
       }),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string; id?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.story_id), 'max');
-    return { success: true, data: { id: json.id } };
+    return { success: true, data: { id: json.id || '' } };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
@@ -49,7 +49,7 @@ export async function updateChapter(id: string, storyId: string, data: UpdateCha
       method: 'PUT',
       body: JSON.stringify(updateFields),
     });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.CHAPTERS(storyId), 'max');
     return { success: true, data: { id } };
@@ -62,7 +62,7 @@ export async function deleteChapter(id: string, storyId: string): Promise<Action
   try {
     await requireActionRole(ACTION_ADMIN_ROLES);
     const res = await fetchApi(`/api/admin/chapters/${id}`, { method: 'DELETE' });
-    const json = await res.json();
+    const json = (await res.json()) as { error?: string };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };
     revalidateTag(CACHE_TAGS.CHAPTERS(storyId), 'max');
     return { success: true, data: { id } };
