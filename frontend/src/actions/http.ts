@@ -11,11 +11,15 @@ export async function fetchApi(path: string, init: RequestInit = {}): Promise<Re
   if (!(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
+  if (!headers.has('X-Request-Id')) {
+    headers.set('X-Request-Id', `act_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`);
+  }
   const res = await fetch(`${getGatewayUrl()}${path}`, { ...init, headers });
   if (!res.ok) {
     // ponytail: console sink matches repo convention; fields bounded (no user/url values)
+    const traceId = res.headers.get('x-trace-id') || res.headers.get('x-request-id') || headers.get('X-Request-Id');
     console.warn(
-      { event: 'gateway_request_failed', path, status: res.status, statusText: res.statusText },
+      { event: 'gateway_request_failed', path, status: res.status, statusText: res.statusText, traceId },
       'gateway request failed',
     );
   }

@@ -1,3 +1,5 @@
+import { logEvent } from '../utils/logger';
+
 export interface AuthContext {
   userId: string;
   role: string;
@@ -145,23 +147,34 @@ export async function validateJWT(
   token: string,
   env?: any,
 ): Promise<AuthContext> {
-  if (!token) throw new UnauthorizedError("Missing token");
+  if (!token) {
+    await logEvent(env, 'auth_missing_token', {}, { level: 'warn' });
+    throw new UnauthorizedError("Missing token");
+  }
   const cleaned = token.trim().replace(/^Bearer\s+/i, "");
   let payload: any;
   try {
     payload = decodeJwtPayload(cleaned);
   } catch (e) {
+    await logEvent(env, 'auth_invalid_payload', { tokenSnippet: cleaned.slice(0, 10) }, { level: 'warn' });
     throw new UnauthorizedError("Invalid token");
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (payload.exp && now >= payload.exp)
+  if (payload.exp && now >= payload.exp) {
+    await logEvent(env, 'auth_token_expired', { exp: payload.exp, now }, { level: 'warn' });
     throw new UnauthorizedError("Token expired");
-  if (payload.nbf && now < payload.nbf)
+  }
+  if (payload.nbf && now < payload.nbf) {
+    await logEvent(env, 'auth_token_not_yet_valid', { nbf: payload.nbf, now }, { level: 'warn' });
     throw new UnauthorizedError("Token not yet valid");
+  }
 
   const userId = payload.sub ?? payload.user_id ?? payload.uid;
-  if (!userId) throw new UnauthorizedError("Missing subject (sub) in token");
+  if (!userId) {
+    await logEvent(env, 'auth_missing_subject', {}, { level: 'warn' });
+    throw new UnauthorizedError("Missing subject (sub) in token");
+  }
 
   const email = payload.email ?? undefined;
   const sbUrl = (globalThis as any).SUPABASE_URL || env?.SUPABASE_URL;
@@ -178,6 +191,7 @@ export async function validateJWT(
     (globalThis as any).JWKS_URL ||
     (sbUrl ? `${sbUrl.replace(/\/$/, '')}/auth/v1/.well-known/jwks.json` : undefined);
   if (!jwksUrl) {
+    await logEvent(env, 'auth_jwks_not_configured', {}, { level: 'error' });
     throw new UnauthorizedError("JWT verification not configured");
   }
 
@@ -186,6 +200,7 @@ export async function validateJWT(
   if (sbUrl) {
     const expectedIss = `${String(sbUrl).replace(/\/$/, '')}/auth/v1`;
     if (payload.iss && payload.iss !== expectedIss) {
+      await logEvent(env, 'auth_issuer_mismatch', { iss: payload.iss, expectedIss }, { level: 'warn' });
       throw new UnauthorizedError("Token issuer mismatch");
     }
   }
@@ -249,9 +264,13 @@ export async function validateJWT(
         });
       }
     }
-    if (!ok) throw new UnauthorizedError("Invalid token signature");
+    if (!ok) {
+      await logEvent(env, 'auth_invalid_signature', { userId }, { level: 'warn' });
+      throw new UnauthorizedError("Invalid token signature");
+    }
   } catch (e) {
     if (e instanceof UnauthorizedError) throw e;
+    await logEvent(env, 'auth_jwks_error', { err: (e as Error).message }, { level: 'error' });
     console.error("validateJWT: unexpected failure during JWKS verification", {
       err: (e as Error).message,
     });
@@ -303,6 +322,8 @@ export async function validateJWT(
   }
 
   if (role === "authenticated") role = "user";
+
+  await logEvent(env, 'auth_success', { userId, role, email }, { level: 'info' });
 
   return { userId, role, email };
 }

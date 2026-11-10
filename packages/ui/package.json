@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
+    "test:unit": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {

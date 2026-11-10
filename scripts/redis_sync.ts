@@ -1,6 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 /// <reference path="../workers/kv-worker/worker-configuration.d.ts" />
 
+import { logEvent } from '../workers/kv-worker/src/utils/logger';
+
 // Minimal Redis sync script
 // Iterates KV keys with prefix 'view:' and syncs counts to Supabase
 
@@ -30,7 +32,7 @@ export async function syncViews(env: Env): Promise<void> {
             body: JSON.stringify({ story_id_param: storyId, inc: count }),
           });
           if (!res.ok) {
-            console.error(`[RedisSync] Failed RPC for ${storyId}: ${res.status}`);
+            await logEvent(env, 'redis_sync_rpc_error', { storyId, status: res.status }, { level: 'error' });
             continue; // Prevent data loss: retain KV key on RPC error
           }
         } catch (e) {

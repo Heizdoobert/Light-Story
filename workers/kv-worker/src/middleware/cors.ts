@@ -1,6 +1,7 @@
 /** CORS and request handling middleware */
 
 import { applySecurityHeaders } from './securityHeaders';
+import { logEvent } from '../utils/logger';
 
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
@@ -29,19 +30,29 @@ export function isOriginAllowed(
   let hostname: string;
   try {
     const parsed = new URL(origin);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      logEvent(null, 'cors_invalid_protocol', { origin }, { level: 'warn' });
+      return false;
+    }
     hostname = parsed.hostname.toLowerCase();
   } catch {
+    logEvent(null, 'cors_invalid_origin_url', { origin }, { level: 'warn' });
     return false;
   }
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
 
-  return allowedSuffixes.some((raw) => {
+  const allowed = allowedSuffixes.some((raw) => {
     const suffix = raw.trim().toLowerCase();
     if (!suffix) return false;
     return hostname === suffix || hostname.endsWith(`.${suffix}`);
   });
+
+  if (!allowed) {
+    logEvent(null, 'cors_disallowed_origin', { origin, hostname }, { level: 'warn' });
+  }
+
+  return allowed;
 }
 
 const DEFAULT_ALLOWED_HEADERS =
@@ -70,6 +81,7 @@ export function handleCorsPreflightRequest(
   request: Request,
 ): Response {
   const origin = request.headers.get('Origin');
+  logEvent(null, 'cors_preflight_handled', { origin }, { level: 'debug' });
   const reqHeaders = request.headers.get('Access-Control-Request-Headers');
   const headers = new Headers(corsHeaders(origin, reqHeaders));
   applySecurityHeaders(headers);

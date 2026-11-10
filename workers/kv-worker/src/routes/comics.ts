@@ -3,6 +3,7 @@
 import {
   err,
   sbGet,
+  sbGetWithCount,
   sbPost,
   sbGetCount,
   handleRes,
@@ -74,16 +75,12 @@ export async function handleComicsRequest(
         const order = sortMap[sort] || 'created_at.desc';
 
         let q = `select=id,title,author,description,cover_url,category,status,views,created_at,updated_at&status=neq.archived&order=${order}&limit=${pageSize}&offset=${offset}`;
-        let countQ = 'stories?status=neq.archived';
         if (keyword) {
           const filter = `or=(title.ilike.*${encodeURIComponent(keyword)}*,author.ilike.*${encodeURIComponent(keyword)}*)`;
           q += `&${filter}`;
-          countQ += `&${filter}`;
         }
-        const res = await sbGet('stories', q, env, token);
+        const { res, items, total } = await sbGetWithCount('stories', q, env, token);
         if (!res.ok) return handleRes(res);
-        const items = await res.json();
-        const total = await sbGetCount(countQ, env, token);
         return { items, total };
       });
       return cachedJson(data, 60, token);

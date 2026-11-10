@@ -3,12 +3,14 @@
 import {
   err,
   sbGet,
+  sbGetWithCount,
   sbPost,
   sb,
   sbGetCount,
   handleRes,
   json,
 } from '../utils/supabase-client';
+import { incrementStoryView } from '../counters';
 import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
 import { withCache, buildCacheKey, invalidateCache, cachedJson, publicCache } from '../middleware/cache';
 
@@ -96,26 +98,8 @@ export async function handleStoriesRequest(
         if (tag) {
           q += `&tags=ilike.*${encodeURIComponent(tag)}*`;
         }
-        const res = await sbGet('stories', q, env, token);
+        const { res, items, total } = await sbGetWithCount('stories', q, env, token);
         if (!res.ok) return handleRes(res);
-        const items = await res.json();
-
-        let countQ = `stories?status=in.(${allowedStatuses.join(',')})`;
-        const countOrParts: string[] = [];
-        if (keyword) {
-          countOrParts.push(`title.ilike.*${encodeURIComponent(keyword)}*`);
-          countOrParts.push(`author.ilike.*${encodeURIComponent(keyword)}*`);
-        }
-        if (categories.length > 0) {
-          categories.forEach(c => countOrParts.push(`category.ilike.*${encodeURIComponent(c)}*`));
-        }
-        if (countOrParts.length > 0) {
-          countQ += `&or=(${countOrParts.join(',')})`;
-        }
-        if (tag) {
-          countQ += `&tags=ilike.*${encodeURIComponent(tag)}*`;
-        }
-        const total = await sbGetCount(countQ, env, token);
         return { items, total };
       });
       return cachedJson(data, 60, token);
@@ -279,11 +263,15 @@ export async function handleStoriesRequest(
       if (typeof body.storyId !== 'string' || !body.storyId.trim()) {
         return err('VALIDATION_ERROR', 'storyId is required', 422);
       }
+      const storyId = body.storyId.trim();
+      if (env.APP_KV) {
+        return await incrementStoryView(env, storyId);
+      }
       const res = await sb(
         '/rest/v1/rpc/increment_story_views',
         {
           method: 'POST',
-          body: JSON.stringify({ story_id_param: body.storyId }),
+          body: JSON.stringify({ story_id_param: storyId }),
         },
         env,
         token,

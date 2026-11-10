@@ -12,6 +12,7 @@ interface __BaseEnv_Env {
 	SUPABASE_SERVICE_KEY: string;
 	ENC_KEY: string;
 	APP_KV?: KVNamespace;
+	COUNTER_DO?: DurableObjectNamespace;
 	R2_BUCKET?: R2Bucket;
 	HYPERDRIVE?: Hyperdrive;
 	ANALYTICS_DATA?: AnalyticsEngineDataset;

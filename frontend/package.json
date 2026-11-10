@@ -19,6 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:auth": "playwright test auth-boundary",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:comic-upload": "playwright test comic-upload",
+    "test:security": "vitest run src/__tests__/security",
     "ci:verify": "npm run lint && npm run build && npm run test:run",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",
