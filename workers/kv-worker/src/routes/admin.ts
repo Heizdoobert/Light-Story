@@ -547,7 +547,10 @@ export async function handleAdminRequest(
       method === 'GET' &&
       path === '/admin/analytics/dashboard'
     ) {
-      const CACHE_KEY = 'admin:analytics:dashboard:overview';
+      const url = new URL(request.url);
+      const rawTimeRange = url.searchParams.get('timeRange') || '30d';
+      const timeRange = ['24h', '7d', '30d', '90d'].includes(rawTimeRange) ? rawTimeRange : '30d';
+      const CACHE_KEY = `admin:analytics:dashboard:overview:${timeRange}`;
 
       // 1. Try L1 in-memory micro-cache (0.1ms read latency)
       const l1Hit = l1Cache.get<any>(CACHE_KEY);
@@ -569,7 +572,7 @@ export async function handleAdminRequest(
         sbRpc('get_admin_dashboard_summary', {}, env, token)
           .then((res) => (res.ok ? (res.json() as Promise<any>).catch(() => null) : null))
           .catch(() => null),
-        sbRpc('get_user_engagement_summary', { p_time_range: '30d' }, env, token)
+        sbRpc('get_user_engagement_summary', { p_time_range: timeRange }, env, token)
           .then((res) => (res.ok ? (res.json() as Promise<any>).catch(() => null) : null))
           .catch(() => null),
         getInfrastructurePayload(env).catch(() => null),

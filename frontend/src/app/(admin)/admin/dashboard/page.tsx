@@ -131,7 +131,7 @@ export default function AdminDashboardPage() {
           </motion.div>
 
           {/* Primary KPI Metrics with inline SVG sparklines */}
-          <MetricsKpiCards stats={stats} engagement={engagement} t={t} />
+          <MetricsKpiCards stats={stats} engagement={engagement} t={t} loading={loading} />
 
           {/* Infrastructure stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -189,7 +189,14 @@ export default function AdminDashboardPage() {
                     {r2Allocated > 0 ? `${r2Allocated} GB` : "—"}
                   </span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-950 h-5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 p-0.5">
+                <div
+                  className="w-full bg-slate-100 dark:bg-slate-950 h-5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800 p-0.5"
+                  role="progressbar"
+                  aria-valuenow={Math.round(r2UsagePct)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={t("dash_r2_gauge_label")}
+                >
                   <div
                     className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-500"
                     style={{ width: `${loading ? 0 : r2UsagePct}%` }}
@@ -248,7 +255,14 @@ export default function AdminDashboardPage() {
                           {val > 0 ? `${val}%` : "—"}
                         </span>
                       </div>
-                      <div className="w-full bg-slate-100 dark:bg-slate-950 h-2.5 rounded-full overflow-hidden">
+                      <div
+                        className="w-full bg-slate-100 dark:bg-slate-950 h-2.5 rounded-full overflow-hidden"
+                        role="progressbar"
+                        aria-valuenow={val}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={item.label}
+                      >
                         <div
                           className={`${item.color} h-full rounded-full`}
                           style={{
@@ -367,7 +381,7 @@ export default function AdminDashboardPage() {
             transition={{ duration: 0.3, delay: 0.3 }}
           >
             <Section title={t("dash_settings_log_title")}>
-              <RecentSettingsAuditTable logs={recentSettingsChanges} t={t} />
+              <RecentSettingsAuditTable logs={recentSettingsChanges} t={t} loading={loading} />
             </Section>
           </motion.div>
 

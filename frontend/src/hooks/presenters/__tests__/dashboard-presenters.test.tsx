@@ -124,7 +124,7 @@ describe('Dashboard Presenters Unit Tests', () => {
       });
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        ROUTES.API.ADMIN.ANALYTICS_DASHBOARD,
+        `${ROUTES.API.ADMIN.ANALYTICS_DASHBOARD}?timeRange=30d`,
         expect.any(Object)
       );
       expect(result.current.data.stats?.totalStories).toBe(100);

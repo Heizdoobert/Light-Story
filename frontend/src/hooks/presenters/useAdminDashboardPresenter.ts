@@ -63,10 +63,11 @@ export function useAdminDashboardPresenter() {
   const [timeRange, setTimeRange] = useState<DashboardTimeRange>("30d");
 
   const query = useQuery<OverviewData>({
-    queryKey: QUERY_KEYS.admin.dashboard,
+    queryKey: [...QUERY_KEYS.admin.dashboard, timeRange],
     queryFn: async () => {
+      const url = `${ROUTES.API.ADMIN.ANALYTICS_DASHBOARD}?timeRange=${timeRange}`;
       const result = await apiClient.get<OverviewData>(
-        ROUTES.API.ADMIN.ANALYTICS_DASHBOARD,
+        url,
         { signal: AbortSignal.timeout(20000) }
       );
       return result ?? initialOverviewData;
