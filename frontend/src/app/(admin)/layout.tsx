@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useUser } from '@/hooks/features/use-user';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
+import { AdminHeader } from '@/components/layout/admin-header';
 import { ROUTES } from '@/lib/constants/routes';
 import { AntdRegistry, LightStoryThemeProvider } from '@light-story/ui';
 
@@ -12,6 +14,7 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
   const { isStaff, isLoading } = useUser();
   const { t } = useLanguage();
   const { theme } = useTheme();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const antdMode = theme === 'light' ? 'light' : 'dark';
 
   if (isLoading) {
@@ -39,13 +42,18 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
     );
   }
 
-  // Every admin route (incl. /admin/dashboard) renders inside the AdminSidebar shell with Ant Design theming.
+  // Every admin route (incl. /admin/dashboard) renders inside the AdminSidebar + AdminHeader shell with Ant Design theming.
   return (
     <AntdRegistry>
       <LightStoryThemeProvider mode={antdMode}>
         <div className="min-h-screen flex bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-          <AdminSidebar />
-          <main id="main-content" className="flex-1 p-8 overflow-y-auto">{children}</main>
+          <AdminSidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+          <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+            <AdminHeader onToggleMobileSidebar={() => setMobileSidebarOpen((prev) => !prev)} />
+            <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+              {children}
+            </main>
+          </div>
         </div>
       </LightStoryThemeProvider>
     </AntdRegistry>
