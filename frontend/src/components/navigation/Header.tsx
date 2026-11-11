@@ -223,7 +223,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
   return (
     <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md text-slate-800 dark:text-slate-100 shadow-sm border-b border-slate-200/80 dark:border-slate-800/80 transition-colors">
       {/* Top Header Bar */}
-      <nav className="px-4 sm:px-6 lg:px-12 py-2.5 flex items-center justify-between gap-3">
+      <nav className="px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 lg:py-4 flex items-center justify-between gap-3 sm:gap-4 min-h-[64px] sm:min-h-[72px]">
         {/* Brand & Mobile Hamburger */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0">
           <motion.button
@@ -232,23 +232,23 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
             aria-label={t("header_open_menu")}
             aria-expanded={showMobileMenu}
             aria-controls="mobile-nav-drawer"
-            className="p-2.5 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all duration-200 shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all duration-200 shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
           >
-            <Menu size={20} />
+            <Menu size={22} />
           </motion.button>
 
           <Link
             href="/"
             className="flex items-center gap-2.5 hover:opacity-95 transition-opacity cursor-pointer outline-none shrink-0 group"
           >
-            <div className="w-9 h-9 bg-gradient-to-tr from-orange-500 via-orange-600 to-amber-500 rounded-xl flex shrink-0 items-center justify-center text-white font-extrabold text-base shadow-sm shadow-orange-500/25 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-tr from-orange-500 via-orange-600 to-amber-500 rounded-2xl flex shrink-0 items-center justify-center text-white font-extrabold text-lg shadow-sm shadow-orange-500/25 group-hover:scale-105 transition-transform">
               L
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
                 Light<span className="text-orange-500 dark:text-accent">Story</span>
               </span>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase hidden sm:inline">
+              <span className="text-[11px] text-slate-400 font-semibold tracking-wider uppercase hidden sm:inline mt-0.5">
                 Manga & Webtoon
               </span>
             </div>
@@ -259,20 +259,20 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
         {/* Mobile search trigger button */}
         <button
           onClick={() => setQuickSearchOpen(true)}
-          className="flex sm:hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer"
+          className="flex sm:hidden p-3 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer"
           aria-label={t("search")}
           title={t("search")}
         >
-          <Search size={18} />
+          <Search size={20} />
         </button>
 
         {/* Desktop interactive search container */}
-        <div ref={searchContainerRef} className="relative hidden sm:flex items-center flex-1 max-w-md mx-4">
+        <div ref={searchContainerRef} className="relative hidden sm:flex items-center flex-1 max-w-lg sm:max-w-xl mx-4 lg:mx-8">
           <form onSubmit={handleSearchSubmit} className="w-full flex items-center relative">
             <div className="relative w-full flex items-center">
               <Search
-                size={16}
-                className="absolute left-3.5 text-slate-400 dark:text-slate-500 pointer-events-none"
+                size={18}
+                className="absolute left-4 text-slate-400 dark:text-slate-500 pointer-events-none"
               />
               <input
                 ref={searchInputRef}
@@ -284,7 +284,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                 }}
                 placeholder={t("search_placeholder")}
                 aria-label={t("search_placeholder")}
-                className="w-full pl-10 pr-20 py-2 rounded-full text-xs font-medium bg-slate-100/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:bg-white dark:focus:bg-slate-900 transition-all placeholder:text-slate-400"
+                className="w-full pl-11 pr-24 py-2.5 sm:py-3 rounded-full text-sm font-medium bg-slate-100/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500/60 focus:bg-white dark:focus:bg-slate-900 transition-all placeholder:text-slate-400 shadow-2xs"
               />
 
               {/* Clear button if text entered */}
@@ -297,10 +297,10 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                     setShowResults(false);
                     searchInputRef.current?.focus();
                   }}
-                  className="absolute right-12 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute right-14 p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   aria-label="Xóa từ khóa"
                 >
-                  <X size={14} />
+                  <X size={16} />
                 </button>
               )}
 
@@ -308,10 +308,10 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
               <button
                 type="submit"
                 aria-label={t("search")}
-                className="absolute right-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full transition-all flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20 cursor-pointer"
+                className="absolute right-2 px-3.5 py-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white rounded-full transition-all flex items-center justify-center shrink-0 shadow-sm shadow-orange-500/20 cursor-pointer"
                 title={t("search")}
               >
-                {isSearching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+                {isSearching ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
               </button>
             </div>
           </form>
@@ -391,13 +391,13 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
         </div>
 
         {/* Right Section: Theme Toggle, Language, Notifications, User / Login */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
           {/* Theme Toggle Button (Light/Dark) */}
           <motion.button
             {...bounceClick}
             onClick={toggleTheme}
             aria-label={theme === "light" ? "Switch to dark mode" : "Chuyển sang chế độ sáng"}
-            className="min-w-[42px] min-h-[42px] flex items-center justify-center rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-200 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="min-w-[46px] min-h-[46px] flex items-center justify-center rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-200 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
             title={
               theme === "light"
                 ? language === "VI"
@@ -408,7 +408,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                 : "Switch to Light Mode"
             }
           >
-            {theme === "light" ? <Moon size={17} className="text-slate-700" /> : <Sun size={17} className="text-amber-400" />}
+            {theme === "light" ? <Moon size={18} className="text-slate-700" /> : <Sun size={18} className="text-amber-400" />}
           </motion.button>
 
           {/* More menu on mobile below md */}
@@ -419,9 +419,9 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
               aria-label={t("header_more_menu")}
               aria-haspopup="menu"
               aria-expanded={isMoreMenuOpen}
-              className="min-w-[42px] min-h-[42px] flex items-center justify-center rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-200 hover:bg-orange-500 hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="min-w-[46px] min-h-[46px] flex items-center justify-center rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-200 hover:bg-orange-500 hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
             >
-              <Ellipsis size={20} />
+              <Ellipsis size={22} />
             </motion.button>
 
             <AnimatePresence>
@@ -475,15 +475,15 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
           </div>
 
           {/* Desktop inline controls */}
-          <div className="hidden md:flex items-center gap-2 sm:gap-3">
+          <div className="hidden md:flex items-center gap-2.5 sm:gap-3.5">
             {/* Language Switcher */}
             <motion.button
               {...bounceClick}
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 min-h-[42px] px-3.5 py-1.5 rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+              className="flex items-center gap-2 min-h-[46px] px-4 py-2 rounded-xl bg-slate-100/90 dark:bg-slate-900/90 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
               title={language === "VI" ? "Switch to English (EN)" : "Chuyển sang Tiếng Việt (VI)"}
             >
-              <Globe size={15} className="text-orange-500" />
+              <Globe size={16} className="text-orange-500" />
               <span>{language}</span>
             </motion.button>
 
@@ -491,20 +491,20 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
             <NotificationBell />
 
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3.5">
                 {isStaffRole(role) && (
                   <Link
                     href={ROUTES.ADMIN.ROOT}
-                    className="flex items-center gap-2 px-3.5 py-2 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl text-xs font-bold shadow-sm shadow-orange-500/20 transition-all hover:scale-102"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-orange-500/20 transition-all hover:scale-102 min-h-[46px]"
                   >
-                    <LayoutDashboard size={15} />
+                    <LayoutDashboard size={16} />
                     <span className="hidden lg:inline">{t("admin_dashboard")}</span>
                   </Link>
                 )}
 
-                <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-3.5 pl-3.5 border-l border-slate-200 dark:border-slate-800">
                   <div className="text-right hidden sm:block">
-                    <div className="text-xs font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[120px]">
+                    <div className="text-sm font-bold text-slate-800 dark:text-white line-clamp-1 max-w-[130px]">
                       {profile?.full_name || user.email?.split("@")[0]}
                     </div>
                     <div className="text-[10px] font-extrabold text-orange-500 uppercase tracking-wider">
@@ -523,9 +523,9 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                       <Image
                         src={proxyAvatarUrl(profile?.avatar_url) || getFallbackAvatar(profile?.full_name || "User")}
                         alt="Avatar"
-                        width={38}
-                        height={38}
-                        className="w-9 h-9 rounded-full border-2 border-orange-500 object-cover"
+                        width={44}
+                        height={44}
+                        className="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-orange-500 object-cover"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = getFallbackAvatar(profile?.full_name || "User");
@@ -608,9 +608,9 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
               <motion.button
                 {...bounceClick}
                 onClick={() => (onLoginClick ? onLoginClick() : router.push(ROUTES.LOGIN))}
-                className="flex items-center gap-2 px-4.5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold text-xs shadow-sm shadow-orange-500/25 transition-all cursor-pointer"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl font-bold text-sm shadow-sm shadow-orange-500/25 transition-all cursor-pointer min-h-[46px]"
               >
-                <LogIn size={16} />
+                <LogIn size={18} />
                 <span className="hidden sm:inline">{t("login")}</span>
               </motion.button>
             )}
@@ -620,21 +620,21 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
 
       {/* Secondary Modern Navigation Bar */}
       <div
-        className="relative bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs text-slate-700 dark:text-slate-200 border-t border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 lg:px-12 transition-colors"
+        className="relative bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-xs text-slate-700 dark:text-slate-200 border-t border-slate-200/80 dark:border-slate-800/80 px-4 sm:px-6 lg:px-12 transition-colors min-h-[54px] sm:min-h-[60px] flex items-center"
         ref={categoryDropdownRef}
       >
-        <div className="flex items-center justify-start md:justify-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar font-bold text-xs tracking-wide py-1.5 scroll-smooth">
+        <div className="w-full flex items-center justify-start md:justify-center gap-1.5 sm:gap-2.5 overflow-x-auto no-scrollbar font-bold text-xs sm:text-sm tracking-wide py-2 sm:py-2.5 scroll-smooth">
           {/* Trang chủ */}
           <Link
             href="/"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive("/") && pathname === "/"
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
             title={t("nav_home")}
           >
-            <Home size={15} />
+            <Home size={17} />
             <span className="hidden sm:inline">{t("nav_home")}</span>
           </Link>
 
@@ -644,16 +644,16 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
             aria-expanded={showCategoryDropdown}
             aria-haspopup="true"
             aria-label={t("nav_categories_title")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 cursor-pointer ${
               showCategoryDropdown
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Menu size={15} />
+            <Menu size={17} />
             <span>{t("nav_categories_title")}</span>
             <ChevronDown
-              size={13}
+              size={14}
               className={`transition-transform duration-200 ${showCategoryDropdown ? "rotate-180" : ""}`}
             />
           </button>
@@ -661,91 +661,91 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
           {/* DANH SÁCH THỂ LOẠI */}
           <Link
             href={ROUTES.GENRES}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.GENRES)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Tag size={15} />
+            <Tag size={17} />
             <span>{t("category_list_title")}</span>
           </Link>
 
           {/* XẾP HẠNG */}
           <Link
             href={`${ROUTES.SEARCH}?sort=most_viewed`}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               pathname === ROUTES.SEARCH && searchKeyword === ""
                 ? "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <BarChart2 size={15} />
+            <BarChart2 size={17} />
             <span>{t("nav_rankings")}</span>
           </Link>
 
           {/* TÌM TRUYỆN */}
           <Link
             href={ROUTES.SEARCH}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.SEARCH)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Search size={15} />
+            <Search size={17} />
             <span>{t("nav_search_comics")}</span>
           </Link>
 
           {/* THEO DÕI */}
           <Link
             href={ROUTES.USER.FAVORITES}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.USER.FAVORITES)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Bookmark size={15} />
+            <Bookmark size={17} />
             <span>{t("nav_bookmarks")}</span>
           </Link>
 
           {/* HỒ SƠ */}
           <Link
             href={ROUTES.USER.PROFILE}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.USER.PROFILE)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <User size={15} />
+            <User size={17} />
             <span>{language === "VI" ? "HỒ SƠ" : "PROFILE"}</span>
           </Link>
 
           {/* GROUP */}
           <Link
             href={ROUTES.GROUP}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.GROUP)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Users size={15} />
+            <Users size={17} />
             <span>{t("nav_group")}</span>
           </Link>
 
           {/* FANPAGE */}
           <Link
             href={ROUTES.FANPAGE}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all shrink-0 ${
               isNavActive(ROUTES.FANPAGE)
                 ? "bg-orange-500 text-white shadow-xs font-bold"
                 : "text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 hover:text-orange-500"
             }`}
           >
-            <Globe size={15} />
+            <Globe size={17} />
             <span>{t("nav_fanpage")}</span>
           </Link>
         </div>
