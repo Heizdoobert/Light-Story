@@ -24,6 +24,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "*.workers.dev",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "*.r2.dev",
         port: "",
         pathname: "/**",
