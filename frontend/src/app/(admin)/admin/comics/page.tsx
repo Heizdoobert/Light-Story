@@ -123,7 +123,7 @@ export default function AdminComicsPage() {
                 else newSet.add(cat.name);
                 setCategoryFilter(newSet);
               }}
-              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+              className={`min-h-[32px] px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                 categoryFilter.has(cat.name)
                   ? "bg-orange-500/20 border-orange-500 text-orange-400"
                   : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"

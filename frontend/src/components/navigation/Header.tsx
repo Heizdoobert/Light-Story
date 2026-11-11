@@ -238,11 +238,13 @@ export const Header: React.FC<HeaderProps> = ({
                   if (searchResults.length > 0) setShowResults(true);
                 }}
                 placeholder={t("search_placeholder")}
+                aria-label={t("search_placeholder")}
                 className="w-full pl-4 pr-10 py-1.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-white border border-slate-200 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-primary transition-all"
               />
               <button
                 type="submit"
-                className="absolute right-1 px-2.5 py-1 bg-orange-500 dark:bg-[#001eff] hover:bg-orange-600 dark:hover:bg-primary/90 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
+                aria-label={t("search")}
+                className="absolute right-1 px-2.5 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-full transition-colors flex items-center justify-center shrink-0"
                 title={t("search")}
               >
                 {isSearching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
@@ -276,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({
                         key={`search-res-${comic.id}`}
                         href={ROUTES.COMIC_DETAIL(comic.id)}
                         onClick={() => setShowResults(false)}
-                        className="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors group"
+                        className="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group"
                       >
                         <Image
                           src={getComicCover(comic)}
@@ -332,7 +334,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : "Switch to Light Mode"
             }
           >
-            {theme === "light" ? <Moon size={16} className="text-slate-700" /> : <Sun size={16} className="text-[#39ff14]" />}
+            {theme === "light" ? <Moon size={16} className="text-slate-700" /> : <Sun size={16} className="text-amber-400" />}
           </motion.button>
 
           {/* More menu — secondary controls collapse here below md */}
@@ -341,6 +343,7 @@ export const Header: React.FC<HeaderProps> = ({
               {...bounceClick}
               onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
               aria-label={t("header_more_menu")}
+              aria-haspopup="menu"
               aria-expanded={isMoreMenuOpen}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all shrink-0 cursor-pointer"
             >
@@ -358,7 +361,7 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <button
                     onClick={toggleLanguage}
-                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                   >
                     <Globe size={16} className="text-orange-500 dark:text-accent" />
                     {language === "VI" ? "English (EN)" : "Tiếng Việt (VI)"}
@@ -375,7 +378,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <Link
                       href={ROUTES.USER.PROFILE}
                       onClick={() => setIsMoreMenuOpen(false)}
-                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                     >
                       <Users size={16} />
                       User Settings
@@ -386,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setIsMoreMenuOpen(false);
                         router.push(ROUTES.LOGIN);
                       }}
-                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange-500 dark:text-accent hover:bg-orange-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                      className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange-500 dark:text-accent hover:bg-orange-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                     >
                       <LogIn size={16} />
                       {t("login")}
@@ -418,7 +421,7 @@ export const Header: React.FC<HeaderProps> = ({
               {isStaffRole(role) && (
                 <Link
                   href={ROUTES.ADMIN.ROOT}
-                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-orange-500 dark:bg-[#001eff] hover:bg-orange-600 dark:hover:bg-primary/90 text-white rounded-full text-sm font-bold shadow-sm transition-all "
+                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-full text-sm font-bold shadow-sm transition-all"
                 >
                   <LayoutDashboard size={16} />
                   <span className="hidden lg:block">{t("admin_dashboard")}</span>
@@ -437,6 +440,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    aria-label="Menu tài khoản"
+                    aria-haspopup="menu"
+                    aria-expanded={isUserMenuOpen}
                     className="relative focus:outline-none focus:ring-2 focus:ring-orange-500 dark:focus:ring-primary rounded-full overflow-hidden shadow-sm hover:shadow-sm transition-shadow"
                   >
                     <Image
@@ -476,7 +482,7 @@ export const Header: React.FC<HeaderProps> = ({
                           <Link
                             href={ROUTES.ADMIN.ROOT}
                             onClick={() => setIsUserMenuOpen(false)}
-                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2 sm:hidden"
+                            className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 sm:hidden"
                           >
                             <LayoutDashboard size={16} />
                             {t("admin_dashboard")}
@@ -485,7 +491,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <Link
                           href={ROUTES.USER.PROFILE}
                           onClick={() => setIsUserMenuOpen(false)}
-                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                         >
                           <Users size={16} />
                           User Settings
@@ -502,7 +508,7 @@ export const Header: React.FC<HeaderProps> = ({
                               toast.error(t("logout_failed"));
                             }
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-[#000b13] transition-colors flex items-center gap-2"
+                          className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2"
                         >
                           <LogOut size={16} />
                           {t("logout")}
@@ -542,6 +548,9 @@ export const Header: React.FC<HeaderProps> = ({
           {/* THỂ LOẠI Toggle Button */}
           <button
             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+            aria-expanded={showCategoryDropdown}
+            aria-haspopup="true"
+            aria-label={t("nav_categories_title")}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors shrink-0"
           >
             <Menu size={16} />
@@ -715,29 +724,29 @@ export const Header: React.FC<HeaderProps> = ({
                       onClick={toggleTheme}
                       className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-colors"
                     >
-                      {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-[#39ff14]" />}
+                      {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-amber-400" />}
                       {theme === "light" ? "Dark" : "Light"}
                     </button>
                   </div>
 
                   {/* Mobile Navigation Links */}
                   <div className="flex flex-col gap-2">
-                    <Link href={ROUTES.HOME} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.HOME} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Home size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_home")}
                     </Link>
-                    <Link href={`${ROUTES.SEARCH}?sort=most_viewed`} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={`${ROUTES.SEARCH}?sort=most_viewed`} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <BarChart2 size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_rankings")}
                     </Link>
-                    <Link href={ROUTES.SEARCH} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.SEARCH} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Search size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_search_comics")}
                     </Link>
-                    <Link href={ROUTES.GENRES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.GENRES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Tag size={20} className="text-slate-400 dark:text-slate-500" /> {t("category_list_title")}
                     </Link>
-                    <Link href={ROUTES.USER.FAVORITES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.USER.FAVORITES} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <Bookmark size={20} className="text-slate-400 dark:text-slate-500" /> {t("nav_bookmarks")}
                     </Link>
-                    <Link href={ROUTES.USER.PROFILE} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-[#1c1c1c] font-bold text-slate-700 dark:text-slate-200 transition-colors">
+                    <Link href={ROUTES.USER.PROFILE} onClick={() => setShowMobileMenu(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200 transition-colors">
                       <User size={20} className="text-slate-400 dark:text-slate-500" /> {language === "VI" ? "Hồ Sơ" : "Profile"}
                     </Link>
                   </div>
@@ -779,7 +788,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Table Header Badge */}
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-white/10">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-orange-500 dark:bg-[#ff008d] animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-orange-500 dark:bg-orange-500 animate-pulse"></span>
                   <span className="font-bold text-sm text-slate-800 dark:text-white tracking-wide">
                     {t("category_list_title")}
                   </span>
@@ -800,7 +809,7 @@ export const Header: React.FC<HeaderProps> = ({
                     key={`nav-cat-${cat.id || cat.name}`}
                     href={`/search?category=${encodeURIComponent(cat.name)}`}
                     onClick={() => setShowCategoryDropdown(false)}
-                    className="group flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/60 hover:bg-orange-500 dark:hover:bg-primary hover:border-orange-500 dark:hover:border-[#001eff] transition-all"
+                    className="group flex items-center justify-between p-2 rounded-lg border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-950/60 hover:bg-orange-500 dark:hover:bg-primary hover:border-orange-500 dark:hover:border-orange-500 transition-all"
                   >
                     <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-white truncate">
                       {cat.name}

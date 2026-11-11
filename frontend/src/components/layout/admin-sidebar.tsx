@@ -98,7 +98,7 @@ export function AdminSidebar() {
             aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
             className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-orange-500 dark:hover:bg-primary hover:text-white transition-all text-xs font-semibold cursor-pointer"
           >
-            {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-[#39ff14]" />}
+            {theme === "light" ? <Moon size={14} /> : <Sun size={14} className="text-amber-400" />}
             {theme === "light" ? "Dark" : "Light"}
           </motion.button>
           <motion.button

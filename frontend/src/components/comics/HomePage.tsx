@@ -37,7 +37,7 @@ function SectionHeader({
   return (
     <div className="flex items-center justify-between px-4 sm:px-5 py-3">
       <div className="flex items-center gap-2.5">
-        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 dark:from-[#001eff] dark:to-[#8900ff] text-white flex items-center justify-center shadow-sm">
+        <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 dark:from-orange-500 dark:to-amber-500 text-white flex items-center justify-center shadow-sm">
           <Icon size={16} />
         </span>
         <h2 className="font-bold text-sm sm:text-base text-slate-800 dark:text-white tracking-tight">
@@ -47,7 +47,7 @@ function SectionHeader({
       {link && (
         <Link
           href={link}
-          className="flex items-center gap-0.5 text-xs font-bold text-orange-500 dark:text-accent hover:underline"
+          className="flex items-center gap-0.5 text-xs font-bold text-orange-500 hover:underline"
         >
           {linkLabel}
         </Link>
@@ -90,7 +90,7 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* HERO SPOTLIGHT */}
       {spotlight && (
         <section className="relative rounded-3xl overflow-hidden border border-slate-200 dark:border-white/10 shadow-xl shadow-orange-500/10 dark:shadow-black/40">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-amber-600 to-slate-950 dark:from-[#001eff] dark:via-[#8900ff] dark:to-slate-950" />
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500 via-amber-600 to-slate-950 dark:from-orange-600 dark:via-amber-700 dark:to-slate-950" />
           <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-8 p-5 sm:p-8 items-center">
             <Link
               href={ROUTES.COMIC_DETAIL(spotlight.id)}
@@ -331,9 +331,9 @@ export const HomePage: React.FC<HomePageProps> = ({
                       idx === 0
                         ? "bg-gradient-to-br from-orange-500 to-amber-600 text-white"
                         : idx === 1
-                        ? "bg-gradient-to-br from-[#8900ff] to-[#001eff] text-white"
+                        ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white"
                         : idx === 2
-                        ? "bg-gradient-to-br from-[#001eff] to-cyan-400 text-white"
+                        ? "bg-gradient-to-br from-cyan-500 to-blue-500 text-white"
                         : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/10"
                     }`}
                   >
