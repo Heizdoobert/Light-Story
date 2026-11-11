@@ -232,7 +232,7 @@ export function AdminHeader({ onToggleMobileSidebar }: AdminHeaderProps) {
       </div>
 
       {/* Bottom Bar: Horizontal Quick Tabs Strip */}
-      <nav aria-label="QuickTabs" className="px-4 sm:px-6 py-2 bg-slate-50/70 dark:bg-slate-900/60 overflow-x-auto no-scrollbar">
+      <nav aria-label="QuickTabs" className="px-4 sm:px-6 py-2 bg-slate-50/70 dark:bg-slate-900/60 overflow-x-auto custom-scrollbar">
         <div className="flex items-center gap-1.5 min-w-max">
           {allowedTabs.map((tab) => {
             const Icon = tab.icon;

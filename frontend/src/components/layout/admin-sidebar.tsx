@@ -153,7 +153,7 @@ export function AdminSidebar({ mobileOpen = false, onClose }: AdminSidebarProps)
         </div>
 
         {/* Grouped Navigation Links */}
-        <nav className="space-y-4 overflow-y-auto max-h-[calc(100vh-220px)] pr-1">
+        <nav className="space-y-4 overflow-y-auto max-h-[calc(100vh-220px)] pr-1 custom-scrollbar">
           {NAV_GROUPS.map((group) => {
             const groupItems = visibleItems.filter((item) => group.itemIds.includes(item.id));
             if (groupItems.length === 0) return null;
@@ -263,7 +263,7 @@ export function AdminSidebar({ mobileOpen = false, onClose }: AdminSidebarProps)
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 z-50 flex flex-col justify-between lg:hidden shadow-2xl"
+              className="fixed top-0 left-0 bottom-0 h-screen h-[100dvh] max-h-[100dvh] w-72 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 p-4 z-50 flex flex-col justify-between lg:hidden shadow-2xl overscroll-contain"
             >
               {renderNavContent()}
             </motion.aside>

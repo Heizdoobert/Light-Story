@@ -66,6 +66,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [searchKeyword, setSearchKeyword] = useState("");
   const [searchResults, setSearchResults] = useState<Story[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -80,6 +81,10 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
+
+  const filteredCategories = categories.filter((c) =>
+    c.name.toLowerCase().includes(categoryFilter.toLowerCase().trim()),
+  );
 
   const getComicCover = (comic: Story) => {
     const raw = comic.cover_url || "";
@@ -773,10 +778,10 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                 aria-modal="true"
                 id="mobile-nav-drawer"
                 aria-label={t("header_nav_drawer")}
-                className="fixed top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white dark:bg-slate-950 z-[90] shadow-2xl flex flex-col border-r border-slate-200/80 dark:border-slate-800/80"
+                className="fixed top-0 left-0 h-screen h-[100dvh] max-h-[100dvh] w-[88vw] sm:w-96 max-w-sm sm:max-w-md bg-white dark:bg-slate-950 z-[90] shadow-2xl flex flex-col border-r border-slate-200/80 dark:border-slate-800/80 overscroll-contain"
               >
                 {/* Drawer Header */}
-                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 shrink-0">
                   <div className="flex items-center gap-2.5">
                     <div className="w-8 h-8 bg-gradient-to-tr from-orange-500 to-amber-600 rounded-xl flex shrink-0 items-center justify-center text-white font-extrabold text-sm shadow-sm">
                       L
@@ -795,7 +800,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                 </div>
 
                 {/* Drawer Body */}
-                <div className="p-4 flex-1 overflow-y-auto space-y-5">
+                <div className="p-4 flex-1 overflow-y-auto space-y-5 custom-scrollbar overscroll-contain">
                   {/* User Profile Card or Login CTA */}
                   {user ? (
                     <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800">
@@ -944,7 +949,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
                 </div>
 
                 {/* Drawer Footer: Pinned Theme & Language Dock */}
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex gap-2">
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 flex gap-2 shrink-0 pb-safe">
                   <button
                     onClick={toggleLanguage}
                     className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-orange-500 hover:text-white transition-all cursor-pointer"
@@ -965,51 +970,167 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
           )}
         </AnimatePresence>
 
-        {/* Category Megamenu Popover */}
+        {/* Category Dropdown (Mobile Full-Height Bottom Sheet & Desktop Megamenu Popover) */}
         <AnimatePresence>
           {showCategoryDropdown && (
-            <motion.div
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 8, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-              className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-[94vw] sm:w-[680px] lg:w-[860px] max-w-4xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl z-50 p-4 sm:p-5 normal-case text-xs"
-            >
-              {/* Header Badge & Quick Action */}
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">
-                    {t("category_list_title")}
-                  </span>
-                  <span className="text-[11px] text-slate-400 font-medium">({categories.length} thể loại)</span>
-                </div>
-                <Link
-                  href={ROUTES.GENRES}
-                  onClick={() => setShowCategoryDropdown(false)}
-                  className="px-3.5 py-1.5 bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all"
-                >
-                  {t("see_all")} »
-                </Link>
-              </div>
+            <>
+              {/* Mobile Backdrop Overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setShowCategoryDropdown(false);
+                  setCategoryFilter("");
+                }}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[85] sm:hidden"
+              />
 
-              {/* 6-Column Category Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[60vh] overflow-y-auto no-scrollbar">
-                {categories.map((cat) => (
-                  <Link
-                    key={`nav-cat-${cat.id || cat.name}`}
-                    href={`/search?category=${encodeURIComponent(cat.name)}`}
-                    onClick={() => setShowCategoryDropdown(false)}
-                    className="group flex items-center justify-between p-2 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/60 hover:bg-orange-500 hover:border-orange-500 dark:hover:bg-primary dark:hover:border-orange-500 transition-all cursor-pointer"
-                  >
-                    <span className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-white truncate">
-                      {cat.name}
+              {/* Mobile Full-Height Bottom Sheet (< sm) */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 260 }}
+                className="fixed inset-x-0 bottom-0 z-[95] h-[88dvh] max-h-[92dvh] bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden sm:hidden border-t border-slate-200 dark:border-slate-800 overscroll-contain"
+              >
+                {/* Drag Handle & Header */}
+                <div className="pt-3 pb-2.5 px-4 flex flex-col items-center border-b border-slate-100 dark:border-slate-800 shrink-0">
+                  <div className="w-12 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700 mb-2.5" />
+                  <div className="w-full flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse" />
+                      <span className="font-extrabold text-base text-slate-900 dark:text-white">
+                        {t("category_list_title")}
+                      </span>
+                      <span className="text-xs text-orange-500 font-bold">({filteredCategories.length})</span>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowCategoryDropdown(false);
+                        setCategoryFilter("");
+                      }}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-rose-500 cursor-pointer"
+                      aria-label="Đóng danh mục"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Filter Search Input on Mobile */}
+                  <div className="w-full mt-3 relative">
+                    <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      placeholder={language === "VI" ? "Tìm kiếm thể loại..." : "Filter categories..."}
+                      className="w-full pl-9 pr-8 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/60"
+                    />
+                    {categoryFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setCategoryFilter("")}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mobile scrollable grid with custom-scrollbar */}
+                <div className="p-4 flex-1 overflow-y-auto custom-scrollbar overscroll-contain">
+                  <div className="grid grid-cols-2 gap-2 pb-6">
+                    {filteredCategories.map((cat) => (
+                      <Link
+                        key={`mob-sheet-cat-${cat.id || cat.name}`}
+                        href={`/search?category=${encodeURIComponent(cat.name)}`}
+                        onClick={() => {
+                          setShowCategoryDropdown(false);
+                          setCategoryFilter("");
+                        }}
+                        className="p-3 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-orange-500 hover:text-white transition-all text-center truncate"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Desktop Megamenu Popover (≥ sm) */}
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[680px] lg:w-[880px] max-w-5xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl z-50 p-4 sm:p-5 normal-case text-xs"
+              >
+                {/* Desktop Header with Quick Filter Input */}
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800 gap-4">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse" />
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">
+                      {t("category_list_title")}
                     </span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-white shrink-0"></span>
+                    <span className="text-[11px] text-slate-400 font-medium">({filteredCategories.length} thể loại)</span>
+                  </div>
+
+                  {/* Filter input on Desktop */}
+                  <div className="relative flex-1 max-w-xs">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      placeholder={language === "VI" ? "Tìm nhanh thể loại..." : "Search categories..."}
+                      className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/60"
+                    />
+                    {categoryFilter && (
+                      <button
+                        type="button"
+                        onClick={() => setCategoryFilter("")}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+
+                  <Link
+                    href={ROUTES.GENRES}
+                    onClick={() => {
+                      setShowCategoryDropdown(false);
+                      setCategoryFilter("");
+                    }}
+                    className="px-3.5 py-1.5 bg-orange-50 dark:bg-slate-800 text-orange-600 dark:text-orange-400 rounded-full font-bold text-xs hover:bg-orange-500 hover:text-white dark:hover:bg-primary dark:hover:text-white transition-all shrink-0"
+                  >
+                    {t("see_all")} »
                   </Link>
-                ))}
-              </div>
-            </motion.div>
+                </div>
+
+                {/* Desktop 6-Column Grid with max-h-[calc(100vh-160px)] and custom-scrollbar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 max-h-[calc(100vh-200px)] overflow-y-auto pr-1 custom-scrollbar">
+                  {filteredCategories.map((cat) => (
+                    <Link
+                      key={`nav-cat-${cat.id || cat.name}`}
+                      href={`/search?category=${encodeURIComponent(cat.name)}`}
+                      onClick={() => {
+                        setShowCategoryDropdown(false);
+                        setCategoryFilter("");
+                      }}
+                      className="group flex items-center justify-between p-2 rounded-xl border border-slate-100 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/60 hover:bg-orange-500 hover:border-orange-500 dark:hover:bg-primary dark:hover:border-orange-500 transition-all cursor-pointer"
+                    >
+                      <span className="font-medium text-slate-700 dark:text-slate-200 group-hover:text-white truncate">
+                        {cat.name}
+                      </span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 group-hover:bg-white shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
