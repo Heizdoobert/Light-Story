@@ -132,7 +132,18 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     profile_sign_in_prompt: "Đăng nhập để xem và quản lý hồ sơ của bạn.",
     profile_sign_in: "Đăng nhập",
 
-    footer_about: "Nền tảng đọc truyện tranh bản quyền. Đăng tải và quản lý bởi Quản trị viên.",
+    footer_about: "Nền tảng đọc truyện tranh bản quyền. Cập nhật liên tục các bộ Manga, Manhwa, Webtoon với chất lượng hình ảnh sắc nét và tốc độ tải trang siêu tốc.",
+    footer_explore: "Khám phá",
+    footer_personal: "Cá nhân & Tiện ích",
+    footer_legal: "Chính sách & Hỗ trợ",
+    footer_terms: "Điều khoản sử dụng",
+    footer_privacy: "Chính sách bảo mật",
+    footer_dmca: "Miễn trừ bản quyền (DMCA)",
+    footer_contact: "Liên hệ & Góp ý",
+    footer_back_to_top: "Về đầu trang",
+    footer_system_status: "Hệ thống hoạt động ổn định",
+    footer_community: "Cộng đồng",
+    footer_all_rights: "Bảo lưu mọi quyền.",
 
     // Homepage Sections
     popular_comics: "TRUYỆN PHỔ BIẾN",
@@ -514,7 +525,18 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     profile_sign_in_prompt: "Sign in to view and manage your profile.",
     profile_sign_in: "Sign In",
 
-    footer_about: "A licensed comic reading platform. Published and managed by Administrators.",
+    footer_about: "A licensed comic reading platform. Constantly updated with Manga, Manhwa, and Webtoons with high-definition imagery and ultra-fast edge loading.",
+    footer_explore: "Explore",
+    footer_personal: "Personal & Tools",
+    footer_legal: "Legal & Support",
+    footer_terms: "Terms of Service",
+    footer_privacy: "Privacy Policy",
+    footer_dmca: "DMCA Disclaimer",
+    footer_contact: "Contact & Feedback",
+    footer_back_to_top: "Back to top",
+    footer_system_status: "All systems operational",
+    footer_community: "Community",
+    footer_all_rights: "All rights reserved.",
 
     // Homepage Sections
     popular_comics: "POPULAR COMICS",
