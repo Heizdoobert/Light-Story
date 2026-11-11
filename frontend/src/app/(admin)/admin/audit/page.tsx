@@ -49,10 +49,72 @@ export default function AdminAuditPage() {
     };
   }, [page]);
 
+  const getActionBadge = (action: string) => {
+    if (!action) return <Badge variant="default">Không xác định</Badge>;
+    const lower = action.toLowerCase();
+    if (lower.includes('create') || lower.includes('add')) {
+      return <Badge variant="success">Tạo mới ({action})</Badge>;
+    }
+    if (lower.includes('delete') || lower.includes('remove')) {
+      return <Badge variant="danger">Xóa ({action})</Badge>;
+    }
+    if (lower.includes('update') || lower.includes('edit') || lower.includes('settings')) {
+      return <Badge variant="warning">Cập nhật ({action})</Badge>;
+    }
+    if (lower.includes('dashboard') || lower.includes('access') || lower.includes('read')) {
+      return <Badge variant="info">Truy cập ({action})</Badge>;
+    }
+    return <Badge variant="default">{action}</Badge>;
+  };
+
+  const formatTimestamp = (raw: string) => {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    return (
+      <div className="flex flex-col text-xs leading-tight">
+        <span className="font-bold text-slate-800 dark:text-slate-200">
+          {d.toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          })}
+        </span>
+        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+          {d.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          })}
+        </span>
+      </div>
+    );
+  };
+
   const columns: Column<AuditLogRow>[] = [
-    { key: 'action', header: 'Hành Động', render: (item) => <Badge variant="info">{item.action}</Badge> },
-    { key: 'target_email', header: 'Email Mục Tiêu', render: (item) => item.target_email || '—' },
-    { key: 'created_at', header: 'Thời Gian' },
+    {
+      key: 'action',
+      header: 'Hành Động',
+      render: (item) => getActionBadge(item.action),
+    },
+    {
+      key: 'target_email',
+      header: 'Email Mục Tiêu / Người Thao Tác',
+      render: (item) => (
+        <span className="font-mono text-xs text-slate-700 dark:text-slate-300">
+          {item.target_email && item.target_email !== '—' ? (
+            item.target_email
+          ) : (
+            <span className="text-slate-400 italic">Hệ thống</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'created_at',
+      header: 'Thời Gian',
+      render: (item) => formatTimestamp(item.created_at),
+    },
   ];
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

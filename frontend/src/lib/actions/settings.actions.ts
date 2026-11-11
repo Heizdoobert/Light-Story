@@ -17,7 +17,7 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
     }
     const res = await fetchApi('/api/admin/site-settings', {
       method: 'POST',
-      body: JSON.stringify({ entries: parsed.data.entries }),
+      body: JSON.stringify({ entries: parsed.data.entries, payload: parsed.data.entries }),
     });
     const json = (await res.json()) as { error?: string; count?: number };
     if (!res.ok) return { success: false, error: json.error ?? res.statusText };

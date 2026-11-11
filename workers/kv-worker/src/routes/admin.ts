@@ -295,7 +295,7 @@ export async function handleAdminRequest(
       const page = clamp(parseInt(url.searchParams.get('page') || '1') || 1, 1, 100000);
       const pageSize = clamp(parseInt(url.searchParams.get('pageSize') || '50') || 50, 1, 200);
       const offset = (page - 1) * pageSize;
-      const q = `select=id,actor_user_id,target_email,metadata,created_at&action=in.(dashboard_access,user_create,user_delete)&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
+      const q = `select=id,action,actor_user_id,target_email,metadata,created_at&order=created_at.desc&limit=${pageSize}&offset=${offset}`;
       const res = await sbGet('admin_audit_logs', q, env, token);
       if (!res.ok) return handleRes(res);
       const items = (await res.json()) as any[];
@@ -311,10 +311,10 @@ export async function handleAdminRequest(
       const mapped = items.map((l: any) => ({
         id: l.id,
         action: l.action,
-        target_email: l.target_email ?? ((l.metadata?.email as string) || '') ?? emailById.get(l.actor_user_id) ?? null,
+        target_email: l.target_email || (l.metadata?.email as string) || (l.metadata?.target_email as string) || emailById.get(l.actor_user_id) || null,
         created_at: l.created_at,
       }));
-      const total = await sbGetCount('admin_audit_logs?action=in.(dashboard_access,user_create,user_delete)', env, token);
+      const total = await sbGetCount('admin_audit_logs', env, token);
       return json({ items: mapped, total });
     }
 
@@ -389,14 +389,26 @@ export async function handleAdminRequest(
       const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
       const body = (await request.json()) as any;
       const userId = request.headers.get('x-user-id');
-      const headers = { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' };
-      if (body.payload && Array.isArray(body.payload)) {
+      const headers = {
+        apikey: svcKey,
+        Authorization: `Bearer ${svcKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      };
+      const rawItems = Array.isArray(body.payload)
+        ? body.payload
+        : Array.isArray(body.entries)
+        ? body.entries
+        : null;
+
+      if (rawItems && rawItems.length > 0) {
         const results = [];
         const keys: string[] = [];
-        for (const item of body.payload) {
+        for (const item of rawItems) {
+          if (!item?.key) continue;
           const upsertRes = await fetch(`${sbUrl}/rest/v1/site_settings`, {
             method: 'POST',
-            headers: { ...headers, Prefer: 'return=representation' },
+            headers,
             body: JSON.stringify({ key: item.key, value: item.value, updated_by: userId || null }),
           });
           results.push(await upsertRes.json().catch(() => ({})));
@@ -406,27 +418,32 @@ export async function handleAdminRequest(
         if (keys.length > 0 && userId) {
           await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
             method: 'POST',
-            headers,
+            headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys } }),
           }).catch(() => null);
         }
         await invalidateCache(env.APP_KV, adminDashboardCachePrefixes());
-        return json({ success: true, results });
+        return json({ success: true, count: keys.length, results });
       }
-      const res = await fetch(`${sbUrl}/rest/v1/site_settings`, {
-        method: 'POST',
-        headers: { ...headers, Prefer: 'return=representation' },
-        body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
-      });
-      if (res.ok && userId) {
-        await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
+
+      if (body.key) {
+        const res = await fetch(`${sbUrl}/rest/v1/site_settings`, {
           method: 'POST',
           headers,
-          body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
-        }).catch(() => null);
-        await invalidateCache(env.APP_KV, adminDashboardCachePrefixes());
+          body: JSON.stringify({ key: body.key, value: body.value, updated_by: userId || null }),
+        });
+        if (res.ok && userId) {
+          await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
+            method: 'POST',
+            headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'settings_update', actor_user_id: userId, metadata: { keys: [body.key] } }),
+          }).catch(() => null);
+          await invalidateCache(env.APP_KV, adminDashboardCachePrefixes());
+        }
+        return handleRes(res);
       }
-      return handleRes(res);
+
+      return err('BAD_REQUEST', 'Missing settings key or payload', 400);
     }
 
     const TAXONOMY_ENTITIES: Record<string, { table: string; select: string }> = {
