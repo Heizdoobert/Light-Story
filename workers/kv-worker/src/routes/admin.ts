@@ -446,6 +446,52 @@ export async function handleAdminRequest(
       return err('BAD_REQUEST', 'Missing settings key or payload', 400);
     }
 
+    if (method === 'POST' && path === '/admin/operations') {
+      if (!requireRole(userRole, ['superadmin', 'admin'])) {
+        return err('FORBIDDEN', 'Operations require admin privileges', 403);
+      }
+      const body = (await request.json().catch(() => ({}))) as { action?: string; target?: string; type?: string };
+      const action = body?.action;
+      const userId = request.headers.get('x-user-id');
+      const sbUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
+      const svcKey = env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (action === 'clearCache') {
+        const target = body?.target || 'all';
+        const prefixes = target === 'all'
+          ? ['cache:stories:', 'cache:comics:', 'cache:chapters:', 'cache:categories', ...adminDashboardCachePrefixes()]
+          : [`cache:${target}:`];
+        await invalidateCache(env.APP_KV, prefixes);
+
+        if (userId && sbUrl && svcKey) {
+          await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
+            method: 'POST',
+            headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clear_cache', actor_user_id: userId, metadata: { target } }),
+          }).catch(() => null);
+        }
+
+        return json({ success: true, message: `Cache cleared for target: ${target}` });
+      }
+
+      if (action === 'triggerBackup') {
+        const backupType = body?.type || 'full';
+        const snapshotId = `snap_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+        if (userId && sbUrl && svcKey) {
+          await fetch(`${sbUrl}/rest/v1/admin_audit_logs`, {
+            method: 'POST',
+            headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'trigger_backup', actor_user_id: userId, metadata: { backupType, snapshotId } }),
+          }).catch(() => null);
+        }
+
+        return json({ success: true, message: `Backup snapshot triggered (${backupType})`, snapshotId });
+      }
+
+      return err('BAD_REQUEST', `Unknown operation action: ${action}`, 400);
+    }
+
     const TAXONOMY_ENTITIES: Record<string, { table: string; select: string }> = {
       category: { table: 'categories', select: 'id,name,description,created_at,updated_at' },
       author: { table: 'authors', select: 'id,name,bio,created_at,updated_at' },

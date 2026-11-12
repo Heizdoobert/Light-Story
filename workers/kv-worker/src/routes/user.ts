@@ -198,6 +198,16 @@ export async function handleUserRequest(
       return handleRes(res);
     }
 
+    if (method === 'DELETE' && pathname === '/user/history') {
+      const res = await sb(
+        `/rest/v1/reading_history?user_id=eq.${assertUuid(userId, 'user_id')}`,
+        { method: 'DELETE' },
+        env,
+        token,
+      );
+      return handleRes(res);
+    }
+
     return null;
   } catch (e: unknown) {
     if (e instanceof ValidationFailure) {

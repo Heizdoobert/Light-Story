@@ -223,3 +223,62 @@ describe('R2 route authorization', () => {
     expect(res?.status).toBe(200);
   });
 });
+
+describe('admin operations authorization and execution', () => {
+  it('rejects employee from calling operations', async () => {
+    const res = await handleAdminRequest(
+      post('/admin/operations', 'employee', { action: 'clearCache', target: 'all' }),
+      env,
+      null,
+      '/admin/operations',
+    );
+    expect(res?.status).toBe(403);
+  });
+
+  it('rejects invalid operation action from admin', async () => {
+    const res = await handleAdminRequest(
+      post('/admin/operations', 'admin', { action: 'nonExistentAction' }),
+      env,
+      null,
+      '/admin/operations',
+    );
+    expect(res?.status).toBe(400);
+  });
+
+  it('allows admin to clearCache and clears cache', async () => {
+    const opEnv = {
+      ...env,
+      APP_KV: {
+        list: async () => ({ keys: [], list_complete: true }),
+        delete: async () => {},
+      },
+    } as unknown as Env;
+
+    const res = await handleAdminRequest(
+      post('/admin/operations', 'admin', { action: 'clearCache', target: 'stories' }),
+      opEnv,
+      null,
+      '/admin/operations',
+    );
+    expect(res?.status).toBe(200);
+    const body = await res!.json();
+    expect(body).toMatchObject({ success: true, message: expect.stringContaining('stories') });
+  });
+
+  it('allows admin to triggerBackup', async () => {
+    const res = await handleAdminRequest(
+      post('/admin/operations', 'admin', { action: 'triggerBackup', type: 'incremental' }),
+      env,
+      null,
+      '/admin/operations',
+    );
+    expect(res?.status).toBe(200);
+    const body = await res!.json();
+    expect(body).toMatchObject({
+      success: true,
+      message: expect.stringContaining('incremental'),
+      snapshotId: expect.stringMatching(/^snap_/),
+    });
+  });
+});
+
