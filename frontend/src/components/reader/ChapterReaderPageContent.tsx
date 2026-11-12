@@ -17,6 +17,7 @@ import {
   Sun,
   Moon,
   Bookmark,
+  BookOpen,
 } from "lucide-react";
 import { ChapterImage } from "@/components/reader/ChapterImage";
 import { AdRenderer } from "@/components/reader/AdRenderer";
@@ -67,6 +68,8 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
     nextChapter,
     isBookmarked,
     toggleBookmark,
+    readingMode,
+    changeReadingMode,
     currentPageIndex,
   } = useReadChapterPresenter(initialData);
 
@@ -220,11 +223,54 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
           <div className="py-20 text-slate-400 dark:text-zinc-500 font-medium">
             Chương này chưa có nội dung (ảnh).
           </div>
+        ) : readingMode === "single" ? (
+          <div className="w-full flex flex-col items-center">
+            <div className="w-full flex items-center justify-center min-h-[60vh]">
+              {images[activeIndex] && (
+                <div id={`page-${activeIndex}`} data-page-index={activeIndex} className="w-full flex justify-center">
+                  <ChapterImage
+                    src={images[activeIndex]}
+                    alt={`Trang ${activeIndex + 1}`}
+                    index={activeIndex}
+                    fitScreen={fitScreen}
+                    priority={true}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-center gap-3 py-4 w-full">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const prev = Math.max(0, activeIndex - 1);
+                  scrollToPage(prev);
+                }}
+                disabled={activeIndex <= 0}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-40 font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-colors hover:bg-primary hover:text-white"
+              >
+                Trang trước
+              </button>
+              <span className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400">
+                {activeIndex + 1} / {images.length}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const next = Math.min(images.length - 1, activeIndex + 1);
+                  scrollToPage(next);
+                }}
+                disabled={activeIndex >= images.length - 1}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 disabled:opacity-40 font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 transition-colors hover:bg-primary hover:text-white"
+              >
+                Trang sau
+              </button>
+            </div>
+          </div>
         ) : (
           images.map((imgUrl, idx) => {
             const inWindow =
-              idx >= Math.max(0, activeIndex - 2) &&
-              idx <= Math.min(images.length - 1, activeIndex + 2);
+              idx >= Math.max(0, activeIndex - 3) &&
+              idx <= Math.min(images.length - 1, activeIndex + 3);
 
             return (
               <React.Fragment key={`${imgUrl}-${idx}`}>
@@ -246,14 +292,9 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
                   <div
                     id={`page-${idx}`}
                     data-page-index={idx}
-                    style={fitScreen ? undefined : { aspectRatio: "3/4" }}
-                    className={`w-full flex items-center justify-center my-2 ${
-                      fitScreen
-                        ? "min-h-[50vh] bg-transparent"
-                        : "aspect-[3/4] rounded-xl bg-slate-900/5 dark:bg-slate-950/20"
-                    }`}
+                    className="w-full flex items-center justify-center my-1 min-h-[360px] sm:min-h-[520px] rounded-lg bg-slate-100/50 dark:bg-slate-900/30 text-slate-400 text-xs transition-colors"
                   >
-                    <span className="text-xs text-slate-400">Trang {idx + 1}</span>
+                    <span>Trang {idx + 1}</span>
                   </div>
                 )}
                 {(idx + 1) % 4 === 0 && idx < images.length - 1 && (
@@ -423,6 +464,23 @@ export const ChapterReaderPageContent: React.FC<ChapterReaderPageContentProps> =
               title="Xem ảnh nhỏ"
             >
               <LayoutGrid size={18} />
+            </button>
+
+            <button
+              onClick={() => changeReadingMode(readingMode === "single" ? "webtoon" : "single")}
+              className={`p-2.5 sm:p-3 rounded-xl transition-all flex-shrink-0 ${
+                readingMode === "single"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700"
+              }`}
+              title={
+                readingMode === "single"
+                  ? "Chế độ: Từng trang (Bấm chuyển sang cuộn dọc)"
+                  : "Chế độ: Cuộn dọc Webtoon (Bấm chuyển sang từng trang)"
+              }
+              aria-label="Chuyển chế độ đọc"
+            >
+              <BookOpen size={18} />
             </button>
 
             <button

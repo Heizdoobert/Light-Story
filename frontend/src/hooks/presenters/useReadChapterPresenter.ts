@@ -382,15 +382,19 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
     }
   }, [loading, images, chapterId]);
 
+  // Look-ahead image prefetching for current chapter pages
   useEffect(() => {
-    if (images.length === 0) return;
-    const preloadCount = Math.min(3, images.length);
-    const idx = 0;
-    for (let i = idx; i < idx + preloadCount && i < images.length; i++) {
-      const img = new Image();
-      img.src = images[i];
+    if (images.length === 0 || typeof window === "undefined") return;
+    const start = Math.max(0, currentPageIndex);
+    const end = Math.min(images.length, start + 4);
+    for (let i = start; i < end; i++) {
+      const url = images[i];
+      if (url && typeof url === "string" && !url.startsWith("blob:")) {
+        const img = new Image();
+        img.src = url;
+      }
     }
-  }, [images]);
+  }, [images, currentPageIndex]);
 
   const handleSelectChapter = (selectedId: string) => {
     setShowChapterMenu(false);
@@ -441,6 +445,17 @@ export function useReadChapterPresenter(initialData?: ReaderInitialData | null) 
     nextChapterRef.current = nextChapter;
     prevChapterRef.current = prevChapter;
   }, [nextChapter, prevChapter]);
+
+  // Ahead-of-time prefetch next chapter RSC payload when reading progress >= 70%
+  const prefetchedNextRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (progress >= 70 && nextChapter?.id && prefetchedNextRef.current !== nextChapter.id) {
+      prefetchedNextRef.current = nextChapter.id;
+      try {
+        router.prefetch(ROUTES.CHAPTER_READER(comicId, nextChapter.id));
+      } catch {}
+    }
+  }, [progress, nextChapter, comicId, router]);
 
   return {
     comicId,
