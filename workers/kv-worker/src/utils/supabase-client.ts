@@ -44,7 +44,9 @@ export function safeUpstreamMessage(status: number, body: unknown): string {
   if (code === '23505') return 'Conflict: resource already exists';
   if (code === '23503') return 'Invalid reference';
   if (code === '23514' || code === '22P02') return 'Invalid input';
-  if (status === 401 || status === 403) return 'Not authorized';
+  // 'Unauthorized' matches the frontend error-utils session-expired mapping.
+  if (status === 401) return 'Unauthorized';
+  if (status === 403) return 'Forbidden';
   if (status === 404) return 'Not found';
   return 'Request failed';
 }

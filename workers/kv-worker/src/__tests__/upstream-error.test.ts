@@ -30,8 +30,8 @@ describe('upstream errors', () => {
     expect(safeUpstreamMessage(400, { code: '23503' })).toBe('Invalid reference');
     expect(safeUpstreamMessage(400, { code: '23514' })).toBe('Invalid input');
     expect(safeUpstreamMessage(400, JSON.stringify({ code: '22P02' }))).toBe('Invalid input');
-    expect(safeUpstreamMessage(401, null)).toBe('Not authorized');
-    expect(safeUpstreamMessage(403, null)).toBe('Not authorized');
+    expect(safeUpstreamMessage(401, null)).toBe('Unauthorized');
+    expect(safeUpstreamMessage(403, null)).toBe('Forbidden');
     expect(safeUpstreamMessage(404, 'not json')).toBe('Not found');
     expect(safeUpstreamMessage(400, 'not json')).toBe('Request failed');
   });
