@@ -50,7 +50,7 @@ describe('story id validation', () => {
     const req = new Request('https://gateway.example.com/api/v1/stories/views', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ storyId: 'x'.repeat(200) }),
+      body: JSON.stringify({ storyId: 'x'.repeat(201) }),
     });
     const res = await worker.fetch(req, { ...fakeEnv, APP_KV: fakeKV() } as any, fakeCtx as any);
     expect(res.status).toBe(422);

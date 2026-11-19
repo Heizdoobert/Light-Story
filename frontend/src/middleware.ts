@@ -68,11 +68,15 @@ async function handleRequest(request: NextRequest): Promise<NextResponse> {
   const isUserPath = pathname.startsWith(ROUTES.USER.ROOT);
 
   if (!supabaseUrl || !supabaseKey) {
+    // Without auth config no session can be verified, so private areas fail closed.
     if (isAdminPath) {
       return addSecurityHeaders(
         NextResponse.redirect(new URL(ROUTES.ERROR.UNAUTHORIZED, request.url)),
         isDev
       );
+    }
+    if (isUserPath) {
+      return addSecurityHeaders(NextResponse.redirect(new URL(ROUTES.LOGIN, request.url)), isDev);
     }
     return addSecurityHeaders(response, isDev);
   }

@@ -53,4 +53,14 @@ describe("middleware security headers", () => {
       expect((await headersFor("production", `https://example.com${path}`)).get("X-Robots-Tag")).toBeNull();
     }
   });
+
+  it("fails closed for /user when Supabase config is missing", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    for (const key of ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY"]) {
+      vi.stubEnv(key, "");
+    }
+    const response = await middleware(new NextRequest("https://example.com/user/bookmarks"));
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("location") ?? "").pathname).toBe("/auth/login");
+  });
 });

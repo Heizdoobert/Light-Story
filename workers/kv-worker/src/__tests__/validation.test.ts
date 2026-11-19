@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { STORY_ID_PATTERN } from '../utils/validation';
 import {
   assertUuid,
   uuidFilter,
@@ -61,5 +62,17 @@ describe('uuidInFilter', () => {
 
   it('rejects a list containing one bad entry', () => {
     expect(() => uuidInFilter('id', [A, 'or=(1.eq.1)'])).toThrow(ValidationFailure);
+  });
+});
+
+describe('STORY_ID_PATTERN', () => {
+  it('accepts uuids and slugs up to the 200-char admin slug limit', () => {
+    expect(STORY_ID_PATTERN.test('6f1c2a90-1111-4222-8333-944445555666')).toBe(true);
+    expect(STORY_ID_PATTERN.test('a'.repeat(200))).toBe(true);
+  });
+  it('rejects ids that are too long or contain path characters', () => {
+    expect(STORY_ID_PATTERN.test('a'.repeat(201))).toBe(false);
+    expect(STORY_ID_PATTERN.test('../admin')).toBe(false);
+    expect(STORY_ID_PATTERN.test('a.b')).toBe(false);
   });
 });
