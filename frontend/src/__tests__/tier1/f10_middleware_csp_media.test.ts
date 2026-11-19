@@ -10,7 +10,7 @@ function readRepoFile(relativePath: string): string {
 
 describe('F10 middleware CSP allows gateway media', () => {
   it('img-src includes the gateway worker domain so chapter images load', () => {
-    const middleware = readRepoFile('frontend/middleware.ts');
+    const middleware = readRepoFile('frontend/src/middleware.ts');
     const imgSrc = middleware.match(/img-src[^;]+/)?.[0] ?? '';
     expect(imgSrc).toContain('${workerDomain}');
     const workerDomainLine =

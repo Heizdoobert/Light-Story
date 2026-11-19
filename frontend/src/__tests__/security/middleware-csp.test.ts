@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
-import { middleware } from "../../../middleware";
+import { middleware } from "../../middleware";
 
 async function headersFor(nodeEnv: string) {
   vi.stubEnv("NODE_ENV", nodeEnv);

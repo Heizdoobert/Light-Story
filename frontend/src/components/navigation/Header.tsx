@@ -230,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
       {/* Top Header Bar */}
       <nav className="px-4 sm:px-6 lg:px-12 py-3 sm:py-3.5 lg:py-4 flex items-center justify-between gap-3 sm:gap-4 min-h-[64px] sm:min-h-[72px]">
         {/* Brand & Mobile Hamburger */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 sm:shrink-0">
           <motion.button
             {...bounceClick}
             onClick={() => setShowMobileMenu(true)}
@@ -244,12 +244,13 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
 
           <Link
             href="/"
-            className="flex items-center gap-2.5 hover:opacity-95 transition-opacity cursor-pointer outline-none shrink-0 group"
+            aria-label="LightStory"
+            className="flex items-center gap-2.5 hover:opacity-95 transition-opacity cursor-pointer outline-none min-w-0 sm:shrink-0 group"
           >
             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-tr from-orange-500 via-orange-600 to-amber-500 rounded-2xl flex shrink-0 items-center justify-center text-white font-extrabold text-lg shadow-sm shadow-orange-500/25 group-hover:scale-105 transition-transform">
               L
             </div>
-            <div className="flex flex-col">
+            <div className="hidden min-[400px]:flex flex-col min-w-0">
               <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-slate-900 dark:text-white leading-none">
                 Light<span className="text-orange-500 dark:text-accent">Story</span>
               </span>
@@ -396,7 +397,7 @@ export const Header: React.FC<HeaderProps> = ({ onLoginClick }) => {
         </div>
 
         {/* Right Section: Theme Toggle, Language, Notifications, User / Login */}
-        <div className="flex items-center gap-2.5 sm:gap-3.5 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3.5 shrink-0">
           {/* Theme Toggle Button (Light/Dark) */}
           <motion.button
             {...bounceClick}

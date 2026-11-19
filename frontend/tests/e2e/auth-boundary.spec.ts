@@ -8,6 +8,7 @@ test.describe('Authentication & Authorization Boundary Tests', () => {
       currentUrl.includes('/auth/login') ||
       currentUrl.includes('/unauthorized') ||
       currentUrl.includes('/forbidden') ||
+      /\/handle-exception\/40[13]\b/.test(currentUrl) ||
       (response !== null && [401, 403, 307, 308].includes(response.status()));
     expect(isProtected).toBe(true);
   });
@@ -19,6 +20,7 @@ test.describe('Authentication & Authorization Boundary Tests', () => {
       currentUrl.includes('/auth/login') ||
       currentUrl.includes('/unauthorized') ||
       currentUrl.includes('/forbidden') ||
+      /\/handle-exception\/40[13]\b/.test(currentUrl) ||
       (response !== null && [401, 403, 307, 308].includes(response.status()));
     expect(isProtected).toBe(true);
   });

@@ -26,7 +26,7 @@ export default function AdminRouteGroupLayout({ children }: { children: React.Re
   }
 
   // ponytail: client-side fallback when middleware didn't redirect — keep inline (SSR-safe);
-  // middleware.ts:107 redirects to ROUTES.ERROR.FORBIDDEN for the canonical page.
+  // src/middleware.ts redirects to ROUTES.ERROR.FORBIDDEN for the canonical page.
   if (!isStaff) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 text-slate-900 dark:text-white p-6 text-center space-y-4">
