@@ -1,7 +1,9 @@
 /** Shared Supabase REST client utilities */
 
-/** Upper bound for a Supabase REST call so a stalled upstream cannot hold the request until the platform limit. */
-export const SUPABASE_TIMEOUT_MS = 8000;
+import { fetchWithHeaderTimeout } from './fetch-timeout';
+
+/** Upper bound (time to response headers) for a Supabase REST call so a stalled upstream cannot hold the request until the platform limit. */
+export const SUPABASE_TIMEOUT_MS = 15000;
 
 export function recordAnalyticsEngineEvent(
   env: Env,
@@ -59,7 +61,7 @@ async function sb(
     if (pref) h.set('Prefer', pref);
   }
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  return fetch(`${baseUrl}${path}`, { ...opts, headers: h, signal: opts.signal ?? AbortSignal.timeout(SUPABASE_TIMEOUT_MS) });
+  return fetchWithHeaderTimeout(`${baseUrl}${path}`, { ...opts, headers: h }, SUPABASE_TIMEOUT_MS);
 }
 
 async function sbGet(
@@ -188,14 +190,13 @@ async function sbGetCount(
       : `Bearer ${env.SUPABASE_ANON_KEY}`,
   );
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  const res = await fetch(`${baseUrl}/rest/v1/${q}`, {
+  const res = await fetchWithHeaderTimeout(`${baseUrl}/rest/v1/${q}`, {
     method: 'HEAD',
-    signal: AbortSignal.timeout(SUPABASE_TIMEOUT_MS),
     headers: {
       ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',
     },
-  });
+  }, SUPABASE_TIMEOUT_MS);
   if (!res.ok) return 0;
   const range = res.headers.get('content-range');
   if (range) {
@@ -222,7 +223,7 @@ async function sbAdmin(
     if (pref) h.set('Prefer', pref);
   }
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  return fetch(`${baseUrl}${path}`, { ...opts, headers: h, signal: opts.signal ?? AbortSignal.timeout(SUPABASE_TIMEOUT_MS) });
+  return fetchWithHeaderTimeout(`${baseUrl}${path}`, { ...opts, headers: h }, SUPABASE_TIMEOUT_MS);
 }
 
 async function sbAdminGet(
@@ -297,14 +298,13 @@ async function sbAdminGetCount(
   h.set('apikey', env.SUPABASE_SERVICE_KEY);
   h.set('Authorization', `Bearer ${env.SUPABASE_SERVICE_KEY}`);
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  const res = await fetch(`${baseUrl}/rest/v1/${q}`, {
+  const res = await fetchWithHeaderTimeout(`${baseUrl}/rest/v1/${q}`, {
     method: 'HEAD',
-    signal: AbortSignal.timeout(SUPABASE_TIMEOUT_MS),
     headers: {
       ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',
     },
-  });
+  }, SUPABASE_TIMEOUT_MS);
   if (!res.ok) return 0;
   const range = res.headers.get('content-range');
   if (range) {

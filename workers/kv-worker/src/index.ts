@@ -27,6 +27,7 @@ import { handleUserRequest } from './routes/user';
 import { handleHyperdriveRequest } from './routes/hyperdrive';
 import { checkRateLimit } from './middleware/rateLimitKV';
 import { applySecurityHeaders } from './middleware/securityHeaders';
+import { fetchWithHeaderTimeout } from './utils/fetch-timeout';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 import { handleTieringFallback } from './utils/tiering-fallback';
 import { checkIdempotency, saveIdempotency } from './middleware/idempotency';
@@ -112,7 +113,7 @@ async function handleSupabaseProxy(
     redirect: 'manual',
   });
 
-  const res = await fetch(upstreamReq, { signal: AbortSignal.timeout(PROXY_TIMEOUT_MS) });
+  const res = await fetchWithHeaderTimeout(upstreamReq, {}, PROXY_TIMEOUT_MS);
   const contentType = res.headers.get('Content-Type') || '';
   const responseHeaders = new Headers(res.headers);
   const c = corsHeaders(origin);
@@ -161,7 +162,7 @@ async function handleSupabaseProxy(
   });
 }
 
-/** Upper bound for the generic Supabase passthrough. */
+/** Upper bound (time to response headers) for the generic Supabase passthrough; bodies stream unbounded. */
 const PROXY_TIMEOUT_MS = 15000;
 
 async function handleFetch(

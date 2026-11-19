@@ -34,6 +34,6 @@ describe('worker top-level error boundary', () => {
 
   it('bounds Supabase REST calls with a timeout', () => {
     expect(SUPABASE_TIMEOUT_MS).toBeGreaterThan(0);
-    expect(SUPABASE_TIMEOUT_MS).toBeLessThanOrEqual(10000);
+    expect(SUPABASE_TIMEOUT_MS).toBeLessThanOrEqual(30000);
   });
 });
