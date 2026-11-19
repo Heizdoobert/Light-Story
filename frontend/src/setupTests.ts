@@ -59,7 +59,7 @@ if (typeof (global as any).File === 'undefined') {
 
 // Mock framer-motion to no-op animations in test environment
 import React from 'react';
-import { vi } from 'vitest';
+import { beforeEach, vi } from 'vitest';
 const MOTION_PROPS = new Set([
   'whileTap', 'whileHover', 'whileFocus', 'whileDrag', 'whileInView',
   'initial', 'animate', 'exit', 'transition', 'variants', 'layout', 'layoutId',
@@ -141,4 +141,19 @@ vi.mock('react-dom', async () => {
     ...actual,
     createPortal: (children: any) => children,
   };
+});
+
+// Guard: block real network requests to local servers and the Supabase mock host in tests
+// unless a test installs its own fetch mock. Real fetch would reject too (ECONNREFUSED/EAI_AGAIN).
+const BLOCKED_TEST_HOSTS = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|mock\.supabase\.co)(:\d+)?(\/|$)/;
+beforeEach(() => {
+  if (vi.isMockFunction(globalThis.fetch)) return;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+    if (BLOCKED_TEST_HOSTS.test(url)) {
+      return Promise.reject(new Error('Blocked real network request in tests: ' + url));
+    }
+    return originalFetch(input, init);
+  }) as typeof fetch;
 });

@@ -34,6 +34,14 @@ const eslintConfig = [
       "react-hooks/exhaustive-deps": "off",
     },
   },
+  // next/og ImageResponse only renders plain <img>. The plugin exempts these files itself,
+  // but on Windows its path normalisation misses them, so disable explicitly for both OSes.
+  {
+    files: ["src/app/**/{opengraph-image,twitter-image,icon,apple-icon}.{js,jsx,ts,tsx}"],
+    rules: {
+      "@next/next/no-img-element": "off",
+    },
+  },
   // Relax explicit any for test files and mocks
   {
     files: [

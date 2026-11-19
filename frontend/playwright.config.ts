@@ -19,7 +19,7 @@ export default defineConfig({
     ['list'],
   ],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3001',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -32,11 +32,10 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: 'npm run dev:all',
-    url: 'http://localhost:3000',
+    command: 'npm run dev',
+    url: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
-    cwd: path.resolve(__dirname, '../..'),
+    cwd: path.resolve(__dirname),
   },
 });
-

@@ -13,12 +13,13 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
     script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://va.vercel.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://shope.ee https://affiliate.shopee.vn;
     style-src 'self' 'unsafe-inline';
     img-src 'self' data: blob: https://*.r2.dev https://${r2Domain} https://placehold.co https://*.googlesyndication.com https://shope.ee https://affiliate.shopee.vn ${workerDomain};
-    connect-src 'self' http://localhost:* http://127.0.0.1:* http://host.docker.internal:* https://*.supabase.co wss://*.supabase.co https://va.vercel.com ${workerDomain} ${isDev ? "ws: wss:" : ""};
+    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://va.vercel.com https://pagead2.googlesyndication.com https://*.adtrafficquality.google ${workerDomain} ${isDev ? "http://localhost:* http://127.0.0.1:* http://host.docker.internal:* ws: wss:" : ""};
     font-src 'self' data:;
     object-src 'none';
     worker-src 'self' blob:;
     base-uri 'self';
     form-action 'self';
+    frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://www.google.com;
     frame-ancestors 'none';
     ${isDev ? "" : "upgrade-insecure-requests;"}
   `.replace(/\s{2,}/g, " ").trim();
@@ -29,7 +30,7 @@ function addSecurityHeaders(res: NextResponse, isDev: boolean): NextResponse {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
-  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=()");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), browsing-topics=(), payment=(), usb=(), display-capture=()");
   
   return res;
 }

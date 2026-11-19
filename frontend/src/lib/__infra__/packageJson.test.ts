@@ -39,7 +39,7 @@ describe('root package.json', () => {
   it('scopes the @hono/node-server override to @modelcontextprotocol/sdk', () => {
     const overrides = pkg.overrides as Record<string, unknown>;
     expect(overrides['@modelcontextprotocol/sdk']).toEqual({
-      '@hono/node-server': '2.1.5',
+      '@hono/node-server': '2.1.9',
     });
   });
 
@@ -51,7 +51,7 @@ describe('root package.json', () => {
     expect(overrides.postcss).toBe('8.5.25');
     expect(overrides.sharp).toBe('0.35.5');
     expect(overrides['js-yaml']).toBe('4.3.2');
-    expect(overrides['@hono/node-server']).toBe('2.1.5');
+    expect(overrides['@hono/node-server']).toBe('2.1.9');
   });
 });
 
