@@ -26,16 +26,10 @@ function getSupabaseServerConfig(): SupabaseServerConfig {
     process.env.VITE_SUPABASE_ANON_KEY ||
     process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-  const SUPABASE_SERVICE_ROLE_KEY =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
+  // Server-only names; a bundler-exposed prefix (VITE_/NEXT_PUBLIC_) must never carry the service key.
   const resolvedServiceKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
-    SUPABASE_SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SERVICE_KEY;
 
   const serviceKeyLower = (resolvedServiceKey || '').toLowerCase();
   const isPlaceholderKey = /placeholder|emulator|publishable|sb_publishable_|anon_|service-role-key|change-me|your-service-key|^test-/i.test(serviceKeyLower);

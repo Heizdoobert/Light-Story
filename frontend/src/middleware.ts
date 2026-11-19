@@ -48,7 +48,7 @@ function createRedirectWithCookies(
   return addSecurityHeaders(redirectResponse, isDev);
 }
 
-export async function middleware(request: NextRequest) {
+async function handleRequest(request: NextRequest): Promise<NextResponse> {
   const isDev = process.env.NODE_ENV === "development";
   const pathname = request.nextUrl.pathname;
 
@@ -171,6 +171,17 @@ export async function middleware(request: NextRequest) {
   }
 
   return addSecurityHeaders(response, isDev);
+}
+
+// Private areas must never be indexed even when linked externally; robots.txt disallow alone does not prevent indexing.
+const NOINDEX_PATH = /^\/(admin|user|profile|auth|handle-exception)(\/|$)/;
+
+export async function middleware(request: NextRequest) {
+  const response = await handleRequest(request);
+  if (NOINDEX_PATH.test(request.nextUrl.pathname)) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return response;
 }
 
 export const config = {

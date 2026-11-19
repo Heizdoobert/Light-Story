@@ -99,6 +99,18 @@ export function isAllowedRouteRole(
   return allowedRoles.includes(role);
 }
 
+/** Compare secrets without an early exit so response timing does not reveal matching prefixes. */
+export function constantTimeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const x = enc.encode(a);
+  const y = enc.encode(b);
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    diff |= (x[i] ?? 0) ^ (y[i] ?? 0);
+  }
+  return diff === 0;
+}
+
 export async function resolveRouteRequester(
   request: NextRequest,
   options: ResolveRouteRequesterOptions = {},
@@ -107,7 +119,7 @@ export async function resolveRouteRequester(
   if (
     internalSecret &&
     process.env.INTERNAL_ADMIN_SECRET &&
-    internalSecret === process.env.INTERNAL_ADMIN_SECRET
+    constantTimeEqual(internalSecret, process.env.INTERNAL_ADMIN_SECRET)
   ) {
     return { ok: true, id: "internal", role: "internal" };
   }

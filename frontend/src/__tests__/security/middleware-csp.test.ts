@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { middleware } from "../../middleware";
 
-async function headersFor(nodeEnv: string) {
+async function headersFor(nodeEnv: string, url = "https://example.com/") {
   vi.stubEnv("NODE_ENV", nodeEnv);
   for (const key of [
     "NEXT_PUBLIC_SUPABASE_URL",
@@ -14,7 +14,7 @@ async function headersFor(nodeEnv: string) {
   ]) {
     vi.stubEnv(key, "");
   }
-  const response = await middleware(new NextRequest("https://example.com/"));
+  const response = await middleware(new NextRequest(url));
   return response.headers;
 }
 
@@ -42,6 +42,15 @@ describe("middleware security headers", () => {
     const policy = (await headersFor("production")).get("Permissions-Policy") ?? "";
     for (const feature of ["camera=()", "microphone=()", "geolocation=()", "payment=()", "usb=()", "display-capture=()"]) {
       expect(policy).toContain(feature);
+    }
+  });
+
+  it("private areas are marked noindex, public pages are not", async () => {
+    for (const path of ["/admin", "/admin/dashboard", "/user", "/auth/login", "/handle-exception/401"]) {
+      expect((await headersFor("production", `https://example.com${path}`)).get("X-Robots-Tag")).toBe("noindex, nofollow");
+    }
+    for (const path of ["/", "/comics", "/administrator-guide", "/users-guide"]) {
+      expect((await headersFor("production", `https://example.com${path}`)).get("X-Robots-Tag")).toBeNull();
     }
   });
 });
