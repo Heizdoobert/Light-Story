@@ -1,5 +1,8 @@
 /** Shared Supabase REST client utilities */
 
+/** Upper bound for a Supabase REST call so a stalled upstream cannot hold the request until the platform limit. */
+export const SUPABASE_TIMEOUT_MS = 8000;
+
 export function recordAnalyticsEngineEvent(
   env: Env,
   event: {
@@ -56,7 +59,7 @@ async function sb(
     if (pref) h.set('Prefer', pref);
   }
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  return fetch(`${baseUrl}${path}`, { ...opts, headers: h });
+  return fetch(`${baseUrl}${path}`, { ...opts, headers: h, signal: opts.signal ?? AbortSignal.timeout(SUPABASE_TIMEOUT_MS) });
 }
 
 async function sbGet(
@@ -187,6 +190,7 @@ async function sbGetCount(
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
   const res = await fetch(`${baseUrl}/rest/v1/${q}`, {
     method: 'HEAD',
+    signal: AbortSignal.timeout(SUPABASE_TIMEOUT_MS),
     headers: {
       ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',
@@ -218,7 +222,7 @@ async function sbAdmin(
     if (pref) h.set('Prefer', pref);
   }
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
-  return fetch(`${baseUrl}${path}`, { ...opts, headers: h });
+  return fetch(`${baseUrl}${path}`, { ...opts, headers: h, signal: opts.signal ?? AbortSignal.timeout(SUPABASE_TIMEOUT_MS) });
 }
 
 async function sbAdminGet(
@@ -295,6 +299,7 @@ async function sbAdminGetCount(
   const baseUrl = (globalThis as any).SUPABASE_URL || env.SUPABASE_URL;
   const res = await fetch(`${baseUrl}/rest/v1/${q}`, {
     method: 'HEAD',
+    signal: AbortSignal.timeout(SUPABASE_TIMEOUT_MS),
     headers: {
       ...Object.fromEntries((h as any).entries()),
       Prefer: 'count=exact',

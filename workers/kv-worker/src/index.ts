@@ -112,7 +112,7 @@ async function handleSupabaseProxy(
     redirect: 'manual',
   });
 
-  const res = await fetch(upstreamReq);
+  const res = await fetch(upstreamReq, { signal: AbortSignal.timeout(PROXY_TIMEOUT_MS) });
   const contentType = res.headers.get('Content-Type') || '';
   const responseHeaders = new Headers(res.headers);
   const c = corsHeaders(origin);
@@ -161,8 +161,10 @@ async function handleSupabaseProxy(
   });
 }
 
-export default {
-  async fetch(
+/** Upper bound for the generic Supabase passthrough. */
+const PROXY_TIMEOUT_MS = 15000;
+
+async function handleFetch(
     request: Request,
     env: Env,
     ctx: ExecutionContext,
@@ -684,7 +686,9 @@ export default {
           if (!supRes.ok && supRes.status >= 500) {
             res = json({ success: true, data: [] });
           } else if (!supRes.ok) {
-            res = err('UPSTREAM', await supRes.text(), supRes.status);
+            // Upstream bodies name tables, columns and constraints; keep them in logs only.
+            console.error('site_settings upstream error', supRes.status, (await supRes.text()).slice(0, 500));
+            res = err('UPSTREAM', 'Upstream request failed', supRes.status);
           } else {
             const text = await supRes.text();
             res = json({ success: true, data: text ? JSON.parse(text) : [] });
@@ -807,6 +811,30 @@ export default {
       status: res.status,
       headers: resHeaders,
     });
+}
+
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    try {
+      return await handleFetch(request, env, ctx);
+    } catch (error) {
+      // Last line of defence: never let the runtime emit a plain-text 500 or leak error details.
+      console.error('unhandled worker error', error instanceof Error ? error.stack ?? error.message : String(error));
+      const headers = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(request.headers.get('Origin')) });
+      applySecurityHeaders(headers);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: { code: 'INTERNAL_ERROR', message: 'Internal error' },
+          timestamp: new Date().toISOString(),
+        }),
+        { status: 500, headers },
+      );
+    }
   },
 
   async queue(
