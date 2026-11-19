@@ -181,7 +181,19 @@ async function handleRequest(request: NextRequest): Promise<NextResponse> {
 const NOINDEX_PATH = /^\/(admin|user|profile|auth|handle-exception)(\/|$)/;
 
 export async function middleware(request: NextRequest) {
-  const response = await handleRequest(request);
+  let response: NextResponse;
+  try {
+    response = await handleRequest(request);
+  } catch (error) {
+    console.error('middleware failed', error instanceof Error ? error.message : String(error));
+    const pathname = request.nextUrl.pathname;
+    const fallback = pathname.startsWith(ROUTES.ADMIN.ROOT)
+      ? NextResponse.redirect(new URL(ROUTES.ERROR.UNAUTHORIZED, request.url))
+      : pathname.startsWith(ROUTES.USER.ROOT)
+        ? NextResponse.redirect(new URL(ROUTES.LOGIN, request.url))
+        : NextResponse.next();
+    response = addSecurityHeaders(fallback, process.env.NODE_ENV === "development");
+  }
   if (NOINDEX_PATH.test(request.nextUrl.pathname)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
