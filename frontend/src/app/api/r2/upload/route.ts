@@ -21,6 +21,8 @@ const ALLOWED_EXTENSIONS = new Set([
   'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'cbz', 'zip',
 ]);
 const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
+const EXTENSION_CONTENT_TYPES: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', avif: 'image/avif', gif: 'image/gif', zip: 'application/zip', cbz: 'application/vnd.comicbook+zip' };
+const MULTIPART_OVERHEAD = 1024 * 1024;
 
 /**
  * POST /api/r2/upload
@@ -30,6 +32,11 @@ const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
 export async function POST(request: NextRequest) {
   const auth = await requireRouteAuthorization(request, { allowedRoles: ALLOWED_ROLES });
   if (!auth.ok) return auth.response;
+
+  const contentLength = Number(request.headers.get('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > MAX_FILE_SIZE + MULTIPART_OVERHEAD) {
+    return NextResponse.json({ error: `File too large (max ${MAX_FILE_SIZE / (1024 * 1024)}MB)`, success: false }, { status: 413 });
+  }
 
   let formData: FormData;
   try {
@@ -78,7 +85,8 @@ export async function POST(request: NextRequest) {
     // For testing environments (jsdom), use empty buffer as body
     const arrayBuffer = await file.arrayBuffer();
     const body = new Uint8Array(arrayBuffer);
-    await putObject(bucket, key, body, file.type || 'application/octet-stream');
+    const contentType = EXTENSION_CONTENT_TYPES[extension] ?? 'application/octet-stream';
+    await putObject(bucket, key, body, contentType);
     return NextResponse.json({ success: true, key, url: key });
   } catch (error) {
     console.error('[R2 Upload] Failed:', error);

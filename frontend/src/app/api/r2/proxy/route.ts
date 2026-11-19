@@ -4,6 +4,7 @@ import { getBucketForFolder, getObject } from '@/lib/r2/s3';
 const ALLOWED_FOLDERS = new Set(['chapters', 'covers', 'avatars']);
 // ponytail: 50MB in-memory ceiling on the buffered object; stream via GetObject/response.Body when larger objects are needed
 const MAX_OBJECT_SIZE = 50 * 1024 * 1024;
+const SAFE_CONTENT_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'application/zip', 'application/vnd.comicbook+zip']);
 
 function guessContentType(key: string): string {
   const ext = key.split('.').pop()?.toLowerCase() ?? '';
@@ -60,10 +61,11 @@ export async function GET(request: Request) {
 
     const finalContentType = contentType || guessContentType(key);
     const isSvg = finalContentType.includes('svg');
+    const isSafe = isSvg || SAFE_CONTENT_TYPES.has(finalContentType.split(';')[0].trim().toLowerCase());
 
     return new NextResponse(Buffer.from(body), {
       headers: {
-        'Content-Type': finalContentType,
+        'Content-Type': isSafe ? finalContentType : 'application/octet-stream',
         'Cache-Control': 'public, max-age=31536000, immutable',
         'Cross-Origin-Resource-Policy': 'cross-origin',
         'X-Content-Type-Options': 'nosniff',
@@ -73,6 +75,7 @@ export async function GET(request: Request) {
               'Content-Disposition': 'inline',
             }
           : {}),
+        ...(!isSafe ? { 'Content-Disposition': 'attachment' } : {}),
       },
     });
   } catch (error) {
