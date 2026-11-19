@@ -4,6 +4,9 @@ import { supabase } from '@/lib/supabase/client';
 import { getGatewayUrl } from '@/lib/utils/gateway-url';
 import { decodeJwtPayload } from '@/lib/utils/jwt';
 
+// Same limit as lib/r2/upload.ts so a stalled gateway upload fails instead of hanging the form.
+const UPLOAD_TIMEOUT_MS = 60_000;
+
 export type ComicContext = {
   id: string;
   tenantKey: string;
@@ -125,6 +128,7 @@ async function uploadFilesToR2(bucket: string | undefined, files: File[], option
       method: 'POST',
       headers,
       body: form,
+      signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
     });
 
     const body = (await response.json()) as { success?: boolean; data?: { urls?: string[] }; urls?: string[]; error?: { message?: string } };

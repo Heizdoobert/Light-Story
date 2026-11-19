@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// A slow storage host must not pin a server function until the platform limit.
+const AVATAR_FETCH_TIMEOUT_MS = 5000;
+
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024; // 5MB ceiling for avatar images
 
 /**
@@ -51,7 +54,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(parsedUrl.toString(), { redirect: 'manual' });
+    const response = await fetch(parsedUrl.toString(), {
+      redirect: 'manual',
+      signal: AbortSignal.timeout(AVATAR_FETCH_TIMEOUT_MS),
+    });
     if (response.redirected || response.type === 'opaqueredirect') {
       return NextResponse.json({ error: 'Redirects not allowed' }, { status: 400 });
     }
@@ -89,6 +95,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof DOMException && (error.name === 'TimeoutError' || error.name === 'AbortError')) {
+      return NextResponse.json({ error: 'Upstream timed out' }, { status: 504 });
+    }
     console.error('[Avatar Proxy] Error:', error);
     return NextResponse.json({ error: 'Error fetching image' }, { status: 500 });
   }

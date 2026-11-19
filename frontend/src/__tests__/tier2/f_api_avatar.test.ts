@@ -135,7 +135,19 @@ describe('GET /api/avatar', () => {
     expect(res.headers.get('Content-Type')).toBe('image/jpeg');
     expect(res.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
-    expect(fetchSpy).toHaveBeenCalledWith(VALID_SUPABASE_URL, { redirect: 'manual' });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      VALID_SUPABASE_URL,
+      expect.objectContaining({ redirect: 'manual', signal: expect.any(AbortSignal) }),
+    );
+    fetchSpy.mockRestore();
+  });
+
+  it('returns 504 when the upstream fetch times out', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
+    const res = await GET(makeRequest(`http://localhost/api/avatar?url=${encodeURIComponent(VALID_SUPABASE_URL)}`));
+    expect(res.status).toBe(504);
     fetchSpy.mockRestore();
   });
 
