@@ -40,16 +40,21 @@ export async function POST(request: Request) {
   // Read secret per-request so env vars injected after boot are picked up
   const webhookSecret = process.env.SUPABASE_WEBHOOK_SECRET || '';
 
-  // Verify webhook signature (skip in development if secret not set)
+  // Verify webhook signature. Fail closed when the secret is missing unless ALLOW_UNSIGNED_WEBHOOKS=true outside production.
   const signature = request.headers.get('x-supabase-signature');
   if (webhookSecret) {
     if (!verifySignature(rawBody, signature, webhookSecret)) {
       console.warn('[Supabase Webhook] Signature verification failed');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
-  } else if (process.env.NODE_ENV === 'production') {
-    console.error('[Supabase Webhook] SUPABASE_WEBHOOK_SECRET is not configured in production');
-    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+  } else {
+    const allowUnsigned = process.env.ALLOW_UNSIGNED_WEBHOOKS === 'true' && process.env.NODE_ENV !== 'production';
+    if (allowUnsigned) {
+      console.warn('[Supabase Webhook] SUPABASE_WEBHOOK_SECRET not set; accepting unsigned request because ALLOW_UNSIGNED_WEBHOOKS=true (non-production only)');
+    } else {
+      console.error('[Supabase Webhook] SUPABASE_WEBHOOK_SECRET is not configured; rejecting request');
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+    }
   }
 
   // Parse and validate payload

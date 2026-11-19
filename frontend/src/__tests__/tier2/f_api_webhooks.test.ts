@@ -32,13 +32,15 @@ describe('POST /api/webhooks/supabase', () => {
     vi.clearAllMocks();
     vi.resetModules();
     vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', 'true');
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     delete process.env.SUPABASE_WEBHOOK_SECRET;
   });
 
-  it('returns 200 in development when webhook secret is not set', async () => {
+  it('returns 200 in development when secret is unset and ALLOW_UNSIGNED_WEBHOOKS=true', async () => {
     const { POST } = await import('@/app/api/webhooks/supabase/route');
     const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
     const res = await POST(makeRequest(payload));
@@ -139,6 +141,7 @@ describe('POST /api/webhooks/supabase (signature verification)', () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     delete process.env.SUPABASE_WEBHOOK_SECRET;
   });
 
@@ -178,5 +181,80 @@ describe('POST /api/webhooks/supabase (signature verification)', () => {
     const signature = makeHmac(payload, 'wrong-secret');
     const res = await POST(makeRequest(payload, { 'x-supabase-signature': signature }));
     expect(res.status).toBe(401);
+  });
+});
+
+describe('POST /api/webhooks/supabase (fail closed without secret)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    delete process.env.SUPABASE_WEBHOOK_SECRET;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns 500 in test env when secret is unset and ALLOW_UNSIGNED_WEBHOOKS is unset', async () => {
+    vi.stubEnv('NODE_ENV', 'test');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', '');
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const res = await POST(makeRequest(payload));
+    expect(res.status).toBe(500);
+    const body = await res.json() as Record<string, string>;
+    expect(body.error).toMatch(/not configured/i);
+  });
+
+  it('returns 500 in development when secret is unset and ALLOW_UNSIGNED_WEBHOOKS is unset', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', '');
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const res = await POST(makeRequest(payload));
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 200 in development when ALLOW_UNSIGNED_WEBHOOKS=true', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', 'true');
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const res = await POST(makeRequest(payload));
+    expect(res.status).toBe(200);
+    const body = await res.json() as Record<string, unknown>;
+    expect(body.received).toBe(true);
+  });
+
+  it('returns 500 in production even when ALLOW_UNSIGNED_WEBHOOKS=true', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', 'true');
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const res = await POST(makeRequest(payload));
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 500 in development when ALLOW_UNSIGNED_WEBHOOKS=false', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', 'false');
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const res = await POST(makeRequest(payload));
+    expect(res.status).toBe(500);
+  });
+
+  it('verifies signatures in production when secret is configured', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('ALLOW_UNSIGNED_WEBHOOKS', '');
+    vi.stubEnv('SUPABASE_WEBHOOK_SECRET', TEST_SECRET);
+    const { POST } = await import('@/app/api/webhooks/supabase/route');
+    const payload = JSON.stringify({ type: 'INSERT', table: 'stories' });
+    const validRes = await POST(makeRequest(payload, { 'x-supabase-signature': makeHmac(payload, TEST_SECRET) }));
+    expect(validRes.status).toBe(200);
+    const invalidRes = await POST(makeRequest(payload, { 'x-supabase-signature': 'deadbeef' }));
+    expect(invalidRes.status).toBe(401);
   });
 });
