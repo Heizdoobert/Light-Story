@@ -1,7 +1,26 @@
 import { createClient } from '@/lib/api/server';
 import { getGatewayUrl } from '@/lib/utils/gateway-url';
 
+/**
+ * Gateway paths are built by interpolating ids (`/api/admin/categories/${id}`). A dot segment or
+ * an encoded separator in an id would let URL normalisation retarget the request to another
+ * admin endpoint, so reject them before any request is made. Query strings are not checked.
+ */
+export function assertSafeApiPath(path: string): void {
+  const pathname = path.split(/[?#]/, 1)[0];
+  if (
+    !pathname.startsWith('/') ||
+    pathname.startsWith('//') ||
+    pathname.includes('\\') ||
+    /(^|\/)\.{1,2}(\/|$)/.test(pathname) ||
+    /%(2e|2f|5c)/i.test(pathname)
+  ) {
+    throw new Error('Unsafe API path');
+  }
+}
+
 export async function fetchApi(path: string, init: RequestInit = {}): Promise<Response> {
+  assertSafeApiPath(path);
   const supabase = await createClient();
   const { data } = await supabase.auth.getSession();
   const headers = new Headers(init.headers);

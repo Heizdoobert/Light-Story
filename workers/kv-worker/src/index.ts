@@ -30,7 +30,7 @@ import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 import { handleTieringFallback } from './utils/tiering-fallback';
 import { checkIdempotency, saveIdempotency } from './middleware/idempotency';
-import { requireActionRole } from './utils/validation';
+import { requireActionRole, STORY_ID_PATTERN } from './utils/validation';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -289,6 +289,29 @@ export default {
         );
       }
       const storyId = viewMatch[1];
+      if (!STORY_ID_PATTERN.test(storyId)) {
+        const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+        h.set('x-request-id', requestId);
+        h.set('x-trace-id', traceId);
+        applySecurityHeaders(h);
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid story id' } }),
+          { status: 422, headers: h },
+        );
+      }
+      // This branch returns before the global limiter below, so apply it here too.
+      const viewLimit = await checkRateLimit(request, false, role, pathname, env.APP_KV);
+      if (!viewLimit.allowed) {
+        const h = new Headers({ 'Content-Type': 'application/json', ...corsHeaders(origin) });
+        h.set('Retry-After', String(viewLimit.resetSec));
+        h.set('x-request-id', requestId);
+        h.set('x-trace-id', traceId);
+        applySecurityHeaders(h);
+        return new Response(
+          JSON.stringify({ success: false, error: { code: 'TOO_MANY_REQUESTS', message: 'Rate limit exceeded. Please try again later.' } }),
+          { status: 429, headers: h },
+        );
+      }
       const res = await incrementStoryView(env, storyId, true);
       const h = new Headers(corsHeaders(origin));
       h.set('x-request-id', requestId);

@@ -42,3 +42,28 @@ describe('POST /stories/:id/view authentication', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('story id validation', () => {
+  it('rejects malformed story ids on the public views endpoint', async () => {
+    const fetchSpy = vi.fn(async () => new Response('{}', { status: 200 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    const req = new Request('https://gateway.example.com/api/v1/stories/views', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storyId: 'x'.repeat(200) }),
+    });
+    const res = await worker.fetch(req, { ...fakeEnv, APP_KV: fakeKV() } as any, fakeCtx as any);
+    expect(res.status).toBe(422);
+  });
+
+  it('returns 400 for a non-JSON body on the public views endpoint', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 200 })));
+    const req = new Request('https://gateway.example.com/api/v1/stories/views', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'not json',
+    });
+    const res = await worker.fetch(req, { ...fakeEnv, APP_KV: fakeKV() } as any, fakeCtx as any);
+    expect(res.status).toBe(400);
+  });
+});

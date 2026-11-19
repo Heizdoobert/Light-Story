@@ -11,7 +11,7 @@ import {
   json,
 } from '../utils/supabase-client';
 import { incrementStoryView } from '../counters';
-import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid } from '../utils/validation';
+import { validateBody, sanitizeBody, VALID_STATUSES, isValidUuid, STORY_ID_PATTERN } from '../utils/validation';
 import { withCache, buildCacheKey, invalidateCache, cachedJson, publicCache } from '../middleware/cache';
 
 const slugify = (value: string) =>
@@ -259,11 +259,19 @@ export async function handleStoriesRequest(
     }
 
     if (method === 'POST' && pathname === '/stories/views') {
-      const body = (await request.json()) as Record<string, unknown>;
-      if (typeof body.storyId !== 'string' || !body.storyId.trim()) {
+      let body: Record<string, unknown>;
+      try {
+        body = (await request.json()) as Record<string, unknown>;
+      } catch {
+        return err('VALIDATION_ERROR', 'invalid JSON body', 400);
+      }
+      if (typeof body?.storyId !== 'string' || !body.storyId.trim()) {
         return err('VALIDATION_ERROR', 'storyId is required', 422);
       }
       const storyId = body.storyId.trim();
+      if (!STORY_ID_PATTERN.test(storyId)) {
+        return err('VALIDATION_ERROR', 'storyId is invalid', 422);
+      }
       if (env.APP_KV) {
         return await incrementStoryView(env, storyId);
       }

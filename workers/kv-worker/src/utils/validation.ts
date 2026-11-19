@@ -120,6 +120,9 @@ export function sanitizeBody(body: Record<string, unknown>, rules: ValidationRul
   return sanitized;
 }
 
+/** Story ids are UUIDs or slugs; anything else never reaches KV keys or RPC params. */
+export const STORY_ID_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
+
 export function getAuthRole(request: Request): string | null {
   return request.headers.get('x-user-role');
 }
