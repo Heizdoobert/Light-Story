@@ -6,6 +6,7 @@ import {
   json,
   authToken,
   recordAnalyticsEngineEvent,
+  safeUpstreamMessage,
 } from './utils/supabase-client';
 import {
   corsHeaders,
@@ -143,9 +144,8 @@ async function handleSupabaseProxy(
       : {
           success: false,
           error: {
-            code: (parsed as any)?.code || 'SUPABASE_ERROR',
-            message:
-              (parsed as any)?.message || res.statusText,
+            code: 'SUPABASE_ERROR',
+            message: safeUpstreamMessage(res.status, parsed),
             requestId,
           },
           timestamp: new Date().toISOString(),

@@ -7,6 +7,7 @@ import {
   sbPost,
   sbGetCount,
   handleRes,
+  upstreamError,
   json,
 } from '../utils/supabase-client';
 import { encryptField, decryptField } from '../utils/encryption';
@@ -205,7 +206,7 @@ export async function handleComicsRequest(
       );
       const data = await res.json();
       if (!res.ok)
-        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+        return upstreamError(res.status, data);
       const item = Array.isArray(data) ? data[0] || null : data;
       if (item && item.content) {
         item.content = await decryptField(item.content, ENC_KEY);

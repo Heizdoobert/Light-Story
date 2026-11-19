@@ -34,6 +34,29 @@ function err(code: string, message: string, status: number): Response {
   return Response.json({ success: false, error: { code, message } }, { status });
 }
 
+export function safeUpstreamMessage(status: number, body: unknown): string {
+  if (status >= 500) return 'Upstream service error';
+  let parsed = body;
+  if (typeof parsed === 'string') {
+    try { parsed = JSON.parse(parsed); } catch { parsed = null; }
+  }
+  const code = parsed && typeof parsed === 'object' && 'code' in parsed ? parsed.code : undefined;
+  if (code === '23505') return 'Conflict: resource already exists';
+  if (code === '23503') return 'Invalid reference';
+  if (code === '23514' || code === '22P02') return 'Invalid input';
+  if (status === 401 || status === 403) return 'Not authorized';
+  if (status === 404) return 'Not found';
+  return 'Request failed';
+}
+
+export function upstreamError(status: number, body: unknown): Response {
+  let raw: string;
+  try { raw = typeof body === 'string' ? body : JSON.stringify(body) ?? String(body); }
+  catch { raw = String(body); }
+  console.error('[Supabase] Upstream error:', raw.slice(0, 500));
+  return err('SUPABASE_ERROR', safeUpstreamMessage(status, body), status);
+}
+
 function authToken(h: Headers): string | null {
   const a = h.get('Authorization');
   if (a?.startsWith('Bearer ')) return a.slice(7);
@@ -314,23 +337,10 @@ async function sbAdminGetCount(
   return 0;
 }
 
-const SENSITIVE_PATTERNS = [
-  /\b(?:password|secret|token|key)\s*[:=]\s*\S+/gi,
-];
-
-function sanitizeMessage(msg: string): string {
-  let clean = msg;
-  for (const p of SENSITIVE_PATTERNS) {
-    clean = clean.replace(p, '$1: [REDACTED]');
-  }
-  if (clean.length > 500) clean = clean.slice(0, 500) + '...';
-  return clean;
-}
-
 async function handleRes(res: Response): Promise<Response> {
   if (!res.ok) {
     const text = await res.text();
-    return err('SUPABASE_ERROR', sanitizeMessage(text), res.status);
+    return upstreamError(res.status, text);
   }
   const text = await res.text();
   if (!text) return json({ success: true });

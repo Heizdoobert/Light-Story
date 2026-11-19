@@ -8,6 +8,7 @@ import {
   sb,
   sbGetCount,
   handleRes,
+  upstreamError,
   json,
 } from '../utils/supabase-client';
 import { incrementStoryView } from '../counters';
@@ -113,7 +114,7 @@ export async function handleStoriesRequest(
         const res = await sbGet('stories', `id=eq.${id}&select=*`, env, token);
         const data = await res.json();
         if (!res.ok)
-          return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+          return upstreamError(res.status, data);
         return Array.isArray(data) ? data[0] || null : data;
       });
       return cachedJson(data, 300, token);
@@ -164,7 +165,7 @@ export async function handleStoriesRequest(
         );
         const data = await res.json();
         if (!res.ok)
-          return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+          return upstreamError(res.status, data);
         return json(
           Array.isArray(data) ? data[0] || null : data,
         );
@@ -199,7 +200,7 @@ export async function handleStoriesRequest(
       );
       const data = await res.json();
       if (!res.ok)
-        return err('SUPABASE_ERROR', JSON.stringify(data), res.status);
+        return upstreamError(res.status, data);
       return json(
         Array.isArray(data) ? data[0] || null : data,
       );
