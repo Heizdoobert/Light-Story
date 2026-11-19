@@ -36,6 +36,7 @@ export default defineConfig({
       "@light-story/sdk": path.resolve(currentDir, "../packages/sdk/src"),
       "@light-story/api-types": path.resolve(currentDir, "../packages/api-types"),
       "@light-story/ui": path.resolve(currentDir, "../packages/ui/src"),
+      "server-only": path.resolve(currentDir, "./src/test/server-only-stub.ts"),
     },
   },
 });
