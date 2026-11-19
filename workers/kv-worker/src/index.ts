@@ -30,7 +30,7 @@ import { applySecurityHeaders } from './middleware/securityHeaders';
 import { classifyR2Get, conditionalGetOptions } from './utils/r2-conditional';
 import { handleTieringFallback } from './utils/tiering-fallback';
 import { checkIdempotency, saveIdempotency } from './middleware/idempotency';
-import { getAuthRole, requireActionRole } from './utils/validation';
+import { requireActionRole } from './utils/validation';
 
 function detectDevice(ua: string): string {
   if (/bot|crawler|spider|curl|wget|python|headless/i.test(ua)) return 'bot';
@@ -248,8 +248,9 @@ export default {
     // POST /stories/{id}/view -> increment view counter (supports /api/v1/stories/:id/view and /api/stories/:id/view)
     const viewMatch = strippedPath.match(/^\/stories\/([^\/]+)\/view$/);
     if (request.method === 'POST' && viewMatch) {
-      let role = getAuthRole(request);
-      if (!role && request.headers.has('Authorization')) {
+      // Role comes only from a validated JWT; a client-supplied x-user-role is never trusted.
+      let role: string | null = null;
+      if (request.headers.has('Authorization')) {
         try {
           const authUser = await validateJWT(request.headers.get('Authorization')!, env);
           role = authUser.role;

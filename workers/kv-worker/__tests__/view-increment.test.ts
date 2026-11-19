@@ -6,6 +6,19 @@ vi.mock('cloudflare:workers', () => ({
   WorkflowStep: class {},
 }));
 
+// Roles come only from a validated JWT. Test tokens are 'Bearer role:<role>'.
+vi.mock('../src/middleware/auth', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/middleware/auth')>();
+  return {
+    ...actual,
+    validateJWT: vi.fn(async (header: string) => {
+      const match = /^Bearer role:(.+)$/.exec(header);
+      if (!match) throw new actual.UnauthorizedError('invalid token');
+      return { id: 'u1', role: match[1] };
+    }),
+  };
+});
+
 import worker from '../src/index';
 import { incrementStoryView } from '../src/counters';
 import { fakeKV } from '../src/__tests__/helpers/fake-kv';
@@ -36,7 +49,7 @@ describe('view-increment', () => {
     const req = new Request('http://localhost/api/v1/stories/story-123/view', {
       method: 'POST',
       headers: {
-        'x-user-role': 'user',
+        'Authorization': 'Bearer role:user',
       },
     });
 
@@ -59,7 +72,7 @@ describe('view-increment', () => {
     const req = new Request('http://localhost/api/stories/story-alt/view', {
       method: 'POST',
       headers: {
-        'x-user-role': 'user',
+        'Authorization': 'Bearer role:user',
       },
     });
 
@@ -84,7 +97,7 @@ describe('view-increment', () => {
     const req = new Request('http://localhost/api/v1/stories/story-123/view', {
       method: 'POST',
       headers: {
-        'x-user-role': 'guest_forbidden',
+        'Authorization': 'Bearer role:guest_forbidden',
       },
     });
 

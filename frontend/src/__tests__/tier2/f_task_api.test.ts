@@ -12,14 +12,40 @@ vi.mock('next/server', () => {
   return { NextResponse: MockNextResponse };
 });
 
-import { GET, POST } from '@/app/api/tasks/route';
-import { GET as GET_ONE, PATCH, DELETE } from '@/app/api/tasks/[id]/route';
+const routeAuth = vi.hoisted(() => ({
+  requireRouteAuthorization: vi.fn(),
+}));
+vi.mock('@/lib/security/route-auth', () => routeAuth);
+
+import { GET, POST as postRoute } from '@/app/api/tasks/route';
+import { GET as GET_ONE, PATCH as patchRoute, DELETE as deleteRoute } from '@/app/api/tasks/[id]/route';
+
+// Handlers are typed for NextRequest; these tests drive them with plain Requests.
+type Params = { params: Promise<{ id: string }> };
+const POST = postRoute as unknown as (request: Request) => Promise<Response>;
+const PATCH = patchRoute as unknown as (request: Request, ctx: Params) => Promise<Response>;
+const DELETE = deleteRoute as unknown as (request: Request, ctx: Params) => Promise<Response>;
 import { taskStore } from '@/sdk/task/api/_shared';
 import type { Task, Paginated, APIError } from '@/sdk/task/types';
 
 describe('Task Management API (integration tests)', () => {
   beforeEach(() => {
     taskStore.clear();
+    routeAuth.requireRouteAuthorization.mockReset();
+    routeAuth.requireRouteAuthorization.mockResolvedValue({ ok: true, requester: { id: 'u1', role: 'admin' } });
+  });
+
+  it('rejects unauthorized mutations before touching the store', async () => {
+    routeAuth.requireRouteAuthorization.mockResolvedValue({ ok: false, response: new Response(null, { status: 401 }) });
+    const res = await POST(new Request('http://localhost/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify({ title: 'x' }),
+      headers: { 'Content-Type': 'application/json' },
+    }));
+    expect(res.status).toBe(401);
+    expect(Object.keys(taskStore).filter((k) => typeof (taskStore as any)[k] !== 'function')).toHaveLength(0);
+    const del = await DELETE(new Request('http://localhost/api/tasks/t1', { method: 'DELETE' }), { params: Promise.resolve({ id: 't1' }) });
+    expect(del.status).toBe(401);
   });
 
   it('performs full CRUD lifecycle: create, list, fetch, update, delete', async () => {

@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { taskStore, generateId, mapPaginated, mapTask } from '@/sdk/task/api/_shared';
 import { config } from '@/lib/config';
 import { createTaskSchema, parseZodError } from '@/sdk/task/validation';
 import type { Task, APIError, CreateTaskInput } from '@/sdk/task/types';
+import { requireRouteAuthorization } from '@/lib/security/route-auth';
+import { ACTION_ADMIN_ROLES } from '@/lib/security/permission';
 
 /** GET – list tasks with safe pagination */
 export async function GET(request: Request) {
@@ -26,7 +28,10 @@ export async function GET(request: Request) {
 }
 
 /** POST – create a new task */
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireRouteAuthorization(request, { allowedRoles: ACTION_ADMIN_ROLES });
+  if (!auth.ok) return auth.response;
+
   let body: unknown;
   try {
     body = await request.json();

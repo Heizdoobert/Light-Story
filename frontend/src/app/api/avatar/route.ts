@@ -24,19 +24,26 @@ export async function GET(request: Request) {
   }
 
   // Reject path traversal sequences before checking prefix
-  const normalizedPath = decodeURIComponent(parsedUrl.pathname).replace(/\/+/g, '/');
+  let decodedPath: string;
+  try {
+    decodedPath = decodeURIComponent(parsedUrl.pathname);
+  } catch {
+    return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+  }
+  const normalizedPath = decodedPath.replace(/\/+/g, '/');
   if (normalizedPath.includes('..')) {
     return NextResponse.json({ error: 'URL not allowed' }, { status: 403 });
   }
 
-  const configuredHost = process.env.NEXT_PUBLIC_SUPABASE_URL
-    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
-    : null;
+  // Fail closed: never fall back to a wildcard *.supabase.co host
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    return NextResponse.json({ error: 'Avatar proxy not configured' }, { status: 500 });
+  }
+  const configuredHost = new URL(supabaseUrl).hostname;
 
   const isValidSupabaseAvatar =
-    (configuredHost
-      ? parsedUrl.hostname === configuredHost
-      : parsedUrl.hostname.endsWith('.supabase.co')) &&
+    parsedUrl.hostname === configuredHost &&
     normalizedPath.startsWith('/storage/v1/object/public/avatars/');
 
   if (!isValidSupabaseAvatar) {

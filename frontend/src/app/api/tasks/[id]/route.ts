@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { updateTaskSchema, parseZodError } from '@/sdk/task/validation';
 import type { Task, UpdateTaskInput, APIError } from '@/sdk/task/types';
 import { taskStore, mapTask } from '@/sdk/task/api/_shared';
+import { requireRouteAuthorization } from '@/lib/security/route-auth';
+import { ACTION_ADMIN_ROLES } from '@/lib/security/permission';
 
 /** GET – fetch a task by id */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +17,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 }
 
 /** PATCH – partially update a task */
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireRouteAuthorization(request, { allowedRoles: ACTION_ADMIN_ROLES });
+  if (!auth.ok) return auth.response;
+
   const { id } = await params;
   const existing = taskStore[id];
   if (!existing) {
@@ -48,7 +53,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 /** DELETE – remove a task */
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireRouteAuthorization(request, { allowedRoles: ACTION_ADMIN_ROLES });
+  if (!auth.ok) return auth.response;
+
   const { id } = await params;
   if (!(id in taskStore)) {
     const err: APIError = { code: 'NOT_FOUND', message: 'task_not_found' };

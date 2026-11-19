@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 vi.mock('next/server', () => {
   class MockNextResponse extends Response {
@@ -25,6 +25,29 @@ const NON_STORAGE_PATH = 'https://abc123.supabase.co/storage/v1/object/public/bu
 describe('GET /api/avatar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://abc123.supabase.co');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('fails closed with 500 when NEXT_PUBLIC_SUPABASE_URL is unset', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '');
+    const res = await GET(makeRequest(`http://localhost/api/avatar?url=${encodeURIComponent(VALID_SUPABASE_URL)}`));
+    expect(res.status).toBe(500);
+  });
+
+  it('rejects other supabase.co projects', async () => {
+    const other = 'https://other-project.supabase.co/storage/v1/object/public/avatars/test.jpg';
+    const res = await GET(makeRequest(`http://localhost/api/avatar?url=${encodeURIComponent(other)}`));
+    expect(res.status).toBe(403);
+  });
+
+  it('returns 400 for malformed percent-encoding in the target path', async () => {
+    const bad = 'https://abc123.supabase.co/storage/v1/object/public/avatars/%E0%A4%A';
+    const res = await GET(makeRequest(`http://localhost/api/avatar?url=${encodeURIComponent(bad)}`));
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 when url param is missing', async () => {
