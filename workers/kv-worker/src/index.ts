@@ -11,6 +11,8 @@ import {
 import {
   corsHeaders,
   isOriginAllowed,
+  isLoopbackOrigin,
+  isLoopbackHost,
   handleCorsPreflightRequest,
   stripApiPrefix,
   supabaseProxyPath,
@@ -213,6 +215,27 @@ async function handleFetch(
 
     const url = new URL(request.url);
     const origin = request.headers.get('Origin');
+
+    // A loopback Origin is only legitimate when the worker itself runs locally (wrangler dev).
+    if (isLoopbackOrigin(origin) && !isLoopbackHost(request.url)) {
+      const h = new Headers({ 'Content-Type': 'application/json' });
+      h.set('X-Request-Id', requestId);
+      h.set('x-request-id', requestId);
+      h.set('x-trace-id', traceId);
+      applySecurityHeaders(h);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: { code: 'FORBIDDEN', message: 'Forbidden origin' },
+          timestamp: new Date().toISOString(),
+          correlationId: requestId,
+        }),
+        {
+          status: 403,
+          headers: h,
+        },
+      );
+    }
 
     if (request.method === 'OPTIONS') {
       const preflightRes = handleCorsPreflightRequest(request);

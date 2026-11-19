@@ -55,6 +55,31 @@ export function isOriginAllowed(
   return allowed;
 }
 
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '::1']);
+
+function isLoopbackHostname(hostname: string): boolean {
+  return LOOPBACK_HOSTNAMES.has(hostname.toLowerCase());
+}
+
+/** True when the Origin header points at a loopback host (local dev frontend). */
+export function isLoopbackOrigin(origin: string | null): boolean {
+  if (!origin) return false;
+  try {
+    return isLoopbackHostname(new URL(origin).hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** True when the worker itself is being served from a loopback host (wrangler dev). */
+export function isLoopbackHost(requestUrl: string): boolean {
+  try {
+    return isLoopbackHostname(new URL(requestUrl).hostname);
+  } catch {
+    return false;
+  }
+}
+
 const DEFAULT_ALLOWED_HEADERS =
   'Authorization, Content-Type, apikey, Prefer, x-r2-bucket, x-request-id, x-trace-id, x-supabase-region, Idempotency-Key, X-Idempotency-Key, x-user-role, x-user-id, x-user-email';
 
