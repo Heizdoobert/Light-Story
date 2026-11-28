@@ -48,7 +48,8 @@ Provides chapter listing, detail fetching, and navigation resolution for reader 
 const chapters = await client.chapters.listByStory('story-123');
 
 // Resolve navigation context (current, previous, next, currentIndex)
-const nav = await client.chapters.resolveNavigation('story-123', 'chapter-456');
+const chapters = await client.chapters.listByStory('story-123');
+const nav = client.chapters.resolveNavigation(chapters, 'chapter-456');
 console.log(nav.previous?.id, nav.next?.id);
 ```
 
@@ -64,15 +65,15 @@ const comments = await client.comments.listComments({
   sort: 'popular',
 });
 
-// Like comment
-await client.comments.likeComment('comment-789');
+// Toggle like
+await client.comments.toggleLike('comment-789');
 ```
 
 ## Other Domain Clients
 
 - `client.comics`: Comic queries, recommendations, CRUD actions.
 - `client.stories`: Story queries, categories, view counters.
-- `client.admin`: Site settings, cache purging, admin metrics.
+- `client.admin`: Site settings, metrics, logs, backup and restore.
 - `client.analytics`: Page views, telemetry, event reporting.
 - `client.user`: Bookmarks and reading history server sync.
 - `client.health`: Gateway worker health check endpoint.

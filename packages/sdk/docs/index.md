@@ -13,7 +13,7 @@ It depends strictly on standard Web APIs (`fetch`, `Headers`, `AbortController`,
 
 ## Documentation Index
 
-- [Gateway Domain Clients](./gateway-clients.md): SearchClient, ChaptersClient, CommentsClient, StoriesClient, ComicsClient, AdminClient, AnalyticsClient, UserClient, and HealthClient.
+- [Gateway Domain Clients](./gateway-clients.md): GatewayClient, GatewayApi, R2Client, SearchClient, ChaptersClient, CommentsClient, StoriesClient, ComicsClient, AdminClient, AnalyticsClient, UserClient, and HealthClient.
 - [Storage & Media Management](./storage.md): StorageManager, R2 presigned URLs, batch uploads with concurrency control, and storage adapters.
 - [Reader State & Bookmarks](./reader-state.md): ReaderProgressManager and BookmarkManager for optimistic reading progress, reading history, and bookmark synchronization.
 - [Formatters & Helpers](./formatters.md): Numbers, relative time, bytes, slugs, and chapter titles.
