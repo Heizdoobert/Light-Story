@@ -1,6 +1,20 @@
 import type { z } from 'zod';
 import { getErrorMessage } from '@/lib/utils/error-utils';
 import { logger } from '@/sdk/logger';
+import { ActionUnauthorizedError, ActionForbiddenError, ActionRateLimitError } from '@/lib/security/permission';
+
+export const GENERIC_ACTION_ERROR = 'Request failed. Please try again.';
+
+export function publicActionError(err: unknown): string {
+  if (
+    err instanceof ActionUnauthorizedError ||
+    err instanceof ActionForbiddenError ||
+    err instanceof ActionRateLimitError
+  ) {
+    return err.message;
+  }
+  return GENERIC_ACTION_ERROR;
+}
 
 export type ActionResult<T = unknown> = {
   success: boolean;
@@ -56,7 +70,7 @@ export async function act<T, R = unknown>(
     }
     return {
       success: false,
-      error: errorMsg,
+      error: publicActionError(err),
       ...(reqId ? { requestId: reqId } : {}),
     };
   }

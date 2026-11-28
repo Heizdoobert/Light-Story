@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { z } from 'zod';
-import { act } from '../result';
+import { act, GENERIC_ACTION_ERROR } from '../result';
 import { fetchApi, messageFromResponse } from '../http';
 import * as serverApi from '@/lib/api/server';
 
@@ -46,7 +46,7 @@ describe('Phase P0 Edge Cases - act() helper', () => {
       throw 'Raw string error thrown';
     });
     expect(res.success).toBe(false);
-    expect(res.error).toBe('Raw string error thrown');
+    expect(res.error).toBe(GENERIC_ACTION_ERROR);
   });
 
   it('handles thrown non-Error object in handler', async () => {
@@ -55,7 +55,7 @@ describe('Phase P0 Edge Cases - act() helper', () => {
       throw { message: 'Object error message' };
     });
     expect(res.success).toBe(false);
-    expect(res.error).toBe('Object error message');
+    expect(res.error).toBe(GENERIC_ACTION_ERROR);
   });
 
   it('handles thrown null/undefined in handler with fallback message', async () => {
@@ -64,13 +64,13 @@ describe('Phase P0 Edge Cases - act() helper', () => {
       throw null;
     });
     expect(resNull.success).toBe(false);
-    expect(resNull.error).toBe('An error occurred. Please try again in a moment.');
+    expect(resNull.error).toBe(GENERIC_ACTION_ERROR);
 
     const resUndefined = await act(stringSchema, 'hello', async () => {
       throw undefined;
     });
     expect(resUndefined.success).toBe(false);
-    expect(resUndefined.error).toBe('An error occurred. Please try again in a moment.');
+    expect(resUndefined.error).toBe(GENERIC_ACTION_ERROR);
   });
 
   it('handles thrown primitive number in handler', async () => {
@@ -79,14 +79,14 @@ describe('Phase P0 Edge Cases - act() helper', () => {
       throw 404;
     });
     expect(res.success).toBe(false);
-    expect(res.error).toBe('404');
+    expect(res.error).toBe(GENERIC_ACTION_ERROR);
   });
 
   it('handles async handlers that reject a Promise', async () => {
     const stringSchema = z.string();
     const res = await act(stringSchema, 'hello', () => Promise.reject(new Error('Async rejection')));
     expect(res.success).toBe(false);
-    expect(res.error).toBe('Async rejection');
+    expect(res.error).toBe(GENERIC_ACTION_ERROR);
   });
 
   it('handles handler returning ok: true without data field', async () => {

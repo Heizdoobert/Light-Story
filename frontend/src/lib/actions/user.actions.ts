@@ -7,7 +7,7 @@ import { updateUserProfileSchema, updateUserRoleSchema } from '@/lib/schemas/use
 import { fetchApi } from '@/actions/http';
 import type { UpdateUserProfileInput } from '@/lib/schemas/user';
 
-import type { ActionResult } from '@/actions/result';
+import { publicActionError, type ActionResult } from '@/actions/result';
 
 export async function updateUserProfile(
   userId: string,
@@ -46,7 +46,8 @@ export async function updateUserProfile(
     revalidateTag(CACHE_TAGS.USERS, 'max');
     return { success: true, data: { userId: targetId } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[user.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -68,6 +69,7 @@ export async function updateUserRole(userId: string, role: string): Promise<Acti
     revalidateTag(CACHE_TAGS.USERS, 'max');
     return { success: true, data: { userId: parsed.data.userId, role: parsed.data.role } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[user.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }

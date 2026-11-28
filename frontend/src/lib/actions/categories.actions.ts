@@ -6,7 +6,7 @@ import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission
 import { fetchApi } from '@/actions/http';
 import { createCategorySchema, updateCategorySchema } from '@/lib/schemas/admin';
 import type { CreateCategoryInput, UpdateCategoryInput } from '@/lib/schemas/admin';
-import type { ActionResult } from '@/actions/result';
+import { publicActionError, type ActionResult } from '@/actions/result';
 
 export async function createCategory(data: CreateCategoryInput): Promise<ActionResult<{ id: string }>> {
   try {
@@ -24,7 +24,8 @@ export async function createCategory(data: CreateCategoryInput): Promise<ActionR
     revalidateTag(CACHE_TAGS.GENRES, 'max');
     return { success: true, data: { id: json.id || '' } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[categories.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -45,7 +46,8 @@ export async function updateCategory(id: string, data: UpdateCategoryInput): Pro
     revalidateTag(CACHE_TAGS.GENRES, 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[categories.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -59,7 +61,8 @@ export async function deleteCategory(id: string): Promise<ActionResult<{ id: str
     revalidateTag(CACHE_TAGS.GENRES, 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[categories.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 

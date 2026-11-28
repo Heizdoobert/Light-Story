@@ -6,7 +6,7 @@ import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission
 import { fetchApi } from '@/actions/http';
 import { createComicSchema, updateComicSchema } from '@/lib/schemas/comic';
 import type { CreateComicInput, UpdateComicInput } from '@/lib/schemas/comic';
-import type { ActionResult } from '@/actions/result';
+import { publicActionError, type ActionResult } from '@/actions/result';
 
 const slugify = (value: string) =>
   value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-');
@@ -40,7 +40,8 @@ export async function createComic(data: CreateComicInput): Promise<ActionResult<
     revalidateTag(CACHE_TAGS.COMICS, 'max');
     return { success: true, data: { id: json.id || '' } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[comic.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -63,7 +64,8 @@ export async function updateComic(id: string, data: UpdateComicInput): Promise<A
     revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[comic.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -80,6 +82,7 @@ export async function deleteComic(id: string): Promise<ActionResult<{ id: string
     revalidateTag(CACHE_TAGS.COMIC_DETAIL(id), 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[comic.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod';
-import { act } from '../result';
+import { act, GENERIC_ACTION_ERROR } from '../result';
 
 const schema = z.object({
   name: z.string().min(2),
@@ -36,7 +36,7 @@ describe('act server-action helper', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'Database connection failed',
+      error: GENERIC_ACTION_ERROR,
     });
   });
 });

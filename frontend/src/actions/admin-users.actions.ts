@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { revalidateTag } from 'next/cache';
-import { act } from '@/actions/result';
+import { act, GENERIC_ACTION_ERROR } from '@/actions/result';
 import type { ActionResult } from '@/actions/result';
 import { fetchApi, messageFromResponse } from '@/actions/http';
 import { ROUTES } from '@/lib/constants/routes';
@@ -39,7 +39,8 @@ export async function updateProfileRole(input: { id: string; role: string }): Pr
       .eq('id', id);
 
     if (error) {
-      return { ok: false, error: error.message };
+      console.error('[admin-users] role update failed', error);
+      return { ok: false, error: GENERIC_ACTION_ERROR };
     }
 
     revalidateTag('profiles', 'max');

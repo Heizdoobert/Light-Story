@@ -6,7 +6,7 @@ import { SETTINGS_ADMIN_ROLES, requireActionRole } from '@/lib/security/permissi
 import { fetchApi } from '@/actions/http';
 import { saveSiteSettingsSchema } from '@/lib/schemas/admin';
 import type { SaveSiteSettingsInput } from '@/lib/schemas/admin';
-import type { ActionResult } from '@/actions/result';
+import { publicActionError, type ActionResult } from '@/actions/result';
 
 export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<ActionResult<{ count: number }>> {
   try {
@@ -24,6 +24,7 @@ export async function saveSiteSettings(input: SaveSiteSettingsInput): Promise<Ac
     revalidateTag(CACHE_TAGS.SETTINGS, 'max');
     return { success: true, data: { count: json.count ?? parsed.data.entries.length } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[settings.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }

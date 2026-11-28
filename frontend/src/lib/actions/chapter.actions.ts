@@ -6,7 +6,7 @@ import { ACTION_ADMIN_ROLES, requireActionRole } from '@/lib/security/permission
 import { fetchApi } from '@/actions/http';
 import { createChapterSchema, updateChapterSchema } from '@/lib/schemas/chapter';
 import type { CreateChapterInput, UpdateChapterInput } from '@/lib/schemas/chapter';
-import type { ActionResult } from '@/actions/result';
+import { publicActionError, type ActionResult } from '@/actions/result';
 
 export async function createChapter(data: CreateChapterInput): Promise<ActionResult<{ id: string }>> {
   try {
@@ -29,7 +29,8 @@ export async function createChapter(data: CreateChapterInput): Promise<ActionRes
     revalidateTag(CACHE_TAGS.CHAPTERS(parsed.data.story_id), 'max');
     return { success: true, data: { id: json.id || '' } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[chapter.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -54,7 +55,8 @@ export async function updateChapter(id: string, storyId: string, data: UpdateCha
     revalidateTag(CACHE_TAGS.CHAPTERS(storyId), 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[chapter.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
 
@@ -67,6 +69,7 @@ export async function deleteChapter(id: string, storyId: string): Promise<Action
     revalidateTag(CACHE_TAGS.CHAPTERS(storyId), 'max');
     return { success: true, data: { id } };
   } catch (err) {
-    return { success: false, error: (err as Error).message };
+    console.error('[chapter.actions] action failed', err);
+    return { success: false, error: publicActionError(err) };
   }
 }
