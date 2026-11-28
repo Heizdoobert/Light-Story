@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import {
   createCategory,
   updateCategory,
@@ -296,7 +297,7 @@ describe('taxonomy.actions', () => {
 
       const res = await createCategory({ name: 'Duplicate' });
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Duplicate entry');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
     });
   });
 });

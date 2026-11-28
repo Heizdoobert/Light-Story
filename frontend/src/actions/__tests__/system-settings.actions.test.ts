@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { saveSystemSettings, updateSystemSettings } from '../system-settings.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
@@ -112,7 +113,7 @@ describe('system-settings.actions server actions', () => {
       const res = await saveSystemSettings(validPayload);
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Permission denied');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
     it('returns forbidden error when user lacks admin role', async () => {

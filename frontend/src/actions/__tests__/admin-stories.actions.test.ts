@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import {
   updateStoryStatus,
   featureStory,
@@ -74,7 +75,7 @@ describe('admin-stories.actions', () => {
       const result = await updateStoryStatus({ id: 'story-1', status: 'archived' });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Permission denied');
+      expect(result.error).toBe(GENERIC_ACTION_ERROR);
     });
   });
 

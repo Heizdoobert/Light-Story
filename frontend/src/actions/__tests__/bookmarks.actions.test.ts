@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { addBookmark, removeBookmark, toggleBookmark } from '../bookmarks.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
@@ -75,7 +76,7 @@ describe('bookmarks.actions server actions', () => {
       const res = await addBookmark('comic-101');
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Unauthorized');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
@@ -158,7 +159,7 @@ describe('bookmarks.actions server actions', () => {
       const res = await toggleBookmark('comic-101');
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Server error');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });

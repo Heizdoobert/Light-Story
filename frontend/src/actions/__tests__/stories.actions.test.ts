@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { incrementStoryView } from '../stories.actions';
 import * as httpModule from '../http';
 import * as nextCache from 'next/cache';
@@ -69,6 +70,6 @@ describe('stories.actions - incrementStoryView', () => {
     const result = await incrementStoryView('non-existent-id');
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Story not found');
+    expect(result.error).toBe(GENERIC_ACTION_ERROR);
   });
 });

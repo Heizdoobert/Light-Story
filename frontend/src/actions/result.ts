@@ -5,6 +5,41 @@ import { ActionUnauthorizedError, ActionForbiddenError, ActionRateLimitError } f
 
 export const GENERIC_ACTION_ERROR = 'Request failed. Please try again.';
 
+export const SAFE_ACTION_ERROR_CODES: Readonly<Record<string, string>> = Object.freeze({
+  UNAUTHORIZED: 'unauthorized',
+  FORBIDDEN: 'forbidden: insufficient permissions',
+  RATE_LIMITED: 'too many requests, please try again later',
+  NOT_FOUND: 'Not found.',
+  CONFLICT: 'Conflict. Please refresh and try again.',
+  VALIDATION_FAILED: 'Invalid input.',
+});
+
+const SAFE_PASSTHROUGH_MESSAGES: ReadonlySet<string> = new Set([
+  GENERIC_ACTION_ERROR,
+  ...Object.values(SAFE_ACTION_ERROR_CODES),
+]);
+
+export function publicRunError(result: {
+  error: string;
+  code?: string;
+  details?: unknown;
+  requestId?: string;
+}): Pick<ActionResult, 'error' | 'code' | 'details' | 'requestId'> {
+  const out: Pick<ActionResult, 'error' | 'code' | 'details' | 'requestId'> = {
+    error: GENERIC_ACTION_ERROR,
+  };
+  if (typeof result.code === 'string' && Object.hasOwn(SAFE_ACTION_ERROR_CODES, result.code)) {
+    out.error = SAFE_ACTION_ERROR_CODES[result.code];
+    out.code = result.code;
+  } else if (SAFE_PASSTHROUGH_MESSAGES.has(result.error)) {
+    out.error = result.error;
+  }
+  if (typeof result.requestId === 'string') {
+    out.requestId = result.requestId;
+  }
+  return out;
+}
+
 export function publicActionError(err: unknown): string {
   if (
     err instanceof ActionUnauthorizedError ||
@@ -46,12 +81,24 @@ export async function act<T, R = unknown>(
     if (result.ok) {
       return { success: true, data: result.data };
     }
+    const pub = publicRunError(result);
+    if (pub.error !== result.error) {
+      try {
+        logger.warn('[ServerAction] sanitized upstream error', {
+          service: 'server-action',
+          upstreamError: result.error,
+          code: result.code,
+          requestId: result.requestId,
+        });
+      } catch {
+        // Non-blocking error logging
+      }
+    }
     return {
       success: false,
-      error: result.error,
-      ...(result.code ? { code: result.code } : {}),
-      ...(result.details ? { details: result.details } : {}),
-      ...(result.requestId ? { requestId: result.requestId } : {}),
+      error: pub.error,
+      ...(pub.code ? { code: pub.code } : {}),
+      ...(pub.requestId ? { requestId: pub.requestId } : {}),
     };
   } catch (err) {
     const errorMsg = getErrorMessage(err);

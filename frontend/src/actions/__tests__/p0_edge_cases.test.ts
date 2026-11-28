@@ -96,11 +96,12 @@ describe('Phase P0 Edge Cases - act() helper', () => {
     expect(res.data).toBeUndefined();
   });
 
-  it('handles handler returning ok: false with error string', async () => {
+  it('sanitizes ok:false raw error string', async () => {
     const stringSchema = z.string();
     const res = await act(stringSchema, 'hello', async () => ({ ok: false, error: 'Custom business rule failure' }));
     expect(res.success).toBe(false);
-    expect(res.error).toBe('Custom business rule failure');
+    expect(res.error).toBe(GENERIC_ACTION_ERROR);
+    expect(res.error).not.toContain('Custom business rule failure');
   });
 });
 

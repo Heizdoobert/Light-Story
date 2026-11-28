@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { createTranslator, addTranslator, updateTranslator, deleteTranslator, removeTranslator } from '../translators.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
@@ -93,7 +94,7 @@ describe('translators.actions server actions', () => {
       const res = await createTranslator({ name: 'Test Translator' });
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Unauthorized');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });

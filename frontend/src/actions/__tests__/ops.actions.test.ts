@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { setMaintenanceMode, maintenanceMode, clearCache, triggerBackup } from '../ops.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
@@ -107,7 +108,7 @@ describe('ops.actions server actions', () => {
       const res = await setMaintenanceMode({ enabled: true });
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Forbidden');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });

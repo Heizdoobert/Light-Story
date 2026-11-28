@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { updateAdConfig, updateSiteSetting, updateAdSlot, toggleAdSlot } from '../ads.actions';
 import * as httpModule from '../http';
 import * as nextCache from 'next/cache';
@@ -81,7 +82,7 @@ describe('ads.actions', () => {
 
       const res = await updateAdConfig({ key: 'public_ads_enabled', value: false });
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Permission denied');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
     });
   });
 

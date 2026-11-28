@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { GENERIC_ACTION_ERROR } from '../result';
 import { saveReadingProgress, clearReadingHistory } from '../reading-history.actions';
 import * as serverApi from '@/lib/api/server';
 import { revalidateTag } from 'next/cache';
@@ -91,7 +92,7 @@ describe('reading-history.actions server actions', () => {
       });
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Unauthorized');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
@@ -138,7 +139,7 @@ describe('reading-history.actions server actions', () => {
       const res = await clearReadingHistory();
 
       expect(res.success).toBe(false);
-      expect(res.error).toBe('Failed to clear history');
+      expect(res.error).toBe(GENERIC_ACTION_ERROR);
       expect(revalidateTag).not.toHaveBeenCalled();
     });
   });
