@@ -33,8 +33,8 @@
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: SDK Modules & Resilient Storage Implementation | Implement `SearchClient`, `ChaptersClient`, `CommentsClient` in `gateway/`, storage adapters and reader sync managers in `storage/`, wire up `GatewayApi`, exports, and build verification | none | IN_PROGRESS |
-| 2 | M2: Final Milestone (Comprehensive Testing & Adversarial Hardening) | Phase 1: 100% test pass on unit/integration suites; Phase 2: Adversarial coverage hardening (Tier 5 challenger loop) | M1 | PLANNED |
+| 1 | M1: SDK Modules & Resilient Storage Implementation | Implement `SearchClient`, `ChaptersClient`, `CommentsClient` in `gateway/`, storage adapters and reader sync managers in `storage/`, wire up `GatewayApi`, exports, and build verification | none | COMPLETED |
+| 2 | M2: Final Milestone (Comprehensive Testing & Adversarial Hardening) | Phase 1: 100% test pass on unit/integration suites; Phase 2: Adversarial coverage hardening (Tier 5 challenger loop) | M1 | COMPLETED |
 
 ## Interface Contracts
 ### `SearchClient` (`packages/sdk/src/gateway/search.ts`)
